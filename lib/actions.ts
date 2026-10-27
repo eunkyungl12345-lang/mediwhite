@@ -393,3 +393,9 @@ export async function plantAction(action: "load" | "plant" | "water" | "sun" | "
   }
   return { plant: p, stage: plantStage(p) };
 }
+
+/* ---------- 사용법 투어 ---------- */
+export async function markOnboarded() {
+  const u = await requireUser();
+  await db().from("users").update({ onboarded: true }).eq("id", u.id);
+}

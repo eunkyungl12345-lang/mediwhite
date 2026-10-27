@@ -476,3 +476,30 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .dq-stamps{display:flex;gap:4px}
 .dq-stamps i{width:24px;height:24px;border-radius:50%;border:1.5px dashed var(--line);display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--muted)}
 .dq-stamps i.on{background:var(--scrub);border:0;color:#fff;font-weight:700}
+
+/* 사용법 투어 */
+.ob{position:fixed;inset:0;z-index:70;display:grid;place-items:center;background:rgba(6,20,26,.72);padding:16px;animation:fadein .25s}
+.ob-card{position:relative;background:var(--surface);color:var(--ink);border-radius:20px;padding:26px 20px 18px;width:100%;max-width:400px;display:grid;gap:10px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+.ob-card h3{margin:0;font-size:20px}
+.ob-card p{margin:0;line-height:1.55;color:var(--ink)}
+.ob-icon{font-size:52px;line-height:1}
+.ob-skip{position:absolute;top:10px;right:12px;background:none;border:0;color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.ob-dots i{width:8px;height:8px;border-radius:50%;background:var(--line);cursor:pointer}
+.ob-dots i.on{background:var(--scrub);width:20px;border-radius:4px}
+.ob-nav{display:flex;justify-content:space-between;gap:8px}
+.ob-nav .btn{min-width:110px}
+.ob-demo{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;font-size:14px;min-height:46px}
+.ob-badge{background:#2C6B5E;color:#fff;border-radius:6px;padding:1px 6px;font-size:13px}
+.ob-ladder{font-size:12px;gap:4px;color:var(--muted)}
+.ob-ladder span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--ink)}
+.ob-ladder .ob-top{background:#F2B705;border-color:#F2B705;color:#3B2A00;font-weight:700}
+.ob-chips{gap:6px}
+.ob-chips span{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px;background:var(--surface)}
+.ob-chips span.on{background:var(--scrub);color:#fff;border-color:var(--scrub)}
+.ob-dock{position:relative;flex-direction:column;gap:4px;border-radius:14px 14px 4px 4px;box-shadow:0 -4px 12px rgba(0,0,0,.08)}
+.ob-dock i{width:36px;height:4px;border-radius:2px;background:var(--line)}
+.ob-games span{font-size:26px;background:var(--surface);border:1px solid var(--line);border-radius:10px;width:42px;height:42px;display:grid;place-items:center}
+.ob-dq{flex-direction:column;align-items:stretch;gap:4px;text-align:left;font-size:13px}
+.ob-dq span:first-child{color:var(--scrub);font-weight:600}
+.ob-help{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700;font-size:13px;cursor:pointer;flex:none;padding:0}

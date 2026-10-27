@@ -10,6 +10,7 @@ import PushSetup from "@/components/PushSetup";
 import { vapid } from "@/lib/push";
 import { runSchedulers } from "@/lib/scheduler";
 import { memo, memoOnce } from "@/lib/memo";
+import Onboarding, { TourButton } from "@/components/Onboarding";
 import { bump } from "@/lib/daily";
 import Name from "@/components/Name";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
@@ -25,7 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   runSchedulers().catch(() => {});
   if (memoOnce("visit:" + s.id, 30 * 60_000)) { d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {}); bump(s.id, "visit").catch(() => {}); }
   const [{ data: me }, { data: msgs }, { pub }, { data: offs }] = await Promise.all([
-    d.from("users").select("id,dept,xp,stealth").eq("id", s.id).maybeSingle(),
+    d.from("users").select("id,dept,xp,stealth,onboarded").eq("id", s.id).maybeSingle(),
     d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").order("created_at", { ascending: false }).limit(40),
     vapid(),
     memo("officials", 5 * 60_000, async () => d.from("users").select("id,username").in("username", Object.keys(OFFICIAL))),
@@ -37,12 +38,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="app">
       <header>
         <div className="brand"><h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트웹</Link></h1></div>
-        <div className="me"><Name r={rank} dept={s.dept} nickname={s.nickname} username={s.username} />{s.role === "admin" && <span className="tag">관리자</span>}<form action={logout}><button>나가기</button></form></div>
+        <TourButton /><div className="me"><Name r={rank} dept={s.dept} nickname={s.nickname} username={s.username} />{s.role === "admin" && <span className="tag">관리자</span>}<form action={logout}><button>나가기</button></form></div>
       </header>
       <Tabs admin={s.role === "admin"} />
       {pub && <PushSetup vapidPublic={pub} />}
       <main>{children}</main>
       <PromoToast />
+      <Onboarding show={!!me && !me.onboarded} />
       <ChatDock me={s} initial={(msgs ?? []).reverse()} myRank={String(rank.index)} official={official} online={<Presence user={s} stealth={!!me?.stealth} />} />
     </div>
   );
