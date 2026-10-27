@@ -12,4 +12,4 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone(); url.pathname = "/login"; url.search = "";
   return NextResponse.redirect(url);
 }
-export const config = { matcher: ["/((?!_next|favicon.ico|api/public).*)"] };
+export const config = { matcher: ["/((?!_next|api/public|.*\\..*).*)"] };
