@@ -8,6 +8,7 @@ import Name from "@/components/Name";
 import Insignia from "@/components/Insignia";
 import DeleteAccount from "@/components/DeleteAccount";
 import ProfileForm from "@/components/ProfileForm";
+import PasswordForm from "@/components/PasswordForm";
 import InviteLink from "@/components/InviteLink";
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default async function RankPage() {
       <div className="card">
         <h3>내 정보</h3>
         <ProfileForm nickname={me?.nickname ?? s.nickname} bio={me?.bio ?? ""} dept={me?.dept ?? s.dept} />
+        <details><summary className="muted" style={{ cursor: "pointer" }}>비밀번호 변경</summary><div style={{ paddingTop: 10 }}><PasswordForm /></div></details>
       </div>
 
       <div className="card">

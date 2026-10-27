@@ -66,6 +66,24 @@ export async function updateProfile(_: FormState, fd: FormData): Promise<FormSta
   return { ok: "저장했어요" };
 }
 
+export async function changePassword(_: FormState, fd: FormData): Promise<FormState> {
+  const u = await requireUser();
+  const cur = String(fd.get("current") ?? ""), next = String(fd.get("next") ?? ""), again = String(fd.get("again") ?? "");
+  if (next.length < 4) return { error: "새 비밀번호는 4자 이상이에요" };
+  if (next !== again) return { error: "새 비밀번호 두 칸이 서로 달라요" };
+  const s = db();
+  const { data: row } = await s.from("users").select("password_hash").eq("id", u.id).single();
+  if (!row || !(await bcrypt.compare(cur, row.password_hash))) return { error: "현재 비밀번호가 맞지 않아요" };
+  await s.from("users").update({ password_hash: await bcrypt.hash(next, 10) }).eq("id", u.id);
+  return { ok: "비밀번호를 바꿨어요" };
+}
+export async function adminResetPassword(_: FormState, fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  const userId = clean(fd.get("user_id"), 40), next = String(fd.get("next") ?? "");
+  if (next.length < 4) return { error: "4자 이상" };
+  await db().from("users").update({ password_hash: await bcrypt.hash(next, 10) }).eq("id", userId);
+  return { ok: "초기화했어요" };
+}
 export async function deleteAccount(_: FormState, fd: FormData): Promise<FormState> {
   const u = await requireUser();
   if (String(fd.get("confirm") ?? "") !== "탈퇴") return { error: "확인 칸에 '탈퇴'라고 적어주세요" };
