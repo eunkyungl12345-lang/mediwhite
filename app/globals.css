@@ -139,3 +139,43 @@ canvas{max-width:100%}
 .ticker span{display:inline-block;animation:slidein .5s ease-out;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 @keyframes slidein{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.ticker span{animation:none}}
+
+/* 이름(계급장[직종]닉네임) */
+.name{display:inline-flex;align-items:center;gap:4px;color:inherit;text-decoration:none;font-weight:600}
+.name .ins{display:inline-flex;align-items:center;padding:1px 3px;border-radius:4px;background:var(--ink);color:var(--bg);line-height:0}
+.name .ins.t1{background:#4F6B63}.name .ins.t2{background:var(--scrub)}.name .ins.t3{background:#3B5BA9}.name .ins.t4{background:#6A3FB5}.name .ins.t5{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}
+.ins.t1{background:#4F6B63}.ins.t2{background:var(--scrub)}.ins.t3{background:#3B5BA9}.ins.t4{background:#6A3FB5}.ins.t5{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}
+.who .ins{display:inline-flex;padding:1px 3px;border-radius:3px;background:var(--ink);color:var(--bg);line-height:0}
+.rank-tag{display:inline-flex;align-items:center;gap:4px}
+.rank-tag .insignia{color:currentColor}
+.bio{font-size:15px}
+.ladder span{display:inline-flex;align-items:center;gap:4px}
+.subtabs .cats{padding-bottom:6px}
+
+/* 하단 채팅 독 */
+main{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.08);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
+.dock-bar{width:100%;max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px;background:none;border:0;font:inherit;color:var(--ink);padding:10px 0;cursor:pointer;text-align:left}
+.dock-title{font-weight:600;white-space:nowrap;display:inline-flex;gap:6px;align-items:center}
+.dock-last{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:13px}
+.dock-unread{background:var(--signal);color:#fff;border-radius:999px;font-size:11px;font-weight:600;padding:1px 7px}
+.dock-caret{margin-left:auto;color:var(--muted)}
+.dock-body{max-width:760px;margin:0 auto}
+.dock.open .chat{height:min(46vh,420px);min-height:220px}
+.dock.open main{padding-bottom:0}
+body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
+
+/* 진급 토스트 */
+.toasts{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));z-index:50;display:grid;gap:8px;max-width:min(92vw,360px)}
+.toast{display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:toastin .35s ease-out,toastout .4s ease-in 6s forwards}
+.toast.t3{background:#3B5BA9;color:#fff}.toast.t4{background:#6A3FB5;color:#fff}.toast.t5{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}
+@keyframes toastin{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+@keyframes toastout{to{opacity:0;transform:translateY(-8px)}}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+
+/* 관리자 */
+.admin-list{display:grid;gap:10px}
+.admin-row{display:grid;gap:6px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.admin-main{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.admin-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
