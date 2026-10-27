@@ -48,7 +48,7 @@ function stageDef(id: number, forced?: Mod): StageDef {
   const pool = [0]; if (id >= 2) pool.push(1); if (id >= 4) pool.push(2); if (id >= 7) pool.push(4); if (id >= 11) pool.push(5); if (id >= 14) pool.push(6);
   const mod: Mod = forced ?? (no === 4 ? "night" : no === 7 ? "iso" : no === 9 ? "rush" : "none");
   const boss = id % 5 === 0 ? (id >= 25 ? 7 : 3) : 0;
-  return { id, ch, no, name: `${ch}-${no}`, waves: Math.min(12, 3 + Math.floor((id - 1) / 3)), mod, boss, pool, mult: 1 + (id - 1) * .10, spd: 1 + (id - 1) * .02 };
+  return { id, ch, no, name: `${ch}-${no}`, waves: id <= 2 ? 2 : Math.min(12, 3 + Math.floor((id - 1) / 3)), mod, boss, pool, mult: (id <= 2 ? .6 : id <= 4 ? .8 : 1) * (1 + (id - 1) * .10), spd: (id <= 2 ? .75 : id <= 4 ? .9 : 1) * (1 + (id - 1) * .02) };
 }
 const kstDay = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
 const hash = (s: string) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
@@ -89,7 +89,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
     const c = cv.current!, x = c.getContext("2d")!, s = g.current;
     const size = () => { const r = box.current!.getBoundingClientRect(); if (!r.width) return; const d = Math.min(2, devicePixelRatio || 1); s.W = r.width; s.H = r.width * 0.62; c.width = s.W * d; c.height = s.H * d; c.style.height = s.H + "px"; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
     const cw = () => s.W / COLS, ch = () => s.H / ROWS;
-    const rowOk = (r: number) => { const id = s.stage?.id ?? 99; if (s.stage?.mod === "iso" || id <= 3) return r >= 1 && r <= 3; if (id <= 6) return r <= 3; return true; };
+    const rowOk = (r: number) => { const id = s.stage?.id ?? 99; if (id === 1) return r === 2; if (id === 2) return r >= 1 && r <= 2; if (s.stage?.mod === "iso" || id <= 4) return r >= 1 && r <= 3; if (id <= 7) return r <= 3; return true; };
     const lv = (k: UnitKind) => lvMult(s.levels[k] ?? 1);
     const draw = () => {
       const CW = cw(), CH = ch();
@@ -166,7 +166,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         else if (!s.germs.length) {
           if (s.wave >= st.waves) return finish(true);
           sfx.level(); pop(box.current, s.W / 2, s.H / 2, `WAVE ${s.wave + 1}/${st.waves}`, "good big");
-          s.wave++; s.spawned = 0; s.waveSize = Math.round((2 + s.wave * 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = 3; setUi(u => ({ ...u, wave: s.wave })); } }
+          s.wave++; s.spawned = 0; s.waveSize = st.id <= 2 ? 3 : Math.round((2 + s.wave * 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = 3; setUi(u => ({ ...u, wave: s.wave })); } }
       if (st.mod !== "night" && Math.random() < dt * Math.max(.05, .16 - s.wave * .008)) s.sunDrops.push({ x: 30 + Math.random() * (s.W - 60), y: 20 + Math.random() * (s.H - 40), t: 8 });
       s.sunDrops = s.sunDrops.filter(d => (d.t -= dt) > 0);
       for (const u of s.units) { u.cd -= dt; const fx = u.c * CW + CW * .7, lane = laneGerms(u.r, u.c * CW), D = Math.round(UNITS[u.kind].dmg * lv(u.kind));
@@ -200,7 +200,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       const before = s.units.length; s.units = s.units.filter(u => u.hp > 0); s.lost += before - s.units.length; s.germs = s.germs.filter(z => z.hp > 0);
       draw(); s.raf = requestAnimationFrame(tick);
     };
-    (box.current as any).__start = (st: StageDef, isDaily: boolean) => { sfx.level(); size(); s.stage = st; s.daily = isDaily; s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = st.mod === "rush" ? 400 : 250; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = Math.round((2 + 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = 6; s.sunDrops = []; s.lost = 0; s.running = true; s.paused = false; s.last = performance.now(); setUi({ sun: s.sun, wave: 1, running: true }); if (st.id === 1) setTimeout(() => pop(box.current, s.W / 2, s.H / 2, "💡 수액 걸이 먼저, 그다음 간호사!", "good"), 400); s.raf = requestAnimationFrame(tick); };
+    (box.current as any).__start = (st: StageDef, isDaily: boolean) => { sfx.level(); size(); s.stage = st; s.daily = isDaily; s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = st.mod === "rush" ? 400 : st.id <= 3 ? 300 : 250; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = st.id <= 2 ? 2 : Math.round((2 + 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = st.id <= 2 ? 8 : 6; s.sunDrops = []; s.lost = 0; s.running = true; s.paused = false; s.last = performance.now(); setUi({ sun: s.sun, wave: 1, running: true }); if (st.id === 1) { setTimeout(() => pop(box.current, s.W / 2, s.H / 2, "💡 가운데 줄에 간호사 2명 + 수액 걸이!", "good"), 400); setTimeout(() => pop(box.current, s.W / 2, s.H * .7, "세균은 8초 뒤에 와요", "good"), 2200); } s.raf = requestAnimationFrame(tick); };
     (box.current as any).__place = (kind: UnitKind, px: number, py: number) => {
       if (!s.running) return; const CW = cw(), CH = ch();
       const hit = s.sunDrops.findIndex(d => Math.hypot(d.x - px, d.y - py) < CH * .4);
