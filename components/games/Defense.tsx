@@ -20,10 +20,12 @@ const UNITS: Record<UnitKind, UnitDef> = {
   ornurse: { name: "수술실 간호사", icon: "✂️", cost: 250, hp: 90, unlock: 25, desc: "가위 투척, 세균 3마리 관통", skill: "✂️ 가위" },
 };
 const ORDER = Object.keys(UNITS) as UnitKind[];
+const UCOLOR: Record<UnitKind, string> = { iv: "#8FD3C2", nurse: "#F5A3B7", wall: "#E6B341", xray: "#B8A1E8", doctor: "#A9C7F0", ortho: "#F0B48C", anes: "#C9B6F0", lab: "#9FE0A8", ems: "#FFD36E", ornurse: "#F7C6D9" };
+const GCOLOR = ["#7CCB8F", "#9BD6E0", "#C48BE8", "#E26B6B"];
 type Unit = { kind: UnitKind; r: number; c: number; hp: number; cd: number };
 type Germ = { r: number; x: number; hp: number; max: number; speed: number; dmg: number; kind: number; eating: boolean; slow: number; poison: number };
 type Shot = { r: number; x: number; dmg: number; kind: "needle" | "beam" | "pill" | "poison" | "scissor"; hit: Set<Germ>; pierce: number; spin: number };
-type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz"; r: number; x: number; t: number; w?: number };
+type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg"; r: number; x: number; t: number; w?: number; txt?: string; y?: number };
 type Saved = { bestWave: number };
 
 export default function Defense({ ranks }: { ranks: Row[] }) {
@@ -43,12 +45,19 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
     const cw = () => s.W / COLS, ch = () => s.H / ROWS;
     const draw = () => {
       const CW = cw(), CH = ch();
-      for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < COLS; cc++) { x.fillStyle = (r + cc) % 2 ? "#E8F0EC" : "#DCE8E2"; x.fillRect(cc * CW, r * CH, CW, CH); }
-      x.fillStyle = "#B8C9C1"; x.fillRect(0, 0, 4, s.H);
+      for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < COLS; cc++) { x.fillStyle = (r + cc) % 2 ? "#EAF2EE" : "#DFEBE5"; x.fillRect(cc * CW, r * CH, CW, CH); }
+      x.strokeStyle = "rgba(0,0,0,.05)"; x.lineWidth = 1; for (let r = 1; r < ROWS; r++) { x.beginPath(); x.moveTo(0, r * CH); x.lineTo(s.W, r * CH); x.stroke(); }
+      x.fillStyle = "#E2574C"; x.fillRect(0, 0, 5, s.H); x.fillStyle = "rgba(226,87,76,.12)"; x.fillRect(5, 0, CW * .5, s.H);
+      x.fillStyle = "#B8C9C1"; x.fillRect(s.W - 6, 0, 6, s.H);
       // 수면가스 영역 표시
       for (const u of s.units) if (u.kind === "anes") { x.fillStyle = "rgba(120,100,220,.10)"; x.fillRect(u.c * CW, u.r * CH, s.W - u.c * CW, CH); }
-      x.font = `${Math.floor(CH * .6)}px system-ui`; x.textAlign = "center"; x.textBaseline = "middle";
-      for (const u of s.units) { x.fillText(UNITS[u.kind].icon, u.c * CW + CW / 2, u.r * CH + CH / 2); const p = u.hp / UNITS[u.kind].hp; x.fillStyle = "#2C6B5E"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 5, (CW - 8) * p, 3); }
+      x.textAlign = "center"; x.textBaseline = "middle";
+      for (const u of s.units) { const cx = u.c * CW + CW / 2, cy = u.r * CH + CH / 2, wob = Math.sin(s.t * 4 + u.c + u.r) * 1.5, R = Math.min(CW, CH) * .42;
+        x.fillStyle = "rgba(0,0,0,.12)"; x.beginPath(); x.ellipse(cx, u.r * CH + CH - 4, R * .9, 3, 0, 0, 7); x.fill();
+        x.fillStyle = UCOLOR[u.kind]; x.beginPath(); x.arc(cx, cy + wob, R, 0, 7); x.fill(); x.strokeStyle = "rgba(255,255,255,.8)"; x.lineWidth = 2; x.stroke();
+        if (u.cd > 0 && u.kind !== "iv" && u.kind !== "wall") { x.strokeStyle = "rgba(0,0,0,.18)"; x.lineWidth = 3; x.beginPath(); x.arc(cx, cy + wob, R + 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, u.cd / 3)); x.stroke(); }
+        x.font = `${Math.floor(R * 1.25)}px system-ui`; x.fillText(UNITS[u.kind].icon, cx, cy + wob + 1);
+        const p = u.hp / UNITS[u.kind].hp; x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 6, CW - 8, 3); x.fillStyle = p > .5 ? "#2C6B5E" : p > .25 ? "#E6B341" : "#E2574C"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 6, (CW - 8) * p, 3); }
       for (const sh of s.shots) {
         const cy = sh.r * CH + CH / 2;
         if (sh.kind === "scissor") { x.save(); x.translate(sh.x, cy); x.rotate(sh.spin); x.font = `${Math.floor(CH * .45)}px system-ui`; x.fillText("✂️", 0, 0); x.restore(); }
@@ -56,18 +65,21 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         else { x.fillStyle = sh.kind === "beam" ? "#E2574C" : sh.kind === "pill" ? "#3B5BA9" : "#2C6B5E"; x.beginPath(); x.arc(sh.x, cy, sh.kind === "beam" ? 3 : sh.kind === "pill" ? 5 : 4, 0, 7); x.fill(); }
       }
       for (const z of s.germs) {
-        const cy = z.r * CH + CH / 2;
-        if (z.kind === 3) x.font = `${Math.floor(CH * .85)}px system-ui`; else x.font = `${Math.floor(CH * .6)}px system-ui`;
-        if (z.poison > 0) { x.save(); x.globalAlpha = .35; x.fillStyle = "#4CAF50"; x.beginPath(); x.arc(z.x, cy, CH * .4, 0, 7); x.fill(); x.restore(); }
-        x.fillText(["🦠", "🧫", "👾", "🧟"][z.kind], z.x, cy);
-        if (z.slow > 0) { x.font = `${Math.floor(CH * .3)}px system-ui`; x.fillText("💤", z.x + CW * .25, cy - CH * .3); }
-        x.fillStyle = "#E2574C"; x.fillRect(z.x - CW * .3, z.r * CH + 4, CW * .6 * (z.hp / z.max), 3);
+        const bounce = z.eating ? Math.abs(Math.sin(s.t * 14)) * 3 : Math.abs(Math.sin(s.t * 6 + z.x * .05)) * 4, cy = z.r * CH + CH / 2 - bounce, R = z.kind === 3 ? CH * .46 : CH * .3;
+        x.fillStyle = "rgba(0,0,0,.12)"; x.beginPath(); x.ellipse(z.x, z.r * CH + CH - 4, R * .8, 3, 0, 0, 7); x.fill();
+        if (z.kind === 3) { x.save(); x.globalAlpha = .25 + Math.sin(s.t * 5) * .1; x.fillStyle = "#E26B6B"; x.beginPath(); x.arc(z.x, cy, R * 1.35, 0, 7); x.fill(); x.restore(); }
+        if (z.poison > 0) { x.save(); x.globalAlpha = .35; x.fillStyle = "#4CAF50"; x.beginPath(); x.arc(z.x, cy, R * 1.2, 0, 7); x.fill(); x.restore(); }
+        x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R, 0, 7); x.fill(); x.strokeStyle = "rgba(0,0,0,.15)"; x.lineWidth = 2; x.stroke();
+        x.font = `${Math.floor(R * 1.3)}px system-ui`; x.fillText(["🦠", "🧫", "👾", "🧟"][z.kind], z.x, cy + 1);
+        if (z.slow > 0) { x.font = `${Math.floor(CH * .3)}px system-ui`; x.fillText("💤", z.x + R, cy - R); }
+        x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(z.x - R, z.r * CH + 4, R * 2, 3); x.fillStyle = z.kind === 3 ? "#B71C1C" : "#E2574C"; x.fillRect(z.x - R, z.r * CH + 4, R * 2 * (z.hp / z.max), 3);
       }
       // 이펙트
       for (const f of s.fx) {
         const cy = f.r * CH + CH / 2, a = Math.max(0, f.t);
         if (f.kind === "bolt") { x.save(); x.globalAlpha = a; x.strokeStyle = "#FFE766"; x.lineWidth = 3; x.shadowColor = "#FFE766"; x.shadowBlur = 12; x.beginPath(); let px = f.x, py = cy; x.moveTo(px, py); while (px < s.W) { px += 14; py = cy + (Math.random() - .5) * CH * .6; x.lineTo(px, py); } x.stroke(); x.restore(); }
         if (f.kind === "boom") { x.save(); x.globalAlpha = a; x.strokeStyle = "#E6B341"; x.lineWidth = 4; x.beginPath(); x.arc(f.x, cy, (1 - a) * CW * 1.2 + 6, 0, 7); x.stroke(); x.font = `${Math.floor(CH * .5)}px system-ui`; x.fillText("🔨", f.x, cy - CH * .2); x.restore(); }
+        if (f.kind === "dmg") { x.save(); x.globalAlpha = a; x.font = `600 ${Math.floor(CH * .32)}px system-ui`; x.fillStyle = "#E2574C"; x.strokeStyle = "#fff"; x.lineWidth = 3; const yy = (f.y ?? cy) - (1 - a) * 18; x.strokeText(f.txt ?? "", f.x, yy); x.fillText(f.txt ?? "", f.x, yy); x.restore(); }
         if (f.kind === "cloud") { x.save(); x.globalAlpha = a * .6; x.fillStyle = "#6CC070"; x.beginPath(); x.arc(f.x, cy, CW * .55, 0, 7); x.fill(); x.restore(); }
       }
       x.font = `${Math.floor(CH * .45)}px system-ui`;
@@ -97,18 +109,18 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
           case "nurse": if (u.cd <= 0 && lane.length) { u.cd = 1.4; s.shots.push({ r: u.r, x: fx, dmg: 20, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
           case "xray": if (u.cd <= 0 && lane.length) { u.cd = 2.2; s.shots.push({ r: u.r, x: fx, dmg: 10, kind: "beam", hit: new Set(), pierce: 99, spin: 0 }); } break;
           case "doctor": if (u.cd <= 0 && lane.length) { u.cd = 3.2; s.shots.push({ r: u.r, x: fx, dmg: 60, kind: "pill", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "ortho": { const near = lane.filter(z => z.x < u.c * CW + CW * 2.6); if (u.cd <= 0 && near.length) { u.cd = 2.8; for (const z of near) z.hp -= 90; s.fx.push({ kind: "boom", r: u.r, x: u.c * CW + CW * 1.6, t: 1 }); } break; }
+          case "ortho": { const near = lane.filter(z => z.x < u.c * CW + CW * 2.6); if (u.cd <= 0 && near.length) { u.cd = 2.8; for (const z of near) { z.hp -= 90; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: "90" }); } s.fx.push({ kind: "boom", r: u.r, x: u.c * CW + CW * 1.6, t: 1 }); } break; }
           case "anes": for (const z of lane) z.slow = .6; if (u.cd <= 0 && lane.length) { u.cd = 2; s.shots.push({ r: u.r, x: fx, dmg: 8, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
           case "lab": if (u.cd <= 0 && lane.length) { u.cd = 3; s.shots.push({ r: u.r, x: fx, dmg: 15, kind: "poison", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "ems": if (u.cd <= 0 && lane.length) { u.cd = 8; for (const z of lane) z.hp -= 120; s.fx.push({ kind: "bolt", r: u.r, x: fx, t: 1 }); } break;
+          case "ems": if (u.cd <= 0 && lane.length) { u.cd = 8; for (const z of lane) { z.hp -= 120; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: "120" }); } s.fx.push({ kind: "bolt", r: u.r, x: fx, t: 1 }); } break;
           case "ornurse": if (u.cd <= 0 && lane.length) { u.cd = 2.4; s.shots.push({ r: u.r, x: fx, dmg: 35, kind: "scissor", hit: new Set(), pierce: 3, spin: 0 }); } break;
         } }
       for (const sh of s.shots) { sh.x += (sh.kind === "poison" ? 180 : sh.kind === "scissor" ? 300 : 260) * dt; sh.spin += dt * (sh.kind === "scissor" ? 14 : 1.2);
-        for (const z of s.germs) { if (z.r === sh.r && !sh.hit.has(z) && Math.abs(z.x - sh.x) < CW * .3) { z.hp -= sh.dmg; sh.hit.add(z);
+        for (const z of s.germs) { if (z.r === sh.r && !sh.hit.has(z) && Math.abs(z.x - sh.x) < CW * .3) { z.hp -= sh.dmg; sh.hit.add(z); s.fx.push({ kind: "dmg", r: sh.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(sh.dmg) });
           if (sh.kind === "poison") { z.poison = 4; s.fx.push({ kind: "cloud", r: sh.r, x: z.x, t: .6 }); for (const o of s.germs) if (o !== z && o.r === z.r && Math.abs(o.x - z.x) < CW) o.poison = 4; }
           if (sh.hit.size >= sh.pierce) sh.x = 1e9; } } }
       s.shots = s.shots.filter(sh => sh.x < s.W + 20);
-      for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
+      for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : f.kind === "dmg" ? 1.4 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
       for (const z of s.germs) { if (z.poison > 0) { z.poison -= dt; z.hp -= 12 * dt; } const sp = z.speed * (z.slow > 0 ? .5 : 1); z.slow = Math.max(0, z.slow - dt);
         const target = s.units.find(u => u.r === z.r && Math.abs(u.c * CW + CW / 2 - z.x) < CW * .45 && u.c * CW + CW / 2 <= z.x + 2);
         if (target) { z.eating = true; target.hp -= z.dmg * dt; } else { z.eating = false; z.x -= sp * dt; }
@@ -139,7 +151,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         {ui.running && <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={async () => { const w = Math.max(0, g.current.wave - 1); if (!w) { setSaved("1웨이브를 넘긴 뒤 저장할 수 있어요"); return; } try { await saveScore("defense", w); g.current.best = Math.max(g.current.best, w); setSaved(`${w}웨이브 기록 저장됨`); } catch { setSaved("저장 실패"); } setTimeout(() => setSaved(""), 2500); }}>기록 저장</button>}
       </div>
       {saved && <div className="muted">{saved}</div>}
-      <div className="def-shop">{unlocked.map(k => <button key={k} type="button" className={"def-unit" + (sel === k ? " sel" : "") + (ui.sun < UNITS[k].cost ? " poor" : "")} onClick={() => setSel(k)} title={UNITS[k].desc}><span className="def-ico">{UNITS[k].icon}</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{UNITS[k].cost}</span></button>)}
+      <div className="def-shop">{unlocked.map(k => <button key={k} type="button" className={"def-unit" + (sel === k ? " sel" : "") + (ui.sun < UNITS[k].cost ? " poor" : "")} onClick={() => setSel(k)} title={UNITS[k].desc}><span className="def-ico" style={{ background: UCOLOR[k] }}>{UNITS[k].icon}</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{UNITS[k].cost}</span></button>)}
         {locked.map(k => <div key={k} className="def-unit locked" title={`${UNITS[k].unlock}웨이브 달성 시 해금`}><span className="def-ico">🔒</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{UNITS[k].unlock}웨이브</span></div>)}</div>
       <div className="def-stage" ref={box} onPointerDown={e => { const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect(); (e.currentTarget as any).__place(sel, e.clientX - r.left, e.clientY - r.top); }}>
         <canvas ref={cv} />
