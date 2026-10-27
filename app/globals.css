@@ -197,3 +197,15 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .def-cost{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .def-stage{position:relative;width:100%;border-radius:12px;overflow:hidden;touch-action:manipulation;background:#DCE8E2}
 .def-stage canvas{width:100%;display:block}
+
+/* 파트 응원전 */
+.pools{display:grid;gap:10px}
+.pool{display:grid;gap:4px;padding:8px 10px;border-radius:10px;border:1px solid var(--line)}
+.pool.mine{border-color:var(--scrub)}
+.pool.top{background:linear-gradient(90deg,color-mix(in srgb,#F2C94C 22%,transparent),transparent 70%);border-color:#F2C94C}
+.pool-head{display:flex;justify-content:space-between;font-weight:600;font-variant-numeric:tabular-nums}
+.pool.top .xpbar i{background:linear-gradient(90deg,#D4A017,#F2C94C)}
+.bank{font-size:15px;padding:10px 12px;border-radius:10px;background:var(--scrub-soft)}
+.cats a.top-tab[aria-current="true"],.cats a.top-tab{border-color:#D4A017}
+.cats a.top-tab[aria-current="true"]{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}
+.tag.top-tag{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}

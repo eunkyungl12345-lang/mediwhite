@@ -5,15 +5,31 @@ import { RANKS } from "@/lib/ranks";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { adminToggleStealth, adminDeleteUser, adminLoginAs, adminDemote } from "@/lib/actions";
 import AdminForms from "@/components/AdminForms";
+import AdminSupport from "@/components/AdminSupport";
+import { bankInfo, deptPools } from "@/lib/support";
+import { confirmContribution } from "@/lib/actions";
+import { fmt } from "@/lib/format";
 import Name from "@/components/Name";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const s = (await getSession())!;
   if (s.role !== "admin") redirect("/board");
-  const [{ data: users }, leaders] = await Promise.all([db().from("users").select("id,username,nickname,dept,xp,role,stealth,seq,join_order,created_at").order("seq"), deptLeaders()]);
+  const [{ data: users }, leaders, bank, { rows: pools }, { data: pending }] = await Promise.all([
+    db().from("users").select("id,username,nickname,dept,xp,role,stealth,seq,join_order,created_at").order("seq"), deptLeaders(), bankInfo(), deptPools(),
+    db().from("contributions").select("id,dept,amount,points,depositor,created_at,users(nickname)").eq("status", "pending").order("created_at"),
+  ]);
   return (
     <div className="games">
+      <div className="card">
+        <h3>파트 응원전 — 입금 확인 대기 {pending?.length ?? 0}건</h3>
+        {!pending?.length && <div className="muted">대기 중인 신청이 없어요.</div>}
+        <div className="quests">{pending?.map((c: any) => <div key={c.id} className="quest" style={{ alignItems: "center" }}>
+          <span>[{c.dept}] {c.amount.toLocaleString()}원 → +{c.points} XP <span className="muted">· 입금자 <b>{c.depositor}</b> · {c.users?.nickname ?? "탈퇴"} · {fmt(c.created_at)}</span></span>
+          <span className="row"><form action={confirmContribution.bind(null, c.id, true)}><button className="btn" style={{ padding: "6px 10px" }}>입금 확인</button></form><form action={confirmContribution.bind(null, c.id, false)}><button className="link">취소</button></form></span>
+        </div>)}</div>
+        <AdminSupport bank={bank} pools={pools} />
+      </div>
       <div className="card">
         <h3>분신 계정 만들기</h3>
         <div className="muted">원하는 계급으로 바로 생성돼요. "숨김"을 켜면 계급표·파트 리더·접속자 수에 안 잡혀요 (일반 회원 눈에는 평범한 회원으로 보여요). 만든 뒤 아래 목록에서 "이 계정으로 전환"으로 들어가서 활동하면 돼요.</div>

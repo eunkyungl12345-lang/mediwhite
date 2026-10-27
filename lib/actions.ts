@@ -9,6 +9,7 @@ import { DEPTS, CATS, NOTICE_CAT } from "./depts";
 import { awardXp, repeatXp } from "./xp";
 import { signupBonus, can, RANKS, rankOf } from "./ranks";
 import { myRank, isDeptLeader } from "./ranksvc";
+import { POINT_PER_WON, AMOUNTS } from "./support";
 
 const admins = () => (process.env.ADMIN_USERNAMES || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
 const clean = (v: FormDataEntryValue | null, max: number) => String(v ?? "").trim().slice(0, max);
@@ -219,4 +220,42 @@ export async function adminLoginAs(userId: string) {
   if (!u) return;
   await createSession({ id: u.id, username: u.username, nickname: u.nickname, dept: u.dept, role: u.role === "admin" || admins().includes(u.username) ? "admin" : "member" });
   redirect("/board");
+}
+
+/* ---------- 파트 응원 (공동 경험치) ---------- */
+export async function requestContribution(_: FormState, fd: FormData): Promise<FormState> {
+  const u = await requireUser();
+  const amount = Number(fd.get("amount")), depositor = clean(fd.get("depositor"), 20);
+  if (!AMOUNTS.includes(amount)) return { error: "금액을 선택해주세요" };
+  if (!depositor) return { error: "입금자명을 적어주세요 (입금 확인용)" };
+  const { error } = await db().from("contributions").insert({ user_id: u.id, dept: u.dept, amount, points: Math.round(amount * POINT_PER_WON), depositor });
+  if (error) return { error: "신청에 실패했어요" };
+  revalidatePath("/support"); return { ok: `신청 완료! ${amount.toLocaleString()}원 입금하시면 관리자가 확인 후 [${u.dept}] 파트에 ${Math.round(amount * POINT_PER_WON)} XP가 쌓여요.` };
+}
+export async function confirmContribution(id: number, ok: boolean) {
+  await requireAdmin();
+  const s = db();
+  const { data: c } = await s.from("contributions").select("*").eq("id", id).eq("status", "pending").maybeSingle();
+  if (!c) return;
+  await s.from("contributions").update({ status: ok ? "confirmed" : "rejected", confirmed_at: new Date().toISOString() }).eq("id", id);
+  if (ok) {
+    const { data: pool } = await s.from("dept_pool").select("points").eq("dept", c.dept).maybeSingle();
+    await s.from("dept_pool").upsert({ dept: c.dept, points: (pool?.points ?? 0) + c.points, updated_at: new Date().toISOString() });
+    if (c.user_id) await awardXp(c.user_id, Math.round(c.points / 2), null, "support"); // 후원자 개인에게도 절반
+    await s.from("events").insert({ kind: "support", text: `[${c.dept}] 파트에 ${c.points} XP가 응원으로 쌓였습니다.|-1|${c.dept}|` });
+  }
+  revalidatePath("/support"); revalidatePath("/admin"); revalidatePath("/board");
+}
+export async function adminSetBank(_: FormState, fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  await db().from("settings").upsert({ key: "bank", value: clean(fd.get("bank"), 80) });
+  revalidatePath("/support"); revalidatePath("/admin"); return { ok: "저장했어요" };
+}
+export async function adminAdjustPool(_: FormState, fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  const dept = clean(fd.get("dept"), 30), delta = Number(fd.get("delta"));
+  if (!(DEPTS as readonly string[]).includes(dept) || !Number.isFinite(delta)) return { error: "입력 확인" };
+  const s = db(); const { data: pool } = await s.from("dept_pool").select("points").eq("dept", dept).maybeSingle();
+  await s.from("dept_pool").upsert({ dept, points: Math.max(0, (pool?.points ?? 0) + delta), updated_at: new Date().toISOString() });
+  revalidatePath("/support"); revalidatePath("/board"); return { ok: `[${dept}] ${delta > 0 ? "+" : ""}${delta}` };
 }
