@@ -22,21 +22,21 @@ export default async function GamesPage() {
   const [dodge, sword, defense, bowling, cpr, quiz, vein, runner, lightning] = await Promise.all(["dodge", "sword", "defense", "bowling", "cpr", "quiz", "vein", "runner", "lightning"].map(top));
   const norm = (r: { data: any[] | null }) => (r.data ?? []).map(x => ({ value: Number(x.value), mode: x.mode as string | undefined, nickname: x.users ? display(x.users.dept, x.users.nickname) : "?", dept: x.users?.dept ?? "" }));
   const games = [
-    { id: "lightning", name: "번개 모드", icon: "⚡", sub: "5초 미니게임 연속", color: "#FFD86B", badge: "NEW", node: <Lightning ranks={norm(lightning)} /> },
-    { id: "runner", name: "복도 질주", icon: "🏃‍♀️", sub: "무한 달리기", color: "#BDE8FF", node: <Runner ranks={norm(runner)} /> },
-    { id: "cpr", name: "코드블루 CPR", icon: "🫀", sub: "리듬 탭", color: "#FFB3C1", node: <Cpr ranks={norm(cpr)} /> },
-    { id: "quiz", name: "의학용어 퀴즈", icon: "📚", sub: "60초 4지선다", color: "#D9C8FF", node: <Quiz ranks={norm(quiz)} myDept={sess.dept} /> },
-    { id: "vein", name: "혈관 찾기", icon: "🩸", sub: "20초 콤보", color: "#FFC9A8", node: <Vein ranks={norm(vein)} /> },
-    { id: "defense", name: "병동 사수", icon: "🦠", sub: "줄 지키기 디펜스", color: "#B8F0C8", badge: "HIT!", node: <Defense ranks={norm(defense)} /> },
-    { id: "plant", name: "창가 화분", icon: "🪴", sub: "실시간 키우기", color: "#D4F5B0", node: <PlantGame /> },
-    { id: "bowling", name: "복도 볼링", icon: "🎳", sub: "10프레임", color: "#FFE0A3", node: <Bowling ranks={norm(bowling)} /> },
-    { id: "dodge", name: "총알 피하기", icon: "💥", sub: "버티기", color: "#FFBDB3", node: <Dodge ranks={norm(dodge)} /> },
-    { id: "sword", name: "검 강화하기", icon: "⚔️", sub: "확률 강화", color: "#CFE3FF", node: <Sword ranks={norm(sword)} /> },
-    { id: "roulette", name: "커피 룰렛", icon: "☕", sub: "내기 정하기", color: "#EBD6C2", node: <Roulette /> },
+    { id: "lightning", name: "번개 모드", icon: "⚡", sub: "5초 미니게임 연속", color: "#FFD400", badge: "NEW", node: <Lightning ranks={norm(lightning)} /> },
+    { id: "runner", name: "복도 질주", icon: "🏃‍♀️", sub: "무한 달리기", color: "#4FC3F7", node: <Runner ranks={norm(runner)} /> },
+    { id: "cpr", name: "코드블루 CPR", icon: "🫀", sub: "리듬 탭", color: "#FF5C8A", node: <Cpr ranks={norm(cpr)} /> },
+    { id: "quiz", name: "의학용어 퀴즈", icon: "📚", sub: "60초 4지선다", color: "#A66BFF", node: <Quiz ranks={norm(quiz)} myDept={sess.dept} /> },
+    { id: "vein", name: "혈관 찾기", icon: "🩸", sub: "20초 콤보", color: "#FF8A3D", node: <Vein ranks={norm(vein)} /> },
+    { id: "defense", name: "병동 사수", icon: "🦠", sub: "줄 지키기 디펜스", color: "#3DDC84", badge: "HIT!", node: <Defense ranks={norm(defense)} /> },
+    { id: "plant", name: "창가 화분", icon: "🪴", sub: "실시간 키우기", color: "#B5E61D", node: <PlantGame /> },
+    { id: "bowling", name: "복도 볼링", icon: "🎳", sub: "10프레임", color: "#FFB300", node: <Bowling ranks={norm(bowling)} /> },
+    { id: "dodge", name: "총알 피하기", icon: "💥", sub: "버티기", color: "#FF6B57", node: <Dodge ranks={norm(dodge)} /> },
+    { id: "sword", name: "검 강화하기", icon: "⚔️", sub: "확률 강화", color: "#5C7CFA", node: <Sword ranks={norm(sword)} /> },
+    { id: "roulette", name: "커피 룰렛", icon: "☕", sub: "내기 정하기", color: "#C58B5A", node: <Roulette /> },
   ];
   return (
     <div className="games">
-      <Hero img="/img/games.jpg" title="🎮 미니게임 오락실" sub="기록은 명예의 전당에, 퀘스트는 경험치로!" />
+      
       <GameHub games={games} />
     </div>
   );

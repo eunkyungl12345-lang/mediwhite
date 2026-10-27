@@ -14,8 +14,9 @@ export default function GameHub({ games }: { games: GameEntry[] }) {
   );
   return (
     <div className="hub">
+      <div className="hub-title"><span>미니게임</span><span className="hub-title2">천국?!</span><span className="hub-star s1">★</span><span className="hub-star s2">★</span><span className="hub-star s3">✦</span></div>
       {games.map((g, i) => <button key={g.id} type="button" className={"hub-tile" + (i === 0 ? " wide" : "")} style={{ "--tile": g.color ?? "#FFE9A8", "--rot": `${((i * 7) % 5) - 2}deg` } as any} onClick={() => pick(g.id)}>
-        {g.badge && <span className={"hub-badge" + (g.badge === "HIT!" ? " hit" : "")}>{g.badge}</span>}
+        {g.badge && <span className={"hub-badge" + (g.badge === "HIT!" ? " hit" : "")}><span>{g.badge}</span></span>}
         <span className="hub-ico" style={{ animationDelay: `${(i % 5) * .3}s` }}>{g.icon}</span><span className="hub-name">{g.name}</span><span className="hub-sub">{g.sub}</span></button>)}
     </div>
   );
