@@ -56,17 +56,17 @@ export default function Bowling({ ranks }: { ranks: Row[] }) {
     const pos = (e: PointerEvent) => { const r = st.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     const pd = (e: PointerEvent) => { if (s.ball.moving || s.over) return; const p = pos(e); if (Math.hypot(p.x - s.ball.x, p.y - s.ball.y) < s.W * .12) { s.drag = p; s.cur = p; st.setPointerCapture(e.pointerId); } };
     const pm = (e: PointerEvent) => { if (!s.drag) return; s.cur = pos(e); draw(); };
-    const pu = () => { if (!s.drag) return; const dx = s.drag.x - s.cur.x, dy = s.drag.y - s.cur.y; s.drag = null; if (dy < 10) { draw(); return; } const pow = Math.min(1, Math.hypot(dx, dy) / (s.H * .35)); s.ball.vx = dx * .06; s.ball.vy = -(5 + pow * 9); s.ball.moving = true; cancelAnimationFrame(s.raf); s.raf = requestAnimationFrame(tick); };
+    const pu = () => { if (!s.drag) return; const dx = s.drag.x - s.cur.x, dy = s.drag.y - s.cur.y; s.drag = null; if (dy < 10) { draw(); return; } const pow = Math.min(1, Math.hypot(dx, dy) / (s.H * .22)); s.ball.vx = dx * .09; s.ball.vy = -(6 + pow * 9); s.ball.moving = true; cancelAnimationFrame(s.raf); s.raf = requestAnimationFrame(tick); };
     const ro = new ResizeObserver(size); ro.observe(st); size();
-    st.addEventListener("pointerdown", pd); st.addEventListener("pointermove", pm); st.addEventListener("pointerup", pu); st.addEventListener("pointercancel", pu);
-    return () => { ro.disconnect(); cancelAnimationFrame(s.raf); st.removeEventListener("pointerdown", pd); st.removeEventListener("pointermove", pm); st.removeEventListener("pointerup", pu); st.removeEventListener("pointercancel", pu); };
+    st.addEventListener("pointerdown", pd); window.addEventListener("pointermove", pm); window.addEventListener("pointerup", pu); window.addEventListener("pointercancel", pu); window.addEventListener("blur", pu);
+    return () => { ro.disconnect(); cancelAnimationFrame(s.raf); st.removeEventListener("pointerdown", pd); window.removeEventListener("pointermove", pm); window.removeEventListener("pointerup", pu); window.removeEventListener("pointercancel", pu); window.removeEventListener("blur", pu); };
   }, []); // eslint-disable-line
 
   const sc = score(rolls);
   const framesView: string[][] = []; { let i = 0; for (let f = 0; f < 10; f++) { if (f === 9) { framesView.push(rolls.slice(i, i + 3).map((v, k, arr) => v === 10 ? "X" : (k > 0 && arr[k - 1] !== 10 && arr[k - 1] + v === 10) ? "/" : String(v))); break; } if (rolls[i] === 10) { framesView.push(["X"]); i++; } else if (rolls[i] != null) { const a = rolls[i], b = rolls[i + 1]; framesView.push(b == null ? [String(a)] : [String(a), a + b === 10 ? "/" : String(b)]); i += 2; } else framesView.push([]); } }
   return (
     <div className="card">
-      <div><h3>복도 볼링</h3><div className="muted">공을 잡고 위로 드래그했다 놓으면 던져요. 좌우로 비스듬히 끌면 각도가 생겨요. 10프레임 정식 점수(스트라이크·스페어 보너스). 100·150·200점 퀘스트.</div></div>
+      <div><h3>복도 볼링</h3><div className="muted">공을 잡고 위로 살짝 끌었다 놓으면 던져요(짧게 끌어도 충분). 좌우로 비스듬히 끌면 각도가 생겨요. 10프레임 정식 점수(스트라이크·스페어 보너스). 100·150·200점 퀘스트.</div></div>
       <div className="bowl-frames">{framesView.map((f, i) => <div key={i} className={"bowl-frame" + (f.length ? " on" : "")}><div className="bowl-rolls">{f.join(" ")}&nbsp;</div><div className="bowl-sum">{sc.frames[i] ?? ""}</div></div>)}</div>
       <div className="def-bar"><span className="def-sun">🎳 {sc.total}점</span><span className="muted">{msg}</span>{over && <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={() => (box.current as any).__reset()}>다시</button>}</div>
       <div className="def-stage" ref={box} style={{ touchAction: "none" }}><canvas ref={cv} /></div>

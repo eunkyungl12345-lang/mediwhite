@@ -21,7 +21,7 @@ export default function Runner({ ranks }: { ranks: Row[] }) {
       x.textAlign = "center"; x.textBaseline = "middle";
       for (const o of s.obs) { x.font = `${Math.floor(o.h)}px system-ui`; x.fillText(o.icon, o.x + o.w / 2, (o.kind === "ob" ? s.ground - o.h / 2 : s.ground - o.h * 1.9) + 2); }
       const bob = s.y === 0 && s.run ? Math.sin(s.t * 18) * 2 : 0;
-      x.font = `${Math.floor(PR() * 2.1)}px system-ui`; x.fillText(s.hit > 0 ? "😵" : "🏃‍♀️", PX(), s.ground - s.y - PR() + bob);
+      x.font = `${Math.floor(PR() * 2.1)}px system-ui`; x.save(); x.translate(PX(), s.ground - s.y - PR() + bob); x.scale(-1, 1); x.fillText(s.hit > 0 ? "😵" : "🏃‍♀️", 0, 0); x.restore();
       if (s.hit > 0) { x.fillStyle = `rgba(226,87,76,${s.hit})`; x.fillRect(0, 0, s.W, s.H); }
     };
     const spawn = () => { const r = Math.random(); const h = s.H * .13;
