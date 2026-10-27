@@ -282,3 +282,16 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 @keyframes sway{50%{transform:rotate(3deg)}}
 @media (prefers-reduced-motion:reduce){.plant-art{animation:none}}
 .plant-name{font-family:var(--f-display);font-size:22px}
+
+/* 퀘스트 달성 팝업 */
+.qpop{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(6,20,26,.55);padding:16px;animation:fadein .2s}
+.qcard{position:relative;overflow:hidden;background:var(--surface);border-radius:18px;padding:26px 22px 20px;width:100%;max-width:340px;text-align:center;display:grid;gap:8px;box-shadow:0 24px 60px rgba(0,0,0,.45);animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+.qkicker{font-size:12px;letter-spacing:.2em;color:var(--scrub);font-weight:600}
+.qtitle{font-family:var(--f-display);font-size:26px;line-height:1.25;text-wrap:balance}
+.qxp{font-family:var(--f-mono);font-size:22px;color:#D4A017;font-weight:600}
+.qcard .btn{margin-top:6px;justify-self:center;padding:10px 28px}
+.confetti{position:absolute;inset:0;pointer-events:none}
+.confetti i{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;animation:fall 1.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(420px) rotate(540deg);opacity:0}}
+@keyframes fadein{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){.confetti i,.qcard,.qpop{animation:none}}
