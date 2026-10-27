@@ -29,7 +29,6 @@ export default async function AboutPage() {
         <div className="about-card"><div className="about-ico">🎖️</div><h3>군대 계급</h3><p>이병에서 참모총장까지 18단계. 글 앞에 계급장이 붙고, 높을수록 글이 위로 올라가고 빛나요. 파트별 참모총장은 단 한 명.</p></div>
         <div className="about-card"><div className="about-ico">🏥</div><h3>파트별 게시판</h3><p>의사·총괄·방사선·물리치료·임상병리·응급구조·간호·원무. 파트 리더가 탭을 만들어 파트를 꾸려가요.</p></div>
         <div className="about-card"><div className="about-ico">🎮</div><h3>미니게임</h3><p>총알 피하기, 검 강화하기, 병동 사수 디펜스, 커피 룰렛. 기록은 명예의 전당에, 퀘스트는 경험치로.</p></div>
-        <div className="about-card"><div className="about-ico">🏆</div><h3>파트 응원전</h3><p>파트에 응원 포인트를 모으면 1위 파트 글이 대표 파트 탭에 상위노출돼요. 파트 대항전의 시작.</p></div>
         <div className="about-card"><div className="about-ico">🔒</div><h3>직원끼리만</h3><p>실명 대신 [직종]닉네임. 이메일·전화번호 안 받아요. 환자 정보는 금지, 19금·욕설은 훈련병 강등.</p></div>
       </section>
 
@@ -41,7 +40,6 @@ export default async function AboutPage() {
 
       <section className="about-cta">
         {s ? <Link className="btn" href="/board">라운지로</Link> : <Link className="btn" href="/login">지금 입대하기</Link>}
-        <div className="muted" style={{ marginTop: 10 }}>협업 · 광고 · 문의 → <Link href="/contact">문의 페이지</Link></div>
       </section>
     </div>
   );

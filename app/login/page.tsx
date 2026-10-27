@@ -7,7 +7,7 @@ export default function LoginPage({ searchParams }: { searchParams: { ref?: stri
       <h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트웹</Link></h1>
       <div className="muted">병원 직원들의 라운지. 아이디와 닉네임만 있으면 돼요.</div>
       <AuthForm refCode={ref || undefined} />
-      <div className="muted" style={{ textAlign: "center" }}><Link href="/about">메디화이트웹이 뭐예요?</Link> · <Link href="/contact">협업 · 광고 · 문의</Link></div>
+      <div className="muted" style={{ textAlign: "center" }}><Link href="/about">메디화이트웹이 뭐예요?</Link></div>
     </div></main></div></div>
   );
 }
