@@ -2,7 +2,6 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { display } from "@/lib/depts";
 import Hero from "@/components/Hero";
-import GameHub from "@/components/games/GameHub";
 import Dodge from "@/components/games/Dodge";
 import Sword from "@/components/games/Sword";
 import Roulette from "@/components/games/Roulette";
@@ -37,9 +36,9 @@ export default async function GamesPage() {
   ];
   return (
     <div className="games">
-      <Hero img="/img/games.jpg" pos="center 42%" title="게임" sub="오늘의 기록을 깨고 경험치 받기" />
-      
-      <GameHub games={games} />
+      <Hero img="/img/games.jpg" pos="center 42%" title="미니게임" sub="기록은 명예의 전당에, 퀘스트는 경험치로" />
+      <div className="chips">{games.map(g => <a key={g.id} className="chip" href={`#${g.id}`}>{g.icon} {g.name}</a>)}</div>
+      {games.map(g => <section key={g.id} id={g.id} className="game-sec">{g.node}</section>)}
     </div>
   );
 }
