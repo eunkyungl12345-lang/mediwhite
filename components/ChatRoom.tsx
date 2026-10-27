@@ -26,6 +26,7 @@ export default function ChatRoom({ me, initial, onNew, myRank, official = {} }: 
     chRef.current = ch; return () => { c.removeChannel(ch); chRef.current = null; };
   }, []); // eslint-disable-line
   useEffect(() => { const f = feed.current; if (f) f.scrollTop = f.scrollHeight; }, [msgs]);
+  useEffect(() => { const f = feed.current; if (!f) return; const ro = new ResizeObserver(() => { f.scrollTop = f.scrollHeight; }); ro.observe(f); return () => ro.disconnect(); }, []);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); const t = text.trim(); if (!t || busy) return;
     setBusy(true); setText("");
@@ -41,9 +42,10 @@ export default function ChatRoom({ me, initial, onNew, myRank, official = {} }: 
     <div className="chat">
       <div className="feed" ref={feed} aria-live="polite">
         {msgs.length === 0 && <div className="empty">아직 대화가 없어요. 첫 인사를 남겨보세요.</div>}
-        {msgs.map(m => { const mine = m.user_id === me.id; const ri = m.rank != null && /^\d+$/.test(String(m.rank)) ? Number(m.rank) : null; return (
-          <div key={m.id} className={"msg" + (mine ? " mine" : "")}>
-            <div className="who">{!mine && <>{m.user_id && official[m.user_id] ? <span className="tag off">{official[m.user_id]}</span> : ri != null && <span className={`ins t${tierOf(ri)}`}><Insignia index={ri} size={12} /></span>}<span>{display(m.dept, m.nickname)}</span></>}<span className="time">{fmt(m.created_at)}</span></div>
+        {msgs.map((m, i) => { const mine = m.user_id === me.id; const ri = m.rank != null && /^\d+$/.test(String(m.rank)) ? Number(m.rank) : null;
+          const prev = msgs[i - 1]; const grouped = !!prev && prev.user_id === m.user_id && prev.user_id != null && new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 120000; return (
+          <div key={m.id} className={"msg" + (mine ? " mine" : "") + (grouped ? " grouped" : "")}>
+            {!grouped && <div className="who">{!mine && <>{m.user_id && official[m.user_id] ? <span className="tag off">{official[m.user_id]}</span> : ri != null && <span className={`ins t${tierOf(ri)}`}><Insignia index={ri} size={12} /></span>}<span>{display(m.dept, m.nickname)}</span></>}<span className="time">{fmt(m.created_at)}</span></div>}
             <div className="bubble">{m.text}</div>
           </div>); })}
       </div>

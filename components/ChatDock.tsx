@@ -16,10 +16,13 @@ export default function ChatDock({ me, initial, online, myRank, official }: { me
   return (
     <div className={"dock" + (open ? " open" : "")}>
       <button type="button" className="dock-bar" onClick={toggle} aria-expanded={open}>
-        <span className="dock-title">💬 실시간 채팅 {online}</span>
-        {!open && last && <span className="dock-last">{display(last.dept, last.nickname)}: {last.text}</span>}
-        {!open && unread > 0 && <span className="dock-unread">{unread}</span>}
-        <span className="dock-caret">{open ? "▾" : "▴"}</span>
+        <span className="dock-handle" aria-hidden="true" />
+        <span className="dock-row">
+          <span className="dock-title">💬 실시간 채팅 {online}</span>
+          {!open && unread > 0 && <span className="dock-unread">{unread}</span>}
+          <span className="dock-caret">{open ? "접기 ▾" : "펼치기 ▴"}</span>
+        </span>
+        {!open && last && <span className="dock-last"><b>{display(last.dept, last.nickname)}</b> {last.text}</span>}
       </button>
       <div className="dock-body" hidden={!open}>
         <ChatRoom me={me} initial={initial} myRank={myRank} official={official} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
