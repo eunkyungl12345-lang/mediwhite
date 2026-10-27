@@ -8,3 +8,5 @@ export const display = (dept: string, nickname: string) => `[${dept}]${nickname}
 
 /** 운영 계정 표시 */
 export const OFFICIAL: Record<string, string> = { mw_team: "운영팀", mw_bot: "봇" };
+/** 운영 소속: 파트 리더·참모총장 경쟁에서 제외, 직종 선택지에도 없음 */
+export const STAFF_DEPT = "운영팀";
