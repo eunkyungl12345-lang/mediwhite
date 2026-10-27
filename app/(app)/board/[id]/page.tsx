@@ -11,6 +11,7 @@ import CommentForm from "@/components/CommentForm";
 import Reactions from "@/components/Reactions";
 import { topicOf } from "@/lib/depts";
 import ReportButton from "@/components/ReportButton";
+import Linkify from "@/components/Linkify";
 export const dynamic = "force-dynamic";
 
 export default async function PostPage({ params }: { params: { id: string } }) {
@@ -43,7 +44,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         {p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드 중</span>}
       </div>
       <h2>{p.title}</h2>
-      <div className="body">{p.body}</div>
+      <div className="body"><Linkify text={p.body} /></div>
       <Reactions kind="post" id={p.id} {...agg("post", p.id)} />
       <div className="comments-head"><b>댓글 {comments?.length ?? 0}</b></div>
       <div className="comments">
