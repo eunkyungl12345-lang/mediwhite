@@ -181,7 +181,7 @@ export async function deleteBoard(id: string, dept: string) {
 }
 
 /* ---------- 게임 ---------- */
-export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner" | "lightning", value: number, mode?: string) {
+export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner" | "lightning" | "tycoon", value: number, mode?: string) {
   const u = await requireUser();
   if (!Number.isFinite(value) || value < 0) return;
   const s = db();
@@ -194,6 +194,7 @@ export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" 
   if (game === "bowling") { for (const [th, xp] of [[100, 100], [150, 250], [200, 500]] as const) if (value >= th) await awardXp(u.id, xp, `bowling_${th}`); }
   if (game === "defense") { for (const [th, xp] of [[5, 150], [10, 400], [20, 800]] as const) if (value >= th) await awardXp(u.id, xp, `defense_${th}`); }
   if (game === "sword") { for (const [th, xp] of [[5, 100], [10, 300], [15, 700]] as const) if (value >= th) await awardXp(u.id, xp, `sword_${th}`); }
+  if (game === "tycoon") { for (const [th, xp, k] of [[1e6, 150, "100m"], [1e7, 400, "1000m"], [1e8, 800, "1eok"]] as const) if (value >= th) await awardXp(u.id, xp, `tycoon_${k}`); }
   const { data: cur } = await s.from("scores").select("value").eq("user_id", u.id).eq("game", game).maybeSingle();
   if (cur && Number(cur.value) >= value) return;
   await s.from("scores").upsert({ user_id: u.id, game, value, mode: mode ?? null, updated_at: new Date().toISOString() });

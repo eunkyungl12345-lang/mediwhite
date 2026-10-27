@@ -437,3 +437,26 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .def-result-card .stars .on{animation:starin .4s cubic-bezier(.2,1.6,.4,1) both}
 .def-result-card .stars .on:nth-child(2){animation-delay:.2s}.def-result-card .stars .on:nth-child(3){animation-delay:.4s}
 @keyframes starin{from{transform:scale(0) rotate(-40deg);opacity:0}to{transform:none;opacity:1}}
+
+/* 우리 병원 키우기 */
+.ty-top{position:relative;display:grid;gap:8px}
+.ty-hospital{display:grid;justify-items:center;gap:4px;background:linear-gradient(180deg,#EAF4F0,#D9EBE3);border:1px solid var(--line);border-radius:16px;padding:18px 12px 14px;font:inherit;color:var(--ink);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform .08s}
+.ty-hospital:active{transform:scale(.985)}
+.ty-build{font-size:64px;line-height:1;filter:drop-shadow(0 6px 6px rgba(0,0,0,.2));animation:hop 1.6s ease-in-out infinite}
+.ty-cash{font-family:var(--f-display);font-size:32px;line-height:1.1;font-variant-numeric:tabular-nums}
+.ty-rate{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ty-vip{background:linear-gradient(135deg,#F2B705,#F28705);color:#3B2A00;border:0;border-radius:12px;padding:10px 12px;font:inherit;font-weight:700;cursor:pointer;animation:vippulse 1s ease-in-out infinite;box-shadow:0 6px 18px rgba(242,183,5,.4)}
+.ty-vip small{display:block;font-weight:500;font-size:12px}
+@keyframes vippulse{50%{transform:scale(1.03)}}
+.ty-welcome{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(14,21,19,.78);padding:16px}
+.ty-welcome-card{background:var(--surface);border-radius:16px;padding:22px 18px;display:grid;gap:8px;justify-items:center;text-align:center;width:100%;max-width:340px;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.ty-welcome-card .big{font-family:var(--f-display);font-size:26px}
+.ty-earn{font-family:var(--f-display);font-size:36px;color:var(--scrub)}
+.ty-list{display:grid;gap:8px}
+.ty-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.ty-row.locked{opacity:.55}
+.ty-btns{display:flex;gap:6px}
+.ty-btns .btn{padding:6px 10px;line-height:1.15;font-size:13px}
+.ty-btns .btn small,.ty-list .btn small{font-size:11px;font-weight:500;opacity:.9}
+.ty-bar{height:4px;background:var(--line);border-radius:2px;margin-top:4px;overflow:hidden}
+.ty-bar i{display:block;height:100%;background:var(--scrub);border-radius:2px;transition:width .3s}

@@ -70,6 +70,9 @@ export const QUESTS: { key: string; title: string; xp: number }[] = [
   { key: "sword_5", title: "검 +5 강화 성공", xp: 100 },
   { key: "sword_10", title: "검 +10 강화 성공", xp: 300 },
   { key: "sword_15", title: "검 +15 강화 성공", xp: 700 },
+  { key: "tycoon_100m", title: "우리 병원 누적 매출 100만원", xp: 150 },
+  { key: "tycoon_1000m", title: "우리 병원 누적 매출 1,000만원", xp: 400 },
+  { key: "tycoon_1eok", title: "우리 병원 누적 매출 1억원", xp: 800 },
 ];
 /** 반복 보상: 1건당 XP와 하루 상한 */
 export const REPEAT: Record<string, { each: number; dailyCap: number }> = {
