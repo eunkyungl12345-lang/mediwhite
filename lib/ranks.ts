@@ -81,5 +81,6 @@ export const REPEAT: Record<string, { each: number; dailyCap: number }> = {
   comment: { each: 10, dailyCap: 30 },
   referral: { each: 50, dailyCap: 500 },
   plant: { each: 15, dailyCap: 45 },
+  liked: { each: 5, dailyCap: 50 },
 };
 export function signupBonus(order: number) { return order <= 10 ? 300 : order <= 30 ? 150 : order <= 100 ? 80 : 30; }

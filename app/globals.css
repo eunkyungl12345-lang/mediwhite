@@ -503,3 +503,25 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .ob-dq{flex-direction:column;align-items:stretch;gap:4px;text-align:left;font-size:13px}
 .ob-dq span:first-child{color:var(--scrub);font-weight:600}
 .ob-help{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700;font-size:13px;cursor:pointer;flex:none;padding:0}
+
+/* 공감·댓글 */
+.post-foot{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:2px}
+.react{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 4px}
+.react-btn{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer;transition:transform .1s,background .15s}
+.react-btn:active{transform:scale(.92)}
+.react-btn.on{background:var(--scrub-soft);border-color:var(--scrub);color:var(--scrub)}
+.react-btn b{font-variant-numeric:tabular-nums}
+.react-btn small{font-size:12px;color:var(--muted)}
+.react-btn.on small{color:var(--scrub)}
+.react.compact{margin:4px 0 0;gap:4px}
+.react.compact .react-btn{padding:2px 8px;font-size:12px}
+.comments-head{margin-top:14px;padding-top:10px;border-top:1px solid var(--line)}
+
+/* 글 주제 */
+.topics{display:flex;gap:6px;flex-wrap:wrap}
+.topics.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+.topics.scroll::-webkit-scrollbar{display:none}
+.topic{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:6px 10px;font:inherit;font-size:13px;white-space:nowrap;cursor:pointer;text-decoration:none}
+.topic.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.topic-pick{display:grid;gap:6px}
+.topic-tag{display:inline-block;font-size:11px;font-weight:600;color:var(--scrub);background:var(--scrub-soft);border-radius:6px;padding:1px 6px;margin-right:6px;vertical-align:2px;text-decoration:none;white-space:nowrap}

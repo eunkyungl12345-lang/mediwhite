@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { db } from "./supabase";
 import { createSession, getSession, clearSession, type Session } from "./auth";
-import { DEPTS, CATS, NOTICE_CAT } from "./depts";
+import { DEPTS, CATS, NOTICE_CAT, EMOJIS, TOPICS } from "./depts";
 import { bump } from "./daily";
 import { awardXp, repeatXp } from "./xp";
 import { signupBonus, can, RANKS, rankOf } from "./ranks";
@@ -123,12 +123,13 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   const u = await requireUser();
   const category = clean(fd.get("category"), 30), title = clean(fd.get("title"), 80), body = clean(fd.get("body"), 4000);
   const boardId = clean(fd.get("board_id"), 40) || null;
+  const topicRaw = clean(fd.get("topic"), 20); const topic = TOPICS.some(t => t.key === topicRaw) ? topicRaw : "free";
   if (!(CATS as readonly string[]).includes(category)) return { error: "칸을 선택해주세요" };
   if (category === NOTICE_CAT && u.role !== "admin" && !can(await myRank(u.id), "준장")) return { error: "공지 칸은 준장 이상만 쓸 수 있어요" };
   if (!title || !body) return { error: "제목과 내용을 적어주세요" };
   const s = db();
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }
-  const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: u.dept, title, body, board_id: boardId }).select("id").single();
+  const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: u.dept, title, body, board_id: boardId, topic }).select("id").single();
   if (error || !data) return { error: "올리지 못했어요" };
   await Promise.all([awardXp(u.id, 100, "first_post"), repeatXp(u.id, "post"), bump(u.id, "write")]);
   revalidatePath("/board"); redirect(`/board/${data.id}`);
@@ -398,4 +399,22 @@ export async function plantAction(action: "load" | "plant" | "water" | "sun" | "
 export async function markOnboarded() {
   const u = await requireUser();
   await db().from("users").update({ onboarded: true }).eq("id", u.id);
+}
+
+/* ---------- 공감 ---------- */
+/** 토글: 같은 이모지면 취소, 다른 이모지면 교체. 글/댓글 작성자에게 경험치(하루 한도). */
+export async function toggleReaction(kind: "post" | "comment", targetId: string, emoji: string) {
+  const u = await requireUser();
+  if (!(EMOJIS as readonly string[]).includes(emoji)) return null;
+  const s = db();
+  const { data: cur } = await s.from("reactions").select("emoji").eq("user_id", u.id).eq("kind", kind).eq("target_id", targetId).maybeSingle();
+  if (cur?.emoji === emoji) { await s.from("reactions").delete().eq("user_id", u.id).eq("kind", kind).eq("target_id", targetId); }
+  else {
+    await s.from("reactions").upsert({ user_id: u.id, kind, target_id: targetId, emoji });
+    if (!cur) { const { data: t } = await s.from(kind === "post" ? "posts" : "comments").select("author_id").eq("id", targetId).maybeSingle(); if (t?.author_id && t.author_id !== u.id) repeatXp(t.author_id, "liked").catch(() => {}); }
+  }
+  const { data: all } = await s.from("reactions").select("emoji,user_id").eq("kind", kind).eq("target_id", targetId);
+  const counts: Record<string, number> = {}; let mine: string | null = null;
+  for (const r of all ?? []) { counts[r.emoji] = (counts[r.emoji] ?? 0) + 1; if (r.user_id === u.id) mine = r.emoji; }
+  return { counts, mine };
 }
