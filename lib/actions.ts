@@ -181,11 +181,12 @@ export async function deleteBoard(id: string, dept: string) {
 }
 
 /* ---------- 게임 ---------- */
-export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein", value: number, mode?: string) {
+export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner", value: number, mode?: string) {
   const u = await requireUser();
   if (!Number.isFinite(value) || value < 0) return;
   const s = db();
   if (game === "dodge") { for (const [th, xp] of [[10, 100], [20, 200], [30, 400]] as const) if (value >= th) await awardXp(u.id, xp, `dodge_${th}`); }
+  if (game === "runner") { for (const [th, xp] of [[700, 150], [1500, 400]] as const) if (value >= th) await awardXp(u.id, xp, `runner_${th}`); }
   if (game === "cpr") { for (const [th, xp] of [[600, 150], [900, 400]] as const) if (value >= th) await awardXp(u.id, xp, `cpr_${th}`); }
   if (game === "quiz") { for (const [th, xp] of [[300, 150], [500, 400]] as const) if (value >= th) await awardXp(u.id, xp, `quiz_${th}`); }
   if (game === "vein") { for (const [th, xp] of [[500, 150], [800, 400]] as const) if (value >= th) await awardXp(u.id, xp, `vein_${th}`); }
