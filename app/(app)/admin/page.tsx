@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const s = (await getSession())!;
   if (s.role !== "admin") redirect("/board");
-  const [{ data: users }, leaders] = await Promise.all([db().from("users").select("id,username,nickname,dept,xp,role,stealth,seq,created_at").order("seq"), deptLeaders()]);
+  const [{ data: users }, leaders] = await Promise.all([db().from("users").select("id,username,nickname,dept,xp,role,stealth,seq,join_order,created_at").order("seq"), deptLeaders()]);
   return (
     <div className="games">
       <div className="card">
@@ -24,7 +24,7 @@ export default async function AdminPage() {
         <div className="admin-list">
           {users?.map(u => { const r = rankFor(u, leaders); return (
             <div key={u.id} className="admin-row">
-              <div className="admin-main"><Name r={r} dept={u.dept} nickname={u.nickname} username={u.username} /><span className="muted">@{u.username} · {u.xp.toLocaleString()} XP · {u.seq}번째{u.role === "admin" ? " · 관리자" : ""}{u.stealth ? " · 숨김" : ""}</span></div>
+              <div className="admin-main"><Name r={r} dept={u.dept} nickname={u.nickname} username={u.username} /><span className="muted">@{u.username} · {u.xp.toLocaleString()} XP · {u.join_order ?? "-"}번째{u.role === "admin" ? " · 관리자" : ""}{u.stealth ? " · 숨김" : ""}</span></div>
               <div className="admin-actions">
                 <AdminForms userId={u.id} currentRank={r.index} compact />
                 {r.index > 0 && <form action={adminDemote.bind(null, u.id, "19금 발언·욕설")}><button className="link" style={{ color: "var(--signal)" }}>훈련병 강등</button></form>}

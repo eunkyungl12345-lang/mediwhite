@@ -15,7 +15,7 @@ export default async function RankPage() {
   const s = (await getSession())!;
   const d = db();
   const [{ data: me }, { data: done }, { data: top }, { count }, leaders, commanders, { count: invited }] = await Promise.all([
-    d.from("users").select("id,username,nickname,dept,xp,seq,bio").eq("id", s.id).single(),
+    d.from("users").select("id,username,nickname,dept,xp,join_order,bio").eq("id", s.id).single(),
     d.from("xp_log").select("key").eq("user_id", s.id).not("key", "is", null),
     d.from("users").select("id,username,nickname,dept,xp").eq("stealth", false).order("xp", { ascending: false }).limit(30),
     d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false),
@@ -27,7 +27,7 @@ export default async function RankPage() {
   return (
     <div className="games">
       <div className={`card t${r.tier}`}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><Name r={r} dept={me?.dept ?? s.dept} nickname={me?.nickname ?? s.nickname} username={s.username} size={22} /><RankBadge r={r} /><span className="muted">가입 {me?.seq ?? "-"}번째</span></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><Name r={r} dept={me?.dept ?? s.dept} nickname={me?.nickname ?? s.nickname} username={s.username} size={22} /><RankBadge r={r} /><span className="muted">가입 {me?.join_order ?? "-"}번째</span></div>
         <h3>{xp.toLocaleString()} XP</h3>
         <div className="xpbar"><i style={{ width: `${Math.round(r.progress * 100)}%` }} /></div>
         <div className="muted">{r.capped ? "참모총장 경험치는 채웠지만 파트 1위가 아니라 중장이에요. 1위를 넘으면 참모총장!" : r.next ? `${r.nextName}까지 ${(r.next - xp).toLocaleString()} XP` : "파트 참모총장이에요. 경례!"}</div>
@@ -50,7 +50,7 @@ export default async function RankPage() {
         <div className="muted">빨리 가입할수록 보너스가 커요. 지금 {n}명 · 다음 가입자 {signupBonus(n + 1)} XP (1~10번째 300 / ~30번째 150 / ~100번째 80 / 이후 30).
           매일: 채팅 {REPEAT.chat.each}×(최대 {REPEAT.chat.dailyCap}) · 글 {REPEAT.post.each}×(최대 {REPEAT.post.dailyCap}) · 댓글 {REPEAT.comment.each}×(최대 {REPEAT.comment.dailyCap}). 하루 열심히 하면 약 100 XP → 일병 하루, 하사 열흘, 소위 한 달 반, 소령 넉 달, 참모총장 1년 반.</div>
         <div className="quests">
-          <div className="quest done"><span>가입하기</span><span>+{me ? signupBonus(me.seq) : 0}</span></div>
+          <div className="quest done"><span>가입하기</span><span>+{me ? signupBonus(me.join_order ?? 999) : 0}</span></div>
           {QUESTS.map(q => <div key={q.key} className={"quest" + (doneKeys.has(q.key) ? " done" : "")}><span>{q.title}</span><span>+{q.xp}</span></div>)}
         </div>
       </div>
