@@ -27,9 +27,11 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const { data: exists } = await s.from("users").select("id").eq("username", username).maybeSingle();
   if (exists) return { error: "이미 쓰는 아이디예요" };
   const role = admins().includes(username) ? "admin" : "member";
+  const { count } = await s.from("users").select("id", { count: "exact", head: true });
+  const order = (count ?? 0) + 1; // 실제 가입 순번 (탈퇴·테스트 계정과 무관)
   const { data, error } = await s.from("users").insert({ username, password_hash: await bcrypt.hash(password, 10), nickname, dept, role }).select("id,seq").single();
   if (error || !data) return { error: "가입에 실패했어요. 잠시 후 다시 시도해주세요" };
-  await awardXp(data.id, signupBonus(data.seq), "signup");
+  await awardXp(data.id, signupBonus(order), "signup");
   await createSession({ id: data.id, username, nickname, dept, role });
   redirect("/chat");
 }
