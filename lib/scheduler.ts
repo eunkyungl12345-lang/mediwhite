@@ -1,8 +1,10 @@
 import { db } from "./supabase";
 import { DAILY_POSTS, BOT_LINES } from "./seedContent";
+import { memoOnce } from "./memo";
 
 /** 접속이 있을 때마다 가볍게 확인: 오늘 슬롯이 아직 안 돌았으면 실행 (크론 없이). */
 export async function runSchedulers() {
+  if (!memoOnce("sched", 60_000)) return; // 인스턴스당 1분에 한 번만 확인
   const s = db();
   const kst = new Date(Date.now() + 9 * 3600000); const day = kst.toISOString().slice(0, 10); const hour = kst.getUTCHours();
   const slot = hour >= 22 ? "night" : hour >= 18 ? "evening" : hour >= 12 ? "lunch" : hour >= 8 ? "morning" : null;

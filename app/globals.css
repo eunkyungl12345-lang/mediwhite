@@ -383,3 +383,9 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .msg.grouped{margin-top:-6px}
 .msg.grouped .bubble{border-top-left-radius:14px}
 .msg.mine.grouped .bubble{border-top-right-radius:14px}
+
+/* 스켈레톤 */
+.skel{display:grid;gap:12px;padding-top:6px}
+.skel-row,.skel-card{border-radius:12px;background:linear-gradient(90deg,var(--line) 25%,color-mix(in srgb,var(--line) 50%,var(--surface)) 50%,var(--line) 75%);background-size:200% 100%;animation:shimmer 1.1s linear infinite}
+.skel-row{height:34px}.skel-card{height:92px}
+@keyframes shimmer{to{background-position:-200% 0}}

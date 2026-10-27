@@ -1,12 +1,13 @@
 import webpush from "web-push";
 import { cache } from "react";
+import { memo } from "./memo";
 import { db } from "./supabase";
 
-export const vapid = cache(async () => {
+export const vapid = cache(() => memo("vapid", 10 * 60_000, async () => {
   const { data } = await db().from("settings").select("key,value").in("key", ["vapid_public", "vapid_private"]);
   const m = Object.fromEntries((data ?? []).map(r => [r.key, r.value]));
   return { pub: m.vapid_public as string | undefined, priv: m.vapid_private as string | undefined };
-});
+}));
 
 type Payload = { title: string; body: string; url?: string; tag?: string };
 

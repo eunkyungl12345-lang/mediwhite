@@ -9,6 +9,7 @@ import ChatDock from "@/components/ChatDock";
 import PushSetup from "@/components/PushSetup";
 import { vapid } from "@/lib/push";
 import { runSchedulers } from "@/lib/scheduler";
+import { memo, memoOnce } from "@/lib/memo";
 import Name from "@/components/Name";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { RANKS, GENERAL, rankOf } from "@/lib/ranks";
@@ -21,12 +22,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!s) redirect("/login");
   const d = db();
   runSchedulers().catch(() => {});
-  d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {});
+  if (memoOnce("visit:" + s.id, 30 * 60_000)) d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {});
   const [{ data: me }, { data: msgs }, { pub }, { data: offs }] = await Promise.all([
     d.from("users").select("id,dept,xp,stealth").eq("id", s.id).maybeSingle(),
-    d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").order("created_at", { ascending: false }).limit(60),
+    d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").order("created_at", { ascending: false }).limit(40),
     vapid(),
-    d.from("users").select("id,username").in("username", Object.keys(OFFICIAL)),
+    memo("officials", 5 * 60_000, async () => d.from("users").select("id,username").in("username", Object.keys(OFFICIAL))),
   ]);
   const official = Object.fromEntries((offs ?? []).map(o => [o.id, OFFICIAL[o.username]]));
   // 참모총장 후보일 때만 파트 1위 확인 (추가 조회 1번)
