@@ -10,7 +10,7 @@ const STEPS: { icon: string; title: string; body: React.ReactNode; demo: React.R
     demo: <div className="ob-demo ob-ladder"><span>훈련병</span>→<span>이병</span>→<span>병장</span>→<span>소위</span>→<span>대령</span>→<span className="ob-top">★ 참모총장</span></div> },
   { icon: "📋", title: "게시판 — 우리 파트 이야기", body: <>위쪽 칩에서 <b>파트</b>를, 그 아래에서 <b>주제</b>(휴게실·당직일지·병원 리뷰·월급봉투…)를 고르면 그 글만 보여요. <b>글쓰기</b> 버튼으로 바로 쓰고, 공지는 📢에 모여 있어요.<br />실명·환자 정보만 빼면 뭐든 OK.</>,
     demo: <div className="ob-demo ob-chips"><span className="on">전체</span><span>의사</span><span>간호사</span><span>방사선</span><span>원무</span><span>…</span></div> },
-  { icon: "💬", title: "실시간 채팅 — 화면 아래 띠", body: <>맨 아래 <b>💬 실시간 채팅</b> 띠를 <b>위로 쓸어올리거나 탭</b>하면 열려요. 지금 접속 중인 사람이 몇 명인지도 보여요.<br />@닉네임 으로 부르면 알림이 가요.</>,
+  { icon: "💬", title: "실시간 채팅 — 오른쪽 아래 버튼", body: <>오른쪽 아래 <b>💬 채팅</b> 버튼을 누르면 열려요. 안 읽은 메시지 수가 빨간 점으로 떠요. 지금 접속 중인 사람이 몇 명인지도 보여요.<br />@닉네임 으로 부르면 알림이 가요.</>,
     demo: <div className="ob-demo ob-dock"><i /><span>💬 실시간 채팅 <b style={{ color: "#E2574C" }}>●</b> 3명</span><span className="muted">펼치기 ▴</span></div> },
   { icon: "🎮", title: "게임 — 기록 세우면 경험치", body: <><b>우리 병원 키우기</b>(접속 안 해도 돈이 쌓여요), <b>병동 사수</b>(세균 막기), 번개 모드, 볼링 등 12가지.<br />기록을 세우면 퀘스트 경험치가 들어와요.</>,
     demo: <div className="ob-demo ob-games"><span>🏥</span><span>🦠</span><span>⚡</span><span>🎳</span><span>🫀</span><span>📚</span></div> },

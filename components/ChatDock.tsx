@@ -25,7 +25,7 @@ export default function ChatDock({ me, initial, online, myRank, official }: { me
 
   // 손가락 따라오는 스와이프: 바를 잡고 위/아래로 끌면 그만큼 열리고, 놓을 때 속도/거리로 판정
   const onDown = (e: React.PointerEvent) => {
-    drag.current = { y0: e.clientY, t0: performance.now(), dy: 0, h: bodyH, moved: false };
+    drag.current = { y0: e.clientY, t0: performance.now(), dy: 0, h: dockRef.current?.offsetHeight ?? bodyH, moved: false };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     dockRef.current?.classList.add("dragging");
   };
@@ -41,7 +41,7 @@ export default function ChatDock({ me, initial, online, myRank, official }: { me
   const onUp = (e: React.PointerEvent) => {
     const d = drag.current; drag.current = null; if (!d || !dockRef.current) return;
     dockRef.current.classList.remove("dragging");
-    const settle = (o: boolean) => { if (dockRef.current) dockRef.current.style.transform = o ? "translateY(0px)" : `translateY(${d.h}px)`; };
+    const settle = (o: boolean) => { if (dockRef.current) dockRef.current.style.transform = o ? "translateY(0px)" : `translateY(calc(100% + 20px))`; };
     if (!d.moved) { settle(!open); setOpenPersist(!open); return; } // 탭 = 토글
     const v = d.dy / Math.max(1, performance.now() - d.t0); // px/ms
     const base = open ? 0 : d.h; const y = base + d.dy;
@@ -51,21 +51,28 @@ export default function ChatDock({ me, initial, online, myRank, official }: { me
   };
 
   return (
-    <div ref={dockRef} className={"dock" + (open ? " open" : "")} style={{ transform: open ? "translateY(0px)" : `translateY(${bodyH}px)` }}>
-      <div className="dock-bar" role="button" tabIndex={0} aria-expanded={open}
-        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenPersist(!open); } }}>
-        <span className="dock-handle" aria-hidden="true" />
-        <span className="dock-row">
-          <span className="dock-title">💬 실시간 채팅 {online}</span>
-          {!open && unread > 0 && <span className="dock-unread">{unread}</span>}
-          <span className="dock-caret">{open ? "접기 ▾" : "펼치기 ▴"}</span>
-        </span>
-        <span className="dock-last" aria-hidden={open}>{last && <><b>{display(last.dept, last.nickname)}</b> {last.text}</>}</span>
+    <>
+      {!open && (
+        <button type="button" className="chat-fab" onClick={() => setOpenPersist(true)} aria-label="실시간 채팅 열기">
+          <span className="chat-fab-ico">💬</span>
+          <span>채팅</span>
+          {unread > 0 && <span className="dock-unread chat-fab-badge">{unread}</span>}
+        </button>
+      )}
+      <div ref={dockRef} className={"dock" + (open ? " open" : "")} style={{ transform: open ? "translateY(0px)" : `translateY(calc(100% + 20px))` }} aria-hidden={!open}>
+        <div className="dock-bar" role="button" tabIndex={0} aria-expanded={open}
+          onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenPersist(!open); } }}>
+          <span className="dock-handle" aria-hidden="true" />
+          <span className="dock-row">
+            <span className="dock-title">💬 실시간 채팅 {online}</span>
+            <span className="dock-caret">접기 ▾</span>
+          </span>
+        </div>
+        <div className="dock-body" ref={bodyRef}>
+          <ChatRoom me={me} initial={initial} myRank={myRank} official={official} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
+        </div>
       </div>
-      <div className="dock-body" ref={bodyRef} aria-hidden={!open}>
-        <ChatRoom me={me} initial={initial} myRank={myRank} official={official} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
-      </div>
-    </div>
+    </>
   );
 }
