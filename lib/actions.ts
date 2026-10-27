@@ -44,7 +44,7 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   await awardXp(data.id, signupBonus(order), "signup", "signup");
   if (ref && ref !== username) { const { data: r } = await s.from("users").select("id").eq("username", ref).maybeSingle(); if (r) await repeatXp(r.id, "referral"); }
   await createSession({ id: data.id, username, nickname, dept, role });
-  redirect("/board");
+  redirect("/home");
 }
 
 export async function login(_: FormState, fd: FormData): Promise<FormState> {
@@ -54,7 +54,7 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   if (!u || !(await bcrypt.compare(password, u.password_hash))) return { error: "아이디 또는 비밀번호가 맞지 않아요" };
   const role = u.role === "admin" || admins().includes(username) ? "admin" : "member";
   await createSession({ id: u.id, username, nickname: u.nickname, dept: u.dept, role });
-  redirect("/board");
+  redirect("/home");
 }
 /** 아이디 찾기: 닉네임+직종으로 일부 가린 아이디 안내 (개인정보 없이) */
 export async function findUsername(_: FormState, fd: FormData): Promise<FormState> {
