@@ -10,7 +10,7 @@ const UNITS: Record<UnitKind, { name: string; icon: string; cost: number; hp: nu
   iv: { name: "수액 걸이", icon: "🧃", cost: 50, hp: 60, desc: "8초마다 수액 25 생산" },
   nurse: { name: "간호사", icon: "💉", cost: 100, hp: 80, desc: "주사기 발사 (공격 20)" },
   wall: { name: "원무 바리케이드", icon: "🚧", cost: 50, hp: 400, desc: "튼튼한 벽" },
-  xray: { name: "방사선사", icon: "☢️", cost: 175, hp: 80, desc: "같은 줄 전체 관통 (공격 12)" },
+  xray: { name: "방사선사", icon: "☢️", cost: 200, hp: 80, desc: "같은 줄 전체 관통 (공격 10)" },
   doctor: { name: "의사", icon: "🩺", cost: 150, hp: 90, desc: "느리지만 강한 처방 (공격 60)" },
 };
 type Unit = { kind: UnitKind; r: number; c: number; hp: number; cd: number };
@@ -34,26 +34,31 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       x.font = `${Math.floor(CH * .6)}px system-ui`; x.textAlign = "center"; x.textBaseline = "middle";
       for (const u of s.units) { x.fillText(UNITS[u.kind].icon, u.c * CW + CW / 2, u.r * CH + CH / 2); const p = u.hp / UNITS[u.kind].hp; x.fillStyle = "#2C6B5E"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 5, (CW - 8) * p, 3); }
       for (const sh of s.shots) { x.fillStyle = sh.pierce ? "#E2574C" : "#2C6B5E"; x.beginPath(); x.arc(sh.x, sh.r * CH + CH / 2, sh.pierce ? 3 : 4, 0, 7); x.fill(); }
-      for (const z of s.germs) { x.fillText(["🦠", "🧫", "👾"][z.kind], z.x, z.r * CH + CH / 2); x.fillStyle = "#E2574C"; x.fillRect(z.x - CW * .3, z.r * CH + 4, CW * .6 * (z.hp / z.max), 3); }
+      for (const z of s.germs) { if (z.kind === 3) x.font = `${Math.floor(CH * .85)}px system-ui`; x.fillText(["🦠", "🧫", "👾", "🧟"][z.kind], z.x, z.r * CH + CH / 2); if (z.kind === 3) x.font = `${Math.floor(CH * .6)}px system-ui`; x.fillStyle = "#E2574C"; x.fillRect(z.x - CW * .3, z.r * CH + 4, CW * .6 * (z.hp / z.max), 3); }
       x.font = `${Math.floor(CH * .45)}px system-ui`;
       for (const d of s.sunDrops) x.fillText("💧", d.x, d.y);
     };
-    const spawnGerm = () => { const r = Math.floor(Math.random() * ROWS), w = s.wave; const kind = w >= 6 && Math.random() < .25 ? 2 : w >= 3 && Math.random() < .35 ? 1 : 0; const hp = [60, 140, 300][kind] * (1 + w * .08);
-      s.germs.push({ r, x: s.W + 10, hp, max: hp, speed: [14, 10, 8][kind] + w * .6, dmg: [10, 14, 25][kind], kind, eating: false }); };
-    const end = () => { s.running = false; cancelAnimationFrame(s.raf); setUi(u => ({ ...u, running: false, over: `${s.wave}웨이브에서 병동이 뚫렸어요` })); saveScore("defense", s.wave).catch(() => {}); };
+    const spawnGerm = (boss = false) => { const r = Math.floor(Math.random() * ROWS), w = s.wave;
+      if (boss) { const hp = 1800 * (1 + w * .15); s.germs.push({ r, x: s.W + 10, hp, max: hp, speed: 7 + w * .3, dmg: 80, kind: 3, eating: false }); return; }
+      const kind = w >= 5 && Math.random() < Math.min(.5, .15 + w * .03) ? 2 : w >= 2 && Math.random() < .4 ? 1 : 0; const hp = [60, 150, 340][kind] * (1 + w * .14);
+      s.germs.push({ r, x: s.W + 10, hp, max: hp, speed: ([15, 11, 9][kind] + w * 1.1) * (1 + Math.random() * .25), dmg: [10, 16, 30][kind], kind, eating: false }); };
+    const end = () => { s.running = false; cancelAnimationFrame(s.raf); setUi(u => ({ ...u, running: false, over: `${s.wave}웨이브에서 병동이 뚫렸어요` })); if (s.wave - 1 > s.best) saveScore("defense", s.wave - 1).catch(() => {}); };
     const tick = (now: number) => {
       const dt = Math.min(.05, (now - s.last) / 1000); s.last = now; s.t += dt; const CW = cw(), CH = ch();
       // 웨이브
       s.nextSpawn -= dt;
-      if (s.nextSpawn <= 0) { if (s.spawned < s.waveSize) { spawnGerm(); s.spawned++; s.nextSpawn = Math.max(.6, 2.2 - s.wave * .12); } else if (!s.germs.length) { s.wave++; s.spawned = 0; s.waveSize = 3 + Math.floor(s.wave * 1.6); s.nextSpawn = 3; setUi(u => ({ ...u, wave: s.wave })); } }
+      if (s.nextSpawn <= 0) {
+        if (s.spawned < s.waveSize) { spawnGerm(); s.spawned++; if (s.wave % 5 === 0 && s.spawned === s.waveSize) spawnGerm(true); s.nextSpawn = Math.max(.35, 1.8 - s.wave * .11); }
+        else if (!s.germs.length) { s.wave++; s.spawned = 0; s.waveSize = 4 + Math.floor(s.wave * 2.2); s.nextSpawn = 2.5; setUi(u => ({ ...u, wave: s.wave }));
+          if (s.wave - 1 > s.best) { s.best = s.wave - 1; saveScore("defense", s.best).catch(() => {}); } } }
       // 자연 수액
-      if (Math.random() < dt * .12) s.sunDrops.push({ x: 30 + Math.random() * (s.W - 60), y: 20 + Math.random() * (s.H - 40), t: 8 });
+      if (Math.random() < dt * Math.max(.03, .1 - s.wave * .006)) s.sunDrops.push({ x: 30 + Math.random() * (s.W - 60), y: 20 + Math.random() * (s.H - 40), t: 8 });
       s.sunDrops = s.sunDrops.filter(d => (d.t -= dt) > 0);
       // 유닛 행동
       for (const u of s.units) { u.cd -= dt; const lane = s.germs.filter(z => z.r === u.r && z.x > u.c * CW);
         if (u.kind === "iv" && u.cd <= 0) { u.cd = 8; s.sun += 25; setUi(x => ({ ...x, sun: s.sun })); }
         if (u.kind === "nurse" && u.cd <= 0 && lane.length) { u.cd = 1.4; s.shots.push({ r: u.r, x: u.c * CW + CW * .7, dmg: 20, pierce: false, hit: new Set() }); }
-        if (u.kind === "xray" && u.cd <= 0 && lane.length) { u.cd = 2.2; s.shots.push({ r: u.r, x: u.c * CW + CW * .7, dmg: 12, pierce: true, hit: new Set() }); }
+        if (u.kind === "xray" && u.cd <= 0 && lane.length) { u.cd = 2.2; s.shots.push({ r: u.r, x: u.c * CW + CW * .7, dmg: 10, pierce: true, hit: new Set() }); }
         if (u.kind === "doctor" && u.cd <= 0 && lane.length) { u.cd = 3.2; s.shots.push({ r: u.r, x: u.c * CW + CW * .7, dmg: 60, pierce: false, hit: new Set() }); } }
       // 탄환
       for (const sh of s.shots) { sh.x += 260 * dt; for (const z of s.germs) { if (z.r === sh.r && !sh.hit.has(z) && Math.abs(z.x - sh.x) < CW * .3) { z.hp -= sh.dmg; sh.hit.add(z); if (!sh.pierce) sh.x = 1e9; } } }
@@ -65,7 +70,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       s.units = s.units.filter(u => u.hp > 0); s.germs = s.germs.filter(z => z.hp > 0);
       draw(); s.raf = requestAnimationFrame(tick);
     };
-    (box.current as any).__start = () => { s.units = []; s.germs = []; s.shots = []; s.sun = 150; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = 3; s.nextSpawn = 5; s.sunDrops = []; s.running = true; s.last = performance.now(); setUi({ sun: 150, wave: 1, running: true, over: "" }); s.raf = requestAnimationFrame(tick); };
+    (box.current as any).__start = () => { s.units = []; s.germs = []; s.shots = []; s.sun = 150; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = 3; s.nextSpawn = 5; s.sunDrops = []; s.best = 0; s.running = true; s.last = performance.now(); setUi({ sun: 150, wave: 1, running: true, over: "" }); s.raf = requestAnimationFrame(tick); };
     (box.current as any).__place = (kind: UnitKind, px: number, py: number) => {
       if (!s.running) return; const CW = cw(), CH = ch();
       const hit = s.sunDrops.findIndex(d => Math.hypot(d.x - px, d.y - py) < CH * .4);
@@ -80,7 +85,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
 
   return (
     <div className="card">
-      <div><h3>병동 사수</h3><div className="muted">왼쪽에 의료진을 배치해서 오른쪽에서 밀려오는 세균을 막으세요. 수액(💧)을 눌러 모으고, 수액으로 의료진을 고용해요. 세균이 왼쪽 끝에 닿으면 끝. 5·10웨이브 달성 시 퀘스트 경험치.</div></div>
+      <div><h3>병동 사수</h3><div className="muted">왼쪽에 의료진을 배치해서 오른쪽에서 밀려오는 세균을 막으세요. 수액(💧)을 눌러 모으고, 수액으로 의료진을 고용해요. 세균이 왼쪽 끝에 닿으면 끝. 5웨이브마다 보스 🧟 등장. 넘긴 웨이브 수가 기록돼요 (5·10·20 퀘스트).</div></div>
       <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">웨이브 {ui.wave}</span></div>
       <div className="def-shop">{(Object.keys(UNITS) as UnitKind[]).map(k => <button key={k} type="button" className={"def-unit" + (sel === k ? " sel" : "") + (ui.sun < UNITS[k].cost ? " poor" : "")} onClick={() => setSel(k)} title={UNITS[k].desc}><span className="def-ico">{UNITS[k].icon}</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{UNITS[k].cost}</span></button>)}</div>
       <div className="def-stage" ref={box} onPointerDown={e => { const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect(); (e.currentTarget as any).__place(sel, e.clientX - r.left, e.clientY - r.top); }}>
