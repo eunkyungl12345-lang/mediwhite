@@ -10,6 +10,7 @@ import Name from "@/components/Name";
 import CommentForm from "@/components/CommentForm";
 import Reactions from "@/components/Reactions";
 import { topicOf } from "@/lib/depts";
+import ReportButton from "@/components/ReportButton";
 export const dynamic = "force-dynamic";
 
 export default async function PostPage({ params }: { params: { id: string } }) {
@@ -20,12 +21,13 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     d.from("users").select("id,dept,xp").eq("id", s.id).maybeSingle(),
   ]);
   if (!p) notFound();
-  const { data: comments } = await d.from("comments").select("id,author_id,dept,text,created_at,author:users(id,username,nickname,dept,xp)").eq("post_id", p.id).order("created_at").limit(300);
+  const { data: comments } = await d.from("comments").select("id,author_id,dept,text,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("post_id", p.id).order("created_at").limit(300);
   const cids = (comments ?? []).map(c => String(c.id));
   const [{ data: rxp }, { data: rxc }] = await Promise.all([d.from("reactions").select("kind,target_id,emoji,user_id").eq("kind", "post").eq("target_id", p.id), cids.length ? d.from("reactions").select("kind,target_id,emoji,user_id").eq("kind", "comment").in("target_id", cids) : Promise.resolve({ data: [] as any[] })]);
   const rx = [...(rxp ?? []), ...(rxc ?? [])];
   const agg = (kind: string, id: string) => { const counts: Record<string, number> = {}; let mine: string | null = null; for (const r of rx ?? []) if (r.kind === kind && String(r.target_id) === id) { counts[r.emoji] = (counts[r.emoji] ?? 0) + 1; if (r.user_id === s.id) mine = r.emoji; } return { counts, mine }; };
   const admin = s.role === "admin", mine = p.author_id === s.id;
+  if (p.hidden && !admin && !mine) return <div className="detail"><Link className="link" href="/board">← 게시판</Link><div className="empty" style={{ marginTop: 20 }}>🚩 신고가 접수되어 임시로 가려진 글이에요.<br /><span className="muted">운영팀 확인 후 복구되거나 삭제돼요 (최대 30일).</span></div></div>;
   const r = rankFor((p as any).author, leaders), myR = rankFor(me, leaders);
   const a = (p as any).author;
   return (
@@ -37,6 +39,8 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         {admin && <form action={togglePin.bind(null, p.id, !p.pinned)}><button className="link">{p.pinned ? "고정 해제" : "상단 고정"}</button></form>}
         {mine && can(myR, "소령") && <form action={boostPost.bind(null, p.id, !p.boosted)}><button className="link">{p.boosted ? "밀어올리기 해제" : "밀어올리기"}</button></form>}
         {(admin || mine) && <form action={deletePost.bind(null, p.id)}><button className="link">글 삭제</button></form>}
+        {!mine && <ReportButton kind="post" id={p.id} />}
+        {p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드 중</span>}
       </div>
       <h2>{p.title}</h2>
       <div className="body">{p.body}</div>
@@ -49,7 +53,8 @@ export default async function PostPage({ params }: { params: { id: string } }) {
             <div className="meta">{c.author ? <Name r={cr} dept={c.author.dept} nickname={c.author.nickname} username={c.author.username} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(c.created_at)}</span>
               {(admin || c.author_id === s.id) && <form action={deleteComment.bind(null, c.id, p.id)}><button className="link">삭제</button></form>}
             </div>
-            <div>{c.text}</div>
+            {c.hidden && !admin && c.author_id !== s.id ? <div className="muted">🚩 신고로 임시 블라인드된 댓글이에요.</div> : <div>{c.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff", marginRight: 6 }}>블라인드</span>}{c.text}</div>}
+            {c.author_id !== s.id && <ReportButton kind="comment" id={String(c.id)} />}
             <Reactions kind="comment" id={String(c.id)} compact {...agg("comment", String(c.id))} />
           </div>
         ); })}

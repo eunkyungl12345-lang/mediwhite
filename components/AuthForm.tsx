@@ -48,6 +48,7 @@ export default function AuthForm({ refCode }: { refCode?: string }) {
           </select>
           <input name="nickname" value={nick} onChange={e => setNick(e.target.value)} placeholder="닉네임 (최대 12자, 나중에 변경 가능)" maxLength={12} required />
           <div className="muted">표시 이름: <b>{display(dept || "직종", nick || "닉네임")}</b> — 앞의 [직종]은 한 번 고르면 바꿀 수 없어요 (탈퇴 후 재가입만 가능).</div>
+          <label className="muted" style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13 }}><input type="checkbox" name="agree" required style={{ marginTop: 3 }} /><span><a href="/rules" target="_blank">커뮤니티 규칙</a>(실명·환자정보 금지, 게시물 책임은 작성자, 신고 시 임시조치)에 동의해요.</span></label>
           {ss?.error && <div className="error">{ss.error}</div>}
           <Submit label="가입하고 입장" />
         </form>

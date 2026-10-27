@@ -7,6 +7,7 @@ import { db } from "./supabase";
 import { createSession, getSession, clearSession, type Session } from "./auth";
 import { DEPTS, CATS, NOTICE_CAT, EMOJIS, TOPICS } from "./depts";
 import { bump } from "./daily";
+import { personMention, REPORT_REASONS } from "./safety";
 import { awardXp, repeatXp } from "./xp";
 import { signupBonus, can, RANKS, rankOf } from "./ranks";
 import { myRank, isDeptLeader } from "./ranksvc";
@@ -27,6 +28,7 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const nickname = clean(fd.get("nickname"), 12);
   const dept = clean(fd.get("dept"), 30);
   const ref = clean(fd.get("ref"), 20).toLowerCase() || cookies().get("mw_ref")?.value || null;
+  if (fd.get("agree") !== "on") return { error: "커뮤니티 규칙에 동의해주세요" };
   if (!/^[a-z0-9_]{3,20}$/.test(username)) return { error: "아이디는 영문 소문자·숫자·밑줄 3~20자예요" };
   if (password.length < 4) return { error: "비밀번호는 4자 이상이에요" };
   if (!nickname) return { error: "닉네임을 입력해주세요" };
@@ -127,6 +129,8 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   if (!(CATS as readonly string[]).includes(category)) return { error: "칸을 선택해주세요" };
   if (category === NOTICE_CAT && u.role !== "admin" && !can(await myRank(u.id), "준장")) return { error: "공지 칸은 준장 이상만 쓸 수 있어요" };
   if (!title || !body) return { error: "제목과 내용을 적어주세요" };
+  const pm = personMention(title + " " + body);
+  if (pm && fd.get("confirm_anon") !== "on") return { error: `"${pm}" — 특정 개인을 가리키는 표현 같아요. 실명·식별 정보가 없다면 아래 확인에 체크하고 다시 올려주세요.` };
   const s = db();
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }
   const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: u.dept, title, body, board_id: boardId, topic }).select("id").single();
@@ -417,4 +421,33 @@ export async function toggleReaction(kind: "post" | "comment", targetId: string,
   const counts: Record<string, number> = {}; let mine: string | null = null;
   for (const r of all ?? []) { counts[r.emoji] = (counts[r.emoji] ?? 0) + 1; if (r.user_id === u.id) mine = r.emoji; }
   return { counts, mine };
+}
+
+/* ---------- 신고·임시조치 (정보통신망법 44조의2) ---------- */
+export async function reportContent(kind: "post" | "comment", targetId: string, reason: string, detail: string) {
+  const u = await requireUser();
+  if (!REPORT_REASONS.some(r => r[0] === reason)) return { error: "사유를 골라주세요" };
+  const s = db(), table = kind === "post" ? "posts" : "comments";
+  const { data: t } = await s.from(table).select("id,author_id,hidden").eq("id", targetId).maybeSingle();
+  if (!t) return { error: "대상이 없어요" };
+  if (t.author_id === u.id) return { error: "내 글은 신고할 수 없어요(삭제하세요)" };
+  const { data: dup } = await s.from("reports").select("id").eq("kind", kind).eq("target_id", targetId).eq("reporter_id", u.id).eq("status", "open").maybeSingle();
+  if (dup) return { error: "이미 신고했어요. 운영팀이 확인 중이에요" };
+  await s.from("reports").insert({ kind, target_id: targetId, reporter_id: u.id, reason, detail: clean(detail, 500) || null });
+  // 임시조치: 신고 즉시 블라인드(최대 30일), 운영팀 판단 후 복구/삭제
+  if (!t.hidden) await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", targetId);
+  const { data: admins } = await s.from("users").select("id").eq("role", "admin");
+  if (admins?.length) pushToUsers(admins.map(a => a.id), { title: "🚨 신고 접수", body: `${kind === "post" ? "글" : "댓글"} 신고 · ${REPORT_REASONS.find(r => r[0] === reason)?.[1]}`, url: "/admin", tag: "report" }).catch(() => {});
+  revalidatePath("/board"); if (kind === "post") revalidatePath(`/board/${targetId}`);
+  return { ok: true };
+}
+export async function resolveReport(id: number, action: "restore" | "delete") {
+  await requireAdmin();
+  const s = db();
+  const { data: r } = await s.from("reports").select("kind,target_id").eq("id", id).maybeSingle(); if (!r) return;
+  const table = r.kind === "post" ? "posts" : "comments";
+  if (action === "delete") await s.from(table).delete().eq("id", r.target_id);
+  else await s.from(table).update({ hidden: false, hidden_at: null }).eq("id", r.target_id);
+  await s.from("reports").update({ status: action === "delete" ? "deleted" : "restored", resolved_at: new Date().toISOString() }).eq("kind", r.kind).eq("target_id", r.target_id).eq("status", "open");
+  revalidatePath("/admin"); revalidatePath("/board");
 }

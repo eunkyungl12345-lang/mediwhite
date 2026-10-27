@@ -3,7 +3,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { RANKS } from "@/lib/ranks";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
-import { adminToggleStealth, adminDeleteUser, adminLoginAs, adminDemote } from "@/lib/actions";
+import { adminToggleStealth, adminDeleteUser, adminLoginAs, adminDemote, resolveReport } from "@/lib/actions";
 import AdminForms from "@/components/AdminForms";
 import AdminSupport from "@/components/AdminSupport";
 import AdminResetPw from "@/components/AdminResetPw";
@@ -14,6 +14,8 @@ import Stats from "@/components/Stats";
 import { setInquiryStatus } from "@/lib/actions";
 import { confirmContribution } from "@/lib/actions";
 import { fmt } from "@/lib/format";
+import Link from "next/link";
+import { REPORT_REASONS } from "@/lib/safety";
 import Name from "@/components/Name";
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,11 @@ export default async function AdminPage() {
   const series = days.map(d => ({ day: d.slice(5), visitors: visByDay[d].size, signups: signByDay[d] }));
   const [{ data: inq }, email] = await Promise.all([db().from("inquiries").select("*").order("created_at", { ascending: false }).limit(50), contactEmail()]);
   const KIND: Record<string, string> = { ad: "광고", partner: "협업", bug: "오류", other: "기타" };
+  const { data: reports } = await db().from("reports").select("id,kind,target_id,reason,detail,status,created_at,reporter:users!reports_reporter_id_fkey(nickname,dept)").order("created_at", { ascending: false }).limit(50);
+  const openR = (reports ?? []).filter(r => r.status === "open");
+  const rPosts = openR.filter(r => r.kind === "post").map(r => r.target_id), rComs = openR.filter(r => r.kind === "comment").map(r => Number(r.target_id));
+  const [{ data: rp }, { data: rc }] = await Promise.all([rPosts.length ? db().from("posts").select("id,title,body").in("id", rPosts) : Promise.resolve({ data: [] as any[] }), rComs.length ? db().from("comments").select("id,text").in("id", rComs) : Promise.resolve({ data: [] as any[] })]);
+  const preview = (r: any) => r.kind === "post" ? (rp ?? []).find((p: any) => p.id === r.target_id) : (rc ?? []).find((c: any) => String(c.id) === r.target_id);
   const [{ data: users }, leaders, bank, { rows: pools }, { data: pending }] = await Promise.all([
     db().from("users").select("id,username,nickname,dept,xp,role,stealth,seq,join_order,created_at").order("seq"), deptLeaders(), bankInfo(), deptPools(),
     db().from("contributions").select("id,dept,amount,points,depositor,created_at,users(nickname)").eq("status", "pending").order("created_at"),
@@ -46,6 +53,17 @@ export default async function AdminPage() {
         <h3>전체 폰 알림 보내기</h3>
         <div className="muted">알림을 켠 회원 모두에게 푸시. 이벤트·공지용 (하루 1~2번만 — 많으면 다 꺼버려요).</div>
         <AdminBroadcast />
+      </div>
+      <div className="card">
+        <h3>🚩 신고함 — 처리 대기 {openR.length}건</h3>
+        <div className="muted">신고 즉시 블라인드돼요. 복구하면 다시 보이고, 삭제하면 영구 삭제. 30일 지나면 자동 복구.</div>
+        {!openR.length && <div className="muted">대기 중인 신고가 없어요.</div>}
+        <div className="quests">{openR.map((r: any) => { const t = preview(r); return <div key={r.id} className="quest" style={{ display: "grid", gap: 6 }}>
+          <div className="meta"><span className="tag">{r.kind === "post" ? "글" : "댓글"}</span><b>{REPORT_REASONS.find(x => x[0] === r.reason)?.[1] ?? r.reason}</b><span>신고자 {r.reporter ? `[${r.reporter.dept}]${r.reporter.nickname}` : "-"}</span><span className="time">{fmt(r.created_at)}</span></div>
+          {r.detail && <div className="muted">사유: {r.detail}</div>}
+          <div style={{ whiteSpace: "pre-wrap", background: "var(--bg)", borderRadius: 8, padding: 8, fontSize: 13 }}>{t ? (r.kind === "post" ? <><b>{t.title}</b><br />{String(t.body).slice(0, 300)}</> : t.text) : "(이미 삭제됨)"}{r.kind === "post" && t && <> · <Link href={`/board/${r.target_id}`}>열기</Link></>}</div>
+          <div className="row"><form action={resolveReport.bind(null, r.id, "restore")}><button className="btn ghost" style={{ padding: "6px 12px" }}>문제없음 · 복구</button></form><form action={resolveReport.bind(null, r.id, "delete")}><button className="btn" style={{ padding: "6px 12px", background: "#E2574C" }}>삭제 확정</button></form></div>
+        </div>; })}</div>
       </div>
       <div className="card">
         <h3>문의함 — 새 문의 {(inq ?? []).filter(i => i.status === "new").length}건</h3>
