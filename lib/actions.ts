@@ -10,6 +10,7 @@ import { awardXp, repeatXp } from "./xp";
 import { signupBonus, can, RANKS, rankOf } from "./ranks";
 import { myRank, isDeptLeader } from "./ranksvc";
 import { POINT_PER_WON, AMOUNTS } from "./support";
+import { pushToUsers, pushToAll } from "./push";
 
 const admins = () => (process.env.ADMIN_USERNAMES || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
 const clean = (v: FormDataEntryValue | null, max: number) => String(v ?? "").trim().slice(0, max);
@@ -111,6 +112,8 @@ export async function sendMessage(text: string) {
   const { data } = await s.from("messages").insert({ user_id: u.id, nickname: u.nickname, dept: u.dept, text: t, rank: String(ri) }).select("id,nickname,dept,text,created_at,user_id,rank").single();
   // 경험치는 응답 뒤로 미루지 않고 병렬로 (한 번의 DB 함수 호출씩)
   await Promise.all([awardXp(u.id, 50, "first_chat"), repeatXp(u.id, "chat")]);
+  const mentions = Array.from(t.matchAll(/@([^\s@\[\]]{1,12})/g)).map(m => m[1]);
+  if (mentions.length) { const { data: targets } = await s.from("users").select("id").in("nickname", mentions).neq("id", u.id); if (targets?.length) pushToUsers(targets.map(x => x.id), { title: "채팅에서 나를 불렀어요", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: "/board", tag: "mention" }).catch(() => {}); }
   return data;
 }
 
@@ -132,8 +135,10 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
 export async function addComment(postId: string, text: string) {
   const u = await requireUser();
   const t = text.trim().slice(0, 500); if (!t) return;
-  await db().from("comments").insert({ post_id: postId, author_id: u.id, dept: u.dept, text: t });
-  await Promise.all([awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment")]);
+  const s = db();
+  await s.from("comments").insert({ post_id: postId, author_id: u.id, dept: u.dept, text: t });
+  const [{ data: post }] = await Promise.all([s.from("posts").select("author_id,title").eq("id", postId).maybeSingle(), awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment")]);
+  if (post?.author_id && post.author_id !== u.id) pushToUsers([post.author_id], { title: "내 글에 댓글", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: `/board/${postId}`, tag: `c-${postId}` }).catch(() => {});
   revalidatePath(`/board/${postId}`);
 }
 export async function togglePin(postId: string, pinned: boolean) {
@@ -316,4 +321,18 @@ export async function setInquiryStatus(id: number, status: "new" | "done") {
 export async function adminSetContactEmail(_: FormState, fd: FormData): Promise<FormState> {
   await requireAdmin(); await db().from("settings").upsert({ key: "contact_email", value: clean(fd.get("email"), 80) });
   revalidatePath("/contact"); revalidatePath("/admin"); return { ok: "저장했어요" };
+}
+
+/* ---------- 푸시 알림 ---------- */
+export async function savePushSub(sub: { endpoint: string; keys?: { p256dh: string; auth: string } }) {
+  const u = await requireUser();
+  if (!sub?.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) return;
+  await db().from("push_subs").upsert({ endpoint: sub.endpoint, user_id: u.id, p256dh: sub.keys.p256dh, auth: sub.keys.auth });
+}
+export async function adminBroadcast(_: FormState, fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  const title = clean(fd.get("title"), 40) || "메디화이트웹", body = clean(fd.get("body"), 140), url = clean(fd.get("url"), 200) || "/board";
+  if (!body) return { error: "내용을 적어주세요" };
+  await pushToAll({ title, body, url, tag: "broadcast" });
+  return { ok: "보냈어요" };
 }

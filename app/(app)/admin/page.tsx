@@ -9,6 +9,7 @@ import AdminSupport from "@/components/AdminSupport";
 import AdminResetPw from "@/components/AdminResetPw";
 import { bankInfo, deptPools, contactEmail } from "@/lib/support";
 import AdminContact from "@/components/AdminContact";
+import AdminBroadcast from "@/components/AdminBroadcast";
 import { setInquiryStatus } from "@/lib/actions";
 import { confirmContribution } from "@/lib/actions";
 import { fmt } from "@/lib/format";
@@ -26,6 +27,11 @@ export default async function AdminPage() {
   ]);
   return (
     <div className="games">
+      <div className="card">
+        <h3>전체 폰 알림 보내기</h3>
+        <div className="muted">알림을 켠 회원 모두에게 푸시. 이벤트·공지용 (하루 1~2번만 — 많으면 다 꺼버려요).</div>
+        <AdminBroadcast />
+      </div>
       <div className="card">
         <h3>문의함 — 새 문의 {(inq ?? []).filter(i => i.status === "new").length}건</h3>
         <AdminContact email={email} />

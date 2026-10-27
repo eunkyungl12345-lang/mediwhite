@@ -2,6 +2,7 @@ import { db } from "./supabase";
 import { REPEAT, rankOf, RANKS, GENERAL } from "./ranks";
 import { deptLeaders } from "./ranksvc";
 import { display } from "./depts";
+import { pushToUsers } from "./push";
 
 /** 경험치 지급(DB 함수 한 번). 진급하면 이벤트 기록. */
 async function grant(userId: string, amount: number, key: string | null, kind: string, cap: number): Promise<number> {
@@ -18,7 +19,8 @@ async function grant(userId: string, amount: number, key: string | null, kind: s
       if (ai >= GENERAL) { const l = await deptLeaders(); leader = l[u.dept] === u.id; }
       const r = rankOf(new_xp, leader);
       if (r.index > rankOf(old_xp, leader).index)
-        await s.from("events").insert({ kind: "promotion", text: `${display(u.dept, u.nickname)}님이 ${r.name}${r.index >= 15 ? "(" + "★".repeat(Math.min(4, r.index - 14)) + ")" : ""}으로 진급하셨습니다.|${r.index}|${u.dept}|${u.nickname}` });
+        { await s.from("events").insert({ kind: "promotion", text: `${display(u.dept, u.nickname)}님이 ${r.name}${r.index >= 15 ? "(" + "★".repeat(Math.min(4, r.index - 14)) + ")" : ""}으로 진급하셨습니다.|${r.index}|${u.dept}|${u.nickname}` });
+          pushToUsers([u.id], { title: "🎖️ 진급!", body: `${r.name}(으)로 진급하셨습니다. 축하해요!`, url: "/rank", tag: "promo" }).catch(() => {}); }
     }
   }
   return granted;
