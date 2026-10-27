@@ -37,6 +37,7 @@ export default async function GamesPage() {
   ];
   return (
     <div className="games">
+      <Hero img="/img/games.jpg" pos="center 42%" title="게임" sub="오늘의 기록을 깨고 경험치 받기" />
       
       <GameHub games={games} />
     </div>
