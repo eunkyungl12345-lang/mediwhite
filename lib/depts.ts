@@ -23,7 +23,6 @@ export const TOPICS = [
   { key: "info", name: "정보·꿀팁", icon: "💡", hint: "꿀팁·뉴스·제도 정보" },
   { key: "job", name: "이직·채용", icon: "💼", hint: "채용 정보, 이직 경험담" },
   { key: "qna", name: "질문", icon: "❓", hint: "궁금한 거 뭐든 물어보기" },
-  { key: "item", name: "제품 후기", icon: "🧤", hint: "간호화·압박스타킹·간식·핸드크림… 직접 써본 솔직 후기" },
 ] as const;
 export type TopicKey = typeof TOPICS[number]["key"];
 export const topicOf = (k: string | null | undefined) => TOPICS.find(t => t.key === k) ?? TOPICS[0];
