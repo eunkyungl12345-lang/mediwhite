@@ -1,14 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import ChatRoom, { type Msg } from "./ChatRoom";
 import type { Session } from "@/lib/auth";
 import { display } from "@/lib/depts";
 
-export default function ChatDock({ me, initial, online }: { me: Session; initial: Msg[]; online: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+export default function ChatDock({ me, initial, online, myRank }: { me: Session; initial: Msg[]; online: React.ReactNode; myRank?: string }) {
+  const path = usePathname();
+  const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [last, setLast] = useState<Msg | null>(initial[initial.length - 1] ?? null);
-  useEffect(() => { try { const v = localStorage.getItem("mw-chat-open"); if (v != null) setOpen(v === "1"); } catch {} }, []);
+  // 기본은 항상 열림(게임 화면만 접힘). 사용자가 접었다 폈으면 그 선택을 기억.
+  useEffect(() => { let v: string | null = null; try { v = localStorage.getItem("mw-chat-open"); } catch {} setOpen(v != null ? v === "1" : !path.startsWith("/games")); }, [path]);
   const toggle = () => { setOpen(o => { try { localStorage.setItem("mw-chat-open", o ? "0" : "1"); } catch {} ; return !o; }); setUnread(0); };
   return (
     <div className={"dock" + (open ? " open" : "")}>
@@ -19,7 +22,7 @@ export default function ChatDock({ me, initial, online }: { me: Session; initial
         <span className="dock-caret">{open ? "▾" : "▴"}</span>
       </button>
       <div className="dock-body" hidden={!open}>
-        <ChatRoom me={me} initial={initial} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
+        <ChatRoom me={me} initial={initial} myRank={myRank} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
       </div>
     </div>
   );

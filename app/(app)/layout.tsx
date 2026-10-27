@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Tabs admin={s.role === "admin"} />
       <main>{children}</main>
       <PromoToast />
-      <ChatDock me={s} initial={(msgs ?? []).reverse()} online={<Presence user={s} stealth={!!me?.stealth} />} />
+      <ChatDock me={s} initial={(msgs ?? []).reverse()} myRank={String(rank.index)} online={<Presence user={s} stealth={!!me?.stealth} />} />
     </div>
   );
 }

@@ -77,9 +77,12 @@ export async function sendMessage(text: string) {
   const u = await requireUser();
   const t = text.trim().slice(0, 500); if (!t) return null;
   const s = db();
-  const r = await myRank(u.id);
-  const { data } = await s.from("messages").insert({ user_id: u.id, nickname: u.nickname, dept: u.dept, text: t, rank: String(r.index) }).select("id,nickname,dept,text,created_at,user_id,rank").single();
-  await awardXp(u.id, 50, "first_chat"); await repeatXp(u.id, "chat");
+  const { data: me } = await s.from("users").select("xp").eq("id", u.id).maybeSingle();
+  let ri = rankOf(me?.xp ?? 0).index;
+  if (ri >= RANKS.length - 1) ri = (await myRank(u.id)).index; // 참모총장 후보만 파트 1위 확인
+  const { data } = await s.from("messages").insert({ user_id: u.id, nickname: u.nickname, dept: u.dept, text: t, rank: String(ri) }).select("id,nickname,dept,text,created_at,user_id,rank").single();
+  // 경험치는 응답 뒤로 미루지 않고 병렬로 (한 번의 DB 함수 호출씩)
+  await Promise.all([awardXp(u.id, 50, "first_chat"), repeatXp(u.id, "chat")]);
   return data;
 }
 
@@ -95,14 +98,14 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }
   const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: u.dept, title, body, board_id: boardId }).select("id").single();
   if (error || !data) return { error: "올리지 못했어요" };
-  await awardXp(u.id, 100, "first_post"); await repeatXp(u.id, "post");
+  await Promise.all([awardXp(u.id, 100, "first_post"), repeatXp(u.id, "post")]);
   revalidatePath("/board"); redirect(`/board/${data.id}`);
 }
 export async function addComment(postId: string, text: string) {
   const u = await requireUser();
   const t = text.trim().slice(0, 500); if (!t) return;
   await db().from("comments").insert({ post_id: postId, author_id: u.id, dept: u.dept, text: t });
-  await awardXp(u.id, 50, "first_comment"); await repeatXp(u.id, "comment");
+  await Promise.all([awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment")]);
   revalidatePath(`/board/${postId}`);
 }
 export async function togglePin(postId: string, pinned: boolean) {
@@ -145,11 +148,12 @@ export async function deleteBoard(id: string, dept: string) {
 }
 
 /* ---------- 게임 ---------- */
-export async function saveScore(game: "dodge" | "sword", value: number, mode?: string) {
+export async function saveScore(game: "dodge" | "sword" | "defense", value: number, mode?: string) {
   const u = await requireUser();
   if (!Number.isFinite(value) || value < 0) return;
   const s = db();
   if (game === "dodge") { for (const [th, xp] of [[10, 100], [20, 200], [30, 400]] as const) if (value >= th) await awardXp(u.id, xp, `dodge_${th}`); }
+  if (game === "defense") { for (const [th, xp] of [[5, 150], [10, 400], [20, 800]] as const) if (value >= th) await awardXp(u.id, xp, `defense_${th}`); }
   if (game === "sword") { for (const [th, xp] of [[5, 100], [10, 300], [15, 700]] as const) if (value >= th) await awardXp(u.id, xp, `sword_${th}`); }
   const { data: cur } = await s.from("scores").select("value").eq("user_id", u.id).eq("game", game).maybeSingle();
   if (cur && Number(cur.value) >= value) return;

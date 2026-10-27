@@ -10,12 +10,15 @@ import { tierOf } from "@/lib/ranks";
 
 export type Msg = { id: number; nickname: string; dept: string; text: string; created_at: string; user_id: string | null; rank?: string | null };
 
-export default function ChatRoom({ me, initial, onNew }: { me: Session; initial: Msg[]; onNew?: (m: Msg) => void }) {
+export default function ChatRoom({ me, initial, onNew, myRank }: { me: Session; initial: Msg[]; onNew?: (m: Msg) => void; myRank?: string }) {
   const [msgs, setMsgs] = useState<Msg[]>(initial);
   const [text, setText] = useState(""); const [busy, setBusy] = useState(false);
   const feed = useRef<HTMLDivElement>(null);
   const chRef = useRef<any>(null);
-  const push = (m: Msg) => setMsgs(prev => prev.some(x => x.id === m.id) ? prev : [...prev.slice(-200), m]);
+  const push = (m: Msg & { tmp?: string }) => setMsgs(prev => {
+    if (m.tmp) { const i = prev.findIndex(x => (x as any).tmp === m.tmp); if (i >= 0) { const n = prev.slice(); n[i] = m; return n; } }
+    return prev.some(x => x.id === m.id) ? prev : [...prev.slice(-200), m];
+  });
   useEffect(() => {
     const c = rt(); if (!c) return;
     const ch = c.channel("chat");
@@ -26,8 +29,13 @@ export default function ChatRoom({ me, initial, onNew }: { me: Session; initial:
   async function submit(e: React.FormEvent) {
     e.preventDefault(); const t = text.trim(); if (!t || busy) return;
     setBusy(true); setText("");
-    try { const saved = await sendMessage(t); if (saved) { push(saved as Msg); chRef.current?.send({ type: "broadcast", event: "msg", payload: saved }); } else setText(t); } catch { setText(t); }
+    // 1) 내 화면과 다른 사람 화면에 즉시 뿌리고  2) 서버 저장은 뒤따라감
+    const tmp = `${me.id}-${Date.now()}`;
+    const optimistic: Msg & { tmp: string } = { id: -Date.now(), tmp, nickname: me.nickname, dept: me.dept, text: t, created_at: new Date().toISOString(), user_id: me.id, rank: myRank ?? null };
+    push(optimistic); chRef.current?.send({ type: "broadcast", event: "msg", payload: optimistic });
     setBusy(false);
+    try { const saved = await sendMessage(t); if (saved) { push({ ...(saved as Msg), tmp }); chRef.current?.send({ type: "broadcast", event: "msg", payload: { ...saved, tmp } }); } }
+    catch { setMsgs(prev => prev.filter(x => (x as any).tmp !== tmp)); setText(t); }
   }
   return (
     <div className="chat">
@@ -41,7 +49,7 @@ export default function ChatRoom({ me, initial, onNew }: { me: Session; initial:
       </div>
       <form className="composer" onSubmit={submit}>
         <input id="chatInput" value={text} onChange={e => setText(e.target.value)} maxLength={500} autoComplete="off" placeholder={`${display(me.dept, me.nickname)}(으)로 말하기`} />
-        <button className="btn" disabled={busy}>보내기</button>
+        <button className="btn">보내기</button>
       </form>
     </div>
   );
