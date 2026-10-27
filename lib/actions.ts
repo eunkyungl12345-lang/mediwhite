@@ -181,11 +181,12 @@ export async function deleteBoard(id: string, dept: string) {
 }
 
 /* ---------- 게임 ---------- */
-export async function saveScore(game: "dodge" | "sword" | "defense", value: number, mode?: string) {
+export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling", value: number, mode?: string) {
   const u = await requireUser();
   if (!Number.isFinite(value) || value < 0) return;
   const s = db();
   if (game === "dodge") { for (const [th, xp] of [[10, 100], [20, 200], [30, 400]] as const) if (value >= th) await awardXp(u.id, xp, `dodge_${th}`); }
+  if (game === "bowling") { for (const [th, xp] of [[100, 100], [150, 250], [200, 500]] as const) if (value >= th) await awardXp(u.id, xp, `bowling_${th}`); }
   if (game === "defense") { for (const [th, xp] of [[5, 150], [10, 400], [20, 800]] as const) if (value >= th) await awardXp(u.id, xp, `defense_${th}`); }
   if (game === "sword") { for (const [th, xp] of [[5, 100], [10, 300], [15, 700]] as const) if (value >= th) await awardXp(u.id, xp, `sword_${th}`); }
   const { data: cur } = await s.from("scores").select("value").eq("user_id", u.id).eq("game", game).maybeSingle();
@@ -335,4 +336,42 @@ export async function adminBroadcast(_: FormState, fd: FormData): Promise<FormSt
   if (!body) return { error: "내용을 적어주세요" };
   await pushToAll({ title, body, url, tag: "broadcast" });
   return { ok: "보냈어요" };
+}
+
+/* ---------- 식물키우기 (서버가 규칙 판정) ---------- */
+export type Plant = { kind: string; waters: number; lastWater: number; lastSun: number; planted: number; harvests: number; wilted: boolean };
+const PLANT_STAGES = [0, 2, 5, 9, 14, 20]; // 씨앗·새싹·잎·꽃봉오리·개화·열매(수확)
+const WATER_GAP = 3 * 3600 * 1000, SUN_GAP = 20 * 3600 * 1000, WILT_AFTER = 48 * 3600 * 1000;
+function plantStage(p: Plant) { let st = 0; PLANT_STAGES.forEach((t, i) => { if (p.waters >= t) st = i; }); return st; }
+export async function plantAction(action: "load" | "plant" | "water" | "sun" | "harvest", kind?: string): Promise<{ plant: Plant | null; stage: number; msg?: string; gained?: number }> {
+  const u = await requireUser(); const s = db(); const now = Date.now();
+  const { data } = await s.from("game_state").select("state").eq("user_id", u.id).eq("game", "plant").maybeSingle();
+  let p = (data?.state as Plant | undefined) ?? null; let msg = "", gained = 0;
+  const save = async () => { await s.from("game_state").upsert({ user_id: u.id, game: "plant", state: p as any, updated_at: new Date().toISOString() }); };
+  if (action === "plant") { if (p && plantStage(p) < 5) return { plant: p, stage: plantStage(p), msg: "지금 키우는 화분을 먼저 수확하거나 끝까지 키워주세요" };
+    p = { kind: ["알로에", "몬스테라", "선인장", "방울토마토"].includes(kind ?? "") ? kind! : "알로에", waters: 0, lastWater: 0, lastSun: 0, planted: now, harvests: p?.harvests ?? 0, wilted: false }; await save(); return { plant: p, stage: 0, msg: `${p.kind} 씨앗을 심었어요. 3시간마다 물을 주세요` }; }
+  if (!p) return { plant: null, stage: 0 };
+  if (p.lastWater && now - p.lastWater > WILT_AFTER && plantStage(p) < 5) p.wilted = true;
+  if (action === "water") {
+    if (plantStage(p) >= 5) return { plant: p, stage: 5, msg: "다 자랐어요! 수확하세요" };
+    if (now - p.lastWater < WATER_GAP) { const m = Math.ceil((WATER_GAP - (now - p.lastWater)) / 60000); return { plant: p, stage: plantStage(p), msg: `아직 흙이 촉촉해요. ${Math.floor(m / 60)}시간 ${m % 60}분 뒤에 다시` }; }
+    const before = plantStage(p); p.waters++; p.lastWater = now; p.wilted = false; const after = plantStage(p);
+    if (after > before) { gained = await repeatXp(u.id, "plant"); msg = `쑥! ${["씨앗", "새싹", "잎", "꽃봉오리", "개화", "열매"][after]} 단계가 됐어요${gained ? ` (+${gained} XP)` : ""}`; } else msg = "물을 줬어요 💧";
+    await save(); return { plant: p, stage: after, msg, gained };
+  }
+  if (action === "sun") {
+    if (plantStage(p) >= 5) return { plant: p, stage: 5, msg: "다 자랐어요! 수확하세요" };
+    if (now - p.lastSun < SUN_GAP) return { plant: p, stage: plantStage(p), msg: "햇빛은 하루에 한 번이에요" };
+    const before = plantStage(p); p.waters++; p.lastSun = now; const after = plantStage(p);
+    if (after > before) { gained = await repeatXp(u.id, "plant"); msg = `햇빛 쬐고 쑥! ${["씨앗", "새싹", "잎", "꽃봉오리", "개화", "열매"][after]} 단계${gained ? ` (+${gained} XP)` : ""}`; } else msg = "창가로 옮겨 햇빛을 쬐었어요 ☀️";
+    await save(); return { plant: p, stage: after, msg, gained };
+  }
+  if (action === "harvest") {
+    if (plantStage(p) < 5) return { plant: p, stage: plantStage(p), msg: "아직 열매가 안 열렸어요" };
+    p.harvests++; const n = p.harvests; const g = await awardXp(u.id, n === 1 ? 300 : n === 3 ? 500 : 0, n === 1 ? "plant_harvest_1" : n === 3 ? "plant_harvest_3" : null, "quest");
+    const g2 = await repeatXp(u.id, "plant"); gained = g + g2;
+    const kindDone = p.kind; p = { kind: kindDone, waters: 0, lastWater: 0, lastSun: 0, planted: 0, harvests: n, wilted: false }; await save();
+    return { plant: p, stage: 0, msg: `${kindDone} 수확! ${n}번째 수확이에요${gained ? ` (+${gained} XP)` : ""}. 새 씨앗을 심어보세요`, gained };
+  }
+  return { plant: p, stage: plantStage(p) };
 }

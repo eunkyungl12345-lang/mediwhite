@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { db } from "./supabase";
-import { DEPTS } from "./depts";
+import { HOSPITAL_DEPTS as DEPTS } from "./depts";
 
 export const POINT_PER_WON = 0.1;              // 1,000원 = 100 공동 경험치
 export const AMOUNTS = [5000, 10000, 30000, 50000];

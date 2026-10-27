@@ -52,6 +52,11 @@ export const QUESTS: { key: string; title: string; xp: number }[] = [
   { key: "defense_5", title: "병동 사수 5웨이브 방어", xp: 150 },
   { key: "defense_10", title: "병동 사수 10웨이브 방어", xp: 400 },
   { key: "defense_20", title: "병동 사수 20웨이브 방어", xp: 800 },
+  { key: "bowling_100", title: "볼링 100점 넘기기", xp: 100 },
+  { key: "bowling_150", title: "볼링 150점 넘기기", xp: 250 },
+  { key: "bowling_200", title: "볼링 200점 넘기기", xp: 500 },
+  { key: "plant_harvest_1", title: "화분 첫 수확", xp: 300 },
+  { key: "plant_harvest_3", title: "화분 3번째 수확", xp: 500 },
   { key: "sword_5", title: "검 +5 강화 성공", xp: 100 },
   { key: "sword_10", title: "검 +10 강화 성공", xp: 300 },
   { key: "sword_15", title: "검 +15 강화 성공", xp: 700 },
@@ -62,5 +67,6 @@ export const REPEAT: Record<string, { each: number; dailyCap: number }> = {
   post: { each: 20, dailyCap: 40 },
   comment: { each: 10, dailyCap: 30 },
   referral: { each: 50, dailyCap: 500 },
+  plant: { each: 15, dailyCap: 45 },
 };
 export function signupBonus(order: number) { return order <= 10 ? 300 : order <= 30 ? 150 : order <= 100 ? 80 : 30; }

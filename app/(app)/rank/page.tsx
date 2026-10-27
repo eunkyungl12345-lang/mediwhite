@@ -2,7 +2,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { RANKS, QUESTS, PRIVILEGES, REPEAT, signupBonus, can } from "@/lib/ranks";
 import { deptLeaders, rankFor, deptCommanders } from "@/lib/ranksvc";
-import { DEPTS, display } from "@/lib/depts";
+import { HOSPITAL_DEPTS as DEPTS, display } from "@/lib/depts";
 import RankBadge from "@/components/RankBadge";
 import Name from "@/components/Name";
 import Insignia from "@/components/Insignia";

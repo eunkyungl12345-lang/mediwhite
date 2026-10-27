@@ -268,3 +268,17 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .about-ranks .muted{color:#93A59E;line-height:1.6}
 .about-cta{text-align:center;padding:32px 16px 56px}
 .about .btn{font-size:16px;padding:12px 22px}
+
+/* 볼링 */
+.bowl-frames{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;font-variant-numeric:tabular-nums}
+.bowl-frame{border:1px solid var(--line);border-radius:4px;text-align:center;font-size:11px;background:var(--bg)}
+.bowl-frame.on{background:var(--surface)}
+.bowl-rolls{border-bottom:1px solid var(--line);padding:2px 0;color:var(--muted);min-height:16px}
+.bowl-sum{padding:2px 0;font-weight:600;min-height:16px}
+/* 화분 */
+.plant{display:grid;gap:8px;justify-items:center;text-align:center;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px}
+.plant-art{font-size:64px;line-height:1;animation:sway 3s ease-in-out infinite;transform-origin:bottom center}
+.plant.wilted .plant-art{filter:grayscale(.7) brightness(.8);animation:none;transform:rotate(12deg)}
+@keyframes sway{50%{transform:rotate(3deg)}}
+@media (prefers-reduced-motion:reduce){.plant-art{animation:none}}
+.plant-name{font-family:var(--f-display);font-size:22px}
