@@ -36,7 +36,7 @@ export default async function AboutPage() {
         <div className="about-hero-in">
           <div className="about-kicker">의료계 익명 커뮤니티</div>
           <h1>메디화이트웹</h1>
-          <p><b>병원 사람들의 진짜 이야기.</b><br />익명 라운지 · 병원 리뷰 · 월급봉투 · 써봤더니 · 채용 — 그리고 계급과 게임.</p>
+          <p><b>병원 사람들의 진짜 이야기.</b><br />익명 라운지 · 병원 리뷰 · 급여·연봉 · 제품 후기 · 채용 — 그리고 계급과 게임.</p>
           <div className="row" style={{ justifyContent: "center" }}>
             {s ? <Link className="btn" href="/board">라운지로 들어가기</Link> : <><Link className="btn" href="/login">가입하고 입장</Link><Link className="btn ghost about-ghost" href="/login">이미 회원이에요</Link></>}
           </div>
@@ -50,12 +50,12 @@ export default async function AboutPage() {
           {hot.length ? hot.map(p => <Row key={p.id} p={p} />) : <div className="mainlive-empty">이번 주 첫 핫한 글의 주인공이 되어보세요.</div>}
         </div>
         <div className="mainlive-col">
-          <h2>🏥 병원 리뷰 · 💰 월급봉투</h2>
+          <h2>🏥 병원 리뷰 · 💰 급여·연봉</h2>
           {info.length ? info.map(p => <Row key={p.id} p={p} />) : <div className="mainlive-empty">병원 분위기·복지·급여 이야기가 모이는 곳. 첫 글을 기다려요.</div>}
           <Link href={s ? "/board?topic=hospital" : "/login"} className="mainlive-more">리뷰 보러 가기 →</Link>
         </div>
         <div className="mainlive-col">
-          <h2>🧤 써봤더니</h2>
+          <h2>🧤 제품 후기</h2>
           {items.length ? items.map(p => <Row key={p.id} p={p} />) : <div className="mainlive-empty">발 안 아픈 간호화, 야간 간식, 손 안 트는 핸드크림… 직접 써본 사람의 솔직 후기.</div>}
           <Link href={s ? "/board?topic=item" : "/login"} className="mainlive-more">후기 보러 가기 →</Link>
         </div>
@@ -67,7 +67,7 @@ export default async function AboutPage() {
 
       <section className="about-grid">
         <div className="about-card"><div className="about-ico">🔒</div><h3>익명, 직원끼리만</h3><p>실명 대신 [직종]닉네임. 이메일·전화번호 안 받아요. 환자 정보 금지, 신고 시 즉시 임시조치.</p></div>
-        <div className="about-card"><div className="about-ico">🏥</div><h3>직종 × 주제</h3><p>의사·간호사·간호조무사·방사선·물리치료·임상병리·응급구조·원무·총괄 — 휴게실·당직일지·병원 리뷰·월급봉투·훈련소·이직·채용.</p></div>
+        <div className="about-card"><div className="about-ico">🏥</div><h3>직종 × 주제</h3><p>의사·간호사·간호조무사·방사선·물리치료·임상병리·응급구조·원무·총괄 — 자유·일상·병원 리뷰·급여·공부·정보·이직·채용·제품 후기.</p></div>
         <div className="about-card"><div className="about-ico">🎖️</div><h3>참여하면 진급</h3><p>훈련병부터 참모총장까지 19계급. 글 앞에 계급장이 붙고, 높을수록 글이 위로 올라가요. 파트별 참모총장은 단 한 명.</p></div>
         <div className="about-card"><div className="about-ico">🎮</div><h3>매일 들어올 이유</h3><p>우리 병원 키우기(접속 안 해도 돈이 쌓여요), 병동 사수, 번개 모드 등 12가지 게임 · 오늘의 퀘스트 · 실시간 채팅.</p></div>
       </section>
