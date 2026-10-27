@@ -10,6 +10,7 @@ import DeleteAccount from "@/components/DeleteAccount";
 import ProfileForm from "@/components/ProfileForm";
 import PasswordForm from "@/components/PasswordForm";
 import InviteLink from "@/components/InviteLink";
+import Hero from "@/components/Hero";
 export const dynamic = "force-dynamic";
 
 export default async function RankPage() {
@@ -27,6 +28,7 @@ export default async function RankPage() {
   const n = count ?? 0;
   return (
     <div className="games">
+      <Hero img="/img/rank.jpg" title="내 계급" sub="참여할수록 진급" />
       <div className={`card t${r.tier}`}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><Name r={r} dept={me?.dept ?? s.dept} nickname={me?.nickname ?? s.nickname} username={s.username} size={22} /><RankBadge r={r} /><span className="muted">가입 {me?.join_order ?? "-"}번째</span></div>
         <h3>{xp.toLocaleString()} XP</h3>

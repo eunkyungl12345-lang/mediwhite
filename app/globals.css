@@ -62,6 +62,7 @@ textarea{resize:vertical;min-height:140px}
 
 /* auth */
 .auth{max-width:380px;margin:8vh auto 0;width:100%}
+.login-bg .auth{margin-top:min(34vh,300px)}
 .auth h1{font-family:var(--f-display);font-weight:400;font-size:32px;margin:0}
 .auth .switch{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:4px}
 .auth .switch button{flex:1;background:none;border:0;font:inherit;font-weight:600;color:var(--muted);padding:10px 0;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
@@ -221,3 +222,17 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .shine-t6{--sw:1.8s;filter:drop-shadow(0 0 4px rgba(230,179,65,1));animation:glow 1.4s ease-in-out infinite}
 @keyframes glow{50%{filter:drop-shadow(0 0 7px rgba(242,201,76,1))}}
 @media (prefers-reduced-motion:reduce){.insignia .sweep,.insignia .tw,.shine-t5,.shine-t6{animation:none}}
+
+/* 이미지 배너 */
+.hero{position:relative;border-radius:14px;overflow:hidden;background-size:cover;background-position:center;min-height:120px;display:flex;align-items:flex-end;background-color:#06141A}
+.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,20,26,.05),rgba(6,20,26,.75))}
+.hero-in{position:relative;padding:16px 18px;color:#F4FBF9}
+.hero-in h2{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0;letter-spacing:.5px;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.hero-in p{margin:2px 0 0;font-size:13px;color:#BFD6CF}
+.login-bg{min-height:100%;background:#040B0E url(/img/login.jpg) 72% 20%/cover no-repeat;position:relative}
+.login-bg::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,11,14,.15) 0%,rgba(4,11,14,.35) 45%,rgba(4,11,14,.85) 100%)}
+@media (min-width:700px){.login-bg{background-position:center 30%}}
+.login-bg .app{position:relative}
+.login-card{background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
+.login-card h1{color:var(--ink)}
+@media (prefers-color-scheme:dark){.login-card{background:rgba(24,34,31,.88)}}

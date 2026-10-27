@@ -3,6 +3,7 @@ import { db } from "@/lib/supabase";
 import { deptPools, bankInfo, AMOUNTS, POINT_PER_WON } from "@/lib/support";
 import { fmt } from "@/lib/format";
 import SupportForm from "@/components/SupportForm";
+import Hero from "@/components/Hero";
 export const dynamic = "force-dynamic";
 
 export default async function SupportPage() {
@@ -15,6 +16,7 @@ export default async function SupportPage() {
   const max = Math.max(1, rows[0]?.points ?? 1);
   return (
     <div className="games">
+      <Hero img="/img/support.jpg" title="파트 응원전" sub="우리 파트를 대표 파트로" />
       <div className="card">
         <h3>파트 응원전</h3>
         <div className="muted">파트에 응원 포인트를 쌓으면 <b>1위 파트</b>가 대표 파트가 돼요. 대표 파트 글은 게시판 <b>🏆 대표 파트</b> 탭에 그 파트만 상위노출되고 금빛 배지가 붙어요. 1,000원 = {Math.round(1000 * POINT_PER_WON)} XP, 응원한 사람도 절반을 개인 경험치로 받아요.</div>
