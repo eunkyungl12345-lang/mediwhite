@@ -15,7 +15,7 @@ export default function Quiz({ ranks, myDept, best = 0 }: { ranks: Row[]; myDept
   const [mode, setMode] = useState<"all" | "mine">("all");
   const pool = useRef<number[]>([]); const timer = useRef<any>(null); const sc = useRef(0);
   useEffect(() => () => clearInterval(timer.current), []);
-  const next = () => { if (!pool.current.length) pool.current = QUIZ.map((_, i) => i).filter(i => mode === "all" || QUIZ[i][5] === myDept).sort(() => Math.random() - .5); if (!pool.current.length) pool.current = QUIZ.map((_, i) => i);
+  const next = () => { if (!pool.current.length) pool.current = QUIZ.map((_, i) => i).filter(i => mode === "all" || (QUIZ[i][5] === myDept || (QUIZ[i][5] === "간호" && (myDept === "간호사" || myDept === "간호조무사")))).sort(() => Math.random() - .5); if (!pool.current.length) pool.current = QUIZ.map((_, i) => i);
     const [text, a, b, c, d, dept] = QUIZ[pool.current.pop()!]; setQ({ text, ans: a, dept, opts: [a, b, c, d].sort(() => Math.random() - .5) }); };
   const start = () => { setRec(false); watch.current = recordWatcher(best); sfx.level(); setScore(0); sc.current = 0; setCombo(0); setN(0); setOk(0); setLeft(DUR); setState("run"); pool.current = []; next();
     const t0 = Date.now(); timer.current = setInterval(() => { const l = DUR - Math.floor((Date.now() - t0) / 1000); setLeft(Math.max(0, l)); if (l <= 0) { clearInterval(timer.current); setState("done"); saveScore("quiz", sc.current).catch(() => {}); } }, 250); };
