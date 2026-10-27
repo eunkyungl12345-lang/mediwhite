@@ -15,3 +15,5 @@ export const deptPools = cache(async () => {
   return { rows, top };
 });
 export async function bankInfo() { const { data } = await db().from("settings").select("value").eq("key", "bank").maybeSingle(); return data?.value ?? ""; }
+
+export async function contactEmail() { const { data } = await db().from("settings").select("value").eq("key", "contact_email").maybeSingle(); return data?.value ?? ""; }

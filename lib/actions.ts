@@ -298,3 +298,22 @@ export async function saveGameState(game: string, state: Record<string, unknown>
   if (JSON.stringify(state).length > 20000) return;
   await db().from("game_state").upsert({ user_id: u.id, game, state, updated_at: new Date().toISOString() });
 }
+
+/* ---------- 문의 ---------- */
+export async function submitInquiry(_: FormState, fd: FormData): Promise<FormState> {
+  const s = await getSession();
+  const kind = clean(fd.get("kind"), 20), name = clean(fd.get("name"), 30), contact = clean(fd.get("contact"), 80), body = clean(fd.get("body"), 2000);
+  if (!["ad", "partner", "bug", "other"].includes(kind)) return { error: "문의 종류를 선택해주세요" };
+  if (!name || !contact || !body) return { error: "이름, 연락처, 내용을 모두 적어주세요" };
+  const { error } = await db().from("inquiries").insert({ kind, name, contact, body, user_id: s?.id ?? null });
+  if (error) return { error: "접수에 실패했어요. 잠시 후 다시 시도해주세요" };
+  revalidatePath("/admin");
+  return { ok: "접수됐어요. 확인 후 적어주신 연락처로 답변드릴게요." };
+}
+export async function setInquiryStatus(id: number, status: "new" | "done") {
+  await requireAdmin(); await db().from("inquiries").update({ status }).eq("id", id); revalidatePath("/admin");
+}
+export async function adminSetContactEmail(_: FormState, fd: FormData): Promise<FormState> {
+  await requireAdmin(); await db().from("settings").upsert({ key: "contact_email", value: clean(fd.get("email"), 80) });
+  revalidatePath("/contact"); revalidatePath("/admin"); return { ok: "저장했어요" };
+}
