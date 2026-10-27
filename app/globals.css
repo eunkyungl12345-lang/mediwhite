@@ -246,3 +246,25 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
 
 .pushbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:13px;background:var(--scrub-soft);border-radius:10px;padding:8px 12px;margin-top:10px}
+
+/* 소개 페이지 */
+.about{background:#06141A;color:#E5EDEA;min-height:100%}
+.about-hero{position:relative;min-height:78vh;display:flex;align-items:center;justify-content:center;text-align:center;background:#06141A url(/img/spare2.jpg) center 20%/cover no-repeat;padding:48px max(16px,env(safe-area-inset-left,0px)) 40px max(16px,env(safe-area-inset-right,0px))}
+.about-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,20,26,.2),rgba(6,20,26,.55) 60%,#06141A 100%)}
+.about-hero-in{position:relative;max-width:640px;display:grid;gap:14px;justify-items:center}
+.about-kicker{font-size:13px;letter-spacing:.2em;color:#6FBFA9;text-transform:uppercase}
+.about-hero h1{font-family:var(--f-display);font-weight:400;font-size:clamp(44px,12vw,84px);margin:0;letter-spacing:1px;text-shadow:0 4px 30px rgba(0,0,0,.7)}
+.about-hero p{font-size:17px;line-height:1.6;color:#CFE0DA;margin:0}
+.about-ghost{color:#E5EDEA;border-color:rgba(255,255,255,.3)}
+.about-count{font-size:13px;color:#93A59E}
+.about-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;max-width:960px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-left,0px)) 8px max(16px,env(safe-area-inset-right,0px))}
+.about-card{background:#0E1F26;border:1px solid #1E3139;border-radius:14px;padding:18px;display:grid;gap:6px}
+.about-card h3{margin:0;font-size:17px}.about-card p{margin:0;font-size:14px;color:#A9BDB6;line-height:1.55}
+.about-ico{font-size:28px;line-height:1}
+.about-ranks{max-width:960px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-left,0px)) 8px max(16px,env(safe-area-inset-right,0px))}
+.about-ranks h2{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0 0 12px}
+.about-rank-row{display:flex;flex-wrap:wrap;gap:10px 16px}
+.about-rank{display:flex;align-items:center;gap:6px;font-size:13px;color:#CFE0DA}
+.about-ranks .muted{color:#93A59E;line-height:1.6}
+.about-cta{text-align:center;padding:32px 16px 56px}
+.about .btn{font-size:16px;padding:12px 22px}
