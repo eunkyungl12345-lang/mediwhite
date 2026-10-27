@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
-import PixelIcon from "./PixelIcon";
 export type GameEntry = { id: string; name: string; icon: string; sub: string; node: ReactNode; color?: string; badge?: string };
 export default function GameHub({ games }: { games: GameEntry[] }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -15,11 +14,9 @@ export default function GameHub({ games }: { games: GameEntry[] }) {
   );
   return (
     <div className="hub">
-      <div className="hub-top"><span className="hub-led" /> GAME SELECT <span className="hub-blink">▶</span><span className="hub-right">MEDIWHITE · {games.length} GAMES</span></div>
-      {games.map((g, i) => <button key={g.id} type="button" className={"hub-tile" + (i === 0 ? " wide" : "")} style={{ "--tile": g.color ?? "#FFE9A8", "--rot": `${((i * 7) % 5) - 2}deg` } as any} onClick={() => pick(g.id)}>
+      {games.map(g => <button key={g.id} type="button" className="hub-tile" onClick={() => pick(g.id)}>
         {g.badge && <span className={"hub-badge" + (g.badge === "HIT!" ? " hit" : "")}>{g.badge}</span>}
-        <span className="hub-ico" style={{ animationDelay: `${(i % 5) * .3}s` }}><PixelIcon e={g.icon} size={i === 0 ? 64 : 48} px={i === 0 ? 16 : 14} /></span><span className="hub-name">{g.name}</span><span className="hub-sub">{g.sub}</span></button>)}
-      <div className="hub-foot"><span className="hub-blink">■</span> PRESS A GAME TO START</div>
+        <span className="hub-ico">{g.icon}</span><span className="hub-name">{g.name}</span><span className="hub-sub">{g.sub}</span></button>)}
     </div>
   );
 }
