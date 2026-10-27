@@ -41,16 +41,17 @@ export default function ChatDock({ me, initial, online, myRank, official }: { me
   const onUp = (e: React.PointerEvent) => {
     const d = drag.current; drag.current = null; if (!d || !dockRef.current) return;
     dockRef.current.classList.remove("dragging");
-    dockRef.current.style.transform = "";
-    if (!d.moved) { setOpenPersist(!open); return; } // 탭 = 토글
+    const settle = (o: boolean) => { if (dockRef.current) dockRef.current.style.transform = o ? "translateY(0px)" : `translateY(${d.h}px)`; };
+    if (!d.moved) { settle(!open); setOpenPersist(!open); return; } // 탭 = 토글
     const v = d.dy / Math.max(1, performance.now() - d.t0); // px/ms
     const base = open ? 0 : d.h; const y = base + d.dy;
     const next = Math.abs(v) > 0.5 ? v < 0 : y < d.h / 2;
+    settle(next); // React가 같은 값이라 다시 안 써줄 수 있으니 직접 복귀
     if (next !== open) setOpenPersist(next); else if ("vibrate" in navigator) try { navigator.vibrate(5); } catch {}
   };
 
   return (
-    <div ref={dockRef} className={"dock" + (open ? " open" : "")} style={{ transform: open ? "translateY(0)" : `translateY(${bodyH}px)` }}>
+    <div ref={dockRef} className={"dock" + (open ? " open" : "")} style={{ transform: open ? "translateY(0px)" : `translateY(${bodyH}px)` }}>
       <div className="dock-bar" role="button" tabIndex={0} aria-expanded={open}
         onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenPersist(!open); } }}>
