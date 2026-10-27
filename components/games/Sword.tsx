@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { saveScore, loadGameState, saveGameState } from "@/lib/actions";
 import Board, { type Row } from "./Board";
+import { sfx, haptic, shake as shakeEl, burst, pop } from "@/lib/juice";
+import { BestLine } from "./Juice";
 
 const NAMES = ["녹슨 검", "무쇠 검", "강철 검", "은빛 검", "기사의 검", "명검", "보검", "전설의 검", "용살검", "성검", "신검"];
 const ART = ["🗡️", "🗡️", "🗡️", "⚔️", "⚔️", "⚔️", "✨", "✨", "🔥", "🔥", "🌟"];
@@ -10,7 +12,8 @@ const START = 1_000_000;
 const INIT: S = { mode: "easy", gold: START, lvl: 0, best: 0 };
 const won = (n: number) => { if (n >= 100_000_000) { const eok = Math.floor(n / 100_000_000), man = Math.floor((n % 100_000_000) / 10000); return `${eok.toLocaleString()}억${man ? " " + man.toLocaleString() + "만" : ""}원`; } return n >= 10000 ? `${Math.floor(n / 10000).toLocaleString()}만${n % 10000 ? " " + (n % 10000).toLocaleString() : ""}원` : `${n.toLocaleString()}원`; };
 
-export default function Sword({ ranks }: { ranks: Row[] }) {
+export default function Sword({ ranks, best = 0 }: { ranks: Row[]; best?: number }) {
+  const boxRef = useRef<HTMLDivElement>(null);
   const [sw, setSw] = useState<S>(INIT);
   const [log, setLog] = useState<{ t: string; c: string }>({ t: "강화를 시작해보세요.", c: "" });
   const [shake, setShake] = useState(0);
@@ -36,11 +39,13 @@ export default function Sword({ ranks }: { ranks: Row[] }) {
   function enhance() {
     const c = cost(sw.lvl); if (sw.gold < c) return;
     const n = { ...sw, gold: sw.gold - c };
-    if (Math.random() * 100 < rate(sw.lvl)) { n.lvl++; setLog({ t: `성공! ${name(n.lvl)} 획득`, c: "good" }); if (n.lvl > n.best) { n.best = n.lvl; saveScore("sword", n.lvl, n.mode).catch(() => {}); } }
-    else if (sw.lvl >= 5 && (sw.protect ?? 0) > 0) { n.protect = (sw.protect ?? 0) - 1; setLog({ t: `실패했지만 🛡️ 깨짐 방지권이 막아줬어요! (남은 방지권 ${n.protect}장)`, c: "good" }); setShake(s => s + 1); }
-    else if (sw.lvl >= 10) { n.lvl = 0; setLog({ t: "쨍그랑… 검이 산산조각 났어요. +0부터 다시", c: "bad" }); setShake(s => s + 1); }
-    else if (sw.lvl >= 5) { n.lvl--; setLog({ t: `실패! 한 단계 내려가서 ${name(n.lvl)}`, c: "bad" }); setShake(s => s + 1); }
-    else { setLog({ t: "실패… 다행히 검은 무사해요", c: "bad" }); setShake(s => s + 1); }
+    const el = boxRef.current, r = el?.getBoundingClientRect(); const cx = r ? r.width / 2 : 0, cy = r ? r.height * .35 : 0;
+    sfx.tap(); haptic(8);
+    if (Math.random() * 100 < rate(sw.lvl)) { n.lvl++; setLog({ t: `성공! ${name(n.lvl)} 획득`, c: "good" }); if (n.lvl >= 10) sfx.record(); else sfx.level(); haptic([15, 20, 15]); burst(el, cx, cy, n.lvl >= 10 ? "#F4D35E" : "#6FBFA9", n.lvl >= 10 ? 24 : 12); pop(el, cx, cy, `+${n.lvl}!`, "good big"); if (n.lvl > n.best) { n.best = n.lvl; saveScore("sword", n.lvl, n.mode).catch(() => {}); } }
+    else if (sw.lvl >= 5 && (sw.protect ?? 0) > 0) { n.protect = (sw.protect ?? 0) - 1; setLog({ t: `실패했지만 🛡️ 깨짐 방지권이 막아줬어요! (남은 방지권 ${n.protect}장)`, c: "good" }); setShake(s => s + 1); sfx.hit(); shakeEl(el, "m"); pop(el, cx, cy, "🛡️ 방어!", "good"); }
+    else if (sw.lvl >= 10) { n.lvl = 0; setLog({ t: "쨍그랑… 검이 산산조각 났어요. +0부터 다시", c: "bad" }); setShake(s => s + 1); sfx.boom(); haptic([80, 50, 80]); shakeEl(el, "l"); burst(el, cx, cy, "#E2574C", 30); pop(el, cx, cy, "쨍그랑!", "bad big"); }
+    else if (sw.lvl >= 5) { n.lvl--; setLog({ t: `실패! 한 단계 내려가서 ${name(n.lvl)}`, c: "bad" }); setShake(s => s + 1); sfx.fail(); haptic([30, 30, 30]); shakeEl(el, "m"); pop(el, cx, cy, "-1", "bad big"); }
+    else { setLog({ t: "실패… 다행히 검은 무사해요", c: "bad" }); setShake(s => s + 1); sfx.fail(); shakeEl(el, "s"); }
     save(n);
   }
   const sell = () => { const p = price(sw.lvl); setLog({ t: `${name(sw.lvl)}을(를) ${won(p)}에 팔았어요. 새 검 지급`, c: "good" }); save({ ...sw, gold: sw.gold + p, lvl: 0 }); };
@@ -53,7 +58,8 @@ export default function Sword({ ranks }: { ranks: Row[] }) {
         <button className="cats-btn" type="button" aria-pressed={sw.mode === "easy"} onClick={() => save({ ...sw, mode: "easy" })}>이지</button>
         <button className="cats-btn" type="button" aria-pressed={sw.mode === "hard"} onClick={() => save({ ...sw, mode: "hard" })}>하드</button>
       </div>
-      <div className="sword">
+      <div className="bar" style={{ paddingBottom: 0 }}><span /><BestLine best={best} cur={sw.lvl} unit="강" /></div>
+      <div className="sword" ref={boxRef}>
         <div key={shake} className={"sword-art" + (shake ? " shake" : "")} aria-hidden="true">{ART[Math.min(sw.lvl, ART.length - 1)]}</div>
         <div className="sword-lvl">{name(sw.lvl)}{(sw.protect ?? 0) > 0 && <span className="tag" style={{ marginLeft: 8, verticalAlign: "middle" }}>🛡️ 방지권 {sw.protect}장</span>}</div>
         <div className="sword-stats"><span>보유 <b>{won(sw.gold)}</b></span><span>강화비 <b>{won(cost(sw.lvl))}</b></span><span>성공률 <b>{rate(sw.lvl)}</b>%</span><span>판매가 <b>{won(price(sw.lvl))}</b></span></div>

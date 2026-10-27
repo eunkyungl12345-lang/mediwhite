@@ -2,9 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { saveScore } from "@/lib/actions";
 import Board, { type Row } from "./Board";
+import { sfx, haptic, shake, burst, pop, recordWatcher } from "@/lib/juice";
+import { BestLine, RecordFlash } from "./Juice";
 /** 혈관 찾기 (스피드) — 20초 동안 계속 나타나는 혈관을 빠르게 찔러요. 연속 성공 콤보 배수, 빗나가면 콤보 리셋. */
 type Target = { x: number; y: number; r: number; life: number; max: number; vx: number; vy: number };
-export default function Vein({ ranks }: { ranks: Row[] }) {
+export default function Vein({ ranks, best = 0 }: { ranks: Row[]; best?: number }) {
+  const [rec, setRec] = useState(false); const watch = useRef(recordWatcher(best));
   const box = useRef<HTMLDivElement>(null), cv = useRef<HTMLCanvasElement>(null);
   const [state, setState] = useState<"idle" | "run" | "done">("idle"); const [score, setScore] = useState(0); const [combo, setCombo] = useState(0); const [left, setLeft] = useState(20); const [fb, setFb] = useState(""); const [patient, setPatient] = useState("성인");
   const g = useRef({ W: 0, H: 0, raf: 0, last: 0, t: 0, run: false, targets: [] as Target[], spawn: 0, score: 0, combo: 0, best: 0, hits: 0, miss: 0, ptype: "성인", fx: [] as { x: number; y: number; t: number; txt: string; good: boolean }[], shake: 0 });
@@ -29,12 +32,12 @@ export default function Vein({ ranks }: { ranks: Row[] }) {
       setLeft(Math.max(0, Math.ceil(20 - s.t))); draw();
       if (s.t >= 20) { s.run = false; setState("done"); const final = s.score; setFb(final >= 800 ? `${final}점 — 채혈의 신 🩸` : final >= 500 ? `${final}점 — 안정적인 손` : `${final}점 — 연습이 필요해요`); saveScore("vein", final).catch(() => {}); return; }
       s.raf = requestAnimationFrame(tick); };
-    (st as any).__start = (ptype: string) => { s.ptype = ptype; s.t = 0; s.score = 0; s.combo = 0; s.hits = 0; s.miss = 0; s.targets = []; s.fx = []; s.spawn = 0; s.run = true; s.last = performance.now(); setScore(0); setCombo(0); setLeft(20); setFb(""); setState("run"); cancelAnimationFrame(s.raf); s.raf = requestAnimationFrame(tick); };
+    (st as any).__start = (ptype: string) => { setRec(false); watch.current = recordWatcher(best); sfx.level(); s.ptype = ptype; s.t = 0; s.score = 0; s.combo = 0; s.hits = 0; s.miss = 0; s.targets = []; s.fx = []; s.spawn = 0; s.run = true; s.last = performance.now(); setScore(0); setCombo(0); setLeft(20); setFb(""); setState("run"); cancelAnimationFrame(s.raf); s.raf = requestAnimationFrame(tick); };
     const pd = (e: PointerEvent) => { if (!s.run) return; const rc = st.getBoundingClientRect(); const px = e.clientX - rc.left, py = e.clientY - rc.top;
       let best: Target | null = null, bd = 1e9; for (const t of s.targets) { const d = Math.hypot(px - t.x, py - t.y); if (d < bd) { bd = d; best = t; } }
-      if (best && bd < best.r * 2.2) { const base = bd < best.r * .7 ? 30 : bd < best.r * 1.4 ? 20 : 10; s.combo++; const mult = 1 + Math.min(2, Math.floor(s.combo / 5) * .5); const pts = Math.round(base * mult); s.score += pts; s.hits++; s.targets = s.targets.filter(t => t !== best); s.fx.push({ x: px, y: py, t: 1, txt: `+${pts}${s.combo >= 5 ? ` x${mult}` : ""}`, good: true }); }
-      else { s.combo = 0; s.score = Math.max(0, s.score - 5); s.shake = .25; s.fx.push({ x: px, y: py, t: 1, txt: "아야!", good: false }); }
-      setScore(s.score); setCombo(s.combo); };
+      if (best && bd < best.r * 2.2) { const base = bd < best.r * .7 ? 30 : bd < best.r * 1.4 ? 20 : 10; s.combo++; const mult = 1 + Math.min(2, Math.floor(s.combo / 5) * .5); const pts = Math.round(base * mult); s.score += pts; s.hits++; s.targets = s.targets.filter(t => t !== best); s.fx.push({ x: px, y: py, t: 1, txt: `+${pts}${s.combo >= 5 ? ` x${mult}` : ""}`, good: true }); base === 30 ? sfx.perfect() : sfx.ok(s.combo); haptic(10); burst(st, px, py, "#D9534F", 8); if (s.combo % 5 === 0) sfx.combo(s.combo); }
+      else { s.combo = 0; s.score = Math.max(0, s.score - 5); s.shake = .25; s.fx.push({ x: px, y: py, t: 1, txt: "아야!", good: false }); sfx.fail(); haptic([25, 30, 25]); shake(st, "l"); }
+      setScore(s.score); setCombo(s.combo); watch.current(s.score, () => { setRec(true); sfx.record(); setTimeout(() => setRec(false), 1400); }); };
     const ro = new ResizeObserver(size); ro.observe(st); size(); st.addEventListener("pointerdown", pd);
     return () => { ro.disconnect(); cancelAnimationFrame(s.raf); st.removeEventListener("pointerdown", pd); };
   }, []);
@@ -42,8 +45,8 @@ export default function Vein({ ranks }: { ranks: Row[] }) {
     <div className="card">
       <div><h3>혈관 찾기</h3><div className="muted">20초 동안 팔 위에 계속 나타나는 혈관을 빠르게 찔러요! 중심 30 · 근처 20 · 가장자리 10, 연속 5번마다 콤보 배수(최대 x3). 빗나가면 환자가 "아야!" + 콤보 리셋, 사라지기 전에 못 찌르면 놓침. 소아는 가늘고 노인은 잘 움직여요. 500·800점 퀘스트.</div></div>
       <div className="row">{["성인", "노인", "소아"].map(p => <button key={p} type="button" className="cats-btn" aria-pressed={patient === p} onClick={() => setPatient(p)} disabled={state === "run"}>{p === "성인" ? "🧑 성인" : p === "노인" ? "👴 노인" : "👶 소아"}</button>)}</div>
-      <div className="def-bar"><span className="def-sun">🩸 {score}점</span><span className="muted">{state === "run" ? `${left}초 · 콤보 ${combo}` : fb}</span></div>
-      <div className="def-stage" ref={box} style={{ touchAction: "manipulation" }}><canvas ref={cv} />
+      <div className="def-bar"><span className="def-sun">🩸 {score}점{combo >= 3 && <span className="tag" style={{ marginLeft: 6 }}>{combo} COMBO</span>}</span><span className="muted">{state === "run" ? `${left}초` : fb}</span><BestLine best={best} cur={score} /></div>
+      <div className="def-stage" ref={box} style={{ touchAction: "manipulation" }}><canvas ref={cv} />{rec && <RecordFlash />}
         {state !== "run" && <button type="button" className="overlay" onClick={e => { e.stopPropagation(); (box.current as any).__start(patient); }}><span className="big">{state === "done" ? "다시" : "혈관 찾기"}</span><span>터치해서 시작</span></button>}</div>
       <Board title="혈관 찾기 명예의 전당" rows={ranks} fmt={r => r.value + "점"} />
     </div>

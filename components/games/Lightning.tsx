@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { saveScore } from "@/lib/actions";
 import { QUIZ } from "@/lib/quiz";
 import Board, { type Row } from "./Board";
+import { sfx, haptic, shake, burst, pop, recordWatcher } from "@/lib/juice";
+import { BestLine, RecordFlash } from "./Juice";
 
 /** ⚡ 번개 모드 — 5초짜리 미니게임이 랜덤 연속. 목숨 3개, 10개마다 빨라짐. */
 type Ctx = CanvasRenderingContext2D;
@@ -25,7 +27,8 @@ const MICROS: Micro[] = [
   { cmd: "정상 체온!", init: s => { s.p = 0; s.dir = 1; }, update: (dt, s) => { s.p += s.dir * dt * 1.4; if (s.p > 1 || s.p < 0) s.dir *= -1; s.p = Math.max(0, Math.min(1, s.p)); }, draw: (x, s, W, H) => { x.fillStyle = "#DDE5E2"; x.fillRect(W * .1, H * .45, W * .8, H * .1); x.fillStyle = "#6FBFA9"; x.fillRect(W * .42, H * .45, W * .16, H * .1); x.fillStyle = "#E2574C"; x.fillRect(W * (.1 + s.p * .8) - 3, H * .4, 6, H * .2); txt(x, "35°", W * .1, H * .65, 13, "#5E6E68"); txt(x, "36.5°", W * .5, H * .65, 13, "#2C6B5E"); txt(x, "40°", W * .9, H * .65, 13, "#5E6E68"); }, tap: (px, py, s) => (s.p > .4 && s.p < .6) ? "win" : "lose" },
 ];
 
-export default function Lightning({ ranks }: { ranks: Row[] }) {
+export default function Lightning({ ranks, best = 0 }: { ranks: Row[]; best?: number }) {
+  const [rec, setRec] = useState(false); const watch = useRef(recordWatcher(best));
   const box = useRef<HTMLDivElement>(null), cv = useRef<HTMLCanvasElement>(null);
   const [state, setState] = useState<"idle" | "run" | "done">("idle"); const [cleared, setCleared] = useState(0); const [lives, setLives] = useState(3); const [cmd, setCmd] = useState(""); const [flash, setFlash] = useState<null | "win" | "lose">(null); const [score, setScore] = useState(0);
   const g = useRef({ W: 0, H: 0, raf: 0, last: 0, micro: null as Micro | null, ms: {} as any, t: 0, limit: 5, cleared: 0, lives: 3, run: false, lock: false, score: 0, hist: [] as number[] });
@@ -33,13 +36,14 @@ export default function Lightning({ ranks }: { ranks: Row[] }) {
     const st = box.current!, c = cv.current!, x = c.getContext("2d")!, s = g.current;
     const size = () => { const r = st.getBoundingClientRect(); const d = Math.min(2, devicePixelRatio || 1); s.W = r.width; s.H = r.width * .8; c.width = s.W * d; c.height = s.H * d; c.style.height = s.H + "px"; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
     const draw = () => { x.fillStyle = "#F3F6F5"; x.fillRect(0, 0, s.W, s.H); if (s.micro) { s.micro.draw(x, s.ms, s.W, s.H, s.t); const p = Math.max(0, 1 - s.t / s.limit); x.fillStyle = p < .3 ? "#E2574C" : "#2C6B5E"; x.fillRect(0, 0, s.W * p, 6); } };
-    const next = () => { let i = Math.floor(Math.random() * MICROS.length); if (s.hist.slice(-2).includes(i)) i = (i + 1) % MICROS.length; s.hist.push(i); s.micro = MICROS[i]; s.ms = {}; s.micro.init(s.ms, s.W, s.H); s.t = 0; s.limit = Math.max(2.6, 5 - Math.floor(s.cleared / 10) * .6); s.lock = false; setCmd(s.micro.cmd); };
+    const next = () => { sfx.tick(); let i = Math.floor(Math.random() * MICROS.length); if (s.hist.slice(-2).includes(i)) i = (i + 1) % MICROS.length; s.hist.push(i); s.micro = MICROS[i]; s.ms = {}; s.micro.init(s.ms, s.W, s.H); s.t = 0; s.limit = Math.max(2.6, 5 - Math.floor(s.cleared / 10) * .6); s.lock = false; setCmd(s.micro.cmd); };
     const resolve = (r: Res) => { if (!r || s.lock) return; s.lock = true; setFlash(r);
-      if (r === "win") { s.cleared++; s.score += 10 + Math.round((1 - s.t / s.limit) * 5); setCleared(s.cleared); setScore(s.score); } else { s.lives--; setLives(s.lives); }
+      if (r === "win") { s.cleared++; const pts = 10 + Math.round((1 - s.t / s.limit) * 5); s.score += pts; setCleared(s.cleared); setScore(s.score); sfx.ok(s.cleared); haptic(12); burst(st, s.W / 2, s.H / 2, "#F4D35E", 14); pop(st, s.W / 2, s.H * .4, `+${pts}`, "good big"); if (s.cleared % 10 === 0) { sfx.level(); pop(st, s.W / 2, s.H * .6, "SPEED UP!", "bad big"); } watch.current(s.score, () => { setRec(true); sfx.record(); setTimeout(() => setRec(false), 1400); }); }
+      else { s.lives--; setLives(s.lives); sfx.fail(); haptic([30, 40, 30]); shake(st, "l"); }
       setTimeout(() => { setFlash(null); if (s.lives <= 0) { s.run = false; cancelAnimationFrame(s.raf); setState("done"); saveScore("lightning", s.score).catch(() => {}); } else next(); }, 450); };
     const tick = (now: number) => { const dt = Math.min(.05, (now - s.last) / 1000); s.last = now; if (!s.lock && s.micro) { s.t += dt; const r = s.micro.update?.(dt, s.ms, s.W, s.H, s.t); if (r) resolve(r); else if (s.t >= s.limit) resolve(s.micro.timeoutWins ? "win" : "lose"); }
       draw(); if (s.run) s.raf = requestAnimationFrame(tick); };
-    (st as any).__start = () => { s.cleared = 0; s.lives = 3; s.score = 0; s.hist = []; s.run = true; setCleared(0); setLives(3); setScore(0); setState("run"); next(); s.last = performance.now(); cancelAnimationFrame(s.raf); s.raf = requestAnimationFrame(tick); };
+    (st as any).__start = () => { setRec(false); watch.current = recordWatcher(best); sfx.level(); s.cleared = 0; s.lives = 3; s.score = 0; s.hist = []; s.run = true; setCleared(0); setLives(3); setScore(0); setState("run"); next(); s.last = performance.now(); cancelAnimationFrame(s.raf); s.raf = requestAnimationFrame(tick); };
     const pd = (e: PointerEvent) => { if (!s.run || s.lock || !s.micro) return; const rc = st.getBoundingClientRect(); const r = s.micro.tap?.(e.clientX - rc.left, e.clientY - rc.top, s.ms, s.W, s.H); if (r) resolve(r); };
     const ro = new ResizeObserver(size); ro.observe(st); size(); st.addEventListener("pointerdown", pd);
     return () => { ro.disconnect(); cancelAnimationFrame(s.raf); st.removeEventListener("pointerdown", pd); };
@@ -47,10 +51,10 @@ export default function Lightning({ ranks }: { ranks: Row[] }) {
   return (
     <div className="card">
       <div><h3>⚡ 번개 모드</h3><div className="muted">5초짜리 미니게임이 랜덤으로 계속 나와요. 화면 위 지시어를 보고 한 손가락으로! 목숨 3개, 10개 넘길 때마다 빨라져요. 빨리 깰수록 보너스. 10개·25개 클리어 퀘스트.</div></div>
-      <div className="def-bar"><span className="def-sun">⚡ {score}점 · {cleared}개</span><span className="muted">{"❤️".repeat(Math.max(0, lives))}{"🖤".repeat(3 - Math.max(0, lives))}</span></div>
+      <div className="def-bar"><span className="def-sun">⚡ {score}점 · {cleared}개</span><span className="muted">{"❤️".repeat(Math.max(0, lives))}{"🖤".repeat(3 - Math.max(0, lives))}</span><BestLine best={best} cur={score} /></div>
       <div className={"lt-cmd" + (flash ? " " + flash : "")}>{state === "run" ? (flash === "win" ? "성공!" : flash === "lose" ? "실패…" : cmd) : state === "done" ? `끝! ${cleared}개 클리어` : "준비됐나요?"}</div>
-      <div className="def-stage" ref={box} style={{ touchAction: "manipulation", background: "#F3F6F5" }}><canvas ref={cv} />
-        {state !== "run" && <button type="button" className="overlay" onClick={e => { e.stopPropagation(); (box.current as any).__start(); }}><span className="big">{state === "done" ? `${score}점` : "⚡ 번개 모드"}</span><span>{state === "done" ? "다시 하려면 터치" : "터치해서 시작"}</span></button>}</div>
+      <div className="def-stage" ref={box} style={{ touchAction: "manipulation", background: "#F3F6F5" }}><canvas ref={cv} />{rec && <RecordFlash />}
+        {state !== "run" && <button type="button" className="overlay" onClick={e => { e.stopPropagation(); (box.current as any).__start(); }}><span className="big">{state === "done" ? `${score}점` : "⚡ 번개 모드"}</span><span>{state === "done" ? (best && score < best ? `최고까지 ${best - score}점 · 다시 하려면 터치` : "다시 하려면 터치") : "터치해서 시작"}</span></button>}</div>
       <Board title="번개 모드 명예의 전당" rows={ranks} fmt={r => r.value + "점"} />
     </div>
   );

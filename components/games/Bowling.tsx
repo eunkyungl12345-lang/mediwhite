@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { saveScore } from "@/lib/actions";
 import Board, { type Row } from "./Board";
+import { sfx, haptic, shake, burst, pop } from "@/lib/juice";
+import { BestLine } from "./Juice";
 
 /** 복도 볼링 — 공을 드래그해서 던지기. 10프레임 정식 점수. */
 type Pin = { x: number; y: number; up: boolean; vx: number; vy: number };
-export default function Bowling({ ranks }: { ranks: Row[] }) {
+export default function Bowling({ ranks, best = 0 }: { ranks: Row[]; best?: number }) {
   const box = useRef<HTMLDivElement>(null), cv = useRef<HTMLCanvasElement>(null);
   const [rolls, setRolls] = useState<number[]>([]);
   const [msg, setMsg] = useState("공을 위로 드래그해서 던지세요");
@@ -40,7 +42,9 @@ export default function Bowling({ ranks }: { ranks: Row[] }) {
       let newRack = false, frameOver = false;
       if (!isTenth) { if (knocked === 10 || s.frameRolls.length === 2) { frameOver = true; newRack = true; } }
       else { const fr = s.frameRolls; if (fr.length === 1 && knocked === 10) newRack = true; else if (fr.length === 2 && (fr[0] === 10 || fr[0] + fr[1] === 10)) newRack = true; if (fr.length === 3 || (fr.length === 2 && fr[0] + fr[1] < 10 && fr[0] !== 10)) frameOver = true; }
-      setMsg(knocked === 10 && s.frameRolls.length === 1 ? "스트라이크! 🎳" : s.frameRolls.length === 2 && s.frameRolls[0] + s.frameRolls[1] === 10 ? "스페어!" : knocked === 0 ? "거터…" : `${knocked}개`);
+      const strike = knocked === 10 && s.frameRolls.length === 1, spare = !strike && s.frameRolls.length === 2 && s.frameRolls[0] + s.frameRolls[1] === 10;
+      setMsg(strike ? "스트라이크! 🎳" : spare ? "스페어!" : knocked === 0 ? "거터…" : `${knocked}개`);
+      if (strike) { sfx.record(); haptic([30, 30, 30, 30, 60]); shake(st, "l"); burst(st, s.W / 2, s.H * .2, "#F4D35E", 24); pop(st, s.W / 2, s.H * .35, "STRIKE!", "good big"); } else if (spare) { sfx.level(); haptic([20, 30, 20]); burst(st, s.W / 2, s.H * .2, "#98C1D9", 14); pop(st, s.W / 2, s.H * .35, "SPARE!", "good big"); } else if (knocked === 0) { sfx.fail(); pop(st, s.W / 2, s.H * .35, "거터…", "bad"); } else { sfx.hit(); haptic(10); pop(st, s.W / 2, s.H * .3, `${knocked}핀`, ""); }
       if (frameOver) s.frameRolls = [];
       if (newRack || standingNow === 0) rack();
       const total = score(s.rolls);
@@ -49,14 +53,14 @@ export default function Bowling({ ranks }: { ranks: Row[] }) {
     const frameIndex = (r: number[]) => { let f = 0, i = 0; while (i < r.length && f < 9) { if (r[i] === 10) i++; else i += 2; f++; } return f; };
     const tick = () => { const b = s.ball; if (!b.moving) return; b.x += b.vx; b.y += b.vy; b.vy *= .992; b.vx *= .99;
       if (b.x < s.W * .08 + b.r || b.x > s.W * .92 - b.r) { b.vx = 0; b.vy *= .6; b.x = Math.max(s.W * .08 + b.r, Math.min(s.W * .92 - b.r, b.x)); }
-      for (const p of s.pins) { if (!p.up) continue; const d = Math.hypot(p.x - b.x, p.y - b.y); if (d < b.r + s.W * .028) { p.up = false; const ang = Math.atan2(p.y - b.y, p.x - b.x); p.vx = Math.cos(ang) * 6; p.vy = Math.sin(ang) * 6; b.vx += Math.cos(ang) * -0.4; b.vy *= .97; chain(p); } }
+      for (const p of s.pins) { if (!p.up) continue; const d = Math.hypot(p.x - b.x, p.y - b.y); if (d < b.r + s.W * .028) { p.up = false; sfx.tick(); const ang = Math.atan2(p.y - b.y, p.x - b.x); p.vx = Math.cos(ang) * 6; p.vy = Math.sin(ang) * 6; b.vx += Math.cos(ang) * -0.4; b.vy *= .97; chain(p); } }
       draw(); if (b.y < -b.r * 2 || (Math.abs(b.vy) < .15 && Math.abs(b.vx) < .15)) endRoll(); else s.raf = requestAnimationFrame(tick); };
     const chain = (src: Pin, depth = 0) => { if (depth > 3) return; for (const p of s.pins) { if (!p.up || p === src) continue; const d = Math.hypot(p.x - src.x, p.y - src.y); if (d < s.W * .11 && Math.random() < .62 - depth * .12) { p.up = false; chain(p, depth + 1); } } };
     (st as any).__reset = () => { s.rolls = []; s.frameRolls = []; s.over = false; s.rollsDone = 0; rack(); resetBall(); setRolls([]); setOver(false); setMsg("공을 위로 드래그해서 던지세요"); draw(); };
     const pos = (e: PointerEvent) => { const r = st.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     const pd = (e: PointerEvent) => { if (s.ball.moving || s.over) return; const p = pos(e); if (Math.hypot(p.x - s.ball.x, p.y - s.ball.y) < s.W * .12) { s.drag = p; s.cur = p; st.setPointerCapture(e.pointerId); } };
     const pm = (e: PointerEvent) => { if (!s.drag) return; s.cur = pos(e); draw(); };
-    const pu = () => { if (!s.drag) return; const dx = s.drag.x - s.cur.x, dy = s.drag.y - s.cur.y; s.drag = null; if (dy < 10) { draw(); return; } const pow = Math.min(1, Math.hypot(dx, dy) / (s.H * .22)); s.ball.vx = dx * .09; s.ball.vy = -(6 + pow * 9); s.ball.moving = true; cancelAnimationFrame(s.raf); s.raf = requestAnimationFrame(tick); };
+    const pu = () => { if (!s.drag) return; const dx = s.drag.x - s.cur.x, dy = s.drag.y - s.cur.y; s.drag = null; if (dy < 10) { draw(); return; } const pow = Math.min(1, Math.hypot(dx, dy) / (s.H * .22)); s.ball.vx = dx * .09; s.ball.vy = -(6 + pow * 9); s.ball.moving = true; sfx.whoosh(); haptic(10); cancelAnimationFrame(s.raf); s.raf = requestAnimationFrame(tick); };
     const ro = new ResizeObserver(size); ro.observe(st); size();
     st.addEventListener("pointerdown", pd); window.addEventListener("pointermove", pm); window.addEventListener("pointerup", pu); window.addEventListener("pointercancel", pu); window.addEventListener("blur", pu);
     return () => { ro.disconnect(); cancelAnimationFrame(s.raf); st.removeEventListener("pointerdown", pd); window.removeEventListener("pointermove", pm); window.removeEventListener("pointerup", pu); window.removeEventListener("pointercancel", pu); window.removeEventListener("blur", pu); };
@@ -68,7 +72,7 @@ export default function Bowling({ ranks }: { ranks: Row[] }) {
     <div className="card">
       <div><h3>복도 볼링</h3><div className="muted">공을 잡고 위로 살짝 끌었다 놓으면 던져요(짧게 끌어도 충분). 좌우로 비스듬히 끌면 각도가 생겨요. 10프레임 정식 점수(스트라이크·스페어 보너스). 100·150·200점 퀘스트.</div></div>
       <div className="bowl-frames">{framesView.map((f, i) => <div key={i} className={"bowl-frame" + (f.length ? " on" : "")}><div className="bowl-rolls">{f.join(" ")}&nbsp;</div><div className="bowl-sum">{sc.frames[i] ?? ""}</div></div>)}</div>
-      <div className="def-bar"><span className="def-sun">🎳 {sc.total}점</span><span className="muted">{msg}</span>{over && <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={() => (box.current as any).__reset()}>다시</button>}</div>
+      <div className="def-bar"><span className="def-sun">🎳 {sc.total}점</span><span className="muted">{msg}</span><BestLine best={best} cur={sc.total} />{over && <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={() => (box.current as any).__reset()}>다시</button>}</div>
       <div className="def-stage" ref={box} style={{ touchAction: "none" }}><canvas ref={cv} /></div>
       <Board title="볼링 명예의 전당" rows={ranks} fmt={r => r.value + "점"} />
     </div>

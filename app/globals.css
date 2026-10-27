@@ -350,3 +350,19 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .bar-v{background:var(--scrub);border-radius:3px 3px 0 0;position:relative;align-self:end}
 .bar-v span{position:absolute;top:-15px;left:0;right:0;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
 .bar-l{font-size:9px;color:var(--muted)}.bar-s{font-size:10px;color:var(--scrub);min-height:12px}
+/* 손맛 */
+.shk-s{animation:shk .25s}.shk-m{animation:shk .3s}.shk-l{animation:shkl .32s}
+@keyframes shk{10%,90%{transform:translate(-2px,0)}20%,80%{transform:translate(3px,0)}30%,50%,70%{transform:translate(-4px,1px)}40%,60%{transform:translate(4px,-1px)}}
+@keyframes shkl{10%,90%{transform:translate(-4px,2px)}20%,80%{transform:translate(6px,-2px)}30%,50%,70%{transform:translate(-8px,3px)}40%,60%{transform:translate(8px,-3px)}}
+.ptc{position:absolute;width:7px;height:7px;border-radius:2px;pointer-events:none;z-index:5;animation:ptc .6s ease-out forwards;transform:scale(var(--s))}
+@keyframes ptc{to{transform:translate(var(--dx),calc(var(--dy) + 40px)) scale(0) rotate(200deg);opacity:0}}
+.popt{position:absolute;pointer-events:none;z-index:6;font-family:"NeoDunggeunmo",var(--f-display);font-size:22px;color:#fff;-webkit-text-stroke:1px #12122A;paint-order:stroke fill;text-shadow:2px 2px 0 #12122A;animation:popt .8s ease-out forwards;transform:translate(-50%,-50%)}
+.popt.good{color:#F4D35E}.popt.bad{color:#EE6C4D}.popt.big{font-size:34px}
+@keyframes popt{0%{transform:translate(-50%,-50%) scale(.6)}20%{transform:translate(-50%,-60%) scale(1.25)}100%{transform:translate(-50%,-140%) scale(1);opacity:0}}
+.def-stage,.stage,.cpr-pad,.quiz,.sword{position:relative;overflow:hidden}
+.rec-flash{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:7;font-family:"Press Start 2P","NeoDunggeunmo",monospace;font-size:22px;color:#F4D35E;-webkit-text-stroke:1px #12122A;paint-order:stroke fill;text-shadow:3px 3px 0 #12122A;animation:recf 1.4s ease-out forwards;background:radial-gradient(circle,rgba(244,211,94,.35),transparent 60%)}
+@keyframes recf{0%{transform:scale(.4);opacity:0}15%{transform:scale(1.2);opacity:1}80%{opacity:1}100%{transform:scale(1);opacity:0}}
+.bestline{font-family:"NeoDunggeunmo",monospace;font-size:13px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.bestline b{color:var(--ink)}
+.mute-btn{background:none;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer;color:var(--muted)}
+.retry{font-family:"NeoDunggeunmo",monospace}

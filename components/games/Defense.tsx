@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { saveScore, loadGameState, saveGameState } from "@/lib/actions";
 import Board, { type Row } from "./Board";
+import { sfx, haptic, shake, burst, pop } from "@/lib/juice";
+import { BestLine } from "./Juice";
 
 /** 병동 사수 — 줄 지키기 디펜스. 웨이브를 넘기면 새 의료진이 해금돼요(계정 저장). */
 const ROWS = 5, COLS = 9;
@@ -28,7 +30,7 @@ type Shot = { r: number; x: number; dmg: number; kind: "needle" | "beam" | "pill
 type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg"; r: number; x: number; t: number; w?: number; txt?: string; y?: number };
 type Saved = { bestWave: number };
 
-export default function Defense({ ranks }: { ranks: Row[] }) {
+export default function Defense({ ranks, best: bestProp = 0 }: { ranks: Row[]; best?: number }) {
   const cv = useRef<HTMLCanvasElement>(null), box = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<UnitKind>("nurse");
   const [ui, setUi] = useState({ sun: 150, wave: 0, running: false, over: "" });
@@ -93,14 +95,14 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
     const commitBest = (w: number) => { if (w > s.best) { s.best = w; saveScore("defense", w).catch(() => {}); }
       if (w > s.account) { const prev = s.account; s.account = w; setBest(w); saveGameState("defense", { bestWave: w }).catch(() => {});
         const nu = ORDER.find(k => UNITS[k].unlock > prev && UNITS[k].unlock <= w); if (nu) setUnlockCard(UNITS[nu]); } };
-    const end = () => { s.running = false; cancelAnimationFrame(s.raf); draw(); setUi(u => ({ ...u, running: false, over: `${s.wave}웨이브에서 병동이 뚫렸어요` })); commitBest(s.wave - 1); };
+    const end = () => { s.running = false; cancelAnimationFrame(s.raf); draw(); sfx.boom(); haptic([60, 40, 60]); shake(box.current, "l"); setUi(u => ({ ...u, running: false, over: `${s.wave}웨이브에서 병동이 뚫렸어요` })); commitBest(s.wave - 1); };
     const laneGerms = (r: number, fromX: number) => s.germs.filter(z => z.r === r && z.x > fromX);
     const tick = (now: number) => {
       const dt = Math.min(.05, (now - s.last) / 1000); s.last = now; s.t += dt; const CW = cw(), CH = ch();
       s.nextSpawn -= dt;
       if (s.nextSpawn <= 0) {
         if (s.spawned < s.waveSize) { spawnGerm(); s.spawned++; if (s.wave % 5 === 0 && s.spawned === s.waveSize) spawnGerm(true); s.nextSpawn = Math.max(.35, 1.8 - s.wave * .11); }
-        else if (!s.germs.length) { commitBest(s.wave); s.wave++; s.spawned = 0; s.waveSize = 4 + Math.floor(s.wave * 2.2); s.nextSpawn = 2.5; setUi(u => ({ ...u, wave: s.wave })); } }
+        else if (!s.germs.length) { commitBest(s.wave); sfx.level(); pop(box.current, s.W / 2, s.H / 2, `WAVE ${s.wave + 1}`, "good big"); if ((s.wave + 1) % 5 === 0) setTimeout(() => { sfx.boom(); pop(box.current, s.W / 2, s.H * .3, "⚠ BOSS", "bad big"); shake(box.current, "m"); }, 1200); s.wave++; s.spawned = 0; s.waveSize = 4 + Math.floor(s.wave * 2.2); s.nextSpawn = 2.5; setUi(u => ({ ...u, wave: s.wave })); } }
       if (Math.random() < dt * Math.max(.03, .1 - s.wave * .006)) s.sunDrops.push({ x: 30 + Math.random() * (s.W - 60), y: 20 + Math.random() * (s.H - 40), t: 8 });
       s.sunDrops = s.sunDrops.filter(d => (d.t -= dt) > 0);
       for (const u of s.units) { u.cd -= dt; const fx = u.c * CW + CW * .7, lane = laneGerms(u.r, u.c * CW);
@@ -116,7 +118,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
           case "ornurse": if (u.cd <= 0 && lane.length) { u.cd = 2.4; s.shots.push({ r: u.r, x: fx, dmg: 35, kind: "scissor", hit: new Set(), pierce: 3, spin: 0 }); } break;
         } }
       for (const sh of s.shots) { sh.x += (sh.kind === "poison" ? 180 : sh.kind === "scissor" ? 300 : 260) * dt; sh.spin += dt * (sh.kind === "scissor" ? 14 : 1.2);
-        for (const z of s.germs) { if (z.r === sh.r && !sh.hit.has(z) && Math.abs(z.x - sh.x) < CW * .3) { z.hp -= sh.dmg; sh.hit.add(z); s.fx.push({ kind: "dmg", r: sh.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(sh.dmg) });
+        for (const z of s.germs) { if (z.r === sh.r && !sh.hit.has(z) && Math.abs(z.x - sh.x) < CW * .3) { z.hp -= sh.dmg; sh.hit.add(z); s.fx.push({ kind: "dmg", r: sh.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(sh.dmg) }); if (z.hp <= 0) { sfx.hit(); burst(box.current, z.x, z.r * CH + CH / 2, GCOLOR[z.kind], 8); }
           if (sh.kind === "poison") { z.poison = 4; s.fx.push({ kind: "cloud", r: sh.r, x: z.x, t: .6 }); for (const o of s.germs) if (o !== z && o.r === z.r && Math.abs(o.x - z.x) < CW) o.poison = 4; }
           if (sh.hit.size >= sh.pierce) sh.x = 1e9; } } }
       s.shots = s.shots.filter(sh => sh.x < s.W + 20);
@@ -125,18 +127,20 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         const target = s.units.find(u => u.r === z.r && Math.abs(u.c * CW + CW / 2 - z.x) < CW * .45 && u.c * CW + CW / 2 <= z.x + 2);
         if (target) { z.eating = true; target.hp -= z.dmg * dt; } else { z.eating = false; z.x -= sp * dt; }
         if (z.x < -4) return end(); }
+      // 세균이 왼쪽 경계 근처까지 오면 경고
+      for (const z of s.germs) if (!(z as any).warn && z.x < CW * 1.2) { (z as any).warn = true; sfx.tick(); shake(box.current, "s"); }
       s.units = s.units.filter(u => u.hp > 0); s.germs = s.germs.filter(z => z.hp > 0);
       draw(); s.raf = requestAnimationFrame(tick);
     };
-    (box.current as any).__start = () => { size(); s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = 150; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = 3; s.nextSpawn = 5; s.sunDrops = []; s.best = 0; s.running = true; s.last = performance.now(); setUi({ sun: 150, wave: 1, running: true, over: "" }); s.raf = requestAnimationFrame(tick); };
+    (box.current as any).__start = () => { sfx.level(); size(); s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = 150; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = 3; s.nextSpawn = 5; s.sunDrops = []; s.best = 0; s.running = true; s.last = performance.now(); setUi({ sun: 150, wave: 1, running: true, over: "" }); s.raf = requestAnimationFrame(tick); };
     (box.current as any).__place = (kind: UnitKind, px: number, py: number) => {
       if (!s.running) return; const CW = cw(), CH = ch();
       const hit = s.sunDrops.findIndex(d => Math.hypot(d.x - px, d.y - py) < CH * .4);
-      if (hit >= 0) { s.sunDrops.splice(hit, 1); s.sun += 25; setUi(u => ({ ...u, sun: s.sun })); return; }
+      if (hit >= 0) { s.sunDrops.splice(hit, 1); s.sun += 25; setUi(u => ({ ...u, sun: s.sun })); sfx.coin(); pop(box.current, px, py, "+25", "good"); return; }
       if (UNITS[kind].unlock > s.account) return;
       const c = Math.floor(px / CW), r = Math.floor(py / CH); if (c < 0 || c >= COLS - 1 || r < 0 || r >= ROWS) return;
       if (s.units.some(u => u.r === r && u.c === c)) return; const cost = UNITS[kind].cost; if (s.sun < cost) return;
-      s.sun -= cost; s.units.push({ kind, r, c, hp: UNITS[kind].hp, cd: kind === "iv" ? 8 : 0 }); setUi(u => ({ ...u, sun: s.sun }));
+      s.sun -= cost; s.units.push({ kind, r, c, hp: UNITS[kind].hp, cd: kind === "iv" ? 8 : 0 }); setUi(u => ({ ...u, sun: s.sun })); sfx.tap(); haptic(8); burst(box.current, px, py, UCOLOR[kind], 8);
     };
     const ro = new ResizeObserver(size); ro.observe(box.current!); size();
     return () => { ro.disconnect(); cancelAnimationFrame(s.raf); };
@@ -147,7 +151,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
   return (
     <div className="card">
       <div><h3>병동 사수</h3><div className="muted">왼쪽에 의료진을 배치해서 오른쪽에서 밀려오는 세균을 막으세요. 수액(💧)을 눌러 모으고, 수액으로 의료진을 고용해요. 세균이 왼쪽 끝에 닿으면 끝. 5웨이브마다 보스 🧟. <b>웨이브를 넘길수록 새 의료진이 해금</b>돼요 (계정에 저장).</div></div>
-      <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">웨이브 {ui.wave} · 최고 {best}</span>
+      <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">웨이브 {ui.wave}</span><BestLine best={Math.max(best, bestProp)} cur={Math.max(0, ui.wave - 1)} unit="웨이브" />
         {ui.running && <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={async () => { const w = Math.max(0, g.current.wave - 1); if (!w) { setSaved("1웨이브를 넘긴 뒤 저장할 수 있어요"); return; } try { await saveScore("defense", w); g.current.best = Math.max(g.current.best, w); setSaved(`${w}웨이브 기록 저장됨`); } catch { setSaved("저장 실패"); } setTimeout(() => setSaved(""), 2500); }}>기록 저장</button>}
       </div>
       {saved && <div className="muted">{saved}</div>}
