@@ -17,3 +17,4 @@ create table if not exists boards (
 alter table boards enable row level security;
 alter table posts add column if not exists board_id uuid references boards(id) on delete set null;
 create index if not exists posts_board_idx on posts(board_id);
+alter table users add column if not exists join_order integer;  -- 실제 가입 순번(분신 제외)

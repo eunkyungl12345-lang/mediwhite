@@ -34,7 +34,7 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const role = admins().includes(username) ? "admin" : "member";
   const { count } = await s.from("users").select("id", { count: "exact", head: true }).eq("stealth", false);
   const order = (count ?? 0) + 1;
-  const { data, error } = await s.from("users").insert({ username, password_hash: await bcrypt.hash(password, 10), nickname, dept, role, referred_by: ref && ref !== username ? ref : null }).select("id").single();
+  const { data, error } = await s.from("users").insert({ username, password_hash: await bcrypt.hash(password, 10), nickname, dept, role, join_order: order, referred_by: ref && ref !== username ? ref : null }).select("id").single();
   if (error || !data) return { error: "가입에 실패했어요. 잠시 후 다시 시도해주세요" };
   await awardXp(data.id, signupBonus(order), "signup", "signup");
   if (ref && ref !== username) { const { data: r } = await s.from("users").select("id").eq("username", ref).maybeSingle(); if (r) await repeatXp(r.id, "referral"); }
@@ -173,7 +173,8 @@ export async function adminCreateUser(_: FormState, fd: FormData): Promise<FormS
   const { data: exists } = await s.from("users").select("id").eq("username", username).maybeSingle();
   if (exists) return { error: "이미 쓰는 아이디예요" };
   const xp = RANKS[rankIdx][1];
-  const { error } = await s.from("users").insert({ username, password_hash: await bcrypt.hash(password, 10), nickname, dept, role: "member", xp, stealth });
+  const { count } = await s.from("users").select("id", { count: "exact", head: true }).eq("stealth", false);
+  const { error } = await s.from("users").insert({ username, password_hash: await bcrypt.hash(password, 10), nickname, dept, role: "member", xp, stealth, join_order: stealth ? null : (count ?? 0) + 1 });
   if (error) return { error: "생성 실패" };
   revalidatePath("/admin"); return { ok: `${rankName(rankIdx)} [${dept}]${nickname} 계정 생성 (아이디 ${username})` };
 }
