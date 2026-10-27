@@ -179,3 +179,8 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .admin-row{display:grid;gap:6px;padding:10px 0;border-bottom:1px dashed var(--line)}
 .admin-main{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .admin-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* 훈련병 */
+.name .ins.t-1,.ins.t-1,.rank-tag.t-1{background:var(--line);color:var(--muted)}
+.post.t-1,.comment.t-1{opacity:.75}
+.toast.t-1{background:var(--signal);color:#fff}

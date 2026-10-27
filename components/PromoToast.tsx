@@ -25,5 +25,5 @@ export default function PromoToast() {
     return () => { alive = false; clearInterval(t); };
   }, []);
   if (!toasts.length) return null;
-  return <div className="toasts" aria-live="polite">{toasts.map(e => <div key={e.id} className={`toast t${e.rank != null ? tierOf(e.rank) : 0}`}>{e.rank != null && <Insignia index={e.rank} size={14} />}<span>🎖️ {e.text}</span></div>)}</div>;
+  return <div className="toasts" aria-live="polite">{toasts.map(e => <div key={e.id} className={`toast t${e.rank != null ? tierOf(e.rank) : 0}`}>{e.rank != null && <Insignia index={e.rank} size={14} />}<span>{e.text.includes("강등") ? "⬇️" : "🎖️"} {e.text}</span></div>)}</div>;
 }

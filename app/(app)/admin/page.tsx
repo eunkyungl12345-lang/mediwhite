@@ -3,7 +3,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { RANKS } from "@/lib/ranks";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
-import { adminToggleStealth, adminDeleteUser, adminLoginAs } from "@/lib/actions";
+import { adminToggleStealth, adminDeleteUser, adminLoginAs, adminDemote } from "@/lib/actions";
 import AdminForms from "@/components/AdminForms";
 import Name from "@/components/Name";
 export const dynamic = "force-dynamic";
@@ -27,6 +27,7 @@ export default async function AdminPage() {
               <div className="admin-main"><Name r={r} dept={u.dept} nickname={u.nickname} username={u.username} /><span className="muted">@{u.username} · {u.xp.toLocaleString()} XP · {u.seq}번째{u.role === "admin" ? " · 관리자" : ""}{u.stealth ? " · 숨김" : ""}</span></div>
               <div className="admin-actions">
                 <AdminForms userId={u.id} currentRank={r.index} compact />
+                {r.index > 0 && <form action={adminDemote.bind(null, u.id, "19금 발언·욕설")}><button className="link" style={{ color: "var(--signal)" }}>훈련병 강등</button></form>}
                 <form action={adminToggleStealth.bind(null, u.id, !u.stealth)}><button className="link">{u.stealth ? "숨김 해제" : "숨김"}</button></form>
                 <form action={adminLoginAs.bind(null, u.id)}><button className="link">이 계정으로 전환</button></form>
                 {u.id !== s.id && <form action={adminDeleteUser.bind(null, u.id)}><button className="link" style={{ color: "var(--signal)" }}>삭제</button></form>}

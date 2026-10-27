@@ -3,8 +3,10 @@ import { IDX } from "@/lib/ranks";
 export default function Insignia({ index, size = 16 }: { index: number; size?: number }) {
   const w = size * 1.6, h = size;
   const el: JSX.Element[] = [];
-  if (index <= IDX["병장"]) {
-    const n = index + 1; for (let i = 0; i < n; i++) el.push(<rect key={i} x={3} y={h - 3 - i * 3.2 - 1.8} width={w - 6} height={1.8} rx={.5} />);
+  if (index === 0) {
+    el.push(<circle key="t" cx={w / 2} cy={h / 2} r={3} fill="none" stroke="currentColor" strokeWidth={1.6} />);
+  } else if (index <= IDX["병장"]) {
+    const n = index; for (let i = 0; i < n; i++) el.push(<rect key={i} x={3} y={h - 3 - i * 3.2 - 1.8} width={w - 6} height={1.8} rx={.5} />);
   } else if (index <= IDX["원사"]) {
     const n = index - IDX["하사"] + 1; for (let i = 0; i < Math.min(n, 3); i++) el.push(<path key={i} d={`M3 ${3 + i * 3.4} L${w / 2} ${7 + i * 3.4} L${w - 3} ${3 + i * 3.4}`} fill="none" stroke="currentColor" strokeWidth={1.8} />);
     if (n === 4) el.push(<circle key="s" cx={w / 2} cy={2.2} r={1.6} />);

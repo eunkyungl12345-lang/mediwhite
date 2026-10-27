@@ -3,8 +3,8 @@
  * 목표 체감: 일병 하루 · 하사 1주+ · 소위 1달+ · 소령 6개월 · 참모총장 1년+
  */
 export const RANKS = [
-  ["이병", 0], ["일병", 100], ["상병", 300], ["병장", 600],
-  ["하사", 1000], ["중사", 1600], ["상사", 2400], ["원사", 3300],
+  ["훈련병", 0], ["이병", 30], ["일병", 130], ["상병", 330], ["병장", 630],
+  ["하사", 1030], ["중사", 1630], ["상사", 2430], ["원사", 3330],
   ["소위", 4500], ["중위", 6000], ["대위", 8000],
   ["소령", 11000], ["중령", 15000], ["대령", 20000],
   ["준장", 26000], ["소장", 33000], ["중장", 41000], ["참모총장", 50000],
@@ -13,8 +13,8 @@ export const IDX = Object.fromEntries(RANKS.map(([n], i) => [n, i])) as Record<s
 export const GENERAL = IDX["참모총장"]; // 별 4개 — 파트별 단 한 명
 export const rankName = (i: number) => RANKS[Math.max(0, Math.min(RANKS.length - 1, i))][0];
 
-/** 계급 구간(tier): 0 병사, 1 부사관, 2 위관, 3 영관, 4 장성, 5 참모총장 */
-export function tierOf(index: number) { return index >= GENERAL ? 5 : index >= IDX["준장"] ? 4 : index >= IDX["소령"] ? 3 : index >= IDX["소위"] ? 2 : index >= IDX["하사"] ? 1 : 0; }
+/** 계급 구간(tier): -1 훈련병, 0 병사, 1 부사관, 2 위관, 3 영관, 4 장성, 5 참모총장 */
+export function tierOf(index: number) { return index === 0 ? -1 : index >= GENERAL ? 5 : index >= IDX["준장"] ? 4 : index >= IDX["소령"] ? 3 : index >= IDX["소위"] ? 2 : index >= IDX["하사"] ? 1 : 0; }
 export const STARS: Record<string, string> = { 준장: "★", 소장: "★★", 중장: "★★★", 참모총장: "★★★★" };
 
 export type Rank = { name: string; index: number; tier: number; min: number; next: number | null; nextName: string | null; progress: number; capped: boolean };
@@ -29,6 +29,7 @@ export function rankOf(xp: number, isDeptLeader = true): Rank {
 }
 
 export const PRIVILEGES: { minRank: string; title: string; desc: string }[] = [
+  { minRank: "훈련병", title: "훈련병", desc: "19금 발언·욕설로 강등된 상태. 처음부터 다시 올라와야 해요 (이병까지 30 XP)" },
   { minRank: "이병", title: "기본", desc: "채팅, 게시판 글·댓글, 게임" },
   { minRank: "일병", title: "글 우선 노출", desc: "계급이 높을수록 내 글이 목록 위쪽에 와요 (모든 계급 공통)" },
   { minRank: "하사", title: "글 빛남 1단계", desc: "내 글이 은은하게 강조돼요" },

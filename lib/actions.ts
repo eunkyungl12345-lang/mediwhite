@@ -190,6 +190,17 @@ export async function adminSetRank(_: FormState, fd: FormData): Promise<FormStat
   await db().from("users").update({ xp: RANKS[rankIdx][1] }).eq("id", userId);
   revalidatePath("/admin"); revalidatePath("/rank"); return { ok: "변경했어요" };
 }
+/** 관리자: 훈련병 강등 (19금/욕설). 경험치 0으로, 처음부터 다시. */
+export async function adminDemote(userId: string, reason: string) {
+  await requireAdmin();
+  const s = db();
+  const { data: u } = await s.from("users").select("id,nickname,dept").eq("id", userId).maybeSingle();
+  if (!u) return;
+  await s.from("users").update({ xp: 0 }).eq("id", userId);
+  await s.from("xp_log").insert({ user_id: userId, key: null, amount: 0, kind: "demote" });
+  await s.from("events").insert({ kind: "promotion", text: `${u.nickname ? `[${u.dept}]${u.nickname}` : "회원"}님이 ${reason || "규정 위반"}으로 훈련병 강등되었습니다.|0|${u.dept}|${u.nickname}` });
+  revalidatePath("/admin"); revalidatePath("/rank");
+}
 export async function adminToggleStealth(userId: string, stealth: boolean) {
   await requireAdmin(); await db().from("users").update({ stealth }).eq("id", userId); revalidatePath("/admin");
 }
