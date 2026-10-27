@@ -142,10 +142,8 @@ canvas{max-width:100%}
 
 /* 이름(계급장[직종]닉네임) */
 .name{display:inline-flex;align-items:center;gap:4px;color:inherit;text-decoration:none;font-weight:600}
-.name .ins{display:inline-flex;align-items:center;padding:1px 3px;border-radius:4px;background:var(--ink);color:var(--bg);line-height:0}
-.name .ins.t1{background:#4F6B63}.name .ins.t2{background:var(--scrub)}.name .ins.t3{background:#3B5BA9}.name .ins.t4{background:#6A3FB5}.name .ins.t5{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}
-.ins.t1{background:#4F6B63}.ins.t2{background:var(--scrub)}.ins.t3{background:#3B5BA9}.ins.t4{background:#6A3FB5}.ins.t5{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}
-.who .ins{display:inline-flex;padding:1px 3px;border-radius:3px;background:var(--ink);color:var(--bg);line-height:0}
+.name .ins{display:inline-flex;align-items:center;line-height:0}
+.who .ins{display:inline-flex;line-height:0}
 .rank-tag{display:inline-flex;align-items:center;gap:4px}
 .rank-tag .insignia{color:currentColor}
 .bio{font-size:15px}
@@ -181,7 +179,7 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .admin-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 
 /* 훈련병 */
-.name .ins.t-1,.ins.t-1,.rank-tag.t-1{background:var(--line);color:var(--muted)}
+.rank-tag.t-1{background:var(--line);color:var(--muted)}
 .post.t-1,.comment.t-1{opacity:.75}
 .toast.t-1{background:var(--signal);color:#fff}
 
