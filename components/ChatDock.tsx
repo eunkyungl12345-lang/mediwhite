@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import ChatRoom, { type Msg } from "./ChatRoom";
 import type { Session } from "@/lib/auth";
@@ -10,21 +10,59 @@ export default function ChatDock({ me, initial, online, myRank, official }: { me
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [last, setLast] = useState<Msg | null>(initial[initial.length - 1] ?? null);
-  // 기본은 접힌 띠(최근 메시지 2줄 미리보기)로 항상 보임. 사용자가 펼쳤으면 그 선택을 기억(게임 화면 제외).
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ y0: number; t0: number; dy: number; h: number; moved: boolean } | null>(null);
+  const [bodyH, setBodyH] = useState(0);
+
   useEffect(() => { let v: string | null = null; try { v = localStorage.getItem("mw-chat-open"); } catch {} setOpen(path.startsWith("/games") ? false : v === "1"); }, [path]);
-  const toggle = () => { setOpen(o => { try { localStorage.setItem("mw-chat-open", o ? "0" : "1"); } catch {} ; return !o; }); setUnread(0); };
+  useEffect(() => {
+    const el = bodyRef.current; if (!el) return;
+    const ro = new ResizeObserver(() => setBodyH(el.offsetHeight)); ro.observe(el); setBodyH(el.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
+  const setOpenPersist = (v: boolean) => { setOpen(v); try { localStorage.setItem("mw-chat-open", v ? "1" : "0"); } catch {} if (v) setUnread(0); };
+
+  // 손가락 따라오는 스와이프: 바를 잡고 위/아래로 끌면 그만큼 열리고, 놓을 때 속도/거리로 판정
+  const onDown = (e: React.PointerEvent) => {
+    drag.current = { y0: e.clientY, t0: performance.now(), dy: 0, h: bodyH, moved: false };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    dockRef.current?.classList.add("dragging");
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current; if (!d || !dockRef.current) return;
+    d.dy = e.clientY - d.y0; if (Math.abs(d.dy) > 6) d.moved = true;
+    const base = open ? 0 : d.h; // 현재 translateY
+    let y = base + d.dy;
+    if (y < 0) y = -Math.pow(-y, 0.6) * 1.2; // 끝에서 고무줄
+    if (y > d.h) y = d.h + Math.pow(y - d.h, 0.6);
+    dockRef.current.style.transform = `translateY(${y}px)`;
+  };
+  const onUp = (e: React.PointerEvent) => {
+    const d = drag.current; drag.current = null; if (!d || !dockRef.current) return;
+    dockRef.current.classList.remove("dragging");
+    dockRef.current.style.transform = "";
+    if (!d.moved) { setOpenPersist(!open); return; } // 탭 = 토글
+    const v = d.dy / Math.max(1, performance.now() - d.t0); // px/ms
+    const base = open ? 0 : d.h; const y = base + d.dy;
+    const next = Math.abs(v) > 0.5 ? v < 0 : y < d.h / 2;
+    if (next !== open) setOpenPersist(next); else if ("vibrate" in navigator) try { navigator.vibrate(5); } catch {}
+  };
+
   return (
-    <div className={"dock" + (open ? " open" : "")}>
-      <button type="button" className="dock-bar" onClick={toggle} aria-expanded={open}>
+    <div ref={dockRef} className={"dock" + (open ? " open" : "")} style={{ transform: open ? "translateY(0)" : `translateY(${bodyH}px)` }}>
+      <div className="dock-bar" role="button" tabIndex={0} aria-expanded={open}
+        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenPersist(!open); } }}>
         <span className="dock-handle" aria-hidden="true" />
         <span className="dock-row">
           <span className="dock-title">💬 실시간 채팅 {online}</span>
           {!open && unread > 0 && <span className="dock-unread">{unread}</span>}
           <span className="dock-caret">{open ? "접기 ▾" : "펼치기 ▴"}</span>
         </span>
-        {!open && last && <span className="dock-last"><b>{display(last.dept, last.nickname)}</b> {last.text}</span>}
-      </button>
-      <div className="dock-body" hidden={!open}>
+        <span className="dock-last" aria-hidden={open}>{last && <><b>{display(last.dept, last.nickname)}</b> {last.text}</>}</span>
+      </div>
+      <div className="dock-body" ref={bodyRef} aria-hidden={!open}>
         <ChatRoom me={me} initial={initial} myRank={myRank} official={official} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
       </div>
     </div>

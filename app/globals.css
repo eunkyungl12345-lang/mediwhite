@@ -62,7 +62,7 @@ textarea{resize:vertical;min-height:140px}
 
 /* auth */
 .auth{max-width:380px;margin:8vh auto 0;width:100%}
-.login-bg .auth{margin-top:min(34vh,300px)}
+.login-bg .auth{margin-top:min(48vh,420px)}
 .auth h1{font-family:var(--f-display);font-weight:400;font-size:32px;margin:0}
 .auth .switch{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:4px}
 .auth .switch button{flex:1;background:none;border:0;font:inherit;font-weight:600;color:var(--muted);padding:10px 0;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
@@ -153,7 +153,15 @@ canvas{max-width:100%}
 
 /* 하단 채팅 독 */
 main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
-.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.08);
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.08);transition:transform .36s cubic-bezier(.32,.72,0,1);will-change:transform;touch-action:none}
+.dock.dragging{transition:none}
+.dock-bar{touch-action:none;user-select:none;-webkit-user-select:none}
+.dock-last{transition:opacity .2s,max-height .2s}
+.dock.open .dock-last{opacity:0;max-height:0}
+.dock:not(.open) .dock-last{max-height:40px}
+.dock-body{transition:opacity .25s}
+.dock:not(.open) .dock-body{opacity:.0;pointer-events:none}
+.dock{
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
 .dock-bar{width:100%;max-width:760px;margin:0 auto;display:grid;gap:4px;background:none;border:0;font:inherit;color:var(--ink);padding:6px 0 10px;cursor:pointer;text-align:left}
 .dock-handle{width:40px;height:4px;border-radius:2px;background:var(--line);justify-self:center}
@@ -164,7 +172,7 @@ main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 .dock-unread{background:var(--signal);color:#fff;border-radius:999px;font-size:11px;font-weight:600;padding:1px 7px}
 .dock-caret{margin-left:auto;color:var(--muted);font-size:12px}
 .dock-body{max-width:760px;margin:0 auto}
-.dock.open .chat{height:min(68vh,620px);min-height:260px}
+.dock .chat{height:min(68vh,620px);min-height:260px}
 .dock{border-radius:18px 18px 0 0;max-height:calc(100dvh - 60px)}
 .dock.open main{padding-bottom:0}
 body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
@@ -228,16 +236,18 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 @media (prefers-reduced-motion:reduce){.insignia .sweep,.insignia .tw,.shine-t5,.shine-t6{animation:none}}
 
 /* 이미지 배너 */
-.hero{position:relative;border-radius:14px;overflow:hidden;background-size:cover;background-position:center;min-height:120px;display:flex;align-items:flex-end;background-color:#06141A}
-.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,20,26,.05),rgba(6,20,26,.75))}
-.hero-in{position:relative;padding:16px 18px;color:#F4FBF9}
-.hero-in h2{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0;letter-spacing:.5px;text-shadow:0 2px 12px rgba(0,0,0,.6)}
-.hero-in p{margin:2px 0 0;font-size:13px;color:#BFD6CF}
-.login-bg{min-height:100%;background:#040B0E url(/img/login.jpg) 72% 20%/cover no-repeat;position:relative}
-.login-bg::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,11,14,.15) 0%,rgba(4,11,14,.35) 45%,rgba(4,11,14,.85) 100%)}
+.hero{position:relative;border-radius:16px;overflow:hidden;background-size:cover;background-position:center 30%;min-height:200px;display:flex;align-items:flex-end;background-color:#06141A;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+@media (min-width:700px){.hero{min-height:260px}}
+.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,20,26,0) 30%,rgba(6,20,26,.82))}
+.hero-in{position:relative;padding:18px 20px;color:#F4FBF9}
+.hero-in h2{font-family:var(--f-display);font-weight:400;font-size:40px;line-height:1;margin:0;letter-spacing:.5px;text-shadow:0 2px 14px rgba(0,0,0,.7)}
+.hero-in p{margin:6px 0 0;font-size:14px;color:#BFD6CF}
+.login-bg{min-height:100%;background:#040B0E url(/img/login.jpg) center 35%/cover no-repeat;position:relative;background-attachment:scroll}
+@media (min-width:700px){.login-bg{background-position:center 25%}}
+.login-bg::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,11,14,.05) 0%,rgba(4,11,14,.15) 40%,rgba(4,11,14,.9) 100%)}
 @media (min-width:700px){.login-bg{background-position:center 30%}}
 .login-bg .app{position:relative}
-.login-card{background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
+.login-card{background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
 .login-card h1{color:var(--ink)}
 @media (prefers-color-scheme:dark){.login-card{background:rgba(24,34,31,.88)}}
 .def-unit.locked{opacity:.5;cursor:default;border-style:dashed}
