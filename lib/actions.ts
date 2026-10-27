@@ -199,6 +199,15 @@ export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" 
   await s.from("scores").upsert({ user_id: u.id, game, value, mode: mode ?? null, updated_at: new Date().toISOString() });
   revalidatePath("/games"); revalidatePath("/rank");
 }
+/** 병동 사수 데일리 챌린지 보상(하루 1회, KST) */
+export async function defenseDaily(day: string) {
+  const u = await requireUser();
+  const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+  if (day !== today) return 0;
+  const xp = await awardXp(u.id, 100, `defense_daily:${today}`, "daily");
+  if (xp) await db().from("events").insert({ kind: "quest", user_id: u.id, text: `병동 사수 오늘의 챌린지 클리어|${xp}|defense_daily` });
+  return xp;
+}
 export async function questOnce(key: "roulette_1") {
   const u = await requireUser();
   if (key === "roulette_1") await awardXp(u.id, 30, key);

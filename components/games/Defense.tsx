@@ -1,59 +1,103 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { saveScore, loadGameState, saveGameState } from "@/lib/actions";
+import { saveScore, loadGameState, saveGameState, defenseDaily } from "@/lib/actions";
 import Board, { type Row } from "./Board";
 import { sfx, haptic, shake, burst, pop } from "@/lib/juice";
-import { BestLine } from "./Juice";
 
-/** 병동 사수 — 줄 지키기 디펜스. 웨이브를 넘기면 새 의료진이 해금돼요(계정 저장). */
-const ROWS = 5, COLS = 9;
+/** 병동 사수 — 스테이지형 줄 지키기 디펜스. 스테이지를 깨면 별·처방전 코인·새 의료진. (계정 저장) */
+const ROWS = 5, COLS = 9, STAGES = 30;
 type UnitKind = "iv" | "nurse" | "wall" | "xray" | "doctor" | "ortho" | "anes" | "lab" | "ems" | "ornurse";
-type UnitDef = { name: string; icon: string; cost: number; hp: number; desc: string; unlock: number; skill: string };
+type UnitDef = { name: string; icon: string; cost: number; hp: number; desc: string; unlock: number; skill: string; dmg: number };
 const UNITS: Record<UnitKind, UnitDef> = {
-  iv:      { name: "수액 걸이",   icon: "🧃", cost: 50,  hp: 60,  unlock: 0,  desc: "8초마다 수액 25 생산", skill: "" },
-  nurse:   { name: "간호사",      icon: "💉", cost: 100, hp: 80,  unlock: 0,  desc: "주사기 발사 (공격 20)", skill: "" },
-  wall:    { name: "원무 바리케이드", icon: "🚧", cost: 50, hp: 400, unlock: 0, desc: "튼튼한 벽", skill: "" },
-  xray:    { name: "방사선사",    icon: "☢️", cost: 200, hp: 80,  unlock: 3,  desc: "같은 줄 전체 관통 (공격 10)", skill: "관통 빔" },
-  doctor:  { name: "내과 의사",   icon: "🩺", cost: 150, hp: 90,  unlock: 5,  desc: "느리지만 강한 처방 (공격 60)", skill: "" },
-  ortho:   { name: "정형외과 의사", icon: "🦴", cost: 225, hp: 120, unlock: 8, desc: "앞 2칸 망치 강타 (공격 90, 광역)", skill: "🔨 망치" },
-  anes:    { name: "마취과 의사", icon: "💤", cost: 175, hp: 80,  unlock: 12, desc: "같은 줄 세균 느려짐 + 약한 공격", skill: "💤 수면가스" },
-  lab:     { name: "임상병리사",  icon: "🧪", cost: 200, hp: 80,  unlock: 15, desc: "독병 투척, 맞은 세균 지속 피해", skill: "☠️ 독" },
-  ems:     { name: "응급구조사",  icon: "⚡", cost: 300, hp: 100, unlock: 20, desc: "8초마다 번개로 줄 전체 타격 (공격 120)", skill: "⚡ 번개" },
-  ornurse: { name: "수술실 간호사", icon: "✂️", cost: 250, hp: 90, unlock: 25, desc: "가위 투척, 세균 3마리 관통", skill: "✂️ 가위" },
+  iv:      { name: "수액 걸이",   icon: "🧃", cost: 50,  hp: 60,  unlock: 0,  desc: "8초마다 수액 25 생산", skill: "", dmg: 0 },
+  nurse:   { name: "간호사",      icon: "💉", cost: 100, hp: 80,  unlock: 0,  desc: "주사기 발사", skill: "", dmg: 20 },
+  wall:    { name: "원무 바리케이드", icon: "🚧", cost: 50, hp: 400, unlock: 0, desc: "튼튼한 벽", skill: "", dmg: 0 },
+  xray:    { name: "방사선사",    icon: "☢️", cost: 200, hp: 80,  unlock: 3,  desc: "같은 줄 전체 관통 빔", skill: "관통 빔", dmg: 10 },
+  doctor:  { name: "내과 의사",   icon: "🩺", cost: 150, hp: 90,  unlock: 5,  desc: "느리지만 강한 처방", skill: "", dmg: 60 },
+  ortho:   { name: "정형외과 의사", icon: "🦴", cost: 225, hp: 120, unlock: 8, desc: "앞 2칸 망치 강타 (광역)", skill: "🔨 망치", dmg: 90 },
+  anes:    { name: "마취과 의사", icon: "💤", cost: 175, hp: 80,  unlock: 12, desc: "같은 줄 세균 느려짐 + 약한 공격", skill: "💤 수면가스", dmg: 8 },
+  lab:     { name: "임상병리사",  icon: "🧪", cost: 200, hp: 80,  unlock: 15, desc: "독병 투척, 맞은 세균 지속 피해", skill: "☠️ 독", dmg: 15 },
+  ems:     { name: "응급구조사",  icon: "⚡", cost: 300, hp: 100, unlock: 20, desc: "8초마다 번개로 줄 전체 타격", skill: "⚡ 번개", dmg: 120 },
+  ornurse: { name: "수술실 간호사", icon: "✂️", cost: 250, hp: 90, unlock: 25, desc: "가위 투척, 세균 3마리 관통", skill: "✂️ 가위", dmg: 35 },
 };
 const ORDER = Object.keys(UNITS) as UnitKind[];
 const UCOLOR: Record<UnitKind, string> = { iv: "#8FD3C2", nurse: "#F5A3B7", wall: "#E6B341", xray: "#B8A1E8", doctor: "#A9C7F0", ortho: "#F0B48C", anes: "#C9B6F0", lab: "#9FE0A8", ems: "#FFD36E", ornurse: "#F7C6D9" };
-const GCOLOR = ["#7CCB8F", "#9BD6E0", "#C48BE8", "#E26B6B"];
-type Unit = { kind: UnitKind; r: number; c: number; hp: number; cd: number };
-type Germ = { r: number; x: number; hp: number; max: number; speed: number; dmg: number; kind: number; eating: boolean; slow: number; poison: number };
+// 세균: 0 일반 1 끈질긴 2 돌연변이(빠름) 3 보스 4 변이균(죽으면 분열) 5 내성균(주사·빔 피해 절반) 6 날벌레(아주 빠름) 7 슈퍼박테리아(소환 보스)
+const GICON = ["🦠", "🧫", "👾", "🧟", "🧬", "🛡️", "🦟", "👑"];
+const GCOLOR = ["#7CCB8F", "#9BD6E0", "#C48BE8", "#E26B6B", "#F0A6D2", "#B0BEC5", "#D7CCA1", "#FFB74D"];
+const GNAME = ["일반 세균", "끈질긴 균", "돌연변이", "보스 🧟", "변이균(분열)", "내성균", "날벌레", "슈퍼박테리아"];
+const CHAPTERS = ["응급실", "일반병동", "중환자실"];
+const MAXLV = 5;
+type Unit = { kind: UnitKind; r: number; c: number; hp: number; max: number; cd: number };
+type Germ = { r: number; x: number; hp: number; max: number; speed: number; dmg: number; kind: number; eating: boolean; slow: number; poison: number; cd: number; warn?: boolean };
 type Shot = { r: number; x: number; dmg: number; kind: "needle" | "beam" | "pill" | "poison" | "scissor"; hit: Set<Germ>; pierce: number; spin: number };
 type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg"; r: number; x: number; t: number; w?: number; txt?: string; y?: number };
-type Saved = { bestWave: number };
+type Saved = { bestWave?: number; stars?: Record<string, number>; coins?: number; levels?: Partial<Record<UnitKind, number>>; dailyDone?: string; cleared?: number };
+type Mod = "none" | "night" | "iso" | "rush" | "tough" | "double";
+const MODS: Record<Mod, { name: string; desc: string }> = {
+  none: { name: "", desc: "" },
+  night: { name: "🌙 야간 근무", desc: "수액이 떨어지지 않아요. 수액 걸이 필수" },
+  iso: { name: "🚪 격리 병동", desc: "가운데 3줄만 사용" },
+  rush: { name: "🚨 응급 상황", desc: "세균 속도 +30%, 시작 수액 300" },
+  tough: { name: "🧱 슈퍼 내성", desc: "세균 체력 +50%" },
+  double: { name: "👯 2배 출현", desc: "세균이 2배로 몰려와요" },
+};
+type StageDef = { id: number; ch: number; no: number; name: string; waves: number; mod: Mod; boss: number; pool: number[]; mult: number; spd: number };
+function stageDef(id: number, forced?: Mod): StageDef {
+  const ch = Math.ceil(id / 10), no = ((id - 1) % 10) + 1;
+  const pool = [0]; if (id >= 2) pool.push(1); if (id >= 4) pool.push(2); if (id >= 7) pool.push(4); if (id >= 11) pool.push(5); if (id >= 14) pool.push(6);
+  const mod: Mod = forced ?? (no === 4 ? "night" : no === 7 ? "iso" : no === 9 ? "rush" : "none");
+  const boss = id % 5 === 0 ? (id >= 25 ? 7 : 3) : 0;
+  return { id, ch, no, name: `${ch}-${no}`, waves: Math.min(12, 3 + Math.floor((id - 1) / 3)), mod, boss, pool, mult: 1 + (id - 1) * .12, spd: 1 + (id - 1) * .025 };
+}
+const kstDay = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+const hash = (s: string) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+const lvCost = (k: UnitKind, lv: number) => Math.round((40 + ORDER.indexOf(k) * 15) * lv);
+const lvMult = (lv: number) => 1 + .2 * (lv - 1);
+const stageCoins = (id: number, stars: number) => Math.round((15 + id * 5) * stars / 3);
 
-export default function Defense({ ranks, best: bestProp = 0 }: { ranks: Row[]; best?: number }) {
+export default function Defense({ ranks }: { ranks: Row[] }) {
   const cv = useRef<HTMLCanvasElement>(null), box = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<UnitKind>("nurse");
-  const [ui, setUi] = useState({ sun: 150, wave: 0, running: false, over: "" });
-  const [saved, setSaved] = useState("");
-  const [best, setBest] = useState(0);
+  const [ui, setUi] = useState({ sun: 150, wave: 0, running: false });
+  const [save, setSave] = useState<Required<Pick<Saved, "stars" | "coins" | "levels" | "cleared">> & { dailyDone?: string }>({ stars: {}, coins: 0, levels: {}, cleared: 0 });
+  const [loaded, setLoaded] = useState(false);
+  const [view, setView] = useState<"map" | "play">("map");
+  const [chapter, setChapter] = useState(1);
+  const [stage, setStage] = useState<StageDef | null>(null);
+  const [daily, setDaily] = useState(false);
+  const [result, setResult] = useState<{ win: boolean; stars: number; coins: number; first: boolean; xp?: number } | null>(null);
+  const [showUp, setShowUp] = useState(false);
   const [unlockCard, setUnlockCard] = useState<UnitDef | null>(null);
-  const closeUnlock = () => { setUnlockCard(null); g.current.paused = false; };
-  useEffect(() => { try { if (location.search.includes("unlockdemo")) setUnlockCard(UNITS.ortho); } catch {} }, []);
-  const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], fx: [] as Fx[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, paused: false, raf: 0, W: 0, H: 0, last: 0, best: 0, account: 0, sunDrops: [] as { x: number; y: number; t: number }[] });
+  const [toast, setToast] = useState("");
+  const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], fx: [] as Fx[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, paused: false, raf: 0, W: 0, H: 0, last: 0, lost: 0, stage: null as StageDef | null, daily: false, levels: {} as Partial<Record<UnitKind, number>>, sunDrops: [] as { x: number; y: number; t: number }[] });
+  const saveRef = useRef(save); saveRef.current = save;
 
-  useEffect(() => { loadGameState("defense").then(s => { const b = Number((s as Saved | null)?.bestWave ?? 0); g.current.account = b; setBest(b); }).catch(() => {}); }, []);
+  const persist = (next: typeof save) => { setSave(next); saveGameState("defense", next).catch(() => {}); };
+  useEffect(() => {
+    loadGameState("defense").then(s => { const d = (s as Saved | null) ?? {};
+      let stars = d.stars ?? {}, coins = d.coins ?? 0, cleared = d.cleared ?? 0;
+      if (!d.stars && d.bestWave) { cleared = Math.min(STAGES, Math.floor(Number(d.bestWave))); stars = {}; for (let i = 1; i <= cleared; i++) stars[i] = 1; coins = cleared * 20; }
+      setSave({ stars, coins, levels: d.levels ?? {}, cleared, dailyDone: d.dailyDone }); setChapter(Math.min(3, Math.ceil((cleared + 1) / 10))); setLoaded(true);
+      try { if (location.search.includes("unlockdemo")) setUnlockCard(UNITS.ortho); } catch {} }).catch(() => setLoaded(true));
+  }, []);
+  useEffect(() => { g.current.levels = save.levels; }, [save.levels]);
+  const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 2200); };
+  const closeUnlock = () => { setUnlockCard(null); g.current.paused = false; };
 
   useEffect(() => {
     const c = cv.current!, x = c.getContext("2d")!, s = g.current;
-    const size = () => { const r = box.current!.getBoundingClientRect(); const d = Math.min(2, devicePixelRatio || 1); s.W = r.width; s.H = r.width * 0.62; c.width = s.W * d; c.height = s.H * d; c.style.height = s.H + "px"; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
+    const size = () => { const r = box.current!.getBoundingClientRect(); if (!r.width) return; const d = Math.min(2, devicePixelRatio || 1); s.W = r.width; s.H = r.width * 0.62; c.width = s.W * d; c.height = s.H * d; c.style.height = s.H + "px"; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
     const cw = () => s.W / COLS, ch = () => s.H / ROWS;
+    const rowOk = (r: number) => s.stage?.mod !== "iso" || (r >= 1 && r <= 3);
+    const lv = (k: UnitKind) => lvMult(s.levels[k] ?? 1);
     const draw = () => {
       const CW = cw(), CH = ch();
-      for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < COLS; cc++) { x.fillStyle = (r + cc) % 2 ? "#EAF2EE" : "#DFEBE5"; x.fillRect(cc * CW, r * CH, CW, CH); }
+      for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < COLS; cc++) { x.fillStyle = !rowOk(r) ? "#C9D3CE" : (r + cc) % 2 ? "#EAF2EE" : "#DFEBE5"; x.fillRect(cc * CW, r * CH, CW, CH); }
+      if (s.stage?.mod === "night") { x.fillStyle = "rgba(20,30,60,.18)"; x.fillRect(0, 0, s.W, s.H); }
       x.strokeStyle = "rgba(0,0,0,.05)"; x.lineWidth = 1; for (let r = 1; r < ROWS; r++) { x.beginPath(); x.moveTo(0, r * CH); x.lineTo(s.W, r * CH); x.stroke(); }
       x.fillStyle = "#E2574C"; x.fillRect(0, 0, 5, s.H); x.fillStyle = "rgba(226,87,76,.12)"; x.fillRect(5, 0, CW * .5, s.H);
       x.fillStyle = "#B8C9C1"; x.fillRect(s.W - 6, 0, 6, s.H);
-      // 수면가스 영역 표시
       for (const u of s.units) if (u.kind === "anes") { x.fillStyle = "rgba(120,100,220,.10)"; x.fillRect(u.c * CW, u.r * CH, s.W - u.c * CW, CH); }
       x.textAlign = "center"; x.textBaseline = "middle";
       for (const u of s.units) { const cx = u.c * CW + CW / 2, cy = u.r * CH + CH / 2, wob = Math.sin(s.t * 4 + u.c + u.r) * 1.5, R = Math.min(CW, CH) * .42;
@@ -61,7 +105,8 @@ export default function Defense({ ranks, best: bestProp = 0 }: { ranks: Row[]; b
         x.fillStyle = UCOLOR[u.kind]; x.beginPath(); x.arc(cx, cy + wob, R, 0, 7); x.fill(); x.strokeStyle = "rgba(255,255,255,.8)"; x.lineWidth = 2; x.stroke();
         if (u.cd > 0 && u.kind !== "iv" && u.kind !== "wall") { x.strokeStyle = "rgba(0,0,0,.18)"; x.lineWidth = 3; x.beginPath(); x.arc(cx, cy + wob, R + 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, u.cd / 3)); x.stroke(); }
         x.font = `${Math.floor(R * 1.25)}px system-ui`; x.fillText(UNITS[u.kind].icon, cx, cy + wob + 1);
-        const p = u.hp / UNITS[u.kind].hp; x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 6, CW - 8, 3); x.fillStyle = p > .5 ? "#2C6B5E" : p > .25 ? "#E6B341" : "#E2574C"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 6, (CW - 8) * p, 3); }
+        const l = s.levels[u.kind] ?? 1; if (l > 1) { x.font = `700 ${Math.floor(CH * .22)}px system-ui`; x.fillStyle = "#fff"; x.strokeStyle = "#2C6B5E"; x.lineWidth = 3; x.strokeText("Lv" + l, cx + R * .7, cy - R * .7); x.fillText("Lv" + l, cx + R * .7, cy - R * .7); }
+        const p = u.hp / u.max; x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 6, CW - 8, 3); x.fillStyle = p > .5 ? "#2C6B5E" : p > .25 ? "#E6B341" : "#E2574C"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 6, (CW - 8) * p, 3); }
       for (const sh of s.shots) {
         const cy = sh.r * CH + CH / 2;
         if (sh.kind === "scissor") { x.save(); x.translate(sh.x, cy); x.rotate(sh.spin); x.font = `${Math.floor(CH * .45)}px system-ui`; x.fillText("✂️", 0, 0); x.restore(); }
@@ -69,16 +114,16 @@ export default function Defense({ ranks, best: bestProp = 0 }: { ranks: Row[]; b
         else { x.fillStyle = sh.kind === "beam" ? "#E2574C" : sh.kind === "pill" ? "#3B5BA9" : "#2C6B5E"; x.beginPath(); x.arc(sh.x, cy, sh.kind === "beam" ? 3 : sh.kind === "pill" ? 5 : 4, 0, 7); x.fill(); }
       }
       for (const z of s.germs) {
-        const bounce = z.eating ? Math.abs(Math.sin(s.t * 14)) * 3 : Math.abs(Math.sin(s.t * 6 + z.x * .05)) * 4, cy = z.r * CH + CH / 2 - bounce, R = z.kind === 3 ? CH * .46 : CH * .3;
+        const big = z.kind === 3 || z.kind === 7;
+        const bounce = z.eating ? Math.abs(Math.sin(s.t * 14)) * 3 : Math.abs(Math.sin(s.t * (z.kind === 6 ? 16 : 6) + z.x * .05)) * (z.kind === 6 ? 8 : 4), cy = z.r * CH + CH / 2 - bounce, R = big ? CH * .46 : z.kind === 6 ? CH * .22 : CH * .3;
         x.fillStyle = "rgba(0,0,0,.12)"; x.beginPath(); x.ellipse(z.x, z.r * CH + CH - 4, R * .8, 3, 0, 0, 7); x.fill();
-        if (z.kind === 3) { x.save(); x.globalAlpha = .25 + Math.sin(s.t * 5) * .1; x.fillStyle = "#E26B6B"; x.beginPath(); x.arc(z.x, cy, R * 1.35, 0, 7); x.fill(); x.restore(); }
+        if (big) { x.save(); x.globalAlpha = .25 + Math.sin(s.t * 5) * .1; x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R * 1.35, 0, 7); x.fill(); x.restore(); }
         if (z.poison > 0) { x.save(); x.globalAlpha = .35; x.fillStyle = "#4CAF50"; x.beginPath(); x.arc(z.x, cy, R * 1.2, 0, 7); x.fill(); x.restore(); }
-        x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R, 0, 7); x.fill(); x.strokeStyle = "rgba(0,0,0,.15)"; x.lineWidth = 2; x.stroke();
-        x.font = `${Math.floor(R * 1.3)}px system-ui`; x.fillText(["🦠", "🧫", "👾", "🧟"][z.kind], z.x, cy + 1);
+        x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R, 0, 7); x.fill(); x.strokeStyle = z.kind === 5 ? "#546E7A" : "rgba(0,0,0,.15)"; x.lineWidth = z.kind === 5 ? 3 : 2; x.stroke();
+        x.font = `${Math.floor(R * 1.3)}px system-ui`; x.fillText(GICON[z.kind], z.x, cy + 1);
         if (z.slow > 0) { x.font = `${Math.floor(CH * .3)}px system-ui`; x.fillText("💤", z.x + R, cy - R); }
-        x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(z.x - R, z.r * CH + 4, R * 2, 3); x.fillStyle = z.kind === 3 ? "#B71C1C" : "#E2574C"; x.fillRect(z.x - R, z.r * CH + 4, R * 2 * (z.hp / z.max), 3);
+        x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(z.x - R, z.r * CH + 4, R * 2, 3); x.fillStyle = big ? "#B71C1C" : "#E2574C"; x.fillRect(z.x - R, z.r * CH + 4, R * 2 * (z.hp / z.max), 3);
       }
-      // 이펙트
       for (const f of s.fx) {
         const cy = f.r * CH + CH / 2, a = Math.max(0, f.t);
         if (f.kind === "bolt") { x.save(); x.globalAlpha = a; x.strokeStyle = "#FFE766"; x.lineWidth = 3; x.shadowColor = "#FFE766"; x.shadowBlur = 12; x.beginPath(); let px = f.x, py = cy; x.moveTo(px, py); while (px < s.W) { px += 14; py = cy + (Math.random() - .5) * CH * .6; x.lineTo(px, py); } x.stroke(); x.restore(); }
@@ -89,98 +134,186 @@ export default function Defense({ ranks, best: bestProp = 0 }: { ranks: Row[]; b
       x.font = `${Math.floor(CH * .45)}px system-ui`;
       for (const d of s.sunDrops) x.fillText("💧", d.x, d.y);
     };
-    const spawnGerm = (boss = false) => { const r = Math.floor(Math.random() * ROWS), w = s.wave;
-      const base = { r, x: s.W + 10, eating: false, slow: 0, poison: 0 };
-      if (boss) { const hp = 1800 * (1 + w * .15); s.germs.push({ ...base, hp, max: hp, speed: 7 + w * .3, dmg: 80, kind: 3 }); return; }
-      const kind = w >= 5 && Math.random() < Math.min(.5, .15 + w * .03) ? 2 : w >= 2 && Math.random() < .4 ? 1 : 0; const hp = [60, 150, 340][kind] * (1 + w * .14);
-      s.germs.push({ ...base, hp, max: hp, speed: ([15, 11, 9][kind] + w * 1.1) * (1 + Math.random() * .25), dmg: [10, 16, 30][kind], kind }); };
-    const commitBest = (w: number) => { if (w > s.best) { s.best = w; saveScore("defense", w).catch(() => {}); }
-      if (w > s.account) { const prev = s.account; s.account = w; setBest(w); saveGameState("defense", { bestWave: w }).catch(() => {});
-        const nu = ORDER.find(k => UNITS[k].unlock > prev && UNITS[k].unlock <= w); if (nu) { s.paused = true; setUnlockCard(UNITS[nu]); sfx.level(); haptic([30, 30, 60]); } } };
-    const end = () => { s.running = false; cancelAnimationFrame(s.raf); draw(); sfx.boom(); haptic([60, 40, 60]); shake(box.current, "l"); setUi(u => ({ ...u, running: false, over: `${s.wave}웨이브에서 병동이 뚫렸어요` })); commitBest(s.wave - 1); };
+    const randRow = () => { const rows = [0, 1, 2, 3, 4].filter(rowOk); return rows[Math.floor(Math.random() * rows.length)]; };
+    const spawn = (kind: number, r = randRow(), x0 = s.W + 10, hpScale = 1) => {
+      const st = s.stage!, w = s.wave, m = st.mult * (st.mod === "tough" ? 1.5 : 1) * (1 + w * .06), sp = st.spd * (st.mod === "rush" ? 1.3 : 1) * (1 + w * .03);
+      const base = [60, 150, 340, 1800, 120, 260, 50, 3500][kind] * m * hpScale, speed = [15, 11, 9, 7, 13, 9, 28, 6][kind] * sp * (1 + Math.random() * .2), dmg = [10, 16, 30, 80, 12, 20, 8, 100][kind];
+      s.germs.push({ r, x: x0, hp: base, max: base, speed, dmg, kind, eating: false, slow: 0, poison: 0, cd: 6 });
+    };
+    const spawnGerm = () => { const st = s.stage!, w = s.wave; const pool = st.pool.filter(k => k === 0 || Math.random() < Math.min(.6, .2 + w * .05 + st.id * .01)); spawn(pool[Math.floor(Math.random() * pool.length)]); };
+    const finish = (win: boolean) => {
+      s.running = false; cancelAnimationFrame(s.raf); draw();
+      const st = s.stage!, cur = saveRef.current;
+      if (!win) { sfx.boom(); haptic([60, 40, 60]); shake(box.current, "l"); setUi(u => ({ ...u, running: false })); setResult({ win: false, stars: 0, coins: 0, first: false }); return; }
+      const stars = s.lost === 0 ? 3 : s.lost <= 3 ? 2 : 1;
+      const prevStars = cur.stars[st.id] ?? 0, first = prevStars === 0;
+      let coins = stageCoins(st.id, stars) + (first ? 30 : 0);
+      if (s.daily) coins *= 2;
+      const next = { ...cur, stars: { ...cur.stars, [st.id]: Math.max(prevStars, stars) }, coins: cur.coins + coins, cleared: Math.max(cur.cleared, st.id), dailyDone: s.daily ? kstDay() : cur.dailyDone };
+      persist(next);
+      sfx.level(); haptic([30, 30, 60]); setUi(u => ({ ...u, running: false }));
+      setResult({ win: true, stars, coins, first });
+      if (st.id > cur.cleared) { saveScore("defense", st.id).catch(() => {}); const nu = ORDER.find(k => UNITS[k].unlock > cur.cleared && UNITS[k].unlock <= st.id); if (nu) setTimeout(() => setUnlockCard(UNITS[nu]), 900); }
+      if (s.daily) defenseDaily(kstDay()).then(xp => { if (xp) setResult(r => r && { ...r, xp }); }).catch(() => {});
+    };
     const laneGerms = (r: number, fromX: number) => s.germs.filter(z => z.r === r && z.x > fromX);
     const tick = (now: number) => {
       if (s.paused) { s.last = now; s.raf = requestAnimationFrame(tick); return; }
-      const dt = Math.min(.05, (now - s.last) / 1000); s.last = now; s.t += dt; const CW = cw(), CH = ch();
+      const dt = Math.min(.05, (now - s.last) / 1000); s.last = now; s.t += dt; const CW = cw(), CH = ch(); const st = s.stage!;
       s.nextSpawn -= dt;
       if (s.nextSpawn <= 0) {
-        if (s.spawned < s.waveSize) { spawnGerm(); s.spawned++; if (s.wave % 5 === 0 && s.spawned === s.waveSize) spawnGerm(true); s.nextSpawn = Math.max(.35, 1.8 - s.wave * .11); }
-        else if (!s.germs.length) { commitBest(s.wave); sfx.level(); pop(box.current, s.W / 2, s.H / 2, `WAVE ${s.wave + 1}`, "good big"); if ((s.wave + 1) % 5 === 0) setTimeout(() => { sfx.boom(); pop(box.current, s.W / 2, s.H * .3, "⚠ BOSS", "bad big"); shake(box.current, "m"); }, 1200); s.wave++; s.spawned = 0; s.waveSize = 4 + Math.floor(s.wave * 2.2); s.nextSpawn = 2.5; setUi(u => ({ ...u, wave: s.wave })); } }
-      if (Math.random() < dt * Math.max(.03, .1 - s.wave * .006)) s.sunDrops.push({ x: 30 + Math.random() * (s.W - 60), y: 20 + Math.random() * (s.H - 40), t: 8 });
+        if (s.spawned < s.waveSize) { spawnGerm(); s.spawned++; if (st.boss && s.wave === st.waves && s.spawned === s.waveSize) { spawn(st.boss); sfx.boom(); pop(box.current, s.W / 2, s.H * .3, "⚠ BOSS", "bad big"); shake(box.current, "m"); } s.nextSpawn = Math.max(.35, 1.7 - s.wave * .1 - st.id * .015); }
+        else if (!s.germs.length) {
+          if (s.wave >= st.waves) return finish(true);
+          sfx.level(); pop(box.current, s.W / 2, s.H / 2, `WAVE ${s.wave + 1}/${st.waves}`, "good big");
+          s.wave++; s.spawned = 0; s.waveSize = Math.round((3 + s.wave * 2 + Math.floor(st.id / 4)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = 2.5; setUi(u => ({ ...u, wave: s.wave })); } }
+      if (st.mod !== "night" && Math.random() < dt * Math.max(.03, .1 - s.wave * .006)) s.sunDrops.push({ x: 30 + Math.random() * (s.W - 60), y: 20 + Math.random() * (s.H - 40), t: 8 });
       s.sunDrops = s.sunDrops.filter(d => (d.t -= dt) > 0);
-      for (const u of s.units) { u.cd -= dt; const fx = u.c * CW + CW * .7, lane = laneGerms(u.r, u.c * CW);
+      for (const u of s.units) { u.cd -= dt; const fx = u.c * CW + CW * .7, lane = laneGerms(u.r, u.c * CW), D = Math.round(UNITS[u.kind].dmg * lv(u.kind));
         switch (u.kind) {
-          case "iv": if (u.cd <= 0) { u.cd = 8; s.sun += 25; setUi(x => ({ ...x, sun: s.sun })); } break;
-          case "nurse": if (u.cd <= 0 && lane.length) { u.cd = 1.4; s.shots.push({ r: u.r, x: fx, dmg: 20, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "xray": if (u.cd <= 0 && lane.length) { u.cd = 2.2; s.shots.push({ r: u.r, x: fx, dmg: 10, kind: "beam", hit: new Set(), pierce: 99, spin: 0 }); } break;
-          case "doctor": if (u.cd <= 0 && lane.length) { u.cd = 3.2; s.shots.push({ r: u.r, x: fx, dmg: 60, kind: "pill", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "ortho": { const near = lane.filter(z => z.x < u.c * CW + CW * 2.6); if (u.cd <= 0 && near.length) { u.cd = 2.8; for (const z of near) { z.hp -= 90; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: "90" }); } s.fx.push({ kind: "boom", r: u.r, x: u.c * CW + CW * 1.6, t: 1 }); } break; }
-          case "anes": for (const z of lane) z.slow = .6; if (u.cd <= 0 && lane.length) { u.cd = 2; s.shots.push({ r: u.r, x: fx, dmg: 8, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "lab": if (u.cd <= 0 && lane.length) { u.cd = 3; s.shots.push({ r: u.r, x: fx, dmg: 15, kind: "poison", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "ems": if (u.cd <= 0 && lane.length) { u.cd = 8; for (const z of lane) { z.hp -= 120; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: "120" }); } s.fx.push({ kind: "bolt", r: u.r, x: fx, t: 1 }); } break;
-          case "ornurse": if (u.cd <= 0 && lane.length) { u.cd = 2.4; s.shots.push({ r: u.r, x: fx, dmg: 35, kind: "scissor", hit: new Set(), pierce: 3, spin: 0 }); } break;
+          case "iv": if (u.cd <= 0) { u.cd = 8; s.sun += Math.round(25 * lv("iv")); setUi(x => ({ ...x, sun: s.sun })); } break;
+          case "nurse": if (u.cd <= 0 && lane.length) { u.cd = 1.4; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
+          case "xray": if (u.cd <= 0 && lane.length) { u.cd = 2.2; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "beam", hit: new Set(), pierce: 99, spin: 0 }); } break;
+          case "doctor": if (u.cd <= 0 && lane.length) { u.cd = 3.2; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "pill", hit: new Set(), pierce: 1, spin: 0 }); } break;
+          case "ortho": { const near = lane.filter(z => z.x < u.c * CW + CW * 2.6); if (u.cd <= 0 && near.length) { u.cd = 2.8; for (const z of near) { z.hp -= D; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: String(D) }); } s.fx.push({ kind: "boom", r: u.r, x: u.c * CW + CW * 1.6, t: 1 }); } break; }
+          case "anes": for (const z of lane) z.slow = .6; if (u.cd <= 0 && lane.length) { u.cd = 2; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
+          case "lab": if (u.cd <= 0 && lane.length) { u.cd = 3; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "poison", hit: new Set(), pierce: 1, spin: 0 }); } break;
+          case "ems": if (u.cd <= 0 && lane.length) { u.cd = 8; for (const z of lane) { z.hp -= D; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: String(D) }); } s.fx.push({ kind: "bolt", r: u.r, x: fx, t: 1 }); } break;
+          case "ornurse": if (u.cd <= 0 && lane.length) { u.cd = 2.4; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "scissor", hit: new Set(), pierce: 3, spin: 0 }); } break;
         } }
       for (const sh of s.shots) { sh.x += (sh.kind === "poison" ? 180 : sh.kind === "scissor" ? 300 : 260) * dt; sh.spin += dt * (sh.kind === "scissor" ? 14 : 1.2);
-        for (const z of s.germs) { if (z.r === sh.r && !sh.hit.has(z) && Math.abs(z.x - sh.x) < CW * .3) { z.hp -= sh.dmg; sh.hit.add(z); s.fx.push({ kind: "dmg", r: sh.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(sh.dmg) }); if (z.hp <= 0) { sfx.hit(); burst(box.current, z.x, z.r * CH + CH / 2, GCOLOR[z.kind], 8); }
-          if (sh.kind === "poison") { z.poison = 4; s.fx.push({ kind: "cloud", r: sh.r, x: z.x, t: .6 }); for (const o of s.germs) if (o !== z && o.r === z.r && Math.abs(o.x - z.x) < CW) o.poison = 4; }
-          if (sh.hit.size >= sh.pierce) sh.x = 1e9; } } }
+        for (const z of s.germs) { if (z.r === sh.r && !sh.hit.has(z) && Math.abs(z.x - sh.x) < CW * .3) {
+            const d = z.kind === 5 && (sh.kind === "needle" || sh.kind === "beam") ? Math.round(sh.dmg / 2) : sh.dmg;
+            z.hp -= d; sh.hit.add(z); s.fx.push({ kind: "dmg", r: sh.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(d) }); if (z.hp <= 0) { sfx.hit(); burst(box.current, z.x, z.r * CH + CH / 2, GCOLOR[z.kind], 8); }
+            if (sh.kind === "poison") { z.poison = 4; s.fx.push({ kind: "cloud", r: sh.r, x: z.x, t: .6 }); for (const o of s.germs) if (o !== z && o.r === z.r && Math.abs(o.x - z.x) < CW) o.poison = 4; }
+            if (sh.hit.size >= sh.pierce) sh.x = 1e9; } } }
       s.shots = s.shots.filter(sh => sh.x < s.W + 20);
       for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : f.kind === "dmg" ? 1.4 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
       for (const z of s.germs) { if (z.poison > 0) { z.poison -= dt; z.hp -= 12 * dt; } const sp = z.speed * (z.slow > 0 ? .5 : 1); z.slow = Math.max(0, z.slow - dt);
+        if (z.kind === 7) { z.cd -= dt; if (z.cd <= 0) { z.cd = 6; spawn(0, z.r, z.x + 10, .6); pop(box.current, z.x, z.r * CH + CH * .2, "소환!", "bad"); } }
         const target = s.units.find(u => u.r === z.r && Math.abs(u.c * CW + CW / 2 - z.x) < CW * .45 && u.c * CW + CW / 2 <= z.x + 2);
         if (target) { z.eating = true; target.hp -= z.dmg * dt; } else { z.eating = false; z.x -= sp * dt; }
-        if (z.x < -4) return end(); }
-      // 세균이 왼쪽 경계 근처까지 오면 경고
-      for (const z of s.germs) if (!(z as any).warn && z.x < CW * 1.2) { (z as any).warn = true; sfx.tick(); shake(box.current, "s"); }
-      s.units = s.units.filter(u => u.hp > 0); s.germs = s.germs.filter(z => z.hp > 0);
+        if (z.x < -4) return finish(false); }
+      for (const z of s.germs) if (!z.warn && z.x < CW * 1.2) { z.warn = true; sfx.tick(); shake(box.current, "s"); }
+      // 변이균: 죽으면 둘로 분열
+      for (const z of s.germs) if (z.hp <= 0 && z.kind === 4) { spawn(0, z.r, z.x - 6, .4); spawn(0, z.r, z.x + 14, .4); pop(box.current, z.x, z.r * CH + CH * .2, "분열!", "bad"); }
+      const before = s.units.length; s.units = s.units.filter(u => u.hp > 0); s.lost += before - s.units.length; s.germs = s.germs.filter(z => z.hp > 0);
       draw(); s.raf = requestAnimationFrame(tick);
     };
-    (box.current as any).__start = () => { sfx.level(); size(); s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = 150; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = 3; s.nextSpawn = 5; s.sunDrops = []; s.best = 0; s.running = true; s.last = performance.now(); setUi({ sun: 150, wave: 1, running: true, over: "" }); s.raf = requestAnimationFrame(tick); };
+    (box.current as any).__start = (st: StageDef, isDaily: boolean) => { sfx.level(); size(); s.stage = st; s.daily = isDaily; s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = st.mod === "rush" ? 300 : 150; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = Math.round((3 + 2 + Math.floor(st.id / 4)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = 5; s.sunDrops = []; s.lost = 0; s.running = true; s.paused = false; s.last = performance.now(); setUi({ sun: s.sun, wave: 1, running: true }); s.raf = requestAnimationFrame(tick); };
     (box.current as any).__place = (kind: UnitKind, px: number, py: number) => {
       if (!s.running) return; const CW = cw(), CH = ch();
       const hit = s.sunDrops.findIndex(d => Math.hypot(d.x - px, d.y - py) < CH * .4);
       if (hit >= 0) { s.sunDrops.splice(hit, 1); s.sun += 25; setUi(u => ({ ...u, sun: s.sun })); sfx.coin(); pop(box.current, px, py, "+25", "good"); return; }
-      if (UNITS[kind].unlock > s.account) return;
-      const c = Math.floor(px / CW), r = Math.floor(py / CH); if (c < 0 || c >= COLS - 1 || r < 0 || r >= ROWS) return;
-      if (s.units.some(u => u.r === r && u.c === c)) return; const cost = UNITS[kind].cost; if (s.sun < cost) return;
-      s.sun -= cost; s.units.push({ kind, r, c, hp: UNITS[kind].hp, cd: kind === "iv" ? 8 : 0 }); setUi(u => ({ ...u, sun: s.sun })); sfx.tap(); haptic(8); burst(box.current, px, py, UCOLOR[kind], 8);
+      if (UNITS[kind].unlock > saveRef.current.cleared) return;
+      const c = Math.floor(px / CW), r = Math.floor(py / CH); if (c < 0 || c >= COLS - 1 || r < 0 || r >= ROWS || !rowOk(r)) return;
+      if (s.units.some(u => u.r === r && u.c === c)) return; const cost = UNITS[kind].cost; if (s.sun < cost) { pop(box.current, px, py, "수액 부족", "bad"); return; }
+      const hp = Math.round(UNITS[kind].hp * lv(kind));
+      s.sun -= cost; s.units.push({ kind, r, c, hp, max: hp, cd: kind === "iv" ? 8 : 0 }); setUi(u => ({ ...u, sun: s.sun })); sfx.tap(); haptic(8); burst(box.current, px, py, UCOLOR[kind], 8);
     };
+    try { if (location.search.includes("devwin")) (box.current as any).__win = () => finish(true); } catch {}
     const ro = new ResizeObserver(size); ro.observe(box.current!); size();
     return () => { ro.disconnect(); cancelAnimationFrame(s.raf); };
   }, []);
 
-  const unlocked = ORDER.filter(k => UNITS[k].unlock <= best), locked = ORDER.filter(k => UNITS[k].unlock > best);
-  const next = locked[0];
+  // 데일리 챌린지: 날짜로 정해지는 스테이지 + 규칙
+  const today = kstDay(), dh = hash(today);
+  const dailyStage = stageDef(Math.max(1, Math.min(STAGES, (dh % Math.max(1, save.cleared + 1)) + 1)), (["night", "iso", "rush", "tough", "double"] as Mod[])[dh % 5]);
+  const dailyDone = save.dailyDone === today;
+  const totalStars = Object.values(save.stars).reduce((a, b) => a + b, 0);
+  const unlocked = ORDER.filter(k => UNITS[k].unlock <= save.cleared), locked = ORDER.filter(k => UNITS[k].unlock > save.cleared);
+  const start = (st: StageDef, isDaily = false) => { setStage(st); setDaily(isDaily); setResult(null); setView("play"); setShowUp(false); setTimeout(() => (box.current as any)?.__start(st, isDaily), 50); };
+  const upgrade = (k: UnitKind) => { const lv = save.levels[k] ?? 1; if (lv >= MAXLV) return; const cost = lvCost(k, lv); if (save.coins < cost) { flash("처방전 코인이 부족해요"); return; } sfx.coin(); haptic(10); persist({ ...save, coins: save.coins - cost, levels: { ...save.levels, [k]: lv + 1 } }); flash(`${UNITS[k].name} Lv${lv + 1}!`); };
+  const Stars = ({ n, size = 14 }: { n: number; size?: number }) => <span className="stars" style={{ fontSize: size }}>{[1, 2, 3].map(i => <span key={i} className={i <= n ? "on" : ""}>★</span>)}</span>;
+
   return (
     <div className="card">
-      <div><h3>병동 사수</h3><div className="muted">왼쪽에 의료진을 배치해서 오른쪽에서 밀려오는 세균을 막으세요. 수액(💧)을 눌러 모으고, 수액으로 의료진을 고용해요. 세균이 왼쪽 끝에 닿으면 끝. 5웨이브마다 보스 🧟. <b>웨이브를 넘길수록 새 의료진이 해금</b>돼요 (계정에 저장).</div></div>
-      <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">웨이브 {ui.wave}</span><BestLine best={Math.max(best, bestProp)} cur={Math.max(0, ui.wave - 1)} unit="웨이브" />
-        {ui.running && <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={async () => { const w = Math.max(0, g.current.wave - 1); if (!w) { setSaved("1웨이브를 넘긴 뒤 저장할 수 있어요"); return; } try { await saveScore("defense", w); g.current.best = Math.max(g.current.best, w); setSaved(`${w}웨이브 기록 저장됨`); } catch { setSaved("저장 실패"); } setTimeout(() => setSaved(""), 2500); }}>기록 저장</button>}
+      <div><h3>병동 사수</h3><div className="muted">왼쪽에 의료진을 배치해 오른쪽에서 밀려오는 세균을 막아요. 수액(💧)을 눌러 모으고 수액으로 고용. 스테이지를 깨면 <b>별·처방전 코인·새 의료진</b>이 열리고, 코인으로 의료진을 강화해요. (계정 저장)</div></div>
+      <div className="def-bar"><span className="def-sun">💊 {save.coins}</span><span className="muted">⭐ {totalStars}/{STAGES * 3} · {save.cleared}/{STAGES} 클리어</span>
+        {view === "play" ? <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={() => { g.current.running = false; cancelAnimationFrame(g.current.raf); setResult(null); setView("map"); }}>맵으로</button>
+          : <button type="button" className={"btn" + (showUp ? "" : " ghost")} style={{ padding: "6px 12px" }} onClick={() => setShowUp(v => !v)}>의료진 강화</button>}
       </div>
-      {saved && <div className="muted">{saved}</div>}
-      <div className="def-shop">{unlocked.map(k => <button key={k} type="button" className={"def-unit" + (sel === k ? " sel" : "") + (ui.sun < UNITS[k].cost ? " poor" : "")} onClick={() => setSel(k)} title={UNITS[k].desc}><span className="def-ico" style={{ background: UCOLOR[k] }}>{UNITS[k].icon}</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{UNITS[k].cost}</span></button>)}
-        {locked.map(k => <div key={k} className="def-unit locked" title={`${UNITS[k].unlock}웨이브 달성 시 해금`}><span className="def-ico">🔒</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{UNITS[k].unlock}웨이브</span></div>)}</div>
-      <div className="def-stage" ref={box} onPointerDown={e => { const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect(); (e.currentTarget as any).__place(sel, e.clientX - r.left, e.clientY - r.top); }}>
-        <canvas ref={cv} />
-        {!ui.running && <button type="button" className="overlay" onClick={e => { e.stopPropagation(); (box.current as any).__start(); }}><span className="big">{ui.over ? ui.over : "병동 사수"}</span><span>{ui.over ? "다시 하려면 터치" : "터치해서 시작"}</span></button>}
-        {unlockCard && (
-          <div className="unlock" role="dialog" aria-modal="true" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
-            <div className="unlock-title">새 의료진을 영입했어요!</div>
-            <div className="unlock-frame">
-              <div className="unlock-card">
-                <div className="unlock-top">{unlockCard.name}</div>
-                <div className="unlock-body">
-                  <div className="unlock-tile"><span className="unlock-ico">{unlockCard.icon}</span></div>
-                  <div className="unlock-desc">{unlockCard.desc}{unlockCard.skill && <><br /><span className="tag">{unlockCard.skill}</span></>}<div className="muted" style={{ marginTop: 6 }}>고용 비용 {unlockCard.cost}💧</div></div>
-                </div>
-              </div>
-              <button type="button" className="unlock-btn" onClick={closeUnlock}>CONTINUE</button>
-            </div>
+      {toast && <div className="muted">{toast}</div>}
+
+      {view === "map" && !showUp && (
+        <>
+          <div className="def-daily">
+            <div><b>📅 오늘의 챌린지</b> <span className="muted">{dailyStage.name} · {MODS[dailyStage.mod].name}</span><div className="muted" style={{ fontSize: 12 }}>{MODS[dailyStage.mod].desc} · 보상 코인 2배 + 경험치 100</div></div>
+            {dailyDone ? <span className="tag">완료 ✓</span> : <button type="button" className="btn" disabled={!loaded} onClick={() => start(dailyStage, true)}>도전</button>}
           </div>
-        )}
+          <div className="cats" style={{ paddingBottom: 0 }}>{CHAPTERS.map((n, i) => <button key={n} type="button" className="cats-btn" aria-pressed={chapter === i + 1} disabled={save.cleared < i * 10} onClick={() => setChapter(i + 1)}>{i + 1}장 {n}{save.cleared < i * 10 ? " 🔒" : ""}</button>)}</div>
+          <div className="def-map">
+            {Array.from({ length: 10 }, (_, i) => stageDef((chapter - 1) * 10 + i + 1)).map(st => { const open = st.id <= save.cleared + 1, s3 = save.stars[st.id] ?? 0;
+              return <button key={st.id} type="button" className={"def-node" + (open ? "" : " locked") + (st.id === save.cleared + 1 ? " next" : "") + (st.boss ? " boss" : "")} disabled={!open || !loaded} onClick={() => start(st)}>
+                <span className="def-no">{st.boss ? GICON[st.boss] : st.name}</span>
+                {open ? <Stars n={s3} /> : <span className="muted">🔒</span>}
+                {st.mod !== "none" && <span className="def-mod">{MODS[st.mod].name.split(" ")[0]}</span>}
+              </button>; })}
+          </div>
+          <div className="muted" style={{ fontSize: 12 }}>⭐ 의료진을 하나도 잃지 않으면 별 3개, 3명 이하 2개. 보스: 5스테이지마다 🧟, 25·30은 👑 슈퍼박테리아(소환). {locked[0] ? `다음 해금: ${UNITS[locked[0]].name} (${stageDef(UNITS[locked[0]].unlock).name} 클리어)` : "모든 의료진 해금 완료!"}</div>
+        </>
+      )}
+
+      {view === "map" && showUp && (
+        <div className="def-up">
+          <div className="muted">처방전 코인 💊으로 의료진을 강화해요. 레벨당 공격력·체력 +20% (수액 걸이는 생산량). 최대 Lv{MAXLV}.</div>
+          {ORDER.map(k => { const lv = save.levels[k] ?? 1, isU = UNITS[k].unlock <= save.cleared, cost = lvCost(k, lv);
+            return <div key={k} className={"def-uprow" + (isU ? "" : " locked")}>
+              <span className="def-ico" style={{ background: isU ? UCOLOR[k] : undefined }}>{isU ? UNITS[k].icon : "🔒"}</span>
+              <div style={{ flex: 1, minWidth: 0 }}><b>{UNITS[k].name}</b> <span className="tag">Lv{lv}</span><div className="muted" style={{ fontSize: 12 }}>{isU ? `${UNITS[k].desc}${UNITS[k].dmg ? ` · 공격 ${Math.round(UNITS[k].dmg * lvMult(lv))}` : ""} · 체력 ${Math.round(UNITS[k].hp * lvMult(lv))}` : `${stageDef(UNITS[k].unlock).name} 클리어 시 해금`}</div></div>
+              {isU && (lv >= MAXLV ? <span className="tag">MAX</span> : <button type="button" className={"btn" + (save.coins < cost ? " ghost" : "")} style={{ padding: "6px 10px" }} onClick={() => upgrade(k)}>💊 {cost}</button>)}
+            </div>; })}
+        </div>
+      )}
+
+      <div style={{ display: view === "play" ? "grid" : "none", gap: 10 }}>
+        {stage && <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">{daily ? "📅 " : ""}{stage.name} · 웨이브 {ui.wave}/{stage.waves}{stage.mod !== "none" ? ` · ${MODS[stage.mod].name}` : ""}</span><span className="muted">잃은 의료진 {g.current.lost}</span></div>}
+        <div className="def-shop">{unlocked.map(k => <button key={k} type="button" className={"def-unit" + (sel === k ? " sel" : "") + (ui.sun < UNITS[k].cost ? " poor" : "")} onClick={() => setSel(k)} title={UNITS[k].desc}><span className="def-ico" style={{ background: UCOLOR[k] }}>{UNITS[k].icon}</span><span className="def-name">{UNITS[k].name}{(save.levels[k] ?? 1) > 1 ? ` +${(save.levels[k] ?? 1) - 1}` : ""}</span><span className="def-cost">{UNITS[k].cost}</span></button>)}
+          {locked.map(k => <div key={k} className="def-unit locked" title={`${stageDef(UNITS[k].unlock).name} 클리어 시 해금`}><span className="def-ico">🔒</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{stageDef(UNITS[k].unlock).name}</span></div>)}</div>
+        <div className="def-stage" ref={box} onPointerDown={e => { const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect(); (e.currentTarget as any).__place(sel, e.clientX - r.left, e.clientY - r.top); }}>
+          <canvas ref={cv} />
+          {result && (
+            <div className="def-result" onPointerDown={e => e.stopPropagation()}>
+              <div className="def-result-card">
+                <div className="big">{result.win ? (daily ? "챌린지 성공!" : `${stage?.name} 클리어!`) : "병동이 뚫렸어요"}</div>
+                {result.win ? <>
+                  <Stars n={result.stars} size={34} />
+                  <div>💊 +{result.coins}{result.first ? <span className="muted"> (첫 클리어 +30)</span> : null}{daily ? <span className="muted"> · 2배</span> : null}{result.xp ? <span className="tag" style={{ marginLeft: 6 }}>+{result.xp} XP</span> : null}</div>
+                  <div className="row">
+                    <button type="button" className="btn ghost" onClick={() => { setResult(null); setView("map"); }}>맵으로</button>
+                    <button type="button" className="btn ghost" onClick={() => stage && start(stage, daily)}>다시</button>
+                    {!daily && stage && stage.id < STAGES && <button type="button" className="btn" onClick={() => start(stageDef(stage.id + 1))}>다음 스테이지 ▶</button>}
+                  </div>
+                </> : <>
+                  <div className="muted">웨이브 {ui.wave}/{stage?.waves}에서 실패 · 의료진 강화나 배치를 바꿔보세요</div>
+                  <div className="row">
+                    <button type="button" className="btn ghost" onClick={() => { setResult(null); setView("map"); }}>맵으로</button>
+                    <button type="button" className="btn" onClick={() => stage && start(stage, daily)}>다시 도전</button>
+                  </div>
+                </>}
+              </div>
+            </div>
+          )}
+          {unlockCard && (
+            <div className="unlock" role="dialog" aria-modal="true" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+              <div className="unlock-title">새 의료진을 영입했어요!</div>
+              <div className="unlock-frame">
+                <div className="unlock-card">
+                  <div className="unlock-top">{unlockCard.name}</div>
+                  <div className="unlock-body">
+                    <div className="unlock-tile"><span className="unlock-ico">{unlockCard.icon}</span></div>
+                    <div className="unlock-desc">{unlockCard.desc}{unlockCard.skill && <><br /><span className="tag">{unlockCard.skill}</span></>}<div className="muted" style={{ marginTop: 6 }}>고용 비용 {unlockCard.cost}💧</div></div>
+                  </div>
+                </div>
+                <button type="button" className="unlock-btn" onClick={closeUnlock}>CONTINUE</button>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="muted">{UNITS[sel].icon} {UNITS[sel].name}: {UNITS[sel].desc} · 바닥을 눌러 배치{stage && stage.pool.length > 1 ? ` · 등장: ${stage.pool.map(k => GICON[k]).join(" ")}${stage.boss ? " + " + GICON[stage.boss] : ""}` : ""}</div>
       </div>
-      <div className="muted">{UNITS[sel].icon} {UNITS[sel].name}: {UNITS[sel].desc} · 바닥을 눌러 배치{next ? ` · 다음 해금: ${UNITS[next].name} (${UNITS[next].unlock}웨이브)` : " · 모든 의료진 해금 완료!"}</div>
-      <Board title="병동 사수 명예의 전당" rows={ranks} fmt={r => r.value + "웨이브"} />
+      <details className="muted" style={{ fontSize: 12 }}><summary>세균 도감</summary>{GNAME.map((n, i) => <div key={i}>{GICON[i]} {n}</div>)}</details>
+      <Board title="병동 사수 명예의 전당" rows={ranks} fmt={r => stageDef(Math.max(1, Math.min(STAGES, r.value))).name + " 클리어"} />
     </div>
   );
 }

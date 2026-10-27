@@ -27,7 +27,7 @@ export default async function GamesPage() {
     { id: "cpr", name: "코드블루 CPR", icon: "🫀", sub: "리듬 탭", color: "#EE6C8F", node: <Cpr ranks={norm(cpr)} best={my.cpr ?? 0} /> },
     { id: "quiz", name: "의학용어 퀴즈", icon: "📚", sub: "60초 4지선다", color: "#9B7EDE", node: <Quiz ranks={norm(quiz)} best={my.quiz ?? 0} myDept={sess.dept} /> },
     { id: "vein", name: "혈관 찾기", icon: "🩸", sub: "20초 콤보", color: "#EE6C4D", node: <Vein ranks={norm(vein)} best={my.vein ?? 0} /> },
-    { id: "defense", name: "병동 사수", icon: "🦠", sub: "줄 지키기 디펜스", color: "#5FA777", badge: "HIT!", node: <Defense ranks={norm(defense)} best={my.defense ?? 0} /> },
+    { id: "defense", name: "병동 사수", icon: "🦠", sub: "줄 지키기 디펜스", color: "#5FA777", badge: "HIT!", node: <Defense ranks={norm(defense)} /> },
     { id: "plant", name: "창가 화분", icon: "🪴", sub: "실시간 키우기", color: "#A8C256", node: <PlantGame /> },
     { id: "bowling", name: "복도 볼링", icon: "🎳", sub: "10프레임", color: "#E9B44C", node: <Bowling ranks={norm(bowling)} best={my.bowling ?? 0} /> },
     { id: "dodge", name: "총알 피하기", icon: "💥", sub: "버티기", color: "#D9534F", node: <Dodge ranks={norm(dodge)} best={my.dodge ?? 0} /> },
@@ -37,7 +37,7 @@ export default async function GamesPage() {
   return (
     <div className="games">
       <Hero img="/img/games.jpg" pos="center 42%" title="미니게임" sub="기록은 명예의 전당에, 퀘스트는 경험치로" />
-      <div className="chips">{games.map(g => <a key={g.id} className="chip" href={`#${g.id}`}>{g.icon} {g.name}</a>)}</div>
+      <div className="cats">{games.map(g => <a key={g.id} href={`#${g.id}`}>{g.icon} {g.name}</a>)}</div>
       {games.map(g => <section key={g.id} id={g.id} className="game-sec">{g.node}</section>)}
     </div>
   );

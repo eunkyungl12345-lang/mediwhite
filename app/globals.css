@@ -413,3 +413,27 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 @keyframes shimmer{to{background-position:-200% 0}}
 
 .game-sec{scroll-margin-top:12px}
+
+/* 병동 사수 스테이지 */
+.def-daily{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(135deg,var(--scrub-soft),transparent);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.cats-btn:disabled{opacity:.5;cursor:default}
+.def-map{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.def-node{display:grid;justify-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 4px 8px;font:inherit;color:var(--ink);cursor:pointer;position:relative;min-height:62px}
+.def-node.next{border-color:var(--scrub);box-shadow:0 0 0 3px var(--scrub-soft);animation:nodepulse 1.6s ease-in-out infinite}
+@keyframes nodepulse{50%{box-shadow:0 0 0 6px var(--scrub-soft)}}
+.def-node.locked{opacity:.45;cursor:default;border-style:dashed}
+.def-node.boss .def-no{font-size:22px}
+.def-no{font-family:var(--f-display);font-size:18px;line-height:1}
+.def-mod{position:absolute;top:-6px;right:-4px;font-size:12px;background:var(--surface);border-radius:999px;padding:0 3px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.stars{letter-spacing:1px;color:#CBD5D0;line-height:1}
+.stars .on{color:#F2B705;text-shadow:0 1px 0 rgba(0,0,0,.15)}
+.def-up{display:grid;gap:8px}
+.def-uprow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.def-uprow.locked{opacity:.55}
+.def-result{position:fixed;inset:0;display:grid;place-items:center;background:rgba(14,21,19,.78);z-index:50;padding:16px}
+.def-result-card{background:var(--surface);border-radius:16px;padding:18px 16px;display:grid;gap:10px;justify-items:center;text-align:center;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.4);animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.def-result-card .big{font-family:var(--f-display);font-size:26px}
+.def-result-card .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.def-result-card .stars .on{animation:starin .4s cubic-bezier(.2,1.6,.4,1) both}
+.def-result-card .stars .on:nth-child(2){animation-delay:.2s}.def-result-card .stars .on:nth-child(3){animation-delay:.4s}
+@keyframes starin{from{transform:scale(0) rotate(-40deg);opacity:0}to{transform:none;opacity:1}}
