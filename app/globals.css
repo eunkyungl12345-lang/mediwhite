@@ -207,3 +207,17 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .cats a.top-tab[aria-current="true"],.cats a.top-tab{border-color:#D4A017}
 .cats a.top-tab[aria-current="true"]{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}
 .tag.top-tag{background:linear-gradient(135deg,#D4A017,#F2C94C);color:#2A1E00}
+
+/* 계급장 반짝임 */
+.insignia{overflow:visible;border-radius:2px}
+.insignia .sweep{animation:sweep var(--sw,4s) ease-in-out infinite}
+@keyframes sweep{0%,55%{transform:translateX(0) skewX(-20deg)}100%{transform:translateX(260%) skewX(-20deg)}}
+.insignia .tw{opacity:0;animation:tw 2.2s ease-in-out infinite}
+.insignia .tw2{animation-delay:.7s}.insignia .tw3{animation-delay:1.3s;animation-duration:1.6s}
+@keyframes tw{0%,100%{opacity:0;transform:scale(.6);transform-box:fill-box;transform-origin:center}50%{opacity:1;transform:scale(1.4);transform-box:fill-box;transform-origin:center}}
+.shine-t1{--sw:6s}.shine-t2{--sw:4.5s}.shine-t3{--sw:3.5s;filter:drop-shadow(0 0 2px rgba(217,222,227,.5))}
+.shine-t4{--sw:3s;filter:drop-shadow(0 0 3px rgba(217,222,227,.7))}
+.shine-t5{--sw:2.4s;filter:drop-shadow(0 0 3px rgba(230,179,65,.8));animation:glow 2s ease-in-out infinite}
+.shine-t6{--sw:1.8s;filter:drop-shadow(0 0 4px rgba(230,179,65,1));animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{50%{filter:drop-shadow(0 0 7px rgba(242,201,76,1))}}
+@media (prefers-reduced-motion:reduce){.insignia .sweep,.insignia .tw,.shine-t5,.shine-t6{animation:none}}

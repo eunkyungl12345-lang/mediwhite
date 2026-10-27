@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { IDX } from "@/lib/ranks";
 /**
  * 계급장 배지 (자체 제작). 어두운 바탕 + 금속색 문양.
@@ -38,10 +39,19 @@ export default function Insignia({ index, size = 16 }: { index: number; size?: n
     for (let i = 0; i < n; i++) el.push(<path key={i} d={star(pad + g * (i + 1), cy0, ih * .44, ih * .19)} fill={gold} />);
     if (index >= IDX["참모총장"]) border = "#C9302C";
   }
+  const tier = index === 0 ? 0 : index <= IDX["병장"] ? 1 : index <= IDX["원사"] ? 2 : index <= IDX["대위"] ? 3 : index <= IDX["대령"] ? 4 : index >= IDX["참모총장"] ? 6 : 5;
+  const uid = useId().replace(/:/g, "");
   return (
-    <svg className="insignia" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+    <svg className={`insignia shine-t${tier}`} width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+      <defs>
+        <clipPath id={`${uid}c`}><rect x={.5} y={.5} width={w - 1} height={h - 1} rx={2} /></clipPath>
+        <linearGradient id={`${uid}g`} x1="0" x2="1"><stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".5" stopColor="#fff" stopOpacity=".55" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
+      </defs>
       <rect x={.5} y={.5} width={w - 1} height={h - 1} rx={2} fill={dark} stroke={border} strokeWidth={1} />
       {el}
+      {tier > 0 && <g clipPath={`url(#${uid}c)`}><rect className="sweep" x={-w} y={-2} width={w * .6} height={h + 4} fill={`url(#${uid}g)`} transform="skewX(-20)" /></g>}
+      {tier >= 3 && <><circle className="tw tw1" cx={w * .18} cy={h * .22} r={1.1} fill="#fff" /><circle className="tw tw2" cx={w * .85} cy={h * .7} r={1} fill="#fff" /></>}
+      {tier >= 5 && <circle className="tw tw3" cx={w * .5} cy={h * .15} r={1.2} fill="#FFF3B0" />}
     </svg>
   );
 }
