@@ -70,7 +70,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
   const [showUp, setShowUp] = useState(false);
   const [unlockCard, setUnlockCard] = useState<UnitDef | null>(null);
   const [toast, setToast] = useState("");
-  const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], fx: [] as Fx[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, paused: false, raf: 0, W: 0, H: 0, last: 0, lost: 0, stage: null as StageDef | null, daily: false, levels: {} as Partial<Record<UnitKind, number>>, sunDrops: [] as { x: number; y: number; t: number }[] });
+  const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], fx: [] as Fx[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, paused: false, assist: false, carts: [true, true, true, true, true] as boolean[], cartFx: [] as { r: number; x: number }[], raf: 0, W: 0, H: 0, last: 0, lost: 0, stage: null as StageDef | null, daily: false, levels: {} as Partial<Record<UnitKind, number>>, sunDrops: [] as { x: number; y: number; t: number }[] });
   const saveRef = useRef(save); saveRef.current = save;
 
   const persist = (next: typeof save) => { setSave(next); saveGameState("defense", next).catch(() => {}); };
@@ -132,12 +132,14 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         if (f.kind === "cloud") { x.save(); x.globalAlpha = a * .6; x.fillStyle = "#6CC070"; x.beginPath(); x.arc(f.x, cy, CW * .55, 0, 7); x.fill(); x.restore(); }
       }
       x.font = `${Math.floor(CH * .45)}px system-ui`;
+      for (let r = 0; r < ROWS; r++) if (s.carts[r] && rowOk(r)) x.fillText("🛒", CW * .3, r * CH + CH / 2);
+      for (const c of s.cartFx) { x.save(); x.font = `${Math.floor(CH * .6)}px system-ui`; x.fillText("🛒", c.x, c.r * CH + CH / 2); x.restore(); }
       for (const d of s.sunDrops) x.fillText("💧", d.x, d.y);
     };
     const randRow = () => { const rows = [0, 1, 2, 3, 4].filter(rowOk); return rows[Math.floor(Math.random() * rows.length)]; };
     const spawn = (kind: number, r = randRow(), x0 = s.W + 10, hpScale = 1) => {
       const st = s.stage!, w = s.wave, m = st.mult * (st.mod === "tough" ? 1.5 : 1) * (1 + w * .06), sp = st.spd * (st.mod === "rush" ? 1.3 : 1) * (1 + w * .03);
-      const base = [60, 150, 340, 1800, 120, 260, 50, 3500][kind] * m * hpScale, speed = [15, 11, 9, 7, 13, 9, 28, 6][kind] * sp * (1 + Math.random() * .2), dmg = [10, 16, 30, 80, 12, 20, 8, 100][kind];
+      const base = [60, 150, 340, 1800, 120, 260, 50, 3500][kind] * m * hpScale * (s.assist ? .65 : 1), speed = [15, 11, 9, 7, 13, 9, 28, 6][kind] * sp * (1 + Math.random() * .2), dmg = [10, 16, 30, 80, 12, 20, 8, 100][kind];
       s.germs.push({ r, x: x0, hp: base, max: base, speed, dmg, kind, eating: false, slow: 0, poison: 0, cd: 6 });
     };
     const spawnGerm = () => { const st = s.stage!, w = s.wave; const pool = st.pool.filter(k => k === 0 || Math.random() < Math.min(.6, .2 + w * .05 + st.id * .01)); spawn(pool[Math.floor(Math.random() * pool.length)]); };
@@ -145,7 +147,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       s.running = false; cancelAnimationFrame(s.raf); draw();
       const st = s.stage!, cur = saveRef.current;
       if (!win) { sfx.boom(); haptic([60, 40, 60]); shake(box.current, "l"); setUi(u => ({ ...u, running: false })); setResult({ win: false, stars: 0, coins: 0, first: false }); return; }
-      const stars = s.lost === 0 ? 3 : s.lost <= 3 ? 2 : 1;
+      const stars = Math.min(s.assist ? 2 : 3, s.lost === 0 ? 3 : s.lost <= 3 ? 2 : 1);
       const prevStars = cur.stars[st.id] ?? 0, first = prevStars === 0;
       let coins = stageCoins(st.id, stars) + (first ? 30 : 0);
       if (s.daily) coins *= 2;
@@ -168,7 +170,8 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
           sfx.level(); pop(box.current, s.W / 2, s.H / 2, `WAVE ${s.wave + 1}/${st.waves}`, "good big");
           s.wave++; s.spawned = 0; s.waveSize = st.id <= 2 ? 3 : Math.round((2 + s.wave * 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = 3; setUi(u => ({ ...u, wave: s.wave })); } }
       if (st.mod !== "night" && Math.random() < dt * Math.max(.05, .16 - s.wave * .008)) s.sunDrops.push({ x: 30 + Math.random() * (s.W - 60), y: 20 + Math.random() * (s.H - 40), t: 8 });
-      s.sunDrops = s.sunDrops.filter(d => (d.t -= dt) > 0);
+      for (const d of s.sunDrops) if ((d.t -= dt) < 5.5) { s.sun += 25; d.t = -1; setUi(u => ({ ...u, sun: s.sun })); pop(box.current, d.x, d.y, "+25", "good"); }
+      s.sunDrops = s.sunDrops.filter(d => d.t > 0);
       for (const u of s.units) { u.cd -= dt; const fx = u.c * CW + CW * .7, lane = laneGerms(u.r, u.c * CW), D = Math.round(UNITS[u.kind].dmg * lv(u.kind));
         switch (u.kind) {
           case "iv": if (u.cd <= 0) { u.cd = 8; s.sun += Math.round(25 * lv("iv")); setUi(x => ({ ...x, sun: s.sun })); } break;
@@ -193,14 +196,19 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         if (z.kind === 7) { z.cd -= dt; if (z.cd <= 0) { z.cd = 6; spawn(0, z.r, z.x + 10, .6); pop(box.current, z.x, z.r * CH + CH * .2, "소환!", "bad"); } }
         const target = s.units.find(u => u.r === z.r && Math.abs(u.c * CW + CW / 2 - z.x) < CW * .45 && u.c * CW + CW / 2 <= z.x + 2);
         if (target) { z.eating = true; target.hp -= z.dmg * dt; } else { z.eating = false; z.x -= sp * dt; }
+        if (z.x < CW * .25 && s.carts[z.r]) { // 응급 카트: 그 줄을 한 번 싹 쓸어줌
+          s.carts[z.r] = false; s.cartFx.push({ r: z.r, x: 0 }); sfx.boom(); haptic([40, 30, 40]); shake(box.current, "m"); pop(box.current, s.W / 2, z.r * CH + CH / 2, "🛒 응급 카트 출동!", "bad big");
+          for (const o of s.germs) if (o.r === z.r && o.kind !== 3 && o.kind !== 7) o.hp = 0; else if (o.r === z.r) { o.hp -= o.max * .5; o.x = Math.max(o.x, CW * 3); }
+          continue; }
         if (z.x < -4) return finish(false); }
       for (const z of s.germs) if (!z.warn && z.x < CW * 1.2) { z.warn = true; sfx.tick(); shake(box.current, "s"); }
       // 변이균: 죽으면 둘로 분열
       for (const z of s.germs) if (z.hp <= 0 && z.kind === 4) { spawn(0, z.r, z.x - 6, .4); spawn(0, z.r, z.x + 14, .4); pop(box.current, z.x, z.r * CH + CH * .2, "분열!", "bad"); }
       const before = s.units.length; s.units = s.units.filter(u => u.hp > 0); s.lost += before - s.units.length; s.germs = s.germs.filter(z => z.hp > 0);
+      for (const c of s.cartFx) c.x += 520 * dt; s.cartFx = s.cartFx.filter(c => c.x < s.W + 40);
       draw(); s.raf = requestAnimationFrame(tick);
     };
-    (box.current as any).__start = (st: StageDef, isDaily: boolean) => { sfx.level(); size(); s.stage = st; s.daily = isDaily; s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = st.mod === "rush" ? 400 : st.id <= 3 ? 300 : 250; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = st.id <= 2 ? 2 : Math.round((2 + 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = st.id <= 2 ? 8 : 6; s.sunDrops = []; s.lost = 0; s.running = true; s.paused = false; s.last = performance.now(); setUi({ sun: s.sun, wave: 1, running: true }); if (st.id === 1) { setTimeout(() => pop(box.current, s.W / 2, s.H / 2, "💡 가운데 줄에 간호사 2명 + 수액 걸이!", "good"), 400); setTimeout(() => pop(box.current, s.W / 2, s.H * .7, "세균은 8초 뒤에 와요", "good"), 2200); } s.raf = requestAnimationFrame(tick); };
+    (box.current as any).__start = (st: StageDef, isDaily: boolean, assist = false) => { sfx.level(); size(); s.stage = st; s.daily = isDaily; s.assist = assist; s.carts = [true, true, true, true, true]; s.cartFx = []; s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = (st.mod === "rush" ? 400 : st.id <= 3 ? 300 : 250) + (assist ? 150 : 0); s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = st.id <= 2 ? 2 : Math.round((2 + 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = st.id <= 2 ? 8 : 6; s.sunDrops = []; s.lost = 0; s.running = true; s.paused = false; s.last = performance.now(); setUi({ sun: s.sun, wave: 1, running: true }); if (st.id === 1) { setTimeout(() => pop(box.current, s.W / 2, s.H / 2, "💡 가운데 줄에 간호사 2명 + 수액 걸이!", "good"), 400); setTimeout(() => pop(box.current, s.W / 2, s.H * .7, "세균은 8초 뒤에 와요", "good"), 2200); } s.raf = requestAnimationFrame(tick); };
     (box.current as any).__place = (kind: UnitKind, px: number, py: number) => {
       if (!s.running) return; const CW = cw(), CH = ch();
       const hit = s.sunDrops.findIndex(d => Math.hypot(d.x - px, d.y - py) < CH * .4);
@@ -222,13 +230,13 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
   const dailyDone = save.dailyDone === today;
   const totalStars = Object.values(save.stars).reduce((a, b) => a + b, 0);
   const unlocked = ORDER.filter(k => UNITS[k].unlock <= save.cleared), locked = ORDER.filter(k => UNITS[k].unlock > save.cleared);
-  const start = (st: StageDef, isDaily = false) => { setStage(st); setDaily(isDaily); setResult(null); setView("play"); setShowUp(false); setTimeout(() => (box.current as any)?.__start(st, isDaily), 50); };
+  const start = (st: StageDef, isDaily = false, assist = false) => { setStage(st); setDaily(isDaily); setResult(null); setView("play"); setShowUp(false); setTimeout(() => (box.current as any)?.__start(st, isDaily, assist), 50); };
   const upgrade = (k: UnitKind) => { const lv = save.levels[k] ?? 1; if (lv >= MAXLV) return; const cost = lvCost(k, lv); if (save.coins < cost) { flash("처방전 코인이 부족해요"); return; } sfx.coin(); haptic(10); persist({ ...save, coins: save.coins - cost, levels: { ...save.levels, [k]: lv + 1 } }); flash(`${UNITS[k].name} Lv${lv + 1}!`); };
   const Stars = ({ n, size = 14 }: { n: number; size?: number }) => <span className="stars" style={{ fontSize: size }}>{[1, 2, 3].map(i => <span key={i} className={i <= n ? "on" : ""}>★</span>)}</span>;
 
   return (
     <div className="card">
-      <div><h3>병동 사수</h3><div className="muted">왼쪽에 의료진을 배치해 오른쪽에서 밀려오는 세균을 막아요. 수액(💧)을 눌러 모으고 수액으로 고용. 스테이지를 깨면 <b>별·처방전 코인·새 의료진</b>이 열리고, 코인으로 의료진을 강화해요. (계정 저장)</div></div>
+      <div><h3>병동 사수</h3><div className="muted">왼쪽에 의료진을 배치해 오른쪽에서 밀려오는 세균을 막아요. 수액(💧)을 눌러 모으고 수액으로 고용. 스테이지를 깨면 <b>별·처방전 코인·새 의료진</b>이 열리고, 코인으로 의료진을 강화해요. 줄마다 <b>🛒 응급 카트</b>가 한 번씩 막아줘요. 💧는 놔둬도 잠시 뒤 자동으로 모여요. (계정 저장)</div></div>
       <div className="def-bar"><span className="def-sun">💊 {save.coins}</span><span className="muted">⭐ {totalStars}/{STAGES * 3} · {save.cleared}/{STAGES} 클리어</span>
         {view === "play" ? <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={() => { g.current.running = false; cancelAnimationFrame(g.current.raf); setResult(null); setView("map"); }}>맵으로</button>
           : <button type="button" className={"btn" + (showUp ? "" : " ghost")} style={{ padding: "6px 12px" }} onClick={() => setShowUp(v => !v)}>의료진 강화</button>}
@@ -285,10 +293,11 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
                     {!daily && stage && stage.id < STAGES && <button type="button" className="btn" onClick={() => start(stageDef(stage.id + 1))}>다음 스테이지 ▶</button>}
                   </div>
                 </> : <>
-                  <div className="muted">웨이브 {ui.wave}/{stage?.waves}에서 실패 · 의료진 강화나 배치를 바꿔보세요</div>
+                  <div className="muted">웨이브 {ui.wave}/{stage?.waves}에서 실패<br /><b>🩹 지원 받고 다시</b>: 세균 체력 -35%, 시작 수액 +150 (별은 최대 2개)</div>
                   <div className="row">
                     <button type="button" className="btn ghost" onClick={() => { setResult(null); setView("map"); }}>맵으로</button>
-                    <button type="button" className="btn" onClick={() => stage && start(stage, daily)}>다시 도전</button>
+                    <button type="button" className="btn ghost" onClick={() => stage && start(stage, daily)}>다시 도전</button>
+                    <button type="button" className="btn" onClick={() => stage && start(stage, daily, true)}>🩹 지원 받고 다시</button>
                   </div>
                 </>}
               </div>
