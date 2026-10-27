@@ -18,7 +18,7 @@ export async function myRank(userId: string): Promise<Rank> {
   return rankFor(u, leaders);
 }
 /** 파트 리더(계급 무관 파트 경험치 1위) — 파트 게시판 탭 신설 권한 */
-export const deptCommanders = cache(async (): Promise<{ id: string; dept: string; nickname: string; username: string; xp: number }[]> {
+export const deptCommanders = cache(async (): Promise<{ id: string; dept: string; nickname: string; username: string; xp: number }[]> => {
   const { data } = await db().from("users").select("id,nickname,username,dept,xp").eq("stealth", false).order("xp", { ascending: false }).order("seq", { ascending: true }).limit(1000);
   const seen = new Set<string>(), out: any[] = [];
   for (const u of data ?? []) if (!seen.has(u.dept)) { seen.add(u.dept); out.push(u); }
