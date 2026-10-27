@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import { saveScore } from "@/lib/actions";
+import { useEffect, useRef, useState } from "react";
+import { saveScore, loadGameState, saveGameState } from "@/lib/actions";
 import Board, { type Row } from "./Board";
 
 const NAMES = ["녹슨 검", "무쇠 검", "강철 검", "은빛 검", "기사의 검", "명검", "보검", "전설의 검", "용살검", "성검", "신검"];
@@ -14,8 +14,19 @@ export default function Sword({ ranks }: { ranks: Row[] }) {
   const [sw, setSw] = useState<S>(INIT);
   const [log, setLog] = useState<{ t: string; c: string }>({ t: "강화를 시작해보세요.", c: "" });
   const [shake, setShake] = useState(0);
-  useEffect(() => { try { const x = JSON.parse(localStorage.getItem("mw-sword") || "null"); if (x && typeof x.gold === "number") setSw(x.gold < 100000 && x.lvl === 0 && x.best === 0 ? { ...x, gold: START } : x); } catch {} }, []);
-  const save = (n: S) => { setSw(n); try { localStorage.setItem("mw-sword", JSON.stringify(n)); } catch {} };
+  const [loaded, setLoaded] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    let local: S | null = null; try { const x = JSON.parse(localStorage.getItem("mw-sword") || "null"); if (x && typeof x.gold === "number") local = x; } catch {}
+    loadGameState("sword").then(remote => {
+      const r = remote as unknown as S | null;
+      // 서버 저장이 있으면 서버 우선, 없으면 이 기기 기록을 서버로 올림
+      if (r && typeof r.gold === "number") setSw(r);
+      else if (local) { setSw(local); saveGameState("sword", local as any).catch(() => {}); }
+    }).catch(() => { if (local) setSw(local); }).finally(() => setLoaded(true));
+  }, []);
+  const save = (n: S) => { setSw(n); try { localStorage.setItem("mw-sword", JSON.stringify(n)); } catch {}
+    if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => { saveGameState("sword", n as any).catch(() => {}); }, 800); };
   const cost = (l: number) => Math.round(100_000 * Math.pow(1.55, l) / 1000) * 1000 * (sw.mode === "hard" ? 2 : 1);
   const rate = (l: number) => sw.mode === "hard" ? Math.max(5, 88 - l * 8) : Math.max(10, 95 - l * 6);
   const price = (l: number) => l === 0 ? 30_000 : Math.round(80_000 * Math.pow(2.1, l) / 1000) * 1000;
@@ -37,7 +48,7 @@ export default function Sword({ ranks }: { ranks: Row[] }) {
   const buyProtect = () => { const c = protectCost(sw.lvl); if (sw.gold < c) return; save({ ...sw, gold: sw.gold - c, protect: (sw.protect ?? 0) + 1 }); setLog({ t: `🛡️ 깨짐 방지권 구매 (보유 ${(sw.protect ?? 0) + 1}장). 다음 실패 1회를 막아줘요`, c: "good" }); };
   return (
     <div className="card">
-      <div><h3>검 강화하기</h3><div className="muted">시작 자금 100만 원으로 검을 강화하세요. 단계가 오를수록 비싸지고 성공률은 떨어져요. +5부터는 실패하면 한 단계 내려가고, +10부터는 깨져요. 🛡️ 깨짐 방지권(강화비의 3배)을 사두면 실패 1회를 막아줘요. 돈이 모자라면 팔아서 메꾸세요. +5/+10/+15 달성 시 퀘스트 경험치.</div></div>
+      <div><h3>검 강화하기</h3><div className="muted">진행 상황은 서버에 저장돼서 어떤 기기에서 열어도 이어서 할 수 있어요. 시작 자금 100만 원으로 검을 강화하세요. 단계가 오를수록 비싸지고 성공률은 떨어져요. +5부터는 실패하면 한 단계 내려가고, +10부터는 깨져요. 🛡️ 깨짐 방지권(강화비의 3배)을 사두면 실패 1회를 막아줘요. 돈이 모자라면 팔아서 메꾸세요. +5/+10/+15 달성 시 퀘스트 경험치.</div></div>
       <div className="row" role="radiogroup" aria-label="난이도">
         <button className="cats-btn" type="button" aria-pressed={sw.mode === "easy"} onClick={() => save({ ...sw, mode: "easy" })}>이지</button>
         <button className="cats-btn" type="button" aria-pressed={sw.mode === "hard"} onClick={() => save({ ...sw, mode: "hard" })}>하드</button>
@@ -49,7 +60,7 @@ export default function Sword({ ranks }: { ranks: Row[] }) {
         <div className={"sword-log " + log.c}>{log.t}</div>
       </div>
       <div className="row">
-        <button className="btn" style={{ flex: 1 }} type="button" disabled={poor} onClick={enhance}>{poor ? "자금 부족" : `강화 (${won(cost(sw.lvl))})`}</button>
+        <button className="btn" style={{ flex: 1 }} type="button" disabled={poor || !loaded} onClick={enhance}>{poor ? "자금 부족" : `강화 (${won(cost(sw.lvl))})`}</button>
         <button className="btn ghost" type="button" onClick={sell}>팔기</button>
         <button className="btn ghost" type="button" disabled={sw.gold < protectCost(sw.lvl)} onClick={buyProtect} title="실패해도 하락·파괴를 1회 막아줘요 (+5부터 효과)">🛡️ 방지권 ({won(protectCost(sw.lvl))})</button>
         <button className="btn ghost" type="button" onClick={() => { save({ ...sw, gold: START, lvl: 0, protect: 0 }); setLog({ t: "처음부터 다시. 자금 100만원", c: "" }); }}>처음부터</button>

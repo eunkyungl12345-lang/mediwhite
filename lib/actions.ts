@@ -286,3 +286,15 @@ export async function adminAdjustPool(_: FormState, fd: FormData): Promise<FormS
   await s.from("dept_pool").upsert({ dept, points: Math.max(0, (pool?.points ?? 0) + delta), updated_at: new Date().toISOString() });
   revalidatePath("/support"); revalidatePath("/board"); return { ok: `[${dept}] ${delta > 0 ? "+" : ""}${delta}` };
 }
+
+/* ---------- 게임 이어하기 (서버 저장) ---------- */
+export async function loadGameState(game: string) {
+  const u = await requireUser();
+  const { data } = await db().from("game_state").select("state").eq("user_id", u.id).eq("game", game).maybeSingle();
+  return (data?.state as Record<string, unknown> | undefined) ?? null;
+}
+export async function saveGameState(game: string, state: Record<string, unknown>) {
+  const u = await requireUser();
+  if (JSON.stringify(state).length > 20000) return;
+  await db().from("game_state").upsert({ user_id: u.id, game, state, updated_at: new Date().toISOString() });
+}
