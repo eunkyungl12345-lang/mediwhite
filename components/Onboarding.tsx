@@ -8,7 +8,7 @@ const STEPS: { icon: string; title: string; body: React.ReactNode; demo: React.R
     demo: <div className="ob-demo"><span className="ob-badge">🪖</span><b>[간호사]야간러버</b><span className="muted">← 이렇게 보여요</span></div> },
   { icon: "🎖️", title: "계급은 활동하면 저절로 올라요", body: <>채팅·글·댓글·게임을 하면 <b>경험치</b>가 쌓이고 훈련병 → 이병 → … → 참모총장까지 진급해요.<br />계급이 높을수록 글이 위에 뜨고, 이름이 반짝여요.</>,
     demo: <div className="ob-demo ob-ladder"><span>훈련병</span>→<span>이병</span>→<span>병장</span>→<span>소위</span>→<span>대령</span>→<span className="ob-top">★ 참모총장</span></div> },
-  { icon: "📋", title: "게시판 — 우리 파트 이야기", body: <>위쪽 칩에서 <b>파트</b>를 고르면 그 파트 글만 보여요. <b>글쓰기</b> 버튼으로 바로 쓰고, 공지는 📢에 모여 있어요.<br />실명·환자 정보만 빼면 뭐든 OK.</>,
+  { icon: "📋", title: "게시판 — 우리 파트 이야기", body: <>위쪽 칩에서 <b>파트</b>를, 그 아래에서 <b>주제</b>(휴게실·당직일지·병원 리뷰·월급봉투…)를 고르면 그 글만 보여요. <b>글쓰기</b> 버튼으로 바로 쓰고, 공지는 📢에 모여 있어요.<br />실명·환자 정보만 빼면 뭐든 OK.</>,
     demo: <div className="ob-demo ob-chips"><span className="on">전체</span><span>의사</span><span>간호사</span><span>방사선</span><span>원무</span><span>…</span></div> },
   { icon: "💬", title: "실시간 채팅 — 화면 아래 띠", body: <>맨 아래 <b>💬 실시간 채팅</b> 띠를 <b>위로 쓸어올리거나 탭</b>하면 열려요. 지금 접속 중인 사람이 몇 명인지도 보여요.<br />@닉네임 으로 부르면 알림이 가요.</>,
     demo: <div className="ob-demo ob-dock"><i /><span>💬 실시간 채팅 <b style={{ color: "#E2574C" }}>●</b> 3명</span><span className="muted">펼치기 ▴</span></div> },
@@ -21,9 +21,9 @@ const STEPS: { icon: string; title: string; body: React.ReactNode; demo: React.R
 export default function Onboarding({ show }: { show: boolean }) {
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
-  useEffect(() => { if (show) setOpen(true); }, [show]);
+  useEffect(() => { if (!show) return; try { if (localStorage.getItem("mw-ob") === "1") { markOnboarded().catch(() => {}); return; } } catch {} setOpen(true); }, [show]);
   useEffect(() => { const h = () => { setI(0); setOpen(true); }; window.addEventListener("mw-tour", h); return () => window.removeEventListener("mw-tour", h); }, []);
-  const close = () => { setOpen(false); if (show) markOnboarded().catch(() => {}); };
+  const close = () => { setOpen(false); try { localStorage.setItem("mw-ob", "1"); } catch {} if (show) markOnboarded().catch(() => {}); };
   if (!open) return null;
   const st = STEPS[i], last = i === STEPS.length - 1;
   return (

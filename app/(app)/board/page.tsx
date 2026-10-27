@@ -43,7 +43,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
       </div>
       {isDept && <BoardTabs dept={cat} boards={boards ?? []} current={tab} canManage={!!canManage} leaderName={leader ? `[${leader.dept}]${leader.nickname}` : null} />}
       {cat === TOP && <div className="muted" style={{ paddingBottom: 8 }}>{top ? `지금 대표 파트는 [${top}] — 파트 응원전 1위. 이 탭엔 [${top}] 글만 올라와요.` : "아직 대표 파트가 없어요. 파트 응원전에서 1위를 차지한 파트가 여기에 노출돼요."} <Link href="/support">응원전 보기 →</Link></div>}
-      <div className="topics scroll">{[{ key: "", name: "전체 주제", icon: "✨" }, ...TOPICS].map(t => <Link key={t.key} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(t.key ? { topic: t.key } : {}) }).toString()}`} className={"topic" + (topic === t.key ? " on" : "")}><span>{t.icon}</span>{t.name}</Link>)}</div>
+      <div className="topics scroll">{[{ key: "", name: "전체", icon: "✨" }, ...TOPICS].map(t => <Link key={t.key} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(t.key ? { topic: t.key } : {}) }).toString()}`} className={"topic" + (topic === t.key ? " on" : "")}><span>{t.icon}</span>{t.name}</Link>)}</div>
       <div className="bar"><span className="muted">{cat === TOP ? "대표 파트" : cat}{tab && boards?.find((b: any) => b.id === tab) ? ` › ${boards!.find((b: any) => b.id === tab)!.name}` : ""} · {posts.length}개</span>
         <Link className="btn" href={`/board/new?${new URLSearchParams({ ...(cat !== "전체" && cat !== TOP ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}) }).toString()}`}>글쓰기</Link></div>
       <div className="posts">
