@@ -5,3 +5,6 @@ export type Dept = (typeof DEPTS)[number];
 export const NOTICE_CAT = "공지";
 export const CATS = [NOTICE_CAT, ...DEPTS] as const;
 export const display = (dept: string, nickname: string) => `[${dept}]${nickname}`;
+
+/** 운영 계정 표시 */
+export const OFFICIAL: Record<string, string> = { mw_team: "운영팀", mw_bot: "봇" };

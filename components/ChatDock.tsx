@@ -5,7 +5,7 @@ import ChatRoom, { type Msg } from "./ChatRoom";
 import type { Session } from "@/lib/auth";
 import { display } from "@/lib/depts";
 
-export default function ChatDock({ me, initial, online, myRank }: { me: Session; initial: Msg[]; online: React.ReactNode; myRank?: string }) {
+export default function ChatDock({ me, initial, online, myRank, official }: { me: Session; initial: Msg[]; online: React.ReactNode; myRank?: string; official?: Record<string, string> }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -22,7 +22,7 @@ export default function ChatDock({ me, initial, online, myRank }: { me: Session;
         <span className="dock-caret">{open ? "▾" : "▴"}</span>
       </button>
       <div className="dock-body" hidden={!open}>
-        <ChatRoom me={me} initial={initial} myRank={myRank} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
+        <ChatRoom me={me} initial={initial} myRank={myRank} official={official} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
       </div>
     </div>
   );

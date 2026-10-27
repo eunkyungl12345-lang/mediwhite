@@ -295,3 +295,5 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 @keyframes fall{to{transform:translateY(420px) rotate(540deg);opacity:0}}
 @keyframes fadein{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){.confetti i,.qcard,.qpop{animation:none}}
+
+.tag.off{background:var(--ink);color:var(--bg)}

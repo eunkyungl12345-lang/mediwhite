@@ -10,7 +10,7 @@ import { tierOf } from "@/lib/ranks";
 
 export type Msg = { id: number; nickname: string; dept: string; text: string; created_at: string; user_id: string | null; rank?: string | null };
 
-export default function ChatRoom({ me, initial, onNew, myRank }: { me: Session; initial: Msg[]; onNew?: (m: Msg) => void; myRank?: string }) {
+export default function ChatRoom({ me, initial, onNew, myRank, official = {} }: { me: Session; initial: Msg[]; onNew?: (m: Msg) => void; myRank?: string; official?: Record<string, string> }) {
   const [msgs, setMsgs] = useState<Msg[]>(initial);
   const [text, setText] = useState(""); const [busy, setBusy] = useState(false);
   const feed = useRef<HTMLDivElement>(null);
@@ -43,7 +43,7 @@ export default function ChatRoom({ me, initial, onNew, myRank }: { me: Session; 
         {msgs.length === 0 && <div className="empty">아직 대화가 없어요. 첫 인사를 남겨보세요.</div>}
         {msgs.map(m => { const mine = m.user_id === me.id; const ri = m.rank != null && /^\d+$/.test(String(m.rank)) ? Number(m.rank) : null; return (
           <div key={m.id} className={"msg" + (mine ? " mine" : "")}>
-            <div className="who">{!mine && <>{ri != null && <span className={`ins t${tierOf(ri)}`}><Insignia index={ri} size={12} /></span>}<span>{display(m.dept, m.nickname)}</span></>}<span className="time">{fmt(m.created_at)}</span></div>
+            <div className="who">{!mine && <>{m.user_id && official[m.user_id] ? <span className="tag off">{official[m.user_id]}</span> : ri != null && <span className={`ins t${tierOf(ri)}`}><Insignia index={ri} size={12} /></span>}<span>{display(m.dept, m.nickname)}</span></>}<span className="time">{fmt(m.created_at)}</span></div>
             <div className="bubble">{m.text}</div>
           </div>); })}
       </div>
