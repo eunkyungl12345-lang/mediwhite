@@ -319,3 +319,8 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .hub-ico{font-size:40px;line-height:1}
 .hub-name{font-weight:600;font-size:15px}
 .hub-sub{font-size:12px;color:var(--muted)}
+
+.lt-cmd{font-family:var(--f-display);font-size:34px;text-align:center;padding:4px 0;min-height:1.3em;transition:color .1s}
+.lt-cmd.win{color:var(--scrub)}.lt-cmd.lose{color:var(--signal)}
+.hub-tile:first-child{grid-column:1/-1;background:linear-gradient(135deg,#0E1513,#1B2A26);color:#F4FBF9;border-color:#2C6B5E}
+.hub-tile:first-child .hub-sub{color:#93A59E}

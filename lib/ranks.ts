@@ -57,6 +57,8 @@ export const QUESTS: { key: string; title: string; xp: number }[] = [
   { key: "bowling_200", title: "볼링 200점 넘기기", xp: 500 },
   { key: "plant_harvest_1", title: "화분 첫 수확", xp: 300 },
   { key: "plant_harvest_3", title: "화분 3번째 수확", xp: 500 },
+  { key: "lightning_10", title: "번개 모드 10개 클리어", xp: 150 },
+  { key: "lightning_25", title: "번개 모드 25개 클리어", xp: 400 },
   { key: "runner_700", title: "복도 질주 700m", xp: 150 },
   { key: "runner_1500", title: "복도 질주 1500m (복도의 치타)", xp: 400 },
   { key: "cpr_600", title: "CPR 600점 (안정적인 압박)", xp: 150 },

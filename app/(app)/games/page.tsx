@@ -13,14 +13,16 @@ import Cpr from "@/components/games/Cpr";
 import Quiz from "@/components/games/Quiz";
 import Vein from "@/components/games/Vein";
 import Runner from "@/components/games/Runner";
+import Lightning from "@/components/games/Lightning";
 export const dynamic = "force-dynamic";
 
 export default async function GamesPage() {
   const d = db(); const sess = (await getSession())!;
   const top = (game: string) => d.from("scores").select("value,mode,users(nickname,dept)").eq("game", game).order("value", { ascending: false }).limit(10);
-  const [dodge, sword, defense, bowling, cpr, quiz, vein, runner] = await Promise.all(["dodge", "sword", "defense", "bowling", "cpr", "quiz", "vein", "runner"].map(top));
+  const [dodge, sword, defense, bowling, cpr, quiz, vein, runner, lightning] = await Promise.all(["dodge", "sword", "defense", "bowling", "cpr", "quiz", "vein", "runner", "lightning"].map(top));
   const norm = (r: { data: any[] | null }) => (r.data ?? []).map(x => ({ value: Number(x.value), mode: x.mode as string | undefined, nickname: x.users ? display(x.users.dept, x.users.nickname) : "?", dept: x.users?.dept ?? "" }));
   const games = [
+    { id: "lightning", name: "⚡ 번개 모드", icon: "⚡", sub: "5초 미니게임 연속", node: <Lightning ranks={norm(lightning)} /> },
     { id: "runner", name: "복도 질주", icon: "🏃‍♀️", sub: "무한 달리기", node: <Runner ranks={norm(runner)} /> },
     { id: "cpr", name: "코드블루 CPR", icon: "🫀", sub: "리듬 탭", node: <Cpr ranks={norm(cpr)} /> },
     { id: "quiz", name: "의학용어 퀴즈", icon: "📚", sub: "60초 4지선다", node: <Quiz ranks={norm(quiz)} myDept={sess.dept} /> },
