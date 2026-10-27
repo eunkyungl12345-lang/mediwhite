@@ -21,6 +21,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
   const cv = useRef<HTMLCanvasElement>(null), box = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<UnitKind>("nurse");
   const [ui, setUi] = useState({ sun: 150, wave: 0, running: false, over: "" });
+  const [saved, setSaved] = useState("");
   const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, raf: 0, W: 0, H: 0, last: 0, best: 0, sunDrops: [] as { x: number; y: number; t: number }[] });
 
   useEffect(() => {
@@ -86,7 +87,10 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
   return (
     <div className="card">
       <div><h3>병동 사수</h3><div className="muted">왼쪽에 의료진을 배치해서 오른쪽에서 밀려오는 세균을 막으세요. 수액(💧)을 눌러 모으고, 수액으로 의료진을 고용해요. 세균이 왼쪽 끝에 닿으면 끝. 5웨이브마다 보스 🧟 등장. 넘긴 웨이브 수가 기록돼요 (5·10·20 퀘스트).</div></div>
-      <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">웨이브 {ui.wave}</span></div>
+      <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">웨이브 {ui.wave}</span>
+        {ui.running && <button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={async () => { const w = Math.max(0, g.current.wave - 1); if (!w) { setSaved("1웨이브를 넘긴 뒤 저장할 수 있어요"); return; } try { await saveScore("defense", w); g.current.best = Math.max(g.current.best, w); setSaved(`${w}웨이브 기록 저장됨`); } catch { setSaved("저장 실패"); } setTimeout(() => setSaved(""), 2500); }}>기록 저장</button>}
+      </div>
+      {saved && <div className="muted">{saved}</div>}
       <div className="def-shop">{(Object.keys(UNITS) as UnitKind[]).map(k => <button key={k} type="button" className={"def-unit" + (sel === k ? " sel" : "") + (ui.sun < UNITS[k].cost ? " poor" : "")} onClick={() => setSel(k)} title={UNITS[k].desc}><span className="def-ico">{UNITS[k].icon}</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{UNITS[k].cost}</span></button>)}</div>
       <div className="def-stage" ref={box} onPointerDown={e => { const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect(); (e.currentTarget as any).__place(sel, e.clientX - r.left, e.clientY - r.top); }}>
         <canvas ref={cv} />
