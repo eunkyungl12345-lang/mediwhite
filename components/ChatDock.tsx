@@ -10,8 +10,8 @@ export default function ChatDock({ me, initial, online, myRank, official }: { me
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [last, setLast] = useState<Msg | null>(initial[initial.length - 1] ?? null);
-  // 기본은 항상 열림(게임 화면만 접힘). 사용자가 접었다 폈으면 그 선택을 기억.
-  useEffect(() => { let v: string | null = null; try { v = localStorage.getItem("mw-chat-open"); } catch {} setOpen(v != null ? v === "1" : !path.startsWith("/games")); }, [path]);
+  // 기본은 접힌 띠(최근 메시지 2줄 미리보기)로 항상 보임. 사용자가 펼쳤으면 그 선택을 기억(게임 화면 제외).
+  useEffect(() => { let v: string | null = null; try { v = localStorage.getItem("mw-chat-open"); } catch {} setOpen(path.startsWith("/games") ? false : v === "1"); }, [path]);
   const toggle = () => { setOpen(o => { try { localStorage.setItem("mw-chat-open", o ? "0" : "1"); } catch {} ; return !o; }); setUnread(0); };
   return (
     <div className={"dock" + (open ? " open" : "")}>
