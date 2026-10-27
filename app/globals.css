@@ -236,3 +236,11 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .login-card{background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
 .login-card h1{color:var(--ink)}
 @media (prefers-color-scheme:dark){.login-card{background:rgba(24,34,31,.88)}}
+.def-unit.locked{opacity:.5;cursor:default;border-style:dashed}
+.unlock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(14,21,19,.72);z-index:3;padding:16px}
+.unlock-card{background:var(--surface);border-radius:14px;overflow:hidden;width:100%;max-width:340px;display:grid;gap:12px;padding-bottom:14px;box-shadow:0 20px 50px rgba(0,0,0,.4);animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.unlock-top{background:linear-gradient(135deg,#2C6B5E,#6FBFA9);color:#fff;font-family:var(--f-display);font-size:22px;text-align:center;padding:12px}
+.unlock-body{display:flex;gap:12px;align-items:center;padding:0 16px}
+.unlock-ico{font-size:44px;line-height:1;background:var(--scrub-soft);border-radius:12px;padding:8px}
+.unlock-card .btn{margin:0 16px}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
