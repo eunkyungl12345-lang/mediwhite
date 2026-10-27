@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { db } from "./supabase";
 import { createSession, getSession, clearSession, type Session } from "./auth";
 import { DEPTS, CATS, NOTICE_CAT } from "./depts";
+import { bump } from "./daily";
 import { awardXp, repeatXp } from "./xp";
 import { signupBonus, can, RANKS, rankOf } from "./ranks";
 import { myRank, isDeptLeader } from "./ranksvc";
@@ -111,7 +112,7 @@ export async function sendMessage(text: string) {
   if (ri >= RANKS.length - 1) ri = (await myRank(u.id)).index; // 참모총장 후보만 파트 1위 확인
   const { data } = await s.from("messages").insert({ user_id: u.id, nickname: u.nickname, dept: u.dept, text: t, rank: String(ri) }).select("id,nickname,dept,text,created_at,user_id,rank").single();
   // 경험치는 응답 뒤로 미루지 않고 병렬로 (한 번의 DB 함수 호출씩)
-  await Promise.all([awardXp(u.id, 50, "first_chat"), repeatXp(u.id, "chat")]);
+  await Promise.all([awardXp(u.id, 50, "first_chat"), repeatXp(u.id, "chat"), bump(u.id, "chat")]);
   const mentions = Array.from(t.matchAll(/@([^\s@\[\]]{1,12})/g)).map(m => m[1]);
   if (mentions.length) { const { data: targets } = await s.from("users").select("id").in("nickname", mentions).neq("id", u.id); if (targets?.length) pushToUsers(targets.map(x => x.id), { title: "채팅에서 나를 불렀어요", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: "/board", tag: "mention" }).catch(() => {}); }
   return data;
@@ -129,7 +130,7 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }
   const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: u.dept, title, body, board_id: boardId }).select("id").single();
   if (error || !data) return { error: "올리지 못했어요" };
-  await Promise.all([awardXp(u.id, 100, "first_post"), repeatXp(u.id, "post")]);
+  await Promise.all([awardXp(u.id, 100, "first_post"), repeatXp(u.id, "post"), bump(u.id, "write")]);
   revalidatePath("/board"); redirect(`/board/${data.id}`);
 }
 export async function addComment(postId: string, text: string) {
@@ -137,7 +138,7 @@ export async function addComment(postId: string, text: string) {
   const t = text.trim().slice(0, 500); if (!t) return;
   const s = db();
   await s.from("comments").insert({ post_id: postId, author_id: u.id, dept: u.dept, text: t });
-  const [{ data: post }] = await Promise.all([s.from("posts").select("author_id,title").eq("id", postId).maybeSingle(), awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment")]);
+  const [{ data: post }] = await Promise.all([s.from("posts").select("author_id,title").eq("id", postId).maybeSingle(), awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment"), bump(u.id, "write")]);
   if (post?.author_id && post.author_id !== u.id) pushToUsers([post.author_id], { title: "내 글에 댓글", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: `/board/${postId}`, tag: `c-${postId}` }).catch(() => {});
   revalidatePath(`/board/${postId}`);
 }
@@ -184,6 +185,7 @@ export async function deleteBoard(id: string, dept: string) {
 export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner" | "lightning" | "tycoon", value: number, mode?: string) {
   const u = await requireUser();
   if (!Number.isFinite(value) || value < 0) return;
+  await bump(u.id, "game");
   const s = db();
   if (game === "dodge") { for (const [th, xp] of [[10, 100], [20, 200], [30, 400]] as const) if (value >= th) await awardXp(u.id, xp, `dodge_${th}`); }
   if (game === "lightning") { const cleared = Math.floor(value / 10); for (const [th, xp] of [[10, 150], [25, 400]] as const) if (cleared >= th) await awardXp(u.id, xp, `lightning_${th}`); }
@@ -317,6 +319,7 @@ export async function loadGameState(game: string) {
 export async function saveGameState(game: string, state: Record<string, unknown>) {
   const u = await requireUser();
   if (JSON.stringify(state).length > 20000) return;
+  bump(u.id, "game").catch(() => {});
   await db().from("game_state").upsert({ user_id: u.id, game, state, updated_at: new Date().toISOString() });
 }
 
@@ -367,7 +370,7 @@ export async function plantAction(action: "load" | "plant" | "water" | "sun" | "
     p = { kind: ["알로에", "몬스테라", "선인장", "방울토마토"].includes(kind ?? "") ? kind! : "알로에", waters: 0, lastWater: 0, lastSun: 0, planted: now, harvests: p?.harvests ?? 0, wilted: false }; await save(); return { plant: p, stage: 0, msg: `${p.kind} 씨앗을 심었어요. 3시간마다 물을 주세요` }; }
   if (!p) return { plant: null, stage: 0 };
   if (p.lastWater && now - p.lastWater > WILT_AFTER && plantStage(p) < 5) p.wilted = true;
-  if (action === "water") {
+  if (action === "water") { bump(u.id, "game").catch(() => {});
     if (plantStage(p) >= 5) return { plant: p, stage: 5, msg: "다 자랐어요! 수확하세요" };
     if (now - p.lastWater < WATER_GAP) { const m = Math.ceil((WATER_GAP - (now - p.lastWater)) / 60000); return { plant: p, stage: plantStage(p), msg: `아직 흙이 촉촉해요. ${Math.floor(m / 60)}시간 ${m % 60}분 뒤에 다시` }; }
     const before = plantStage(p); p.waters++; p.lastWater = now; p.wilted = false; const after = plantStage(p);

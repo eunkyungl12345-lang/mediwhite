@@ -460,3 +460,19 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .ty-btns .btn small,.ty-list .btn small{font-size:11px;font-weight:500;opacity:.9}
 .ty-bar{height:4px;background:var(--line);border-radius:2px;margin-top:4px;overflow:hidden}
 .ty-bar i{display:block;height:100%;background:var(--scrub);border-radius:2px;transition:width .3s}
+
+/* 오늘의 퀘스트 */
+.dq-list{display:grid;gap:6px}
+.dq{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.dq.done{background:var(--scrub-soft);border-color:transparent}
+.dq-chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex:none}
+.dq.done .dq-chk{background:var(--scrub);border-color:var(--scrub)}
+.dq-ico{font-size:18px}
+.dq-t{flex:1}
+.dq.done .dq-t{text-decoration:line-through;color:var(--muted)}
+.dq-n{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.dq-all{background:linear-gradient(135deg,#F2B705,#F28705);color:#3B2A00;border-radius:10px;padding:8px 12px;font-weight:700;text-align:center}
+.dq-streak{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.dq-stamps{display:flex;gap:4px}
+.dq-stamps i{width:24px;height:24px;border-radius:50%;border:1.5px dashed var(--line);display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--muted)}
+.dq-stamps i.on{background:var(--scrub);border:0;color:#fff;font-weight:700}

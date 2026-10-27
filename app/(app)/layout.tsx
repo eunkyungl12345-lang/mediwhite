@@ -10,6 +10,7 @@ import PushSetup from "@/components/PushSetup";
 import { vapid } from "@/lib/push";
 import { runSchedulers } from "@/lib/scheduler";
 import { memo, memoOnce } from "@/lib/memo";
+import { bump } from "@/lib/daily";
 import Name from "@/components/Name";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { RANKS, GENERAL, rankOf } from "@/lib/ranks";
@@ -22,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!s) redirect("/login");
   const d = db();
   runSchedulers().catch(() => {});
-  if (memoOnce("visit:" + s.id, 30 * 60_000)) d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {});
+  if (memoOnce("visit:" + s.id, 30 * 60_000)) { d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {}); bump(s.id, "visit").catch(() => {}); }
   const [{ data: me }, { data: msgs }, { pub }, { data: offs }] = await Promise.all([
     d.from("users").select("id,dept,xp,stealth").eq("id", s.id).maybeSingle(),
     d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").order("created_at", { ascending: false }).limit(40),

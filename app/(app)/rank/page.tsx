@@ -11,18 +11,20 @@ import ProfileForm from "@/components/ProfileForm";
 import PasswordForm from "@/components/PasswordForm";
 import InviteLink from "@/components/InviteLink";
 import Hero from "@/components/Hero";
+import { dailyStatus, DAILY_BONUS, STREAK_BONUS } from "@/lib/daily";
 export const dynamic = "force-dynamic";
 
 export default async function RankPage() {
   const s = (await getSession())!;
   const d = db();
-  const [{ data: me }, { data: done }, { data: top }, { count }, leaders, commanders, { count: invited }] = await Promise.all([
+  const [{ data: me }, { data: done }, { data: top }, { count }, leaders, commanders, { count: invited }, daily] = await Promise.all([
     d.from("users").select("id,username,nickname,dept,xp,join_order,bio").eq("id", s.id).single(),
     d.from("xp_log").select("key").eq("user_id", s.id).not("key", "is", null),
     d.from("users").select("id,username,nickname,dept,xp").eq("stealth", false).order("xp", { ascending: false }).limit(30),
     d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false),
     deptLeaders(), deptCommanders(),
     d.from("users").select("id", { count: "exact", head: true }).eq("referred_by", s.username),
+    dailyStatus(s.id),
   ]);
   const xp = me?.xp ?? 0, r = rankFor(me, leaders), doneKeys = new Set((done ?? []).map(x => x.key));
   const n = count ?? 0;
@@ -35,6 +37,13 @@ export default async function RankPage() {
         <div className="xpbar"><i style={{ width: `${Math.round(r.progress * 100)}%` }} /></div>
         <div className="muted">{r.capped ? "참모총장 경험치는 채웠지만 파트 1위가 아니라 중장이에요. 1위를 넘으면 참모총장!" : r.next ? `${r.nextName}까지 ${(r.next - xp).toLocaleString()} XP` : "파트 참모총장이에요. 경례!"}</div>
         <div className="ladder">{RANKS.map(([name], i) => <span key={name} className={i === r.index ? "cur" : ""}><Insignia index={i} size={10} /> {name}</span>)}</div>
+      </div>
+
+      <div className="card daily">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}><h3 style={{ margin: 0 }}>📅 오늘의 퀘스트</h3><span className="muted">자정에 초기화 · 3개 다 하면 +{DAILY_BONUS} XP</span></div>
+        <div className="dq-list">{daily.quests.map(q => <div key={q.key} className={"dq" + (q.done ? " done" : "")}><span className="dq-chk">{q.done ? "✓" : ""}</span><span className="dq-ico">{q.icon}</span><span className="dq-t">{q.title}</span><span className="dq-n">{q.n}/{q.target}</span><span className="tag">+{q.xp}</span></div>)}</div>
+        {daily.all && <div className="dq-all">🎉 오늘 퀘스트 올클리어! 보너스 +{DAILY_BONUS} XP</div>}
+        <div className="dq-streak"><span><b>{daily.streak}일</b> 연속 출석</span><span className="dq-stamps">{Array.from({ length: 7 }, (_, i) => <i key={i} className={i < (daily.streak % 7 === 0 && daily.streak > 0 ? 7 : daily.streak % 7) ? "on" : ""}>{i < (daily.streak % 7 === 0 && daily.streak > 0 ? 7 : daily.streak % 7) ? "✓" : i + 1}</i>)}</span><span className="muted">7일마다 +{STREAK_BONUS} XP</span></div>
       </div>
 
       <div className="card">
