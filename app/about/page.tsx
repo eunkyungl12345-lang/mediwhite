@@ -36,7 +36,7 @@ export default async function AboutPage() {
         <div className="about-hero-in">
           <div className="about-kicker">의료계 익명 커뮤니티</div>
           <h1>메디화이트웹</h1>
-          <p><b>병원 사람들의 진짜 이야기.</b><br />익명 라운지 · 병원 리뷰 · 월급봉투 · 병원꿀템 · 채용 — 그리고 계급과 게임.</p>
+          <p><b>병원 사람들의 진짜 이야기.</b><br />익명 라운지 · 병원 리뷰 · 월급봉투 · 써봤더니 · 채용 — 그리고 계급과 게임.</p>
           <div className="row" style={{ justifyContent: "center" }}>
             {s ? <Link className="btn" href="/board">라운지로 들어가기</Link> : <><Link className="btn" href="/login">가입하고 입장</Link><Link className="btn ghost about-ghost" href="/login">이미 회원이에요</Link></>}
           </div>
@@ -55,9 +55,9 @@ export default async function AboutPage() {
           <Link href={s ? "/board?topic=hospital" : "/login"} className="mainlive-more">리뷰 보러 가기 →</Link>
         </div>
         <div className="mainlive-col">
-          <h2>🧴 병원꿀템</h2>
-          {items.length ? items.map(p => <Row key={p.id} p={p} />) : <div className="mainlive-empty">발 안 아픈 간호화, 야간 간식, 손 안 트는 핸드크림… 써본 사람의 추천.</div>}
-          <Link href={s ? "/board?topic=item" : "/login"} className="mainlive-more">꿀템 보러 가기 →</Link>
+          <h2>🧤 써봤더니</h2>
+          {items.length ? items.map(p => <Row key={p.id} p={p} />) : <div className="mainlive-empty">발 안 아픈 간호화, 야간 간식, 손 안 트는 핸드크림… 직접 써본 사람의 솔직 후기.</div>}
+          <Link href={s ? "/board?topic=item" : "/login"} className="mainlive-more">후기 보러 가기 →</Link>
         </div>
         <div className="mainlive-col">
           <h2>🎖️ 이번 주 진급</h2>

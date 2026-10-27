@@ -23,7 +23,7 @@ export const TOPICS = [
   { key: "info", name: "보급창고", icon: "🎒", hint: "꿀팁·뉴스·제도 정보" },
   { key: "job", name: "이직·채용", icon: "🚪", hint: "채용 정보, 이직 경험담" },
   { key: "qna", name: "무전", icon: "📻", hint: "궁금한 거 뭐든 물어보기" },
-  { key: "item", name: "병원꿀템", icon: "🧴", hint: "간호화·압박스타킹·간식·핸드크림… 써보고 좋았던 것 (구매 링크 OK)" },
+  { key: "item", name: "써봤더니", icon: "🧤", hint: "간호화·압박스타킹·간식·핸드크림… 직접 써본 솔직 후기 (좋았던 것도, 별로였던 것도)" },
 ] as const;
 export type TopicKey = typeof TOPICS[number]["key"];
 export const topicOf = (k: string | null | undefined) => TOPICS.find(t => t.key === k) ?? TOPICS[0];

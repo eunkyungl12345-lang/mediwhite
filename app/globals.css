@@ -160,7 +160,9 @@ main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 .dock.open .dock-last{opacity:0;max-height:0}
 .dock:not(.open) .dock-last{max-height:40px}
 .dock-body{transition:opacity .25s}
-.dock:not(.open) .dock-body{opacity:.0;pointer-events:none}
+.dock:not(.open) .dock-body{opacity:0;pointer-events:none}
+.dock.dragging .dock-body{opacity:1}
+.dock.dragging .dock-last{opacity:0;max-height:0}
 .dock{
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
 .dock-bar{width:100%;max-width:760px;margin:0 auto;display:grid;gap:4px;background:none;border:0;font:inherit;color:var(--ink);padding:6px 0 10px;cursor:pointer;text-align:left}
