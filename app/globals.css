@@ -297,3 +297,16 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 @media (prefers-reduced-motion:reduce){.confetti i,.qcard,.qpop{animation:none}}
 
 .tag.off{background:var(--ink);color:var(--bg)}
+
+/* CPR */
+.cpr-pad{width:100%;aspect-ratio:1.6/1;max-height:300px;border:0;border-radius:16px;background:#0E1513;color:#E5EDEA;font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;touch-action:manipulation;user-select:none;transition:background .08s}
+.cpr-pad.a{background:#1B2A26}.cpr-pad.b{background:#0E1513}
+.cpr-heart{font-size:64px;line-height:1}.cpr-pad.a .cpr-heart{transform:scale(1.15)}
+.cpr-fb{font-family:var(--f-display);font-size:24px;min-height:1.4em}
+/* 퀴즈 */
+.quiz{display:grid;gap:10px;border-radius:12px;padding:12px;background:var(--bg);border:2px solid var(--line);transition:border-color .15s}
+.quiz.ok{border-color:var(--scrub)}.quiz.no{border-color:var(--signal)}
+.quiz-q{font-size:17px;font-weight:600;text-wrap:balance}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quiz-opt{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 8px;font:inherit;color:var(--ink);cursor:pointer;min-height:52px}
+.quiz-opt:active{background:var(--scrub-soft)}
