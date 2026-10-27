@@ -49,7 +49,7 @@ export default function Insignia({ index, size = 16 }: { index: number; size?: n
       </defs>
       <rect x={.5} y={.5} width={w - 1} height={h - 1} rx={2} fill={dark} stroke={border} strokeWidth={1} />
       {el}
-      {tier > 0 && <g clipPath={`url(#${uid}c)`}><rect className="sweep" x={-w} y={-2} width={w * .6} height={h + 4} fill={`url(#${uid}g)`} transform="skewX(-20)" /></g>}
+      {tier >= 2 && <g clipPath={`url(#${uid}c)`}><rect className="sweep" x={-w} y={-2} width={w * .6} height={h + 4} fill={`url(#${uid}g)`} transform="skewX(-20)" /></g>}
       {tier >= 3 && <><circle className="tw tw1" cx={w * .18} cy={h * .22} r={1.1} fill="#fff" /><circle className="tw tw2" cx={w * .85} cy={h * .7} r={1} fill="#fff" /></>}
       {tier >= 5 && <circle className="tw tw3" cx={w * .5} cy={h * .15} r={1.2} fill="#FFF3B0" />}
     </svg>
