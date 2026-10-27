@@ -27,9 +27,9 @@ export default function Sword({ ranks }: { ranks: Row[] }) {
   }, []);
   const save = (n: S) => { setSw(n); try { localStorage.setItem("mw-sword", JSON.stringify(n)); } catch {}
     if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => { saveGameState("sword", n as any).catch(() => {}); }, 800); };
-  const cost = (l: number) => Math.round(100_000 * Math.pow(1.55, l) / 1000) * 1000 * (sw.mode === "hard" ? 2 : 1);
+  const cost = (l: number) => Math.round(100_000 * Math.pow(1.62, l) / 1000) * 1000 * (sw.mode === "hard" ? 2 : 1);
   const rate = (l: number) => sw.mode === "hard" ? Math.max(5, 88 - l * 8) : Math.max(10, 95 - l * 6);
-  const price = (l: number) => l === 0 ? 30_000 : Math.round(80_000 * Math.pow(2.1, l) / 1000) * 1000;
+  const price = (l: number) => l === 0 ? 30_000 : Math.round(60_000 * Math.pow(1.75, l) / 1000) * 1000;
   const protectCost = (l: number) => cost(l) * 3;
   const name = (l: number) => `+${l} ${NAMES[Math.min(l, NAMES.length - 1)]}${l >= NAMES.length ? ` (${l}강)` : ""}`;
 
