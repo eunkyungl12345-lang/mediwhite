@@ -9,12 +9,11 @@ export default function BoardTabs({ dept, boards, current, canManage, leaderName
   const [st, action] = useFormState<FormState, FormData>(createBoard, undefined);
   return (
     <div className="subtabs">
-      <div className="cats">
+      <div className="sub-head"><strong>{dept} 게시판</strong><span className="muted">{leaderName ? `리더 ${leaderName}` : "리더 공석"}</span>{canManage && <button type="button" className="link" onClick={() => setOpen(o => !o)}>＋ 탭 만들기</button>}</div>
+      <div className="sub-tabs">
         <Link href={`/board?cat=${encodeURIComponent(dept)}`} aria-current={!current ? "true" : undefined}>자유</Link>
         {boards.map(b => <Link key={b.id} href={`/board?cat=${encodeURIComponent(dept)}&tab=${b.id}`} aria-current={current === b.id ? "true" : undefined}>{b.name}</Link>)}
-        {canManage && <button type="button" className="cats-btn" onClick={() => setOpen(o => !o)}>＋ 탭 만들기</button>}
       </div>
-      <div className="muted" style={{ paddingBottom: 8 }}>{leaderName ? `${dept} 파트 리더: ${leaderName} (파트 경험치 1위, 탭 신설 권한)` : `${dept} 파트 리더 공석 — 첫 가입자가 리더`}</div>
       {canManage && open && (
         <form action={action} className="row" style={{ paddingBottom: 10 }}>
           <input type="hidden" name="dept" value={dept} />

@@ -366,3 +366,12 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .bestline b{color:var(--ink)}
 .mute-btn{background:none;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer;color:var(--muted)}
 .retry{font-family:"NeoDunggeunmo",monospace}
+
+/* 파트 게시판 서브탭 */
+.subtabs{margin:4px 0 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.sub-head{display:flex;align-items:center;gap:10px;padding:10px 12px 6px;font-size:14px}
+.sub-head .link{margin-left:auto}
+.sub-tabs{display:flex;gap:2px;overflow-x:auto;padding:0 6px;border-top:1px solid var(--line);scrollbar-width:none}
+.sub-tabs a{padding:9px 12px;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
+.sub-tabs a[aria-current="true"]{color:var(--scrub);border-color:var(--scrub)}
+.subtabs form.row{padding:8px 12px 12px}
