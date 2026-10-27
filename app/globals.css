@@ -311,16 +311,24 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .quiz-opt{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 8px;font:inherit;color:var(--ink);cursor:pointer;min-height:52px}
 .quiz-opt:active{background:var(--scrub-soft)}
 
-/* 게임 허브 */
-.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.hub-tile{display:grid;gap:4px;justify-items:center;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 10px 14px;font:inherit;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s}
-.hub-tile:active{transform:scale(.97)}
-.hub-tile:hover{box-shadow:0 6px 20px rgba(0,0,0,.08)}
-.hub-ico{font-size:40px;line-height:1}
-.hub-name{font-weight:600;font-size:15px}
-.hub-sub{font-size:12px;color:var(--muted)}
 
 .lt-cmd{font-family:var(--f-display);font-size:34px;text-align:center;padding:4px 0;min-height:1.3em;transition:color .1s}
 .lt-cmd.win{color:var(--scrub)}.lt-cmd.lose{color:var(--signal)}
-.hub-tile:first-child{grid-column:1/-1;background:linear-gradient(135deg,#0E1513,#1B2A26);color:#F4FBF9;border-color:#2C6B5E}
-.hub-tile:first-child .hub-sub{color:#93A59E}
+
+/* 게임 허브 — 오락실 스티커판 */
+.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;padding:14px;border-radius:20px;
+  background:radial-gradient(circle at 10% 20%,rgba(255,216,107,.25),transparent 30%),radial-gradient(circle at 90% 80%,rgba(189,232,255,.35),transparent 30%),repeating-linear-gradient(45deg,transparent 0 14px,rgba(0,0,0,.025) 14px 16px),var(--surface);border:2px dashed var(--line)}
+.hub-tile{position:relative;display:grid;gap:4px;justify-items:center;text-align:center;background:var(--tile);border:3px solid #fff;border-radius:22px;padding:20px 10px 14px;font:inherit;color:#1F2A26;cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.12),0 10px 24px rgba(0,0,0,.08);transform:rotate(var(--rot));transition:transform .15s,box-shadow .15s}
+.hub-tile:hover{transform:rotate(0) translateY(-3px) scale(1.03);box-shadow:0 9px 0 rgba(0,0,0,.12),0 16px 30px rgba(0,0,0,.12)}
+.hub-tile:active{transform:rotate(0) translateY(3px) scale(.98);box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.hub-tile.wide{grid-column:1/-1;background:linear-gradient(135deg,#FFD86B,#FFB36B);padding:22px 10px 16px}
+.hub-tile.wide .hub-ico{font-size:56px}
+.hub-ico{font-size:44px;line-height:1;filter:drop-shadow(0 3px 0 rgba(0,0,0,.15));animation:bounce 1.6s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
+.hub-name{font-family:var(--f-display);font-size:19px;letter-spacing:.3px}
+.hub-sub{font-size:12px;color:rgba(31,42,38,.7);background:rgba(255,255,255,.6);border-radius:999px;padding:1px 10px}
+.hub-badge{position:absolute;top:-10px;right:-8px;background:#3B5BA9;color:#fff;font-family:var(--f-display);font-size:13px;padding:3px 10px;border-radius:999px;transform:rotate(8deg);border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.2)}
+.hub-badge.hit{background:#E2574C;font-size:15px;padding:4px 12px;animation:hitpulse 1s ease-in-out infinite}
+@keyframes hitpulse{50%{transform:rotate(8deg) scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.hub-ico,.hub-badge.hit{animation:none}}
+@media (prefers-color-scheme:dark){.hub-tile{border-color:#2A3833}.hub{border-color:#2A3833}}
