@@ -45,13 +45,13 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const canManage = isDept && (s.role === "admin" || leader?.id === s.id);
   return (
     <>
+      <div className="filters">
+        <DeptSelect value={isDept ? cat : "전체"} options={DEPTS} mine={s.dept} topic={topic} sort={sort} />
+        <div className="sorts">{[["rank", "🎖️ 계급순"], ["new", "🕒 새 글"], ["best", "🔥 핫한 글"]].map(([k, n]) => <Link key={k} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(k !== "rank" ? { sort: k } : {}) }).toString()}`} aria-current={sort === k ? "true" : undefined}>{n}</Link>)}</div>
+      </div>
       <div className="topics wrap">
         <Link href="/board?cat=%EA%B3%B5%EC%A7%80" className={"topic notice" + (cat === NOTICE_CAT ? " on" : "")}><span>📢</span>공지</Link>
         {[{ key: "", name: "전체", icon: "✨" }, ...TOPICS].map(t => <Link key={t.key} href={`/board?${new URLSearchParams({ ...(cat !== "전체" && cat !== NOTICE_CAT ? { cat } : {}), ...(tab ? { tab } : {}), ...(t.key ? { topic: t.key } : {}), ...(sort !== "rank" ? { sort } : {}) }).toString()}`} className={"topic" + (topic === t.key && cat !== NOTICE_CAT ? " on" : "")}><span>{t.icon}</span>{t.name}</Link>)}
-      </div>
-      <div className="filters">
-        <DeptSelect value={isDept ? cat : "전체"} options={DEPTS} topic={topic} sort={sort} />
-        <div className="sorts">{[["rank", "🎖️ 계급순"], ["new", "🕒 새 글"], ["best", "🔥 핫한 글"]].map(([k, n]) => <Link key={k} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(k !== "rank" ? { sort: k } : {}) }).toString()}`} aria-current={sort === k ? "true" : undefined}>{n}</Link>)}</div>
       </div>
       {isDept && <BoardTabs dept={cat} boards={boards ?? []} current={tab} canManage={!!canManage} leaderName={leader ? `[${leader.dept}]${leader.nickname}` : null} />}
       <div className="bar"><span className="muted">{cat === TOP ? "대표 파트" : cat}{tab && boards?.find((b: any) => b.id === tab) ? ` › ${boards!.find((b: any) => b.id === tab)!.name}` : ""} · {posts.length}개</span>

@@ -578,3 +578,10 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .dept-sel{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .dept-sel select{width:auto;padding:6px 28px 6px 10px;font-size:14px;border-radius:10px}
 .filters .sorts{padding-bottom:0}
+
+/* 범위: 전체 / 내 직종 / 다른 직종 */
+.scope{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.scope-btn{position:relative;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 13px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.scope-btn.on{background:var(--scrub);border-color:var(--scrub);color:#fff}
+.scope-sel select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.filters{align-items:center}
