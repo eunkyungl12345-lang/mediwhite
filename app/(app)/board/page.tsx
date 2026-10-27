@@ -7,6 +7,7 @@ import { fmt } from "@/lib/format";
 import { deptLeaders, rankFor, deptCommanders } from "@/lib/ranksvc";
 import Name from "@/components/Name";
 import BoardTabs from "@/components/BoardTabs";
+import DeptSelect from "@/components/DeptSelect";
 
 export const dynamic = "force-dynamic";
 
@@ -44,13 +45,15 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const canManage = isDept && (s.role === "admin" || leader?.id === s.id);
   return (
     <>
-      <div className="cats">
-        {[NOTICE_CAT, "전체", ...DEPTS].map(c => <Link key={c} href={c === "전체" ? "/board" : `/board?cat=${encodeURIComponent(c)}`} aria-current={c === cat ? "true" : undefined} className={c === TOP ? "top-tab" : undefined}>{c === NOTICE_CAT ? "📢 공지" : c === TOP ? `🏆 대표 파트${top ? ` [${top}]` : ""}` : c}</Link>)}
+      <div className="topics wrap">
+        <Link href="/board?cat=%EA%B3%B5%EC%A7%80" className={"topic notice" + (cat === NOTICE_CAT ? " on" : "")}><span>📢</span>공지</Link>
+        {[{ key: "", name: "전체", icon: "✨" }, ...TOPICS].map(t => <Link key={t.key} href={`/board?${new URLSearchParams({ ...(cat !== "전체" && cat !== NOTICE_CAT ? { cat } : {}), ...(tab ? { tab } : {}), ...(t.key ? { topic: t.key } : {}), ...(sort !== "rank" ? { sort } : {}) }).toString()}`} className={"topic" + (topic === t.key && cat !== NOTICE_CAT ? " on" : "")}><span>{t.icon}</span>{t.name}</Link>)}
+      </div>
+      <div className="filters">
+        <DeptSelect value={isDept ? cat : "전체"} options={DEPTS} topic={topic} sort={sort} />
+        <div className="sorts">{[["rank", "🎖️ 계급순"], ["new", "🕒 새 글"], ["best", "🔥 핫한 글"]].map(([k, n]) => <Link key={k} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(k !== "rank" ? { sort: k } : {}) }).toString()}`} aria-current={sort === k ? "true" : undefined}>{n}</Link>)}</div>
       </div>
       {isDept && <BoardTabs dept={cat} boards={boards ?? []} current={tab} canManage={!!canManage} leaderName={leader ? `[${leader.dept}]${leader.nickname}` : null} />}
-      {cat === TOP && <div className="muted" style={{ paddingBottom: 8 }}>{top ? `지금 대표 파트는 [${top}] — 파트 응원전 1위. 이 탭엔 [${top}] 글만 올라와요.` : "아직 대표 파트가 없어요. 파트 응원전에서 1위를 차지한 파트가 여기에 노출돼요."} <Link href="/support">응원전 보기 →</Link></div>}
-      <div className="topics scroll">{[{ key: "", name: "전체", icon: "✨" }, ...TOPICS].map(t => <Link key={t.key} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(t.key ? { topic: t.key } : {}) }).toString()}`} className={"topic" + (topic === t.key ? " on" : "")}><span>{t.icon}</span>{t.name}</Link>)}</div>
-      <div className="sorts">{[["rank", "🎖️ 계급순"], ["new", "🕒 새 글"], ["best", "🔥 핫한 글"]].map(([k, n]) => <Link key={k} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(k !== "rank" ? { sort: k } : {}) }).toString()}`} aria-current={sort === k ? "true" : undefined}>{n}</Link>)}</div>
       <div className="bar"><span className="muted">{cat === TOP ? "대표 파트" : cat}{tab && boards?.find((b: any) => b.id === tab) ? ` › ${boards!.find((b: any) => b.id === tab)!.name}` : ""} · {posts.length}개</span>
         <Link className="btn" href={`/board/new?${new URLSearchParams({ ...(cat !== "전체" && cat !== TOP ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}) }).toString()}`}>글쓰기</Link></div>
       <div className="posts">
