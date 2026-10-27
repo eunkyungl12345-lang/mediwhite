@@ -52,6 +52,15 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   await createSession({ id: u.id, username, nickname: u.nickname, dept: u.dept, role });
   redirect("/board");
 }
+/** 아이디 찾기: 닉네임+직종으로 일부 가린 아이디 안내 (개인정보 없이) */
+export async function findUsername(_: FormState, fd: FormData): Promise<FormState> {
+  const nickname = clean(fd.get("nickname"), 12), dept = clean(fd.get("dept"), 30);
+  if (!nickname || !dept) return { error: "닉네임과 직종을 입력해주세요" };
+  const { data } = await db().from("users").select("username").eq("nickname", nickname).eq("dept", dept).eq("stealth", false).limit(3);
+  if (!data?.length) return { error: "일치하는 계정이 없어요. 닉네임을 바꿨다면 관리자에게 문의하세요" };
+  const mask = (u: string) => u.slice(0, Math.min(3, Math.max(1, u.length - 2))) + "*".repeat(Math.max(2, u.length - 3));
+  return { ok: `아이디: ${data.map(d => mask(d.username)).join(", ")}  (비밀번호를 잊었다면 관리자에게 초기화를 요청하세요)` };
+}
 export async function logout() { clearSession(); redirect("/login"); }
 
 /* ---------- 내 정보 ---------- */
