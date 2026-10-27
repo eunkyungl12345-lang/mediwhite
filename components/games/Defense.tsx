@@ -37,7 +37,9 @@ export default function Defense({ ranks, best: bestProp = 0 }: { ranks: Row[]; b
   const [saved, setSaved] = useState("");
   const [best, setBest] = useState(0);
   const [unlockCard, setUnlockCard] = useState<UnitDef | null>(null);
-  const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], fx: [] as Fx[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, raf: 0, W: 0, H: 0, last: 0, best: 0, account: 0, sunDrops: [] as { x: number; y: number; t: number }[] });
+  const closeUnlock = () => { setUnlockCard(null); g.current.paused = false; };
+  useEffect(() => { try { if (location.search.includes("unlockdemo")) setUnlockCard(UNITS.ortho); } catch {} }, []);
+  const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], fx: [] as Fx[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, paused: false, raf: 0, W: 0, H: 0, last: 0, best: 0, account: 0, sunDrops: [] as { x: number; y: number; t: number }[] });
 
   useEffect(() => { loadGameState("defense").then(s => { const b = Number((s as Saved | null)?.bestWave ?? 0); g.current.account = b; setBest(b); }).catch(() => {}); }, []);
 
@@ -94,10 +96,11 @@ export default function Defense({ ranks, best: bestProp = 0 }: { ranks: Row[]; b
       s.germs.push({ ...base, hp, max: hp, speed: ([15, 11, 9][kind] + w * 1.1) * (1 + Math.random() * .25), dmg: [10, 16, 30][kind], kind }); };
     const commitBest = (w: number) => { if (w > s.best) { s.best = w; saveScore("defense", w).catch(() => {}); }
       if (w > s.account) { const prev = s.account; s.account = w; setBest(w); saveGameState("defense", { bestWave: w }).catch(() => {});
-        const nu = ORDER.find(k => UNITS[k].unlock > prev && UNITS[k].unlock <= w); if (nu) setUnlockCard(UNITS[nu]); } };
+        const nu = ORDER.find(k => UNITS[k].unlock > prev && UNITS[k].unlock <= w); if (nu) { s.paused = true; setUnlockCard(UNITS[nu]); sfx.level(); haptic([30, 30, 60]); } } };
     const end = () => { s.running = false; cancelAnimationFrame(s.raf); draw(); sfx.boom(); haptic([60, 40, 60]); shake(box.current, "l"); setUi(u => ({ ...u, running: false, over: `${s.wave}웨이브에서 병동이 뚫렸어요` })); commitBest(s.wave - 1); };
     const laneGerms = (r: number, fromX: number) => s.germs.filter(z => z.r === r && z.x > fromX);
     const tick = (now: number) => {
+      if (s.paused) { s.last = now; s.raf = requestAnimationFrame(tick); return; }
       const dt = Math.min(.05, (now - s.last) / 1000); s.last = now; s.t += dt; const CW = cw(), CH = ch();
       s.nextSpawn -= dt;
       if (s.nextSpawn <= 0) {
@@ -161,11 +164,17 @@ export default function Defense({ ranks, best: bestProp = 0 }: { ranks: Row[]; b
         <canvas ref={cv} />
         {!ui.running && <button type="button" className="overlay" onClick={e => { e.stopPropagation(); (box.current as any).__start(); }}><span className="big">{ui.over ? ui.over : "병동 사수"}</span><span>{ui.over ? "다시 하려면 터치" : "터치해서 시작"}</span></button>}
         {unlockCard && (
-          <div className="unlock" onClick={e => { e.stopPropagation(); setUnlockCard(null); }}>
-            <div className="unlock-card">
-              <div className="unlock-top">새 의료진 영입!</div>
-              <div className="unlock-body"><span className="unlock-ico">{unlockCard.icon}</span><div><b>{unlockCard.name}</b>{unlockCard.skill && <span className="tag" style={{ marginLeft: 6 }}>{unlockCard.skill}</span>}<div className="muted">{unlockCard.desc} · {unlockCard.cost}💧</div></div></div>
-              <button type="button" className="btn" onClick={e => { e.stopPropagation(); setUnlockCard(null); }}>계속하기</button>
+          <div className="unlock" role="dialog" aria-modal="true" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+            <div className="unlock-title">새 의료진을 영입했어요!</div>
+            <div className="unlock-frame">
+              <div className="unlock-card">
+                <div className="unlock-top">{unlockCard.name}</div>
+                <div className="unlock-body">
+                  <div className="unlock-tile"><span className="unlock-ico">{unlockCard.icon}</span></div>
+                  <div className="unlock-desc">{unlockCard.desc}{unlockCard.skill && <><br /><span className="tag">{unlockCard.skill}</span></>}<div className="muted" style={{ marginTop: 6 }}>고용 비용 {unlockCard.cost}💧</div></div>
+                </div>
+              </div>
+              <button type="button" className="unlock-btn" onClick={closeUnlock}>CONTINUE</button>
             </div>
           </div>
         )}
