@@ -8,8 +8,8 @@ import { sfx, haptic, burst, pop } from "@/lib/juice";
 type Dept = "원무" | "간호" | "물리치료" | "방사선" | "임상병리" | "응급구조" | "의사" | "총괄";
 type DeptDef = { icon: string; rate: number; cost: number; need?: string; desc: string };
 const DEPTS: Record<Dept, DeptDef> = {
-  원무:   { icon: "🧾", rate: 2,    cost: 60,      desc: "접수·수납. 병원의 시작" },
-  간호:   { icon: "💉", rate: 6,    cost: 300,     desc: "처치·투약, 환자 회전율 ↑" },
+  원무:   { icon: "🧾", rate: 3,    cost: 40,      desc: "접수·수납. 병원의 시작" },
+  간호:   { icon: "💉", rate: 8,    cost: 180,     desc: "처치·투약, 환자 회전율 ↑" },
   물리치료: { icon: "🦵", rate: 18,  cost: 1500,    need: "재활센터", desc: "재활 치료 수익" },
   방사선: { icon: "☢️", rate: 50,   cost: 7000,    need: "검사실", desc: "X-ray·CT 촬영 수익" },
   임상병리: { icon: "🧪", rate: 140, cost: 30000,   need: "검사실", desc: "혈액·검체 검사 수익" },
@@ -31,7 +31,7 @@ const ROOMS: Room[] = [
 ];
 type Saved = { cash: number; total: number; staff: Partial<Record<Dept, { n: number; lv: number }>>; rooms: number; lastSeen: number; patients: number; myDept?: string };
 const fmt = (n: number) => { n = Math.floor(n); if (n >= 1e12) return (n / 1e12).toFixed(n < 1e13 ? 1 : 0) + "조"; if (n >= 1e8) return (n / 1e8).toFixed(n < 1e9 ? 1 : 0) + "억"; if (n >= 1e4) return (n / 1e4).toFixed(n < 1e5 ? 1 : 0) + "만"; return n.toLocaleString(); };
-const hireCost = (d: Dept, n: number) => Math.round(DEPTS[d].cost * Math.pow(1.13, n));
+const hireCost = (d: Dept, n: number) => Math.round(DEPTS[d].cost * Math.pow(1.11, n));
 const lvCost = (d: Dept, lv: number) => Math.round(DEPTS[d].cost * 8 * Math.pow(2.2, lv - 1));
 const milestoneMult = (n: number) => Math.pow(2, MILESTONES.filter(m => n >= m).length);
 const OFFLINE_CAP = 8 * 3600, OFFLINE_RATE = .5;
@@ -44,7 +44,7 @@ function rateOf(s: Saved, mine: string) {
 }
 
 export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string }) {
-  const [s, setS] = useState<Saved>({ cash: 100, total: 0, staff: {}, rooms: 0, lastSeen: Date.now(), patients: 0 });
+  const [s, setS] = useState<Saved>({ cash: 300, total: 0, staff: {}, rooms: 0, lastSeen: Date.now(), patients: 0 });
   const [loaded, setLoaded] = useState(false);
   const [welcome, setWelcome] = useState<{ sec: number; earn: number; pts: number } | null>(null);
   const [vip, setVip] = useState(false);
@@ -79,7 +79,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
     return () => { clearInterval(id); document.removeEventListener("visibilitychange", onHide); window.removeEventListener("pagehide", onHide as any); };
   }, [loaded, mine, vip]);
 
-  const tap = (e: React.PointerEvent) => { const base = Math.max(10, rate * .02); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setS(x => ({ ...x, cash: x.cash + base, total: x.total + base, patients: x.patients + 1 })); sfx.coin(); haptic(6); pop(box.current, e.clientX - r.left, e.clientY - r.top, "+" + fmt(base), "good"); dirty.current = true; };
+  const tap = (e: React.PointerEvent) => { const base = Math.max(20, rate * .02); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setS(x => ({ ...x, cash: x.cash + base, total: x.total + base, patients: x.patients + 1 })); sfx.coin(); haptic(6); pop(box.current, e.clientX - r.left, e.clientY - r.top, "+" + fmt(base), "good"); dirty.current = true; };
   const hire = (d: Dept) => { const st = s.staff[d] ?? { n: 0, lv: 1 }; const c = hireCost(d, st.n); if (s.cash < c) { flash("현금이 부족해요"); return; } const n = st.n + 1; const ms = MILESTONES.includes(n); sfx.tap(); haptic(8); if (ms) { sfx.level(); burst(box.current, 100, 60, "#F2B705", 20); flash(`${d} ${n}명 달성! 매출 ×2`); }
     setS(x => ({ ...x, cash: x.cash - c, staff: { ...x.staff, [d]: { n, lv: st.lv } } })); setTimeout(() => persist(true), 50); };
   const levelUp = (d: Dept) => { const st = s.staff[d]; if (!st) return; const c = lvCost(d, st.lv); if (s.cash < c) { flash("현금이 부족해요"); return; } sfx.level(); haptic([10, 20, 10]); setS(x => ({ ...x, cash: x.cash - c, staff: { ...x.staff, [d]: { n: st.n, lv: st.lv + 1 } } })); flash(`${d} 교육 Lv${st.lv + 1} · 매출 ×1.5`); setTimeout(() => persist(true), 50); };
@@ -97,7 +97,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           <span className="ty-build">{ROOMS[level].icon}</span>
           <span className="ty-cash">₩ {fmt(s.cash)}</span>
           <span className="ty-rate">초당 +{fmt(rate)}원 · 누적 {fmt(s.total)}원</span>
-          <span className="muted" style={{ fontSize: 12 }}>탭해서 직접 진료 · 환자 {fmt(s.patients)}명</span>
+          <span className="muted" style={{ fontSize: 12 }}>{rate === 0 ? "👆 여기를 연타해서 첫 직원 월급 모으기" : `탭해서 직접 진료 · 환자 ${fmt(s.patients)}명`}</span>
         </button>
         {vip && <button type="button" className="ty-vip" onClick={claimVip}>💼 VIP 환자 도착! <small>탭하면 30초치 매출</small></button>}
         {welcome && (
