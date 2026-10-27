@@ -6,7 +6,8 @@ import Presence from "@/components/Presence";
 import PromoToast from "@/components/PromoToast";
 import ChatDock from "@/components/ChatDock";
 import Name from "@/components/Name";
-import { myRank } from "@/lib/ranksvc";
+import { deptLeaders, rankFor } from "@/lib/ranksvc";
+import { RANKS, GENERAL, rankOf } from "@/lib/ranks";
 import { db } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const s = await getSession();
   if (!s) redirect("/login");
   const d = db();
-  const [rank, { data: me }, { data: msgs }] = await Promise.all([
-    myRank(s.id), d.from("users").select("stealth").eq("id", s.id).maybeSingle(),
-    d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").order("created_at", { ascending: false }).limit(80),
+  const [{ data: me }, { data: msgs }] = await Promise.all([
+    d.from("users").select("id,dept,xp,stealth").eq("id", s.id).maybeSingle(),
+    d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").order("created_at", { ascending: false }).limit(60),
   ]);
+  // 참모총장 후보일 때만 파트 1위 확인 (추가 조회 1번)
+  const rank = me && me.xp >= RANKS[GENERAL][1] ? rankFor(me, await deptLeaders()) : rankOf(me?.xp ?? 0);
   return (
     <div className="app">
       <header>
