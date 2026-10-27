@@ -341,3 +341,12 @@ body:has(.dock.open) main{padding-bottom:calc(min(46vh,420px) + 80px)}
 .hub-badge.hit{background:#D9534F;animation:blink 1s steps(2) infinite;font-size:10px}
 .games .bar .link{font-family:"NeoDunggeunmo",monospace;font-size:14px}
 @media (prefers-reduced-motion:reduce){.hub-ico,.hub-badge.hit,.hub-blink,.hub-led{animation:none}}
+.stat-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+@media (max-width:480px){.stat-row{grid-template-columns:repeat(3,1fr)}}
+.stat{display:grid;gap:2px;text-align:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 4px}
+.stat b{font-size:22px;font-variant-numeric:tabular-nums}.stat span{font-size:11px;color:var(--muted)}
+.bars{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;height:130px;padding-top:16px}
+.bar-col{display:grid;grid-template-rows:1fr auto auto;height:100%;text-align:center}
+.bar-v{background:var(--scrub);border-radius:3px 3px 0 0;position:relative;align-self:end}
+.bar-v span{position:absolute;top:-15px;left:0;right:0;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar-l{font-size:9px;color:var(--muted)}.bar-s{font-size:10px;color:var(--scrub);min-height:12px}

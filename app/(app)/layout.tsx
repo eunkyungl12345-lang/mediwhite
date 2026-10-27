@@ -21,6 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!s) redirect("/login");
   const d = db();
   runSchedulers().catch(() => {});
+  d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {});
   const [{ data: me }, { data: msgs }, { pub }, { data: offs }] = await Promise.all([
     d.from("users").select("id,dept,xp,stealth").eq("id", s.id).maybeSingle(),
     d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").order("created_at", { ascending: false }).limit(60),

@@ -10,6 +10,7 @@ import AdminResetPw from "@/components/AdminResetPw";
 import { bankInfo, deptPools, contactEmail } from "@/lib/support";
 import AdminContact from "@/components/AdminContact";
 import AdminBroadcast from "@/components/AdminBroadcast";
+import Stats from "@/components/Stats";
 import { setInquiryStatus } from "@/lib/actions";
 import { confirmContribution } from "@/lib/actions";
 import { fmt } from "@/lib/format";
@@ -19,6 +20,19 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const s = (await getSession())!;
   if (s.role !== "admin") redirect("/board");
+  const since = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
+  const [{ data: vis }, { data: signups }, { count: msg24 }, { count: postsAll }, { count: scores24 }] = await Promise.all([
+    db().from("visits").select("day,user_id,hits").gte("day", since),
+    db().from("users").select("created_at").eq("stealth", false),
+    db().from("messages").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 86400000).toISOString()),
+    db().from("posts").select("id", { count: "exact", head: true }),
+    db().from("scores").select("user_id", { count: "exact", head: true }).gte("updated_at", new Date(Date.now() - 86400000).toISOString()),
+  ]);
+  const kst = (d: string | Date) => new Date(new Date(d).getTime() + 9 * 3600000).toISOString().slice(0, 10);
+  const days: string[] = Array.from({ length: 14 }, (_, i) => kst(new Date(Date.now() - (13 - i) * 86400000)));
+  const visByDay: Record<string, Set<string>> = Object.fromEntries(days.map(d => [d, new Set<string>()])); for (const v of vis ?? []) visByDay[v.day]?.add(v.user_id);
+  const signByDay: Record<string, number> = Object.fromEntries(days.map(d => [d, 0])); for (const u of signups ?? []) { const k = kst(u.created_at); if (k in signByDay) signByDay[k]++; }
+  const series = days.map(d => ({ day: d.slice(5), visitors: visByDay[d].size, signups: signByDay[d] }));
   const [{ data: inq }, email] = await Promise.all([db().from("inquiries").select("*").order("created_at", { ascending: false }).limit(50), contactEmail()]);
   const KIND: Record<string, string> = { ad: "광고", partner: "협업", bug: "오류", other: "기타" };
   const [{ data: users }, leaders, bank, { rows: pools }, { data: pending }] = await Promise.all([
@@ -27,6 +41,7 @@ export default async function AdminPage() {
   ]);
   return (
     <div className="games">
+      <Stats series={series} totals={{ users: (signups ?? []).length, today: series[series.length - 1]?.visitors ?? 0, msg24h: msg24 ?? 0, posts: postsAll ?? 0, games24h: scores24 ?? 0 }} />
       <div className="card">
         <h3>전체 폰 알림 보내기</h3>
         <div className="muted">알림을 켠 회원 모두에게 푸시. 이벤트·공지용 (하루 1~2번만 — 많으면 다 꺼버려요).</div>
