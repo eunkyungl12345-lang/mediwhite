@@ -133,7 +133,7 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   const pm = personMention(title + " " + body);
   const plm = category === SSUM_CAT ? placeMention(title + " " + body) : null;
   if (plm) return { error: `"${plm}" — 초성은 괜찮지만, 병원명·병동·층·부서는 빼주세요. 초성이랑 합쳐지면 누군지 바로 알 수 있어요 💘` };
-  if (pm && category === SSUM_CAT) return { error: `"${pm}" — 썸류센터 글엔 실명을 쓸 수 없어요. 초성(예: ㄱㅁㅈ 쌤)으로 바꿔서 써주세요 💘` };
+  if (pm && category === SSUM_CAT) return { error: `"${pm}" — 썸 글엔 실명을 쓸 수 없어요. 초성(예: ㄱㅁㅈ 쌤)으로 바꿔서 써주세요 💘` };
   if (pm && fd.get("confirm_anon") !== "on") return { error: `"${pm}" — 특정 개인을 가리키는 표현 같아요. 실명·식별 정보가 없다면 아래 확인에 체크하고 다시 올려주세요.` };
   const s = db();
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }

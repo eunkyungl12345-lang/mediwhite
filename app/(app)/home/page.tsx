@@ -94,7 +94,7 @@ export default async function HomePage() {
           </> : <div className="h-empty">시즌 2 오픈! 병원을 키워서 한강뷰 집·외제차까지 사보세요.</div>}
         </Link>
         <Link href="/ssum" className="h-card" style={{ background: "linear-gradient(135deg,#FFE3EC,#FFF4F7)", borderColor: "#F6C6D5", color: "#7A2E4A" }}>
-          <div className="h-head"><h3>💘 썸류센터</h3><span className="h-link" style={{ color: "#C2185B" }}>들어가기 →</span></div>
+          <div className="h-head"><h3>💘 썸</h3><span className="h-link" style={{ color: "#C2185B" }}>들어가기 →</span></div>
           <div className="h-empty" style={{ color: "#7A2E4A" }}>닉네임 고백 · 셀소 카드 · 지인 소개 · 오늘의 솔로</div>
         </Link>
         <section className="h-card h-jobs">

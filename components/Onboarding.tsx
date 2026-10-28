@@ -14,7 +14,7 @@ const STEPS: { icon: string; title: string; body: React.ReactNode; demo: React.R
     demo: <div className="ob-demo ob-dock"><i /><span>💬 실시간 채팅 <b style={{ color: "#E2574C" }}>●</b> 3명</span><span className="muted">펼치기 ▴</span></div> },
   { icon: "🎮", title: "게임 — 기록 세우면 경험치", body: <><b>우리 병원 키우기</b>(접속 안 해도 돈이 쌓여요), <b>병동 사수</b>(세균 막기), 번개 모드, 볼링 등 12가지.<br />기록을 세우면 퀘스트 경험치가 들어와요.</>,
     demo: <div className="ob-demo ob-games"><span>🏥</span><span>🦠</span><span>⚡</span><span>🎳</span><span>🫀</span><span>📚</span></div> },
-  { icon: "📅", title: "매일 할 일은 '내 계급' 탭에", body: <><b>💘 썸류센터</b> 탭에선 익명 고백·프로필 카드로 병원 사람끼리 설렐 수 있어요. <b>오늘의 퀘스트</b> 3개(채팅 3번·게임 1판·글 1개)를 하면 보너스 경험치, 매일 출석하면 7일마다 추가 보너스.<br />친구 <b>초대 링크</b>도 여기 있어요. 그럼 시작해볼까요?</>,
+  { icon: "📅", title: "매일 할 일은 '내 계급' 탭에", body: <><b>💘 썸</b> 탭에선 익명 고백·프로필 카드로 병원 사람끼리 설렐 수 있어요. <b>오늘의 퀘스트</b> 3개(채팅 3번·게임 1판·글 1개)를 하면 보너스 경험치, 매일 출석하면 7일마다 추가 보너스.<br />친구 <b>초대 링크</b>도 여기 있어요. 그럼 시작해볼까요?</>,
     demo: <div className="ob-demo ob-dq"><span>✓ 실시간 채팅 3번</span><span>○ 게임 아무거나 1판</span><span>○ 글 또는 댓글 1개</span></div> },
 ];
 

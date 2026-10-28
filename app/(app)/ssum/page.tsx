@@ -124,7 +124,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
 
   return (
     <div className="games">
-      <div className="ss-hero"><div><b>💘 썸류센터</b><span>병원 사람끼리, 조심스럽게 설레는 곳</span></div><span className="muted" style={{ fontSize: 11 }}>만 19세 이상 · 실명·연락처 금지</span></div>
+      <div className="ss-hero"><div><b>💘 썸</b><span>병원 사람끼리, 조심스럽게 설레는 곳</span></div><span className="muted" style={{ fontSize: 11 }}>만 19세 이상 · 실명·연락처 금지</span></div>
       {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
       <div className="cats" style={{ paddingBottom: 0 }}>{TABS.map(([k, n]) => <Link key={k} href={`/ssum?tab=${k}`} aria-current={tab === k ? "true" : undefined}>{n}</Link>)}</div>
       {body}

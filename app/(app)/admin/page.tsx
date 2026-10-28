@@ -57,7 +57,7 @@ export default async function AdminPage() {
         <AdminBroadcast />
       </div>
       <div className="card">
-        <h3>💘 썸류센터 현황</h3>
+        <h3>💘 썸 현황</h3>
         <div className="h-stats">
           <div className="h-stat"><b>{gcount(dps, "여")}</b><span>🙋‍♀️ 여 카드</span></div>
           <div className="h-stat"><b>{gcount(dps, "남")}</b><span>🙋‍♂️ 남 카드</span></div>
