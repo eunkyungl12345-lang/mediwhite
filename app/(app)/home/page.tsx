@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { topicOf, HOSPITAL_DEPTS } from "@/lib/depts";
 import { dailyStatus, DAILY_BONUS } from "@/lib/daily";
-import { rateOf, dailyOf, fmt as won, tycoonDept, OFFLINE_CAP, OFFLINE_RATE, ROOMS, HOMES, assetsOf, isCurrent } from "@/lib/tycoon";
+import { rateOf, dailyOf, fmt as won, tycoonDept, OFFLINE_CAP, OFFLINE_RATE, STAFF, HOMES, assetsOf, isCurrent } from "@/lib/tycoon";
 import { fmt } from "@/lib/format";
 import Name from "@/components/Name";
 import Insignia from "@/components/Insignia";
@@ -89,7 +89,7 @@ export default async function HomePage() {
         <Link href="/games?g=tycoon" className="h-card h-ty">
           <div className="h-head"><h3>🏥 우리 병원</h3><span className="h-link">들어가기 →</span></div>
           {tyS ? <>
-            <div className="h-ty-row"><span className="h-ty-ico">{ROOMS[Math.min(ROOMS.length - 1, tyS.rooms)].icon}</span><div><b>₩ {won(tyS.cash)}</b><div className="muted">하루 +{won(tyDaily)}원 · 🏠 {HOMES[tyS.home].area} {HOMES[tyS.home].name} · 총자산 {won(assetsOf(tyS))}원</div></div></div>
+            <div className="h-ty-row"><span className="h-ty-ico">{(() => { const k = tyS.staff.reduce((a: number, lv: number, i: number) => lv ? i : a, -1); return k >= 0 ? STAFF[k].icon : "🏥"; })()}</span><div><b>₩ {won(tyS.cash)}</b><div className="muted">초당 +{won(tyRate)}원 · 🏠 {HOMES[tyS.home].area} {HOMES[tyS.home].name} · 총자산 {won(assetsOf(tyS))}원</div></div></div>
             {tyPending > 0 && <div className="h-ty-pending">💰 자리 비운 동안 <b>+{won(tyPending)}원</b> 쌓였어요 — 받으러 가기</div>}
           </> : <div className="h-empty">시즌 2 오픈! 병원을 키워서 한강뷰 집·외제차까지 사보세요.</div>}
         </Link>

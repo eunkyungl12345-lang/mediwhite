@@ -956,3 +956,14 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 @keyframes sw-bolt{0%,60%{opacity:0}70%,90%{opacity:1}}
 .sw-ray{animation:sw-pulse 1.8s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.sw-float,.sw-aura,.sw-rune,.sw-gem,.sw-spin,.sw-spark,.sw-bolt,.sw-ray{animation:none}}
+
+/* 병원 키우기 시즌 3 */
+.ty-combo{font-size:12px;text-align:center;color:var(--muted);display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap}
+.ty-combo span{width:10px;height:10px;border-radius:50%;display:inline-block}
+.ty-talk{display:grid;gap:8px;text-align:left}
+.ty-talk .big{text-align:center}
+.ty-say{background:var(--bg);border-radius:12px 12px 12px 4px;padding:8px 10px;font-size:14px}
+.ty-say.you{background:var(--scrub-soft);border-radius:12px 12px 4px 12px;margin-left:18px}
+.ty-group{display:grid;gap:8px}
+.ty-group-t{font-weight:700;font-size:14px;margin-top:6px}
+.ty-group-t .muted{font-weight:400;font-size:11px}
