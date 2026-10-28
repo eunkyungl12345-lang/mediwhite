@@ -78,80 +78,8 @@ export const HERO_SVG: Record<string, string> = {
     weapon: `<g fill="url(#metal)"><path d="M62 46 l22 -8 l2 3 l-22 8 z"/><path d="M62 52 l26 -2 l0 3 l-26 2 z"/><path d="M62 58 l22 6 l-1 3 l-22 -6 z"/></g><circle cx="62" cy="54" r="4" fill="${SKIN}"/>` }),
 };
 
-/** 세균 괴물 0~7 */
-const eye = (x: number, y: number, r = 3.4, c = "#FFEB3B") => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><ellipse cx="${x + .4}" cy="${y}" rx="${r * .35}" ry="${r * .8}" fill="#120" stroke="none"/>`;
-const fangs = (x: number, y: number, w: number, n = 4) => `<path d="M${x} ${y} Q${x + w / 2} ${y + 10} ${x + w} ${y} Z" fill="#3A0A0A"/>` + Array.from({ length: n }, (_, i) => { const px = x + (i + .5) * w / n; return `<path d="M${px - 2} ${y + .5} L${px} ${y + 5} L${px + 2} ${y + .5} Z" fill="#FFF8E1" stroke-width="1"/>`; }).join("");
-const spikes = (cx: number, cy: number, r: number, n: number, c: string, len = 8) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2 - Math.PI / 2, x1 = cx + Math.cos(a - .18) * r, y1 = cy + Math.sin(a - .18) * r, x2 = cx + Math.cos(a + .18) * r, y2 = cy + Math.sin(a + .18) * r, tx = cx + Math.cos(a) * (r + len), ty = cy + Math.sin(a) * (r + len); return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} L${tx.toFixed(1)} ${ty.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)} Z" fill="${c}"/>`; }).join("");
+export { GERM_SVG } from "./defMonsters";
 
-export const GERM_SVG: string[] = [
-  // 0 고블린균: 뾰족 초록 덩어리 + 송곳니
-  wrap(`<ellipse cx="50" cy="94" rx="22" ry="4" fill="#000" opacity=".2" stroke="none"/>
-    ${spikes(50, 58, 26, 11, "#3E8E3A")}
-    <path d="M24 60 Q22 34 50 32 Q78 34 76 60 Q76 86 50 88 Q24 86 24 60 Z" fill="#6CC04A"/>
-    <path d="M30 70 Q50 80 70 70" fill="none" stroke="#3E8E3A" stroke-width="1.2"/>
-    <circle cx="36" cy="46" r="3" fill="#A5E07E" stroke="none"/><circle cx="64" cy="76" r="2.5" fill="#A5E07E" stroke="none"/>
-    <path d="M34 47 l10 4 M66 47 l-10 4" stroke-width="2.6"/>${eye(40, 54)}${eye(60, 54)}${fangs(38, 64, 24, 5)}
-    <path d="M22 66 Q12 70 14 80 M78 66 Q88 70 86 80" fill="none" stroke="#3E8E3A" stroke-width="4"/>`),
-  // 1 갑각균: 껍데기 두른 탱커
-  wrap(`<ellipse cx="50" cy="94" rx="26" ry="4" fill="#000" opacity=".2" stroke="none"/>
-    <path d="M20 70 Q18 38 50 34 Q82 38 80 70 Q78 90 50 90 Q22 90 20 70 Z" fill="#4BA3B5"/>
-    <path d="M22 58 Q50 26 78 58 Q50 48 22 58 Z" fill="#2E6F80"/><path d="M30 46 l4 -10 l4 8 M46 40 l4 -12 l4 12 M62 44 l4 -9 l4 9" fill="#BFE7EF"/>
-    <path d="M24 74 Q50 84 76 74" fill="none" stroke="#2E6F80" stroke-width="2"/>
-    ${eye(40, 62, 3.6, "#FF8A65")}${eye(60, 62, 3.6, "#FF8A65")}${fangs(40, 70, 20, 4)}`),
-  // 2 돌연변이 러너: 길쭉한 보라 + 발톱
-  wrap(`<ellipse cx="50" cy="94" rx="20" ry="3.5" fill="#000" opacity=".2" stroke="none"/>
-    <path d="M38 92 L42 74 M62 92 L58 74" stroke-width="4" stroke="#6A2F9E"/>
-    <path d="M30 60 Q26 30 52 26 Q78 30 72 58 Q68 80 50 80 Q32 80 30 60 Z" fill="#A45EE0"/>
-    <path d="M52 26 Q60 12 70 14 Q62 18 60 28" fill="#6A2F9E"/>
-    <path d="M28 58 Q10 54 8 66 l6 -2 l-2 6 l6 -3 l0 6 Q18 62 30 64 Z" fill="#E0C3FF"/>
-    ${eye(42, 46, 4, "#B9FF5C")}${eye(60, 44, 3, "#B9FF5C")}${fangs(38, 58, 26, 6)}`),
-  // 3 역병 오크 보스: 엄니·어깨 가시갑옷·뿔
-  wrap(`<ellipse cx="50" cy="95" rx="34" ry="4.5" fill="#000" opacity=".25" stroke="none"/>
-    <circle cx="50" cy="55" r="40" fill="url(#glowR)" stroke="none" opacity=".35"/>
-    <path d="M36 80 L32 94 L44 94 L46 82 Z M64 80 L68 94 L56 94 L54 82 Z" fill="#5C3A1E"/>
-    <path d="M22 56 Q18 40 50 36 Q82 40 78 56 L74 84 Q50 92 26 84 Z" fill="#7BA23F"/>
-    <path d="M28 70 h44 v8 h-44 z" fill="#5C3A1E"/><rect x="45" y="69" width="10" height="10" rx="2" fill="url(#gold)"/>
-    <path d="M12 46 Q22 30 38 40 L34 56 Q20 58 12 46 Z M88 46 Q78 30 62 40 L66 56 Q80 58 88 46 Z" fill="#B23A2E"/>
-    <path d="M16 40 l-4 -10 l9 6 M26 34 l-1 -11 l7 8 M84 40 l4 -10 l-9 6 M74 34 l1 -11 l-7 8" fill="url(#metal)"/>
-    <path d="M36 36 Q36 18 50 16 Q64 18 64 36 Q64 46 50 48 Q36 46 36 36 Z" fill="#8DB548"/>
-    <path d="M38 22 L30 8 L42 18 M62 22 L70 8 L58 18" fill="#E8DCC0"/>
-    <path d="M40 30 l8 3 M60 30 l-8 3" stroke-width="2.6"/>${eye(44, 33, 2.8, "#FF3B30")}${eye(56, 33, 2.8, "#FF3B30")}
-    <path d="M42 42 Q50 46 58 42" fill="#3A0A0A"/><path d="M42 44 l-2 -9 l5 6 Z M58 44 l2 -9 l-5 6 Z" fill="#FFF8E1"/>
-    <path d="M80 50 L96 22 M93 18 l8 6 l-6 6 l-6 -6 z" stroke-width="2.4" fill="url(#metal)"/>`),
-  // 4 분열균: 눈 여러 개 분홍 덩어리
-  wrap(`<ellipse cx="50" cy="94" rx="24" ry="4" fill="#000" opacity=".2" stroke="none"/>
-    <path d="M22 66 Q16 44 34 38 Q40 26 56 30 Q78 30 80 54 Q86 76 66 86 Q50 94 34 86 Q20 80 22 66 Z" fill="#F08BC2"/>
-    <path d="M50 30 Q50 60 52 88" fill="none" stroke="#C2448A" stroke-dasharray="3 3"/>
-    ${eye(36, 52, 3.4, "#fff")}${eye(48, 44, 2.6, "#fff")}${eye(62, 48, 4, "#fff")}${eye(70, 62, 2.4, "#fff")}${eye(40, 66, 2.2, "#fff")}
-    ${fangs(46, 70, 20, 4)}`),
-  // 5 강철 내성균: 금속판 + 리벳
-  wrap(`<ellipse cx="50" cy="94" rx="24" ry="4" fill="#000" opacity=".2" stroke="none"/>
-    ${spikes(50, 60, 26, 8, "#7D8A99", 7)}
-    <path d="M24 60 Q24 34 50 34 Q76 34 76 60 Q76 86 50 88 Q24 86 24 60 Z" fill="#90A4AE"/>
-    <path d="M26 52 Q50 40 74 52 L74 60 Q50 50 26 60 Z" fill="url(#metal)"/>
-    <circle cx="32" cy="55" r="1.6" fill="#37474F" stroke="none"/><circle cx="68" cy="55" r="1.6" fill="#37474F" stroke="none"/>
-    <rect x="34" y="60" width="32" height="8" rx="3" fill="#37474F"/><circle cx="42" cy="64" r="2.4" fill="#FF5252" stroke="none"/><circle cx="58" cy="64" r="2.4" fill="#FF5252" stroke="none"/>
-    ${fangs(40, 72, 20, 4)}`),
-  // 6 모기 악마: 날개 + 침
-  wrap(`<ellipse cx="50" cy="94" rx="14" ry="3" fill="#000" opacity=".15" stroke="none"/>
-    <path d="M48 46 Q20 18 10 34 Q22 46 48 52 Z M52 46 Q80 18 90 34 Q78 46 52 52 Z" fill="#E6F0FF" opacity=".75"/>
-    <path d="M40 66 L28 86 M48 68 L44 90 M60 66 L72 86" stroke-width="2" stroke="#5A4630"/>
-    <ellipse cx="50" cy="58" rx="13" ry="16" fill="#8B6B45"/><path d="M40 54 h20 M39 62 h22 M41 70 h18" stroke="#5A4630"/>
-    <circle cx="50" cy="40" r="10" fill="#A3825A"/>${eye(45, 39, 3.2, "#FF3B30")}${eye(55, 39, 3.2, "#FF3B30")}
-    <path d="M48 46 L36 58 L50 49 Z" fill="#3A2A1A"/>`),
-  // 7 슈퍼박테리아 왕: 왕관 + 붉은 오라 + 촉수
-  wrap(`<ellipse cx="50" cy="95" rx="34" ry="4.5" fill="#000" opacity=".25" stroke="none"/>
-    <circle cx="50" cy="58" r="44" fill="url(#glowR)" stroke="none" opacity=".5"/>
-    <path d="M24 78 Q8 84 6 72 Q14 76 22 70 M76 78 Q92 84 94 72 Q86 76 78 70 M34 86 Q30 98 20 96 M66 86 Q70 98 80 96" fill="none" stroke="#7A1010" stroke-width="5"/>
-    ${spikes(50, 60, 30, 14, "#7A1010", 9)}
-    <path d="M20 60 Q20 30 50 28 Q80 30 80 60 Q80 90 50 92 Q20 90 20 60 Z" fill="#C62828"/>
-    <path d="M30 46 Q50 36 70 46" fill="none" stroke="#FF8A80" stroke-width="2"/>
-    <path d="M32 30 L36 14 L44 24 L50 10 L56 24 L64 14 L68 30 Z" fill="url(#gold)"/><circle cx="50" cy="20" r="2.4" fill="#4FC3F7"/>
-    <path d="M34 48 l12 5 M66 48 l-12 5" stroke-width="3"/>${eye(40, 56, 4.4, "#FFD600")}${eye(60, 56, 4.4, "#FFD600")}
-    ${fangs(34, 68, 32, 7)}`),
-];
-
-/** SVG → 캔버스 이미지 캐시. webp 원화가 있으면 그걸 써요 */
 /** 고퀄 원화(webp)를 넣으면 여기에 키를 추가해요 */
 export const HAS_WEBP = new Set<string>([]);
 const cache: Record<string, CanvasImageSource | null> = {};
