@@ -54,6 +54,8 @@ const kstDay = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 1
 const hash = (s: string) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const lvCost = (k: UnitKind, lv: number) => Math.round((40 + ORDER.indexOf(k) * 15) * lv);
 const lvMult = (lv: number) => 1 + .2 * (lv - 1);
+/** 수액 걸이: 레벨마다 생산량 +10, 간격 -0.5초 */
+const ivAmt = (lv: number) => 25 + 10 * (lv - 1), ivGap = (lv: number) => 8 - .5 * (lv - 1);
 const stageCoins = (id: number, stars: number) => Math.round((15 + id * 5) * stars / 3);
 
 export default function Defense({ ranks }: { ranks: Row[] }) {
@@ -174,7 +176,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       s.sunDrops = s.sunDrops.filter(d => d.t > 0);
       for (const u of s.units) { u.cd -= dt; const fx = u.c * CW + CW * .7, lane = laneGerms(u.r, u.c * CW), D = Math.round(UNITS[u.kind].dmg * lv(u.kind));
         switch (u.kind) {
-          case "iv": if (u.cd <= 0) { u.cd = 8; s.sun += Math.round(25 * lv("iv")); setUi(x => ({ ...x, sun: s.sun })); } break;
+          case "iv": if (u.cd <= 0) { const L = s.levels.iv ?? 1, amt = ivAmt(L); u.cd = ivGap(L); s.sun += amt; setUi(x => ({ ...x, sun: s.sun })); pop(box.current, u.c * CW + CW / 2, u.r * CH + CH * .2, `+${amt}💧`, "good"); } break;
           case "nurse": if (u.cd <= 0 && lane.length) { u.cd = 1.4; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
           case "xray": if (u.cd <= 0 && lane.length) { u.cd = 2.2; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "beam", hit: new Set(), pierce: 99, spin: 0 }); } break;
           case "doctor": if (u.cd <= 0 && lane.length) { u.cd = 3.2; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "pill", hit: new Set(), pierce: 1, spin: 0 }); } break;
@@ -217,7 +219,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       const c = Math.floor(px / CW), r = Math.floor(py / CH); if (c < 0 || c >= COLS - 1 || r < 0 || r >= ROWS || !rowOk(r)) return;
       if (s.units.some(u => u.r === r && u.c === c)) return; const cost = UNITS[kind].cost; if (s.sun < cost) { pop(box.current, px, py, "수액 부족", "bad"); return; }
       const hp = Math.round(UNITS[kind].hp * lv(kind));
-      s.sun -= cost; s.units.push({ kind, r, c, hp, max: hp, cd: kind === "iv" ? 8 : 0 }); setUi(u => ({ ...u, sun: s.sun })); sfx.tap(); haptic(8); burst(box.current, px, py, UCOLOR[kind], 8);
+      s.sun -= cost; s.units.push({ kind, r, c, hp, max: hp, cd: kind === "iv" ? ivGap(s.levels.iv ?? 1) : 0 }); setUi(u => ({ ...u, sun: s.sun })); sfx.tap(); haptic(8); burst(box.current, px, py, UCOLOR[kind], 8);
     };
     try { if (location.search.includes("devwin")) (box.current as any).__win = () => finish(true); } catch {}
     const ro = new ResizeObserver(size); ro.observe(box.current!); size();
@@ -264,11 +266,11 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
 
       {view === "map" && showUp && (
         <div className="def-up">
-          <div className="muted">처방전 코인 💊으로 의료진을 강화해요. 레벨당 공격력·체력 +20% (수액 걸이는 생산량). 최대 Lv{MAXLV}.</div>
+          <div className="muted">처방전 코인 💊으로 의료진을 강화해요. 레벨당 공격력·체력 +20%, 수액 걸이는 생산량 +10·간격 -0.5초. 최대 Lv{MAXLV}.</div>
           {ORDER.map(k => { const lv = save.levels[k] ?? 1, isU = UNITS[k].unlock <= save.cleared, cost = lvCost(k, lv);
             return <div key={k} className={"def-uprow" + (isU ? "" : " locked")}>
               <span className="def-ico" style={{ background: isU ? UCOLOR[k] : undefined }}>{isU ? UNITS[k].icon : "🔒"}</span>
-              <div style={{ flex: 1, minWidth: 0 }}><b>{UNITS[k].name}</b> <span className="tag">Lv{lv}</span><div className="muted" style={{ fontSize: 12 }}>{isU ? `${UNITS[k].desc}${UNITS[k].dmg ? ` · 공격 ${Math.round(UNITS[k].dmg * lvMult(lv))}` : ""} · 체력 ${Math.round(UNITS[k].hp * lvMult(lv))}` : `${stageDef(UNITS[k].unlock).name} 클리어 시 해금`}</div></div>
+              <div style={{ flex: 1, minWidth: 0 }}><b>{UNITS[k].name}</b> <span className="tag">Lv{lv}</span><div className="muted" style={{ fontSize: 12 }}>{isU ? `${k === "iv" ? `${ivGap(lv)}초마다 수액 ${ivAmt(lv)} 생산${lv < MAXLV ? ` (다음 Lv: ${ivGap(lv + 1)}초·${ivAmt(lv + 1)})` : ""}` : UNITS[k].desc}${UNITS[k].dmg ? ` · 공격 ${Math.round(UNITS[k].dmg * lvMult(lv))}` : ""} · 체력 ${Math.round(UNITS[k].hp * lvMult(lv))}` : `${stageDef(UNITS[k].unlock).name} 클리어 시 해금`}</div></div>
               {isU && (lv >= MAXLV ? <span className="tag">MAX</span> : <button type="button" className={"btn" + (save.coins < cost ? " ghost" : "")} style={{ padding: "6px 10px" }} onClick={() => upgrade(k)}>💊 {cost}</button>)}
             </div>; })}
         </div>

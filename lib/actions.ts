@@ -131,6 +131,7 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   if (category === NOTICE_CAT && u.role !== "admin" && !can(await myRank(u.id), "준장")) return { error: "공지 칸은 준장 이상만 쓸 수 있어요" };
   if (!title || !body) return { error: "제목과 내용을 적어주세요" };
   const pm = personMention(title + " " + body);
+  if (pm && category === SSUM_CAT) return { error: `"${pm}" — 썸류센터 글에는 실명·직함처럼 사람을 특정하는 표현을 쓸 수 없어요. 그 사람만 알아볼 수 있게 돌려서 써주세요 💘` };
   if (pm && fd.get("confirm_anon") !== "on") return { error: `"${pm}" — 특정 개인을 가리키는 표현 같아요. 실명·식별 정보가 없다면 아래 확인에 체크하고 다시 올려주세요.` };
   const s = db();
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }

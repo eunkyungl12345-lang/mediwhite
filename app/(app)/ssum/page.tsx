@@ -12,10 +12,11 @@ export const dynamic = "force-dynamic";
 type Tab = "lounge" | "me" | "intro" | "box";
 const TABS: [Tab, string][] = [["lounge", "💘 라운지"], ["me", "🙋 셀소"], ["intro", "🤝 지인 소개"], ["box", "💌 내 썸함"]];
 
-function Card({ p, head, foot }: { p: any; head: React.ReactNode; foot?: React.ReactNode }) {
+function Card({ p, head, foot, see }: { p: any; head: React.ReactNode; foot?: React.ReactNode; see?: boolean }) {
   const rows: [string, any][] = [["성별", p.gender ? (p.gender === "남" ? "🙋‍♂️ 남" : "🙋‍♀️ 여") : null], ["나이", p.age ? `${p.age}세` : null], ["지역", p.region], ["키", p.height ? `${p.height}cm` : null], ["성격", p.personality], ["취미", p.hobby], ["연애 스타일", p.style], ["원하는 상대", p.want]];
   return (
     <div className="ss-card">
+      {p.photo && <div className="ss-pic">{see || p.photo_public ? <img src={p.photo} alt="" loading="lazy" /> : <><img src={p.photo_blur ?? ""} alt="" className="blur" /><span>💗 서로 관심이면 선명하게 보여요</span></>}</div>}
       <div className="ss-card-head">{head}</div>
       <dl>{rows.filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
       {p.intro && <p className="ss-intro">“{p.intro}”</p>}
@@ -32,21 +33,17 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
   const GFilter = ({ t }: { t: string }) => <div className="sorts">{[["", "전체"], ["여", "🙋‍♀️ 여성"], ["남", "🙋‍♂️ 남성"]].map(([k, n]) => <Link key={k} href={`/ssum?tab=${t}${k ? `&g=${encodeURIComponent(k)}` : ""}`} aria-current={gf === k ? "true" : undefined}>{n}</Link>)}</div>;
   const [leaders, { data: myLikes }, { data: soloRow }] = await Promise.all([deptLeaders(), d.from("likes").select("kind,target").eq("from_id", s.id), d.from("settings").select("value").eq("key", "solo_pick").maybeSingle()]);
   const liked = (kind: string, t: string) => (myLikes ?? []).some(l => l.kind === kind && l.target === t);
+  const { data: likedMe } = await d.from("likes").select("from_id").eq("kind", "profile").eq("target", s.id);
+  const mutualWith = (uid: string) => liked("profile", uid) && (likedMe ?? []).some(l => l.from_id === uid);
   let solo: any = null;
   try { const v = soloRow?.value ? JSON.parse(soloRow.value) : null; if (v?.userId) { const [{ data: sp }, { data: su }] = await Promise.all([d.from("dating_profiles").select("*").eq("user_id", v.userId).eq("visible", true).maybeSingle(), d.from("users").select("id,username,nickname,dept,xp").eq("id", v.userId).maybeSingle()]); if (sp && su) solo = { ...sp, user: su, comment: v.comment, day: v.day }; } } catch {}
 
   let body: React.ReactNode = null;
   if (tab === "lounge") {
-    const [{ data: accepted }, { data: posts }] = await Promise.all([
-      d.from("confessions").select("id,text,answered_at,from:users!confessions_from_id_fkey(nickname,dept),to:users!confessions_to_id_fkey(nickname,dept)").eq("status", "accepted").order("answered_at", { ascending: false }).limit(10),
+    const [{ data: posts }] = await Promise.all([
       d.from("posts").select("id,title,topic,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(40),
     ]);
     body = <>
-      <section className="card">
-        <div className="ss-head"><h3>💌 닉네임 고백</h3><span className="muted">수락된 고백만 공개돼요</span></div>
-        {accepted?.length ? <div className="ss-confs">{accepted.map((c: any) => <div key={c.id} className="ss-conf"><div className="ss-conf-who">{c.from ? display(c.from.dept, c.from.nickname) : "?"} <span>💘</span> {c.to ? display(c.to.dept, c.to.nickname) : "?"}</div><div className="ss-conf-text">“{c.text}”</div><div className="time">{fmt(c.answered_at)} 수락</div></div>)}</div> : <div className="muted">아직 성사된 고백이 없어요. 첫 커플의 주인공이 되어보세요.</div>}
-        <details className="ss-details"><summary>💌 나도 고백하기</summary><ConfessForm /></details>
-      </section>
       {SSUM_TOPICS.map(t => { const list = (posts ?? []).filter((p: any) => p.topic === t.key).slice(0, 8);
         return <section key={t.key} className="card">
           <div className="ss-head"><h3>{t.icon} {t.name}</h3><Link className="btn" style={{ padding: "6px 12px" }} href={`/board/new?cat=${encodeURIComponent("썸")}&topic=${t.key}`}>글쓰기</Link></div>
@@ -62,9 +59,9 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     ]);
     body = <>
       <details className="card ss-details" open={!mine}><summary><b>{mine ? "✏️ 내 셀소 카드 수정" : "🙋 셀소 카드 만들기 (셀프소개팅)"}</b></summary><ProfileForm p={mine} /></details>
-      {mine && <Card p={mine} head={<><b>{display(s.dept, s.nickname)}</b><span className="muted" style={{ fontSize: 12 }}>내 카드</span><span className="tag">{mine.visible ? "공개 중" : "비공개"}</span></>} />}
+      {mine && <Card p={mine} see head={<><b>{display(s.dept, s.nickname)}</b><span className="muted" style={{ fontSize: 12 }}>내 카드</span><span className="tag">{mine.visible ? "공개 중" : "비공개"}</span></>} />}
       <GFilter t="me" />
-      <div className="ss-cards">{(profs ?? []).filter((p: any) => !p.user.stealth).map((p: any) => <Card key={p.user_id} p={p}
+      <div className="ss-cards">{(profs ?? []).filter((p: any) => !p.user.stealth).map((p: any) => <Card key={p.user_id} p={p} see={admin || mutualWith(p.user_id)}
         head={<Name r={rankFor(p.user, leaders)} dept={p.user.dept} nickname={p.user.nickname} username={p.user.username} />}
         foot={<><LikeButton kind="profile" target={p.user_id} liked={liked("profile", p.user_id)} />{admin && <PickSolo userId={p.user_id} />}</>} />)}
         {!profs?.length && <div className="muted">아직 공개된 카드가 없어요. 첫 카드를 올려보세요!</div>}
@@ -76,7 +73,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     body = <>
       <details className="card ss-details"><summary><b>🤝 지인을 소개합니다</b> <span className="muted">— 소개할 분의 동의를 꼭 받아주세요</span></summary><IntroForm /></details>
       <GFilter t="intro" />
-      <div className="ss-cards">{(intros ?? []).map((p: any) => <Card key={p.id} p={p}
+      <div className="ss-cards">{(intros ?? []).map((p: any) => <Card key={p.id} p={p} see={admin || p.author_id === s.id}
         head={<><span className="tag">{p.dept || "지인"}</span><span className="muted" style={{ fontSize: 12 }}>{p.author ? `${display(p.author.dept, p.author.nickname)}님의 지인` : ""}</span></>}
         foot={<>{p.author_id !== s.id && <LikeButton kind="intro" target={String(p.id)} liked={liked("intro", String(p.id))} label="소개받고 싶어요" />}{(admin || p.author_id === s.id) && <form action={deleteIntro.bind(null, p.id)}><button className="link">삭제</button></form>}</>} />)}
         {!intros?.length && <div className="muted">아직 소개된 분이 없어요.</div>}
@@ -105,7 +102,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         {lastBy.length ? lastBy.map(t => <Link key={t.other} href={`/ssum/dm/${t.other}`} className="h-row"><span className="h-topic">💬</span><span className="h-title">{nameOf(t.other)}</span><span className="h-meta">{t.sender === s.id ? "나: " : ""}{t.text.slice(0, 40)} · {fmt(t.created_at)}</span></Link>) : <div className="muted">서로 관심이 생기거나 고백이 수락되면 여기서 대화할 수 있어요.</div>}
         {[...mutual.map((l: any) => l.from_id), ...acceptedIds, ...(introLikers ?? []).map((l: any) => l.from_id)].filter(id => !seen.has(id)).filter((v, i, a) => a.indexOf(v) === i).map(id => <Link key={id} href={`/ssum/dm/${id}`} className="ss-newdm">💘 {(likers ?? []).find((l: any) => l.from_id === id)?.user ? display((likers as any).find((l: any) => l.from_id === id).user.dept, (likers as any).find((l: any) => l.from_id === id).user.nickname) : (introLikers ?? []).find((l: any) => l.from_id === id)?.user ? display((introLikers as any).find((l: any) => l.from_id === id).user.dept, (introLikers as any).find((l: any) => l.from_id === id).user.nickname) : nameOf(id)} 님과 대화 시작하기 →</Link>)}
       </section>
-      <a className="ss-promo small" href="https://ssumcenter.vercel.app" target="_blank" rel="noopener"><span className="ss-promo-ico">☕</span><span className="ss-promo-txt"><b>대화가 잘 통한다면, 썸류센터에서 직접 만나보세요</b><small>오프라인 로테이션 소개팅 · 1:1 매칭</small></span><span className="ss-promo-go">보기 →</span></a>
+      <details className="card ss-details"><summary><b>🤫 회원에게 몰래 고백하기</b> <span className="muted">— 닉네임으로 익명 전달, 수락하면 1:1 대화가 열려요</span></summary><ConfessForm /></details>
       <section className="card"><h3>💌 받은 고백</h3>
         {got?.length ? got.map(c => <div key={c.id} className="ss-conf"><div className="ss-conf-text">“{c.text}”</div><div className="meta"><span className="time">{fmt(c.created_at)}</span>
           {c.status === "pending" ? <><form action={answerConfession.bind(null, c.id, true)}><button className="btn" style={{ padding: "4px 12px" }}>💘 수락 (공개)</button></form><form action={answerConfession.bind(null, c.id, false)}><button className="link">정중히 거절</button></form></> : <span className="tag">{c.status === "accepted" ? `수락함 · ${nameOf(c.from_id)}` : "거절함"}</span>}</div></div>) : <div className="muted">아직 받은 고백이 없어요.</div>}
@@ -122,12 +119,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
   return (
     <div className="games">
       <div className="ss-hero"><div><b>💘 썸류센터</b><span>병원 사람끼리, 조심스럽게 설레는 곳</span></div><span className="muted" style={{ fontSize: 11 }}>만 19세 이상 · 실명·연락처 금지</span></div>
-      <a className="ss-promo" href="https://ssumcenter.vercel.app" target="_blank" rel="noopener">
-        <span className="ss-promo-ico">💞</span>
-        <span className="ss-promo-txt"><b>진짜 만남은 썸류센터에서</b><small>강남 퇴근 후 로테이션 소개팅 · 1:1 매칭 · 성향 테스트</small></span>
-        <span className="ss-promo-go">신청하기 →</span>
-      </a>
-      {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
+      {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
       <div className="cats" style={{ paddingBottom: 0 }}>{TABS.map(([k, n]) => <Link key={k} href={`/ssum?tab=${k}`} aria-current={tab === k ? "true" : undefined}>{n}</Link>)}</div>
       {body}
     </div>

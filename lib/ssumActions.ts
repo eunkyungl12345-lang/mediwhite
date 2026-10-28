@@ -46,7 +46,9 @@ export async function saveDatingProfile(_: R, fd: FormData): Promise<R> {
   const gender = clean(fd.get("gender"), 2); if (!["남", "여"].includes(gender)) return { error: "성별을 골라주세요" };
   const f = { region: clean(fd.get("region"), 20), personality: clean(fd.get("personality"), 60), hobby: clean(fd.get("hobby"), 60), style: clean(fd.get("style"), 60), want: clean(fd.get("want"), 60), intro: clean(fd.get("intro"), 300) };
   if (Object.values(f).some(v => CONTACT.test(v))) return { error: "연락처·SNS 아이디는 적을 수 없어요. 서로 '관심 있어요'를 누르면 1:1 대화가 열려요." };
-  await db().from("dating_profiles").upsert({ user_id: u.id, age, height, gender, ...f, visible: fd.get("visible") === "on", updated_at: new Date().toISOString() });
+  const photo = clean(fd.get("photo"), 300), photo_blur = clean(fd.get("photo_blur"), 300);
+  if (!okUrl(photo) || !okUrl(photo_blur)) return { error: "사진을 다시 올려주세요" };
+  await db().from("dating_profiles").upsert({ user_id: u.id, age, height, gender, photo: photo || null, photo_blur: photo_blur || null, photo_public: fd.get("photo_public") === "on", ...f, visible: fd.get("visible") === "on", updated_at: new Date().toISOString() });
   revalidatePath("/ssum"); return { ok: "프로필 카드를 저장했어요" };
 }
 export async function deleteDatingProfile() { const u = await me(); await db().from("dating_profiles").delete().eq("user_id", u.id); await db().from("likes").delete().eq("kind", "profile").eq("target", u.id); revalidatePath("/ssum"); }
@@ -62,7 +64,9 @@ export async function saveIntro(_: R, fd: FormData): Promise<R> {
   if (Object.values(f).some(v => CONTACT.test(v)) || personMention(f.intro)) return { error: "이름·연락처·SNS 등 지인을 알아볼 수 있는 정보는 빼주세요" };
   const { count } = await db().from("intros").select("id", { count: "exact", head: true }).eq("author_id", u.id);
   if ((count ?? 0) >= 5) return { error: "지인 소개는 5명까지 올릴 수 있어요" };
-  await db().from("intros").insert({ author_id: u.id, age, height, gender, ...f });
+  const photo = clean(fd.get("photo"), 300), photo_blur = clean(fd.get("photo_blur"), 300);
+  if (!okUrl(photo) || !okUrl(photo_blur)) return { error: "사진을 다시 올려주세요" };
+  await db().from("intros").insert({ author_id: u.id, age, height, gender, photo: photo || null, photo_blur: photo_blur || null, photo_public: fd.get("photo_public") === "on", ...f });
   revalidatePath("/ssum"); return { ok: "지인 소개를 올렸어요" };
 }
 export async function deleteIntro(id: number) {
@@ -123,3 +127,20 @@ export async function pickSolo(userId: string, comment: string) {
   await db().from("settings").upsert({ key: "solo_pick", value: JSON.stringify({ userId, comment: comment.slice(0, 100), day }) });
   revalidatePath("/ssum");
 }
+
+/* ---------- 사진: 클라이언트에서 줄이고(EXIF·위치정보 제거) 선명본+흐린본 두 장 업로드 ---------- */
+const PUB = () => `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/ssum/`;
+export async function uploadSsumPhoto(fd: FormData): Promise<{ photo?: string; blur?: string; error?: string }> {
+  const u = await me();
+  const full = fd.get("full"), blur = fd.get("blur");
+  if (!(full instanceof File) || !(blur instanceof File)) return { error: "사진을 다시 골라주세요" };
+  if (full.type !== "image/jpeg" || full.size > 1_500_000 || blur.size > 100_000) return { error: "사진이 너무 커요" };
+  const id = crypto.randomUUID(), st = db().storage.from("ssum");
+  const [a, b] = await Promise.all([
+    st.upload(`${u.id}/${id}.jpg`, Buffer.from(await full.arrayBuffer()), { contentType: "image/jpeg" }),
+    st.upload(`${u.id}/${id}_b.jpg`, Buffer.from(await blur.arrayBuffer()), { contentType: "image/jpeg" }),
+  ]);
+  if (a.error || b.error) return { error: "업로드에 실패했어요" };
+  return { photo: PUB() + `${u.id}/${id}.jpg`, blur: PUB() + `${u.id}/${id}_b.jpg` };
+}
+const okUrl = (v: string) => v === "" || v.startsWith(PUB());

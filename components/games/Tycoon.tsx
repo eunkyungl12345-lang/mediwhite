@@ -13,21 +13,24 @@ const ROOM_OF: Record<Dept, number> = { 원무: 0, 간호: 0, 의사: 0, 총괄:
 const GEAR_ROOM: Record<string, number> = { kiosk: 0, emr: 0, rehab: 1, analyzer: 2, ct: 3, mri: 3, robot: 5 };
 const MAIN_FLOORS = [0, 1, 2, 3, 5, 6, 7]; // 응급실(4)은 별동, 신관(8)·대학병원(9)은 건물 변화
 
-function Crowd({ icon, n }: { icon: string; n: number }) {
+/** 직원은 사람 캐릭터로: 최대 5명까지 그리고 나머지는 +N. 고용하면 새 캐릭터가 톡 튀어나와요 */
+const PERSON: Record<Dept, string> = { 원무: "💁", 간호: "👩‍⚕️", 의사: "🧑‍⚕️", 총괄: "🕴️", 물리치료: "🤸", 임상병리: "🧑‍🔬", 방사선: "👨‍🔬", 응급구조: "🧑‍🚒" };
+function Crowd({ d, n }: { d: Dept; n: number }) {
   if (!n) return null;
-  return <span className="hs-crowd"><span>{icon}</span>{n > 1 && <b>×{n}</b>}</span>;
+  const shown = Math.min(5, n);
+  return <span className="hs-crowd" title={`${d} ${n}명`}>{Array.from({ length: shown }, (_, i) => <i key={i} style={{ animationDelay: `${(i * 0.37) % 1.2}s` }}>{PERSON[d]}</i>)}{n > shown && <b>+{n - shown}</b>}</span>;
 }
 
 function HospitalScene({ s }: { s: Saved }) {
   const floors = MAIN_FLOORS.filter(i => i <= s.rooms);
-  const staffOn = (room: number) => DORDER.filter(d => ROOM_OF[d] === room).map(d => <Crowd key={d} icon={DEPTS[d].icon} n={s.staff[d]?.n ?? 0} />);
+  const staffOn = (room: number) => DORDER.filter(d => ROOM_OF[d] === room && d !== "응급구조").map(d => <Crowd key={d} d={d} n={s.staff[d]?.n ?? 0} />);
   const gearOn = (room: number) => s.gear.filter(k => GEAR_ROOM[k] === room).map(k => <span key={k} className="hs-gear" title={GEAR.find(g => g.key === k)?.name}>{GEAR.find(g => g.key === k)?.icon}</span>);
   const uni = s.rooms >= 9, annex = s.rooms >= 8, er = s.rooms >= 4;
   return (
     <div className={"hs" + (uni ? " uni" : "")}>
       <div className="hs-sky"><span className="hs-sun" /></div>
       <div className="hs-campus">
-        {er && <div className="hs-er" key="er"><div className="hs-er-sign">🚨 응급실</div><div className="hs-er-body"><Crowd icon="🚑" n={s.staff.응급구조?.n ?? 0} /></div></div>}
+        {er && <div className="hs-er" key="er"><div className="hs-er-sign">🚨 응급실</div><div className="hs-er-body"><Crowd d="응급구조" n={s.staff.응급구조?.n ?? 0} /></div></div>}
         <div className="hs-tower" key={"t" + floors.length}>
           <div className="hs-roof">
             {s.heli && <span className="hs-heli">🚁</span>}
@@ -127,7 +130,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const claimVip = () => { const bonus = Math.max(30000, daily / 144); setVip(false); sfx.level(); haptic([20, 20, 60]); burst(box.current, 160, 60, "#F2B705", 30); setS(x => ({ ...x, cash: x.cash + bonus, total: x.total + bonus })); flash(`💼 VIP 환자 진료! +${fmt(bonus)}원`); setTimeout(() => persist(true), 60); };
 
   const roomOpen = (name?: string) => !name || ROOMS.slice(0, s.rooms + 1).some(r => r.name === name);
-  const hire = (d: Dept) => { const st = s.staff[d] ?? { n: 0, lv: 1 }, n = st.n + 1; spend(hireCost(d, st.n), x => ({ ...x, staff: { ...x.staff, [d]: { n, lv: st.lv } } }), MILESTONES.includes(n) ? `🎉 ${d} ${n}명 달성! ${d} 매출 +50%` : `${DEPTS[d].icon} ${d} ${n}번째 직원 입사`, MILESTONES.includes(n)); };
+  const hire = (d: Dept) => { if (ref.current.cash >= hireCost(d, ref.current.staff[d]?.n ?? 0)) setTimeout(() => pop(box.current, (box.current?.clientWidth ?? 300) / 2, 150, `${PERSON[d]} 입사!`, "good big"), 30); const st = s.staff[d] ?? { n: 0, lv: 1 }, n = st.n + 1; spend(hireCost(d, st.n), x => ({ ...x, staff: { ...x.staff, [d]: { n, lv: st.lv } } }), MILESTONES.includes(n) ? `🎉 ${d} ${n}명 달성! ${d} 매출 +50%` : `${PERSON[d]} ${d} ${n}번째 직원 입사!`, MILESTONES.includes(n)); };
   const edu = (d: Dept) => { const st = s.staff[d]; if (!st || st.lv >= MAX_EDU) return; spend(lvCost(d, st.lv), x => ({ ...x, staff: { ...x.staff, [d]: { n: st.n, lv: st.lv + 1 } } }), `📚 ${d} 교육 Lv${st.lv + 1} · 1인 매출 ×1.25`); };
   const buyRoom = () => { const r = ROOMS[s.rooms + 1]; if (r) spend(r.cost, x => ({ ...x, rooms: x.rooms + 1 }), `${r.icon} ${r.name} 개설! 병원이 커졌어요`, true); };
   const buyGear = (k: string) => { const g = GEAR.find(x => x.key === k)!; spend(g.cost, x => ({ ...x, gear: [...x.gear, k] }), `${g.icon} ${g.name} 도입!`, true); };
