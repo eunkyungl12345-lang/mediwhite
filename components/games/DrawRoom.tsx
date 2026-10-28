@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { rt } from "@/lib/realtime";
-import { getDraw, joinDraw, leaveDraw, startDraw, nextRound, guessDraw, rematchDraw, type DrawState } from "@/lib/draw";
+import { getDraw, joinDraw, leaveDraw, startDraw, nextRound, guessDraw, rematchDraw, stopDraw, skipDraw, type DrawState } from "@/lib/draw";
 import { display } from "@/lib/depts";
 import { sfx, haptic } from "@/lib/juice";
 
@@ -63,13 +63,14 @@ export default function DrawRoom({ me, initial }: { me: { id: string; nickname: 
 
   return (
     <div className="games">
-      <div className="bar"><Link className="link" href="/games/draw">← 로비</Link><button type="button" className="link" onClick={share}>📤 친구 부르기</button></div>
+      <div className="bar"><Link className="link" href="/games/draw">← 로비</Link><span className="row" style={{ gap: 12 }}><button type="button" className="link" onClick={share}>📤 친구 부르기</button>{joined && <button type="button" className="link" onClick={() => { if (st.status !== "playing" || confirm("게임 중인데 나갈까요? 점수는 사라져요")) act(async () => { await leaveDraw(st.id); r.push("/games/draw"); }); }}>🚪 나가기</button>}</span></div>
       <div className="card" style={{ gap: 6 }}>
         <div className="bar"><h3 style={{ margin: 0 }}>{st.title}</h3>{st.status === "playing" && <span className="tag">라운드 {st.round}/{st.rounds_total}</span>}</div>
         <div className="dr-players">{ranking.map(x => <span key={x.user_id} className={(st.drawer === x.user_id && st.status === "playing" ? "drawing " : "") + (st.guessed.includes(x.user_id) ? "ok" : "")}>{st.drawer === x.user_id && st.status === "playing" ? "✏️ " : st.guessed.includes(x.user_id) ? "✅ " : ""}{display(x.dept, x.nickname)} <b>{st.scores[x.user_id] ?? 0}</b>{x.user_id === st.host ? " 👑" : ""}</span>)}</div>
         {st.status === "waiting" && <div className="row">{!joined ? <button type="button" className="btn" disabled={p} onClick={() => act(() => joinDraw(st.id))}>참가하기</button> : st.host === me.id ? <button type="button" className="btn" disabled={p || st.players.length < 2} onClick={() => act(() => startDraw(st.id))}>▶ 시작하기 {st.players.length < 2 ? "(2명부터)" : ""}</button> : <span className="muted">방장이 시작하면 바로 시작해요</span>}{joined && <button type="button" className="btn ghost" onClick={() => act(async () => { await leaveDraw(st.id); r.push("/games/draw"); })}>나가기</button>}</div>}
         {st.status === "playing" && <div className={"om-status" + (isDrawer ? " me" : "")} style={{ width: "100%" }}>{isDrawer ? <>✏️ 제시어: <b style={{ fontSize: 18 }}>{st.word}</b> — 그려주세요!</> : st.guessed.includes(me.id) ? <>✅ 맞혔어요! 정답 「{st.word}」</> : <>🤔 {nameOf(st.drawer)}님이 그리는 중 · {st.hint}</>}<span className="om-timer"><i style={{ width: `${(left / 80) * 100}%` }} />{left}초</span></div>}
         {st.status === "done" && <div className="om-status win">🏆 {ranking[0] ? `${display(ranking[0].dept, ranking[0].nickname)} 1등! (${st.scores[ranking[0].user_id] ?? 0}점)` : "끝!"} {st.last_word ? ` · 마지막 정답 「${st.last_word}」` : ""}{joined && <button type="button" className="btn" style={{ padding: "4px 12px", marginLeft: 8 }} onClick={() => act(() => rematchDraw(st.id))}>한 판 더</button>}</div>}
+        {st.status === "playing" && (isDrawer || st.host === me.id) && <div className="row" style={{ gap: 6 }}>{isDrawer && <button type="button" className="btn ghost" style={{ padding: "5px 12px" }} disabled={p} onClick={() => act(() => skipDraw(st.id))}>⏭️ 패스 (다음 사람)</button>}{st.host === me.id && <button type="button" className="btn ghost" style={{ padding: "5px 12px" }} disabled={p} onClick={() => { if (confirm("게임을 중단하고 대기실로 돌아갈까요?")) act(() => stopDraw(st.id)); }}>⏹️ 게임 중단</button>}</div>}
         {err && <div className="muted">{err}</div>}
       </div>
       <div className="dr-wrap">

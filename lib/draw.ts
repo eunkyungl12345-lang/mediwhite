@@ -102,3 +102,15 @@ export async function rematchDraw(id: string) {
   const u = await me(); const st = await getDraw(id); if (!st || st.status !== "done" || !st.players.some(p => p.user_id === u.id)) return;
   await db().from("draw_rooms").update({ status: "waiting", round: 0, scores: {}, guessed: [], word: null, drawer: null, round_end: null, updated_at: new Date().toISOString() }).eq("id", id);
 }
+/** 방장: 게임 중단 → 대기실로 */
+export async function stopDraw(id: string) {
+  const u = await me(); const { data: r } = await db().from("draw_rooms").select("host,status").eq("id", id).maybeSingle();
+  if (!r || r.host !== u.id || r.status !== "playing") return { error: "방장만 중단할 수 있어요" };
+  await db().from("draw_rooms").update({ status: "waiting", round: 0, guessed: [], word: null, drawer: null, round_end: null, updated_at: new Date().toISOString() }).eq("id", id); return {};
+}
+/** 그리는 사람(또는 방장): 이번 제시어 패스 → 다음 차례 */
+export async function skipDraw(id: string) {
+  const u = await me(); const { data: r } = await db().from("draw_rooms").select("host,drawer,status").eq("id", id).maybeSingle();
+  if (!r || r.status !== "playing" || (r.drawer !== u.id && r.host !== u.id)) return { error: "그리는 사람만 패스할 수 있어요" };
+  await nextRound(id, true); return {};
+}
