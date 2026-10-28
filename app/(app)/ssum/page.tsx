@@ -10,7 +10,7 @@ import { ConfessForm, ProfileForm, IntroForm, LikeButton, PickSolo } from "@/com
 export const dynamic = "force-dynamic";
 
 type Tab = "lounge" | "me" | "intro" | "box";
-const TABS: [Tab, string][] = [["lounge", "💘 라운지"], ["me", "🙋 나어때"], ["intro", "🤝 지인 소개"], ["box", "💌 내 썸함"]];
+const TABS: [Tab, string][] = [["lounge", "💘 라운지"], ["me", "🙋 셀소"], ["intro", "🤝 지인 소개"], ["box", "💌 내 썸함"]];
 
 function Card({ p, head, foot }: { p: any; head: React.ReactNode; foot?: React.ReactNode }) {
   const rows: [string, any][] = [["성별", p.gender ? (p.gender === "남" ? "🙋‍♂️ 남" : "🙋‍♀️ 여") : null], ["나이", p.age ? `${p.age}세` : null], ["지역", p.region], ["키", p.height ? `${p.height}cm` : null], ["성격", p.personality], ["취미", p.hobby], ["연애 스타일", p.style], ["원하는 상대", p.want]];
@@ -61,7 +61,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
       (gf ? d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)").eq("gender", gf) : d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)")).eq("visible", true).neq("user_id", s.id).order("updated_at", { ascending: false }).limit(60),
     ]);
     body = <>
-      <details className="card ss-details" open={!mine}><summary><b>{mine ? "✏️ 내 프로필 카드 수정" : "🙋 나어때? 내 프로필 카드 만들기"}</b></summary><ProfileForm p={mine} /></details>
+      <details className="card ss-details" open={!mine}><summary><b>{mine ? "✏️ 내 셀소 카드 수정" : "🙋 셀소 카드 만들기 (셀프소개팅)"}</b></summary><ProfileForm p={mine} /></details>
       {mine && <Card p={mine} head={<><b>{display(s.dept, s.nickname)}</b><span className="muted" style={{ fontSize: 12 }}>내 카드</span><span className="tag">{mine.visible ? "공개 중" : "비공개"}</span></>} />}
       <GFilter t="me" />
       <div className="ss-cards">{(profs ?? []).filter((p: any) => !p.user.stealth).map((p: any) => <Card key={p.user_id} p={p}
@@ -111,7 +111,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
           {c.status === "pending" ? <><form action={answerConfession.bind(null, c.id, true)}><button className="btn" style={{ padding: "4px 12px" }}>💘 수락 (공개)</button></form><form action={answerConfession.bind(null, c.id, false)}><button className="link">정중히 거절</button></form></> : <span className="tag">{c.status === "accepted" ? `수락함 · ${nameOf(c.from_id)}` : "거절함"}</span>}</div></div>) : <div className="muted">아직 받은 고백이 없어요.</div>}
       </section>
       <section className="card"><h3>💗 내 카드에 관심 보낸 사람</h3>
-        {likers?.length ? likers.map((l: any) => <div key={l.from_id} className="meta"><b>{l.user ? display(l.user.dept, l.user.nickname) : "회원"}</b><span className="time">{fmt(l.created_at)}</span>{liked("profile", l.from_id) ? <span className="tag">💘 서로 관심</span> : <span className="muted">나도 그 사람 카드에 관심을 누르면 대화가 열려요</span>}</div>) : <div className="muted">아직 없어요. 나어때 카드를 공개해두면 관심이 올 수 있어요.</div>}
+        {likers?.length ? likers.map((l: any) => <div key={l.from_id} className="meta"><b>{l.user ? display(l.user.dept, l.user.nickname) : "회원"}</b><span className="time">{fmt(l.created_at)}</span>{liked("profile", l.from_id) ? <span className="tag">💘 서로 관심</span> : <span className="muted">나도 그 사람 카드에 관심을 누르면 대화가 열려요</span>}</div>) : <div className="muted">아직 없어요. 셀소 카드를 공개해두면 관심이 올 수 있어요.</div>}
       </section>
       <section className="card"><h3>📤 보낸 고백</h3>
         {sent?.length ? sent.map((c: any) => <div key={c.id} className="meta"><b>{c.to ? display(c.to.dept, c.to.nickname) : "?"}</b><span>“{c.text.slice(0, 30)}”</span><span className="tag">{c.status === "pending" ? "대기 중" : c.status === "accepted" ? "💘 수락됨" : "다음 기회에"}</span></div>) : <div className="muted">보낸 고백이 없어요.</div>}

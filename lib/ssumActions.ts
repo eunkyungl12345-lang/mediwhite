@@ -37,7 +37,7 @@ export async function answerConfession(id: number, accept: boolean) {
   revalidatePath("/ssum");
 }
 
-/* ---------- 나어때: 셀프 소개 카드 ---------- */
+/* ---------- 셀소: 셀프 소개 카드 ---------- */
 export async function saveDatingProfile(_: R, fd: FormData): Promise<R> {
   const u = await me();
   if (fd.get("adult") !== "on") return { error: "만 19세 이상만 참여할 수 있어요" };
