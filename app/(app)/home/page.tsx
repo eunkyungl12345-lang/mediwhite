@@ -86,7 +86,7 @@ export default async function HomePage() {
       </div>
 
       <div className="h-grid">
-        <Link href="/games#tycoon" className="h-card h-ty">
+        <Link href="/games?g=tycoon" className="h-card h-ty">
           <div className="h-head"><h3>🏥 우리 병원</h3><span className="h-link">들어가기 →</span></div>
           {tyS ? <>
             <div className="h-ty-row"><span className="h-ty-ico">{ROOMS[Math.min(ROOMS.length - 1, tyS.rooms)].icon}</span><div><b>₩ {won(tyS.cash)}</b><div className="muted">하루 +{won(tyDaily)}원 · 🏠 {HOMES[tyS.home].area} {HOMES[tyS.home].name} · 총자산 {won(assetsOf(tyS))}원</div></div></div>

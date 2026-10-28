@@ -13,7 +13,7 @@ export default async function OmokLobby() {
   const { data: rooms } = await d.from("omok_rooms").select("id,title,bet,per_team,status,created_at,host_u:users!omok_rooms_host_fkey(nickname,dept),players:omok_players(team)").neq("status", "done").order("updated_at", { ascending: false }).limit(30);
   return (
     <div className="games">
-      <Link className="link" href="/games">← 게임</Link>
+      <Link className="link" href="/games">← 게임 목록</Link>
       <div className="card">
         <h3>⚫⚪ 온라인 오목</h3>
         <div className="muted">회원끼리 실시간 오목. 1:1부터 5:5 팀전까지 — 팀전은 같은 팀끼리 번갈아 한 수씩 둬요. 한 수 30초. 내기는 재미로만 ☕</div>

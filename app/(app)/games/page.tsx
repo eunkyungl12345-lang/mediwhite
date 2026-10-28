@@ -17,7 +17,7 @@ import Tycoon from "@/components/games/Tycoon";
 import Link from "next/link";
 export const dynamic = "force-dynamic";
 
-export default async function GamesPage() {
+export default async function GamesPage({ searchParams }: { searchParams: { g?: string } }) {
   const d = db(); const sess = (await getSession())!;
   const top = (game: string) => d.from("scores").select("value,mode,users(nickname,dept)").eq("game", game).order("value", { ascending: false }).limit(10);
   const [dodge, sword, defense, bowling, cpr, quiz, vein, runner, lightning, tycoon, mine] = await Promise.all([...["dodge", "sword", "defense", "bowling", "cpr", "quiz", "vein", "runner", "lightning", "tycoon"].map(top), d.from("scores").select("game,value").eq("user_id", sess.id)]);
@@ -38,11 +38,12 @@ export default async function GamesPage() {
     { id: "sword", name: "검 강화하기", icon: "⚔️", sub: "확률 강화", color: "#3D5A80", node: <Sword ranks={norm(sword)} best={my.sword ?? 0} /> },
     { id: "roulette", name: "커피 룰렛", icon: "☕", sub: "내기 정하기", color: "#B08968", node: <Roulette /> },
   ];
+  const cur = games.find(g => g.id === searchParams.g && g.id !== "omok") ?? games[0];
   return (
     <div className="games">
       <Hero img="/img/games.jpg" pos="center 42%" title="미니게임" sub="기록은 명예의 전당에, 퀘스트는 경험치로" />
-      <div className="cats">{games.map(g => <a key={g.id} href={`#${g.id}`}>{g.icon} {g.name}</a>)}</div>
-      {games.map(g => <section key={g.id} id={g.id} className="game-sec">{g.node}</section>)}
+      <div className="gtiles">{games.map(g => <Link key={g.id} href={g.id === "omok" ? "/games/omok" : `/games?g=${g.id}`} scroll={false} className={"gtile" + (cur.id === g.id ? " on" : "")}><span className="gtile-ico">{g.icon}</span><span className="gtile-name">{g.name}</span>{g.badge && <span className="gtile-badge">{g.badge}</span>}</Link>)}</div>
+      <section key={cur.id} id={cur.id} className="game-sec">{cur.node}</section>
     </div>
   );
 }
