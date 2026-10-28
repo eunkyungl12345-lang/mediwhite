@@ -42,11 +42,13 @@ function HospitalScene({ s }: { s: Saved }) {
   useEffect(() => { if (!shown.length) return; const id = setInterval(() => { const k = Math.floor(Math.random() * shown.length), L = LINES[shown[k].d]; setBubble({ k, t: L[Math.floor(Math.random() * L.length)] }); setTimeout(() => setBubble(null), 2400); }, 3200); return () => clearInterval(id); }, [shown.length]); // eslint-disable-line
   // 로비 바닥(마름모) 안쪽에 흩뿌리기
   const pos = (k: number) => { const h = (k * 2654435761) >>> 0, u = (h % 1000) / 1000, v = ((h >>> 10) % 1000) / 1000; const y = 42 + v * 40, half = 18 + (y - 42) * .55; return { x: 50 + (u * 2 - 1) * half, y, sc: .8 + (y - 42) / 40 * .35 }; };
-  const big = s.rooms >= 4, uni = s.rooms >= 9;
+  const uni = s.rooms >= 9;
+  // 시설 단계별 외관: 의원 → 지역병원 → 영상센터 → 응급·종합병원 → 신관 → 대학병원
+  const bld = s.rooms >= 9 ? "b6" : s.rooms >= 8 ? "b5" : s.rooms >= 4 ? "b4" : s.rooms >= 3 ? "b3" : s.rooms >= 1 ? "b2" : "b1";
   return (
     <div className={"lb" + (uni ? " uni" : "")}>
       <div className="lb-out">
-        <img src={big ? "/game/b7.webp" : "/game/b1.webp"} alt="" className={"lb-bld" + (big ? " big" : "")} key={big ? "b7" : "b1"} draggable={false} />
+        <img src={`/game/${bld}.webp`} alt="" className={"lb-bld s-" + bld} key={bld} draggable={false} />
         {s.heli && <span className="lb-heli">🚁</span>}
         <span className="lb-sign"><i>✚</i>{uni ? "메디화이트 대학교병원" : "메디화이트병원"} · {s.rooms + 1}층</span>
         {s.amb > 0 && <span className="lb-amb">{"🚑".repeat(s.amb)}</span>}

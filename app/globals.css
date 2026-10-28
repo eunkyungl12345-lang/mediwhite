@@ -792,9 +792,9 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .lb-pat{margin-left:auto;color:var(--muted)}
 
 /* 병원 키우기 그림 에셋 */
-.lb-out{position:relative;height:190px;background:linear-gradient(180deg,#BFE3F7 0%,#E3EEF8 70%,#DCE6F1 100%);display:grid;place-items:center;overflow:hidden}
+.lb-out{position:relative;height:200px;background:linear-gradient(180deg,#BFE3F7 0%,#E3EEF8 70%,#DCE6F1 100%);display:grid;place-items:center;overflow:hidden}
 .lb-bld{height:170px;width:auto;filter:drop-shadow(0 8px 10px rgba(0,0,0,.12));animation:pop .5s cubic-bezier(.2,1.4,.4,1);pointer-events:none;user-select:none}
-.lb-bld.big{height:182px}
+.lb-bld.s-b1,.lb-bld.s-b2{height:160px}.lb-bld.s-b3,.lb-bld.s-b4{height:178px}.lb-bld.s-b5,.lb-bld.s-b6{height:186px}
 .lb-out .lb-sign{position:absolute;left:8px;top:8px;background:rgba(44,107,94,.92);color:#fff;border-radius:999px;padding:3px 10px;font-size:12px}
 .lb-out .lb-heli{top:6px;left:auto;right:10px;font-size:22px}
 .lb-amb{position:absolute;right:8px;bottom:6px;font-size:18px}
