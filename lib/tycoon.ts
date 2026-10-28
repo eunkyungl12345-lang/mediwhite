@@ -208,3 +208,17 @@ export function assetsOf(s: Saved, now = Date.now()) {
 }
 /** 내 직종 → 직원 직종 */
 export const tycoonDept = (d: string) => d === "간호사" ? "간호사" : d === "간호조무사" ? "간호조무사" : d === "의사" ? "의사" : d;
+
+/* ---------- 세금·복비 (현실 반영, 단순화) ---------- */
+/** 양도소득세(지방세 포함) 누진: 과세표준 구간별 세율 ×1.1 */
+const CGT: [number, number][] = [[1.4e7, .066], [5e7, .165], [8.8e7, .264], [1.5e8, .385], [3e8, .418], [5e8, .44], [1e9, .462], [Infinity, .495]];
+export function capGainTax(gain: number) { if (gain <= 0) return 0; let t = 0, prev = 0; for (const [cap, r] of CGT) { const part = Math.min(gain, cap) - prev; if (part <= 0) break; t += part * r; prev = cap; } return Math.floor(t); }
+/** 상가·건물: 취득세 4.6% + 복비 0.9% / 팔 때 복비 0.9% + 양도세 */
+export const propBuyFee = (price: number) => ({ tax: Math.floor(price * .046), agent: Math.floor(price * .009) });
+export const propSellFee = (value: number, price: number) => ({ tax: capGainTax(value - price), agent: Math.floor(value * .009) });
+/** 미술품: 사고팔 때 경매 수수료 10%(낙찰·위탁) / 팔 때 기타소득세(필요경비 80% 인정 → 차익의 4.4%) */
+export const artBuyFee = (price: number) => ({ tax: 0, agent: Math.floor(price * .1) });
+export const artSellFee = (value: number, price: number) => ({ tax: Math.max(0, Math.floor((value - price) * .044)), agent: Math.floor(value * .1) });
+/** 주택: 취득세 6억 이하 1.1% · 9억 이하 2.2% · 초과 3.3% / 복비 0.4~0.7% / 1주택 양도세 비과세 */
+export const homeBuyFee = (price: number) => ({ tax: Math.floor(price * (price <= 6e8 ? .011 : price <= 9e8 ? .022 : .033)), agent: Math.floor(price * (price < 2e8 ? .005 : price < 9e8 ? .004 : price < 1.2e9 ? .005 : price < 1.5e9 ? .006 : .007)) });
+export const homeSellAgent = (price: number) => homeBuyFee(price).agent;

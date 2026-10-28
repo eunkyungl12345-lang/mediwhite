@@ -975,3 +975,11 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .ty-hint{border:1px dashed var(--scrub);background:var(--scrub-soft);color:var(--ink);border-radius:12px;padding:8px 10px;font-size:13px;text-align:left;cursor:pointer;animation:sw-in .3s}
 .ty-hud-cash.bump{animation:ty-bump .18s ease-out}
 @keyframes ty-bump{50%{transform:scale(1.06)}}
+
+/* 내 차 쇼룸 */
+.hm-garage.has{position:relative;display:block;padding:10px 8px 26px;min-height:120px;background:radial-gradient(ellipse at 50% 0%,#5A6270 0%,#22262D 55%,#121418 100%);overflow:hidden}
+.hm-garage.has .car-art{position:relative;display:block;width:100%;max-width:360px;margin:0 auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+.hm-spot{position:absolute;left:50%;top:-30px;width:70%;height:180px;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 0%,rgba(255,250,225,.35),transparent 65%);pointer-events:none}
+.hm-garage.has .hm-car-name{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font-weight:700;letter-spacing:.5px;background:rgba(0,0,0,.45);padding:2px 10px;border-radius:999px;white-space:nowrap}
+.hm-garage.t6 .hm-spot,.hm-garage.t7 .hm-spot{background:radial-gradient(ellipse at 50% 0%,rgba(255,215,120,.45),transparent 65%)}
+.hm-garage.t7 .hm-car-name{background:linear-gradient(90deg,#8a6a1c,#e8c35a,#8a6a1c);color:#1a1205}
