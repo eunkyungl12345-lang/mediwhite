@@ -622,3 +622,73 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .h-ty-row b{font-family:var(--f-display);font-weight:400;font-size:24px}
 .h-ty-pending{background:linear-gradient(135deg,#F2B705,#F28705);color:#3B2A00;border-radius:10px;padding:8px 10px;font-size:13px}
 @media (max-width:420px){.h-stat b{font-size:20px}}
+
+/* 병원 키우기 시즌2 */
+.ty-money{display:grid;justify-items:center;gap:2px;padding:6px 0;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.ty-toast{background:var(--ink);color:var(--bg);border-radius:10px;padding:8px 12px;font-size:13px;text-align:center;animation:pop .25s}
+.ty-scene-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px}
+.ty-scene-tabs button{border:0;background:none;font:inherit;font-weight:600;padding:8px;border-radius:9px;color:var(--muted);cursor:pointer}
+.ty-scene-tabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.ty-scene{user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.ty-row.cur{border-color:var(--scrub)}
+.ty-row.past{opacity:.5}
+/* 병원 그림 */
+.hs{position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#9FD3F0 0%,#D7EEF7 60%,#EAF4EC 100%);padding:14px 10px 0;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer}
+.hs.uni{background:linear-gradient(180deg,#7FB4E6 0%,#CFE6F5 60%,#E2F0E6 100%)}
+.hs-sky{position:absolute;inset:0;pointer-events:none}
+.hs-sun{position:absolute;top:12px;right:16px;width:30px;height:30px;border-radius:50%;background:#FFE08A;box-shadow:0 0 24px #FFE08A}
+.hs-campus{position:relative;display:flex;align-items:flex-end;justify-content:center;gap:6px}
+.hs-tower{position:relative;flex:0 1 250px;background:#F7FAF9;border:2px solid #9DB5AE;border-bottom:0;border-radius:8px 8px 0 0;box-shadow:0 6px 20px rgba(0,0,0,.12);animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.hs-roof{position:relative;display:flex;justify-content:center;align-items:center;gap:6px;background:#2C6B5E;color:#fff;padding:5px 6px;border-radius:6px 6px 0 0}
+.hs-roof.small{background:#4E8578}
+.hs-sign{font-weight:700;font-size:12px;letter-spacing:.02em;white-space:nowrap}
+.hs-sign i{font-style:normal;color:#FF6B6B;margin-right:4px}
+.hs-sign.small{font-size:11px}
+.hs-heli{position:absolute;top:-24px;left:8px;font-size:22px;animation:hop 1.2s ease-in-out infinite}
+.hs-floor{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:30px;padding:3px 6px;border-top:1px solid #D7E3DF;background:repeating-linear-gradient(90deg,transparent 0 22px,rgba(120,170,200,.16) 22px 34px)}
+.hs-floor.blank{min-height:24px}
+.hs-fl{font-size:11px;color:#3E5A53;font-weight:600;white-space:nowrap}
+.hs-staff{display:flex;flex-wrap:wrap;gap:3px 6px;justify-content:flex-end;align-items:center}
+.hs-crowd{display:inline-flex;align-items:center;gap:1px;font-size:13px;line-height:1;white-space:nowrap;background:rgba(44,107,94,.08);border-radius:999px;padding:2px 5px}
+.hs-crowd b{font-size:11px;color:#2C6B5E;margin-left:2px}
+.hs-gear,.hs-beds{font-size:13px;line-height:1}
+.hs-lobby{display:flex;justify-content:space-between;align-items:center;background:#E6EFEC;border-top:2px solid #9DB5AE;padding:4px 8px;font-size:16px}
+.hs-patients{font-size:11px;color:#3E5A53}
+.hs-er{flex:0 0 74px;align-self:flex-end;background:#FFF5F5;border:2px solid #E2574C;border-bottom:0;border-radius:6px 6px 0 0;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.hs-er-sign{background:#E2574C;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:3px 0}
+.hs-er-body{min-height:40px;display:grid;place-items:center;padding:4px}
+.hs-annex{flex:0 0 70px;background:#F2F6F5;border:2px solid #9DB5AE;border-bottom:0;border-radius:6px 6px 0 0;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.hs-park{display:flex;gap:4px;align-items:center;justify-content:flex-end;background:#5C6B66;margin:0 -10px;padding:6px 12px;min-height:30px;font-size:18px;border-top:3px solid #8FA29B}
+.hs-park .muted{color:#C5D2CD;font-size:11px}
+/* 집 그림 */
+.hm{position:relative;border-radius:14px;overflow:hidden;background:var(--wall);min-height:260px;display:grid;grid-template-rows:150px 1fr auto;border:1px solid var(--line)}
+.hm.dark{color:#EEE}
+.hm-wall{position:relative;background:linear-gradient(180deg,var(--wall),color-mix(in srgb,var(--wall) 85%,#000))}
+.hm-win{position:absolute;left:8%;top:16px;width:44%;height:104px;border:6px solid #fff;border-radius:6px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.15);overflow:hidden}
+.hm-win::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:4px;background:#fff;transform:translateX(-50%)}
+.hm-view-label{position:absolute;right:6px;bottom:4px;font-size:10px;color:#fff;text-shadow:0 1px 2px #000;z-index:1}
+.v-wall{background:repeating-linear-gradient(0deg,#B4553E 0 10px,#9E4733 10px 11px),#B4553E}
+.v-alley{background:linear-gradient(180deg,#C9D6DE 0 40%,#8A949A 40% 100%)}
+.v-city{background:linear-gradient(180deg,#9CC8EA 0 45%,transparent 45%),repeating-linear-gradient(90deg,#7C8A99 0 18px,#93A1AF 18px 30px,#6E7B88 30px 44px);background-color:#7C8A99}
+.v-river{background:linear-gradient(180deg,#8FC4EE 0 35%,transparent 35% 55%,#3E86C2 55% 100%),repeating-linear-gradient(90deg,#8796A6 0 14px,#A3B1BF 14px 22px,#76869A 22px 34px)}
+.v-nightriver{background:radial-gradient(circle at 70% 20%,#FFF6C8 0 3px,transparent 4px),linear-gradient(180deg,#0E1A3A 0 35%,transparent 35% 55%,#13305A 55% 100%),repeating-linear-gradient(90deg,#1E2A44 0 14px,#2C3B5C 14px 22px,#1A2440 22px 34px);box-shadow:inset 0 -40px 30px -20px rgba(255,210,120,.35)}
+.v-garden{background:linear-gradient(180deg,#A8D8F0 0 40%,#6DAE5A 40% 100%)}
+.v-garden::before{content:"🌳🌲🌳";position:absolute;bottom:8px;left:8px;font-size:26px}
+.hm-art{position:absolute;right:10%;top:22px;width:62px;height:50px;display:grid;place-items:center;background:#fff;border:5px solid #8B6A43;box-shadow:0 3px 8px rgba(0,0,0,.25);font-size:24px}
+.hm-art.t2{border-color:#6B4A2B;width:72px}.hm-art.t3{border-color:#C9A227;width:82px;height:58px}
+.hm-art.t4,.hm-art.t5{border-color:#D4AF37;width:96px;height:68px;font-size:34px;box-shadow:0 0 0 2px #F6E7A8,0 4px 18px rgba(212,175,55,.5)}
+.hm-thing{position:absolute;line-height:1;font-size:calc(26px * var(--sc,1));filter:drop-shadow(0 3px 2px rgba(0,0,0,.25));animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+.hm-thing.lux{filter:drop-shadow(0 3px 2px rgba(0,0,0,.25)) saturate(1.3)}
+.hm-thing.top::after{content:"✨";position:absolute;top:-10px;right:-12px;font-size:14px;animation:blink 1.4s steps(2) infinite}
+.hm-light{left:62%;top:2px}
+.hm-light.top span{filter:drop-shadow(0 0 10px #FFE08A)}
+.hm-tv{right:12%;bottom:6px}
+.hm-floor{position:relative;background:linear-gradient(180deg,color-mix(in srgb,var(--floor) 80%,#000) 0,var(--floor) 14px);min-height:80px}
+.hm-bed{left:6%;bottom:12px}.hm-sofa{left:34%;bottom:10px}.hm-table{right:22%;bottom:14px}.hm-plant{right:5%;bottom:12px}.hm-sculpt{left:22%;bottom:30px}
+.hm-empty{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;color:rgba(0,0,0,.45)}
+.hm.dark .hm-empty{color:rgba(255,255,255,.5)}
+.hm-garage{display:flex;align-items:center;gap:8px;background:#4A4F55;color:#E8ECEF;padding:6px 12px;min-height:36px;font-size:12px}
+.hm-car{font-size:26px;line-height:1}
+.hm-car.t6,.hm-car.t7{filter:drop-shadow(0 0 6px #F2B705)}
+.hm-garage .muted{color:#C5CBD0}
+.hm-plate{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;border-radius:999px;padding:2px 8px}

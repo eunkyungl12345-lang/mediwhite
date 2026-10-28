@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { topicOf, HOSPITAL_DEPTS } from "@/lib/depts";
 import { dailyStatus, DAILY_BONUS } from "@/lib/daily";
-import { rateOf, fmt as won, tycoonDept, OFFLINE_CAP, OFFLINE_RATE, ROOMS, type Saved } from "@/lib/tycoon";
+import { rateOf, dailyOf, fmt as won, tycoonDept, OFFLINE_CAP, OFFLINE_RATE, ROOMS, HOMES, assetsOf, isCurrent } from "@/lib/tycoon";
 import { fmt } from "@/lib/format";
 import Name from "@/components/Name";
 import Insignia from "@/components/Insignia";
@@ -39,8 +39,8 @@ export default async function HomePage() {
   const hot = [...posts].filter(p => !p.pinned).sort((a, b) => b.score - a.score || +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 5);
   const mine = posts.filter(p => p.category === s.dept && !p.pinned).slice(0, 5);
   const online = new Set((visits ?? []).map((v: any) => v.user_id)).size;
-  const tyS = ty?.state as Saved | undefined;
-  const tyRate = tyS && typeof tyS.cash === "number" ? rateOf(tyS, tycoonDept(s.dept)) : 0;
+  const tyS = isCurrent(ty?.state) ? ty!.state as any : undefined;
+  const tyRate = tyS ? rateOf(tyS, tycoonDept(s.dept)) : 0, tyDaily = tyS ? dailyOf(tyS, tycoonDept(s.dept)) : 0;
   const tyPending = tyS && tyRate ? Math.floor(tyRate * Math.min(OFFLINE_CAP, Math.max(0, (now - tyS.lastSeen) / 1000)) * OFFLINE_RATE) : 0;
   const q = question?.[0] as any;
   const Row = ({ p }: { p: any }) => <Link href={`/board/${p.id}`} className="h-row"><span className="h-topic">{topicOf(p.topic).icon}</span><span className="h-title">{p.title}</span><span className="h-meta">{p.author ? `[${p.author.dept}]` : ""} · 💬{p.nc} 👍{p.nr}</span></Link>;
@@ -88,10 +88,10 @@ export default async function HomePage() {
       <div className="h-grid">
         <Link href="/games#tycoon" className="h-card h-ty">
           <div className="h-head"><h3>🏥 우리 병원</h3><span className="h-link">들어가기 →</span></div>
-          {tyS && typeof tyS.cash === "number" ? <>
-            <div className="h-ty-row"><span className="h-ty-ico">{ROOMS[Math.min(ROOMS.length - 1, tyS.rooms)].icon}</span><div><b>₩ {won(tyS.cash)}</b><div className="muted">초당 +{won(tyRate)}원 · 누적 {won(tyS.total)}원</div></div></div>
+          {tyS ? <>
+            <div className="h-ty-row"><span className="h-ty-ico">{ROOMS[Math.min(ROOMS.length - 1, tyS.rooms)].icon}</span><div><b>₩ {won(tyS.cash)}</b><div className="muted">하루 +{won(tyDaily)}원 · 🏠 {HOMES[tyS.home].area} {HOMES[tyS.home].name} · 총자산 {won(assetsOf(tyS))}원</div></div></div>
             {tyPending > 0 && <div className="h-ty-pending">💰 자리 비운 동안 <b>+{won(tyPending)}원</b> 쌓였어요 — 받으러 가기</div>}
-          </> : <div className="h-empty">접속 안 해도 돈이 쌓이는 병원을 차려보세요.</div>}
+          </> : <div className="h-empty">시즌 2 오픈! 병원을 키워서 한강뷰 집·외제차까지 사보세요.</div>}
         </Link>
         <section className="h-card h-jobs">
           <div className="h-head"><h3>💼 채용</h3><Link href="/board?topic=job" className="h-link">이직·채용 글</Link></div>
