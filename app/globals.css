@@ -757,3 +757,8 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .ss-post-t{font-weight:700;font-size:15px}
 .ss-post-b{font-size:14px;color:var(--ink);opacity:.85;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
 .ss-post-m{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)}
+
+.dock-rooms{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px;max-width:760px;margin:0 auto}
+.dock-rooms::-webkit-scrollbar{display:none}
+.dock-rooms button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.dock-rooms button.on{background:var(--scrub);border-color:var(--scrub);color:#fff;font-weight:600}

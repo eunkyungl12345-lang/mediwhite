@@ -3,7 +3,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { RANKS } from "@/lib/ranks";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
-import { adminToggleStealth, adminDeleteUser, adminLoginAs, adminDemote, resolveReport } from "@/lib/actions";
+import { adminToggleStealth, adminDeleteUser, adminLoginAs, adminDemote, resolveReport, adminSetChatRooms } from "@/lib/actions";
 import AdminForms from "@/components/AdminForms";
 import AdminSupport from "@/components/AdminSupport";
 import AdminResetPw from "@/components/AdminResetPw";
@@ -39,6 +39,8 @@ export default async function AdminPage() {
   const KIND: Record<string, string> = { ad: "광고", partner: "협업", bug: "오류", other: "기타" };
   const [{ data: dps }, { data: its }, { count: dmCount }, { count: cfAcc }] = await Promise.all([db().from("dating_profiles").select("gender,visible"), db().from("intros").select("gender"), db().from("dms").select("id", { count: "exact", head: true }), db().from("confessions").select("id", { count: "exact", head: true }).eq("status", "accepted")]);
   const gcount = (rows: any[] | null, g: string) => (rows ?? []).filter(r => r.gender === g).length;
+  const [{ data: peaks }, { data: roomsSet }] = await Promise.all([db().from("online_peaks").select("day,peak,at").order("day", { ascending: false }).limit(30), db().from("settings").select("value").eq("key", "chat_rooms").maybeSingle()]);
+  const todayPeak = peaks?.[0]?.peak ?? 0, maxPeak = Math.max(0, ...(peaks ?? []).map(p => p.peak)), roomsOn = roomsSet?.value === "on";
   const { data: reports } = await db().from("reports").select("id,kind,target_id,reason,detail,status,created_at,reporter:users!reports_reporter_id_fkey(nickname,dept)").order("created_at", { ascending: false }).limit(50);
   const openR = (reports ?? []).filter(r => r.status === "open");
   const rPosts = openR.filter(r => r.kind === "post").map(r => r.target_id), rComs = openR.filter(r => r.kind === "comment").map(r => Number(r.target_id));
@@ -55,6 +57,18 @@ export default async function AdminPage() {
         <h3>전체 폰 알림 보내기</h3>
         <div className="muted">알림을 켠 회원 모두에게 푸시. 이벤트·공지용 (하루 1~2번만 — 많으면 다 꺼버려요).</div>
         <AdminBroadcast />
+      </div>
+      <div className="card">
+        <h3>📡 동시 접속 · 채팅방</h3>
+        <div className="h-stats">
+          <div className="h-stat"><b>{todayPeak}</b><span>오늘 최고</span></div>
+          <div className="h-stat"><b>{maxPeak}</b><span>30일 최고</span></div>
+          <div className="h-stat"><b>200</b><span>무료 한도</span></div>
+          <div className="h-stat"><b>{Math.round(maxPeak / 2)}%</b><span>한도 사용</span></div>
+        </div>
+        <div className="muted">동시 접속 <b>150명</b> 근처가 되면 Supabase Pro(월 $25, 동시 500명)로 올리면 돼요. 코드는 그대로예요.</div>
+        <div className="row" style={{ alignItems: "center" }}><span>키워드 채팅방 (전체·우리 직종·야간근무·이직·썸·게임): <b>{roomsOn ? "켜짐" : "꺼짐"}</b></span><form action={adminSetChatRooms.bind(null, !roomsOn)}><button className={"btn" + (roomsOn ? " ghost" : "")} style={{ padding: "6px 12px" }}>{roomsOn ? "끄기" : "켜기"}</button></form></div>
+        <div className="muted" style={{ fontSize: 12 }}>동시 접속 30~50명쯤부터 켜는 걸 추천해요. 사람이 적을 때 방을 나누면 방마다 썰렁해져요.</div>
       </div>
       <div className="card">
         <h3>💘 썸 현황</h3>

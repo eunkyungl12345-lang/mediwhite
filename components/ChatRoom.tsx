@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { rt } from "@/lib/realtime";
 import { fmt } from "@/lib/format";
-import { sendMessage } from "@/lib/actions";
+import { sendMessage, loadRoom } from "@/lib/actions";
 import type { Session } from "@/lib/auth";
 import { display } from "@/lib/depts";
 import Insignia from "./Insignia";
@@ -10,7 +10,7 @@ import { tierOf } from "@/lib/ranks";
 
 export type Msg = { id: number; nickname: string; dept: string; text: string; created_at: string; user_id: string | null; rank?: string | null };
 
-export default function ChatRoom({ me, initial, onNew, myRank, official = {} }: { me: Session; initial: Msg[]; onNew?: (m: Msg) => void; myRank?: string; official?: Record<string, string> }) {
+export default function ChatRoom({ me, initial, onNew, myRank, official = {}, room = "all" }: { me: Session; initial: Msg[]; onNew?: (m: Msg) => void; myRank?: string; official?: Record<string, string>; room?: string }) {
   const [msgs, setMsgs] = useState<Msg[]>(initial);
   const [text, setText] = useState(""); const [busy, setBusy] = useState(false);
   const feed = useRef<HTMLDivElement>(null);
@@ -19,12 +19,16 @@ export default function ChatRoom({ me, initial, onNew, myRank, official = {} }: 
     if (m.tmp) { const i = prev.findIndex(x => (x as any).tmp === m.tmp); if (i >= 0) { const n = prev.slice(); n[i] = m; return n; } }
     return prev.some(x => x.id === m.id) ? prev : [...prev.slice(-200), m];
   });
+  const first = useRef(true);
   useEffect(() => {
+    // 방을 옮기면 그 방 최근 메시지를 불러오고 채널을 갈아탐 ("all"은 기존 채널 이름 유지)
+    if (!first.current) { setMsgs([]); loadRoom(room).then(m => setMsgs(m as Msg[])).catch(() => {}); }
+    first.current = false;
     const c = rt(); if (!c) return;
-    const ch = c.channel("chat");
+    const ch = c.channel(room === "all" ? "chat" : `chat:${room}`);
     ch.on("broadcast", { event: "msg" }, ({ payload }) => { push(payload as Msg); onNew?.(payload as Msg); }).subscribe();
     chRef.current = ch; return () => { c.removeChannel(ch); chRef.current = null; };
-  }, []); // eslint-disable-line
+  }, [room]); // eslint-disable-line
   useEffect(() => { const f = feed.current; if (f) f.scrollTop = f.scrollHeight; }, [msgs]);
   useEffect(() => { const f = feed.current; if (!f) return; const ro = new ResizeObserver(() => { f.scrollTop = f.scrollHeight; }); ro.observe(f); return () => ro.disconnect(); }, []);
   async function submit(e: React.FormEvent) {
@@ -35,7 +39,7 @@ export default function ChatRoom({ me, initial, onNew, myRank, official = {} }: 
     const optimistic: Msg & { tmp: string } = { id: -Date.now(), tmp, nickname: me.nickname, dept: me.dept, text: t, created_at: new Date().toISOString(), user_id: me.id, rank: myRank ?? null };
     push(optimistic); chRef.current?.send({ type: "broadcast", event: "msg", payload: optimistic });
     setBusy(false);
-    try { const saved = await sendMessage(t); if (saved) { push({ ...(saved as Msg), tmp }); chRef.current?.send({ type: "broadcast", event: "msg", payload: { ...saved, tmp } }); } }
+    try { const saved = await sendMessage(t, room); if (saved) { push({ ...(saved as Msg), tmp }); chRef.current?.send({ type: "broadcast", event: "msg", payload: { ...saved, tmp } }); } }
     catch { setMsgs(prev => prev.filter(x => (x as any).tmp !== tmp)); setText(t); }
   }
   return (

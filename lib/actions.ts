@@ -7,6 +7,7 @@ import { db } from "./supabase";
 import { createSession, getSession, clearSession, type Session } from "./auth";
 import { DEPTS, CATS, NOTICE_CAT, EMOJIS, TOPICS, SSUM_CAT, SSUM_TOPICS } from "./depts";
 import { bump } from "./daily";
+import { validRoom } from "./chatRooms";
 import { personMention, placeMention, REPORT_REASONS } from "./safety";
 import { awardXp, repeatXp } from "./xp";
 import { signupBonus, can, RANKS, rankOf } from "./ranks";
@@ -105,14 +106,15 @@ export async function deleteAccount(_: FormState, fd: FormData): Promise<FormSta
 }
 
 /* ---------- 채팅 ---------- */
-export async function sendMessage(text: string) {
+export async function sendMessage(text: string, room = "all") {
   const u = await requireUser();
   const t = text.trim().slice(0, 500); if (!t) return null;
+  if (!validRoom(room, u.dept)) room = "all";
   const s = db();
   const { data: me } = await s.from("users").select("xp").eq("id", u.id).maybeSingle();
   let ri = rankOf(me?.xp ?? 0).index;
   if (ri >= RANKS.length - 1) ri = (await myRank(u.id)).index; // 참모총장 후보만 파트 1위 확인
-  const { data } = await s.from("messages").insert({ user_id: u.id, nickname: u.nickname, dept: u.dept, text: t, rank: String(ri) }).select("id,nickname,dept,text,created_at,user_id,rank").single();
+  const { data } = await s.from("messages").insert({ user_id: u.id, nickname: u.nickname, dept: u.dept, text: t, rank: String(ri), room }).select("id,nickname,dept,text,created_at,user_id,rank").single();
   // 경험치는 응답 뒤로 미루지 않고 병렬로 (한 번의 DB 함수 호출씩)
   await Promise.all([awardXp(u.id, 50, "first_chat"), repeatXp(u.id, "chat"), bump(u.id, "chat")]);
   const mentions = Array.from(t.matchAll(/@([^\s@\[\]]{1,12})/g)).map(m => m[1]);
@@ -454,4 +456,22 @@ export async function resolveReport(id: number, action: "restore" | "delete") {
   else await s.from(table).update({ hidden: false, hidden_at: null }).eq("id", r.target_id);
   await s.from("reports").update({ status: action === "delete" ? "deleted" : "restored", resolved_at: new Date().toISOString() }).eq("kind", r.kind).eq("target_id", r.target_id).eq("status", "open");
   revalidatePath("/admin"); revalidatePath("/board");
+}
+
+/* ---------- 채팅방 ---------- */
+export async function loadRoom(room: string) {
+  const u = await requireUser(); if (!validRoom(room, u.dept)) room = "all";
+  const { data } = await db().from("messages").select("id,nickname,dept,text,created_at,user_id,rank").eq("room", room).order("created_at", { ascending: false }).limit(40);
+  return (data ?? []).reverse();
+}
+export async function adminSetChatRooms(on: boolean) {
+  await requireAdmin(); await db().from("settings").upsert({ key: "chat_rooms", value: on ? "on" : "off" });
+  revalidatePath("/admin"); revalidatePath("/home");
+}
+/** 동시 접속 최고치 기록 (요금제 업그레이드 시점 판단용) */
+export async function reportOnline(n: number) {
+  const u = await getSession(); if (!u || !Number.isInteger(n) || n < 1 || n > 100000) return;
+  const day = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10), s = db();
+  const { data } = await s.from("online_peaks").select("peak").eq("day", day).maybeSingle();
+  if (!data) await s.from("online_peaks").insert({ day, peak: n }); else if (n > data.peak) await s.from("online_peaks").update({ peak: n, at: new Date().toISOString() }).eq("day", day);
 }

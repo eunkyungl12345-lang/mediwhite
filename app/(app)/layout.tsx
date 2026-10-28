@@ -25,11 +25,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const d = db();
   runSchedulers().catch(() => {});
   if (memoOnce("visit:" + s.id, 30 * 60_000)) { d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {}); bump(s.id, "visit").catch(() => {}); }
-  const [{ data: me }, { data: msgs }, { pub }, { data: offs }] = await Promise.all([
+  const [{ data: me }, { data: msgs }, { pub }, { data: offs }, roomsOn] = await Promise.all([
     d.from("users").select("id,dept,xp,stealth,onboarded").eq("id", s.id).maybeSingle(),
-    d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").order("created_at", { ascending: false }).limit(40),
+    d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").eq("room", "all").order("created_at", { ascending: false }).limit(40),
     vapid(),
     memo("officials", 5 * 60_000, async () => d.from("users").select("id,username").in("username", Object.keys(OFFICIAL))),
+    memo("chat_rooms", 60_000, async () => { const { data } = await d.from("settings").select("value").eq("key", "chat_rooms").maybeSingle(); return data?.value === "on"; }),
   ]);
   const official = Object.fromEntries((offs ?? []).map(o => [o.id, OFFICIAL[o.username]]));
   // 참모총장 후보일 때만 파트 1위 확인 (추가 조회 1번)
@@ -45,7 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main>{children}</main>
       <PromoToast />
       <Onboarding show={!!me && !me.onboarded} />
-      <ChatDock me={s} initial={(msgs ?? []).reverse()} myRank={String(rank.index)} official={official} online={<Presence user={s} stealth={!!me?.stealth} />} />
+      <ChatDock me={s} initial={(msgs ?? []).reverse()} myRank={String(rank.index)} official={official} online={<Presence user={s} stealth={!!me?.stealth} />} roomsOn={roomsOn} />
     </div>
   );
 }
