@@ -967,3 +967,7 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .ty-group{display:grid;gap:8px}
 .ty-group-t{font-weight:700;font-size:14px;margin-top:6px}
 .ty-group-t .muted{font-weight:400;font-size:11px}
+
+.om-chat .dr-feed{max-height:150px}
+.om-cb{color:var(--ink)}.om-cw{color:#6b7280}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--ink)}

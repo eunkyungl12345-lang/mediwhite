@@ -4,6 +4,8 @@ import { db } from "./supabase";
 import { getSession, type Session } from "./auth";
 import { awardXp } from "./xp";
 import { bump } from "./daily";
+import { gameEvent } from "./feed";
+import { display } from "./depts";
 
 /** 그림 맞히기: 순서대로 한 명이 그리고 나머지가 채팅으로 맞혀요. 정답 확인은 서버에서. */
 const ROUND_SEC = 80;
@@ -76,9 +78,10 @@ export async function nextRound(id: string, force = false) {
   const allGuessed = ids.filter(x => x !== r.drawer).every(x => (r.guessed ?? []).includes(x));
   if (!force && !allGuessed && Date.now() < new Date(r.round_end).getTime() - 500) return;
   if (r.round >= r.rounds_total || ids.length < 2) {
-    await s.from("draw_rooms").update({ status: "done", last_word: r.word, word: null, round_end: null, updated_at: new Date().toISOString() }).eq("id", id).eq("round", r.round);
+    const { data: ended } = await s.from("draw_rooms").update({ status: "done", last_word: r.word, word: null, round_end: null, updated_at: new Date().toISOString() }).eq("id", id).eq("round", r.round).eq("status", "playing").select("id");
+    if (!ended?.length) return;
     const sc: Record<string, number> = r.scores ?? {}; const top = Object.entries(sc).sort((a, b) => b[1] - a[1])[0];
-    if (top && top[1] > 0) await awardXp(top[0], 100, "draw_win_1");
+    if (top && top[1] > 0) { await awardXp(top[0], 100, "draw_win_1"); const { data: w } = await s.from("users").select("dept,nickname").eq("id", top[0]).maybeSingle(); if (w) await gameEvent(`${display(w.dept, w.nickname)}님이 그림 맞히기 ${ids.length}명 중 1등! (${top[1]}점)`); }
     await Promise.all(ids.map(x => bump(x, "game")));
     return;
   }

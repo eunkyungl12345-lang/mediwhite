@@ -1,4 +1,5 @@
 "use server";
+import { gameEvent } from "./feed";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -211,6 +212,9 @@ export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" 
   const { data: cur } = await s.from("scores").select("value").eq("user_id", u.id).eq("game", game).maybeSingle();
   if (cur && Number(cur.value) >= value) return;
   await s.from("scores").upsert({ user_id: u.id, game, value, mode: mode ?? null, updated_at: new Date().toISOString() });
+  { const who = u.nickname ? `[${u.dept}]${u.nickname}` : "누군가";
+    if (game === "sword" && value >= 15) await gameEvent(`${who}님이 검 +${value} 강화 성공! ⚔️`);
+    if (game === "defense" && value % 5 === 0) await gameEvent(`${who}님이 병동사수 ${Math.ceil(value / 10)}-${((value - 1) % 10) + 1} 보스 스테이지 클리어! 🛡️`); }
   revalidatePath("/games"); revalidatePath("/rank");
 }
 /** 병동 사수 데일리 챌린지 보상(하루 1회, KST) */

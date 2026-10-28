@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Insignia from "./Insignia";
 import { tierOf } from "@/lib/ranks";
-type Ev = { id: number; text: string; rank: number | null };
+type Ev = { id: number; text: string; rank: number | null; kind?: string };
 type Q = { id: number; title: string; xp: number; key: string };
 /** 진급 알림: 우측 상단에 떴다가 6초 뒤 사라짐. 새 이벤트만(마지막으로 본 id 이후) */
 export default function PromoToast() {
@@ -41,6 +41,6 @@ export default function PromoToast() {
       <div className="qxp">+{quest.xp} XP</div>
       <button type="button" className="btn" onClick={closeQuest}>좋았어</button>
     </div></div>}
-    {toasts.length > 0 && <div className="toasts" aria-live="polite">{toasts.map(e => <div key={e.id} className={`toast t${e.rank != null && e.rank >= 0 ? tierOf(e.rank) : 0}`}>{e.rank != null && e.rank >= 0 && <Insignia index={e.rank} size={14} />}<span>{e.text.includes("강등") ? "⬇️" : e.text.includes("응원") ? "📣" : "🎖️"} {e.text}</span></div>)}</div>}
+    {toasts.length > 0 && <div className="toasts" aria-live="polite">{toasts.map(e => <div key={e.id} className={`toast${e.kind === "game" ? " game" : ""} t${e.rank != null && e.rank >= 0 ? tierOf(e.rank) : 0}`}>{e.rank != null && e.rank >= 0 && <Insignia index={e.rank} size={14} />}<span>{e.kind === "game" ? "🎮" : e.text.includes("강등") ? "⬇️" : e.text.includes("응원") ? "📣" : "🎖️"} {e.text}</span></div>)}</div>}
   </>;
 }

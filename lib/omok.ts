@@ -1,4 +1,6 @@
 "use server";
+import { gameEvent } from "@/lib/feed";
+import { display } from "@/lib/depts";
 import { redirect } from "next/navigation";
 import { db } from "./supabase";
 import { getSession, type Session } from "./auth";
@@ -89,6 +91,7 @@ export async function placeStone(id: string, at: number) {
     await db().from("omok_rooms").update({ board, last_move: at, status: "done", winner: st.turn, deadline: null, updated_at: new Date().toISOString() }).eq("id", id).eq("board", st.board);
     const winners = st.players.filter(p => p.team === st.turn).map(p => p.user_id);
     await Promise.all(winners.map(w => awardXp(w, 100, "omok_win_1")));
+    { const nm = (t: string) => st.players.filter(p => p.team === t).map(p => display(p.dept, p.nickname)).join("·"); const loseT = st.turn === "b" ? "w" : "b"; if (nm(loseT)) await gameEvent(`${nm(st.turn)}님이 ${nm(loseT)}님에게 오목 승리!`); }
     await Promise.all(st.players.map(p => bump(p.user_id, "game")));
     return {};
   }

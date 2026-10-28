@@ -8,20 +8,25 @@ import { display } from "@/lib/depts";
 import { sfx, haptic } from "@/lib/juice";
 
 const N = 15;
-export default function OmokRoom({ me, initial }: { me: { id: string; nickname: string }; initial: OmokState }) {
-  const [st, setSt] = useState(initial), [err, setErr] = useState(""), [p, start] = useTransition(), [now, setNow] = useState(Date.now());
+export default function OmokRoom({ me, initial }: { me: { id: string; nickname: string; dept?: string }; initial: OmokState }) {
+  const [st, setSt] = useState(initial), stRef = useRef(initial), [err, setErr] = useState(""), [p, start] = useTransition(), [now, setNow] = useState(Date.now());
   const ch = useRef<any>(null); const r = useRouter();
+  const [lines, setLines] = useState<{ who: string; text: string; t?: string }[]>([]), [msg, setMsg] = useState(""); const feed = useRef<HTMLDivElement>(null);
+  useEffect(() => { const f = feed.current; if (f) f.scrollTop = f.scrollHeight; }, [lines]);
+  const say = (text: string) => { const t = text.trim().slice(0, 80); if (!t) return; const line = { who: display(me.dept ?? "", me.nickname), text: t, t: mineTeam() }; setLines(l => [...l.slice(-80), line]); ch.current?.send({ type: "broadcast", event: "chat", payload: line }); setMsg(""); };
   const refresh = async () => { const n = await getOmok(initial.id); if (n) { if (n.board !== st.board) sfx.tap(); setSt(n); } else r.push("/games/omok"); };
   const ping = () => ch.current?.send({ type: "broadcast", event: "sync", payload: {} });
   useEffect(() => {
-    const c = rt(); if (!c) return; const x = c.channel(`omok:${initial.id}`);
-    x.on("broadcast", { event: "sync" }, () => { refresh(); }).subscribe(); ch.current = x;
+    const c = rt(); if (!c) return; const x = c.channel(`omok:${initial.id}`, { config: { broadcast: { self: false } } });
+    x.on("broadcast", { event: "sync" }, () => { refresh(); }).on("broadcast", { event: "chat" }, ({ payload }) => { setLines(l => [...l.slice(-80), payload]); sfx.tap(); }).subscribe(); ch.current = x;
     const poll = setInterval(refresh, 4000), tick = setInterval(() => setNow(Date.now()), 250);
     return () => { c.removeChannel(x); clearInterval(poll); clearInterval(tick); };
   }, []); // eslint-disable-line
   const act = (f: () => Promise<any>) => start(async () => { setErr(""); const res = await f(); if (res?.error) setErr(res.error); await refresh(); ping(); });
 
+  stRef.current = st;
   const mine = st.players.find(x => x.user_id === me.id);
+  function mineTeam() { return stRef.current.players.find(x => x.user_id === me.id)?.team ?? ""; }
   const team = (t: string) => st.players.filter(x => x.team === t);
   const curTeam = team(st.turn), cur = curTeam.length ? curTeam[(st.turn === "b" ? st.idx_b : st.idx_w) % curTeam.length] : null;
   const myTurn = st.status === "playing" && cur?.user_id === me.id;
@@ -59,6 +64,11 @@ export default function OmokRoom({ me, initial }: { me: { id: string; nickname: 
             {c !== "." && <span className={"om-stone " + c + (st.last_move === i ? " last" : "")} />}
             {myTurn && c === "." && <span className={"om-ghost " + st.turn} />}
           </button>); })}
+      </div>
+      <div className="card dr-chat om-chat">
+        <div className="dr-feed" ref={feed}>{lines.length ? lines.map((l, i) => <div key={i}><b className={l.t === "b" ? "om-cb" : l.t === "w" ? "om-cw" : ""}>{l.t === "b" ? "⚫ " : l.t === "w" ? "⚪ " : "👀 "}{l.who}</b> {l.text}</div>) : <div className="muted">💬 두면서 수다 떨어요! (방 안에서만 보여요)</div>}</div>
+        <div className="row" style={{ gap: 4, flexWrap: "wrap" }}>{["ㅋㅋㅋ", "👍 굿수", "😱 헉", "🤔 고민중…", "빨리 둬요~", "한 판 더?"].map(q => <button key={q} type="button" className="chip" onClick={() => say(q)}>{q}</button>)}</div>
+        <form className="composer dr-form" onSubmit={e => { e.preventDefault(); say(msg); }}><input value={msg} onChange={e => setMsg(e.target.value)} maxLength={80} placeholder="메시지 보내기" autoComplete="off" /><button className="btn">보내기</button></form>
       </div>
       {!mine && <div className="muted" style={{ textAlign: "center" }}>👀 구경 중이에요. {st.status === "waiting" ? "위에서 팀을 골라 참가하세요." : ""}</div>}
     </div>
