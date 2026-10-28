@@ -15,8 +15,8 @@ async function grant(userId: string, amount: number, key: string | null, kind: s
   if (key) { const q = QUESTS.find(q => q.key === key); if (q) await s.from("events").insert({ kind: "quest", user_id: userId, text: `${q.title}|${granted}|${key}` }); }
   const bi = rankOf(old_xp).index, ai = rankOf(new_xp).index;
   if (ai > bi) {
-    const { data: u } = await s.from("users").select("id,nickname,dept").eq("id", userId).single();
-    if (u) {
+    const { data: u } = await s.from("users").select("id,nickname,dept,username").eq("id", userId).single();
+    if (u && !u.username?.startsWith("zz_")) {
       let leader = true;
       if (ai >= GENERAL) { const l = await deptLeaders(); leader = l[u.dept] === u.id; }
       const r = rankOf(new_xp, leader);

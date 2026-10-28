@@ -27,6 +27,7 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
     { id: "tycoon", name: "우리 병원 키우기", icon: "🏥", sub: "방치형 경영", color: "#6FBFA9", badge: "NEW", node: <Tycoon ranks={norm(tycoon)} myDept={sess.dept} /> },
     { id: "defense", name: "병동 사수", icon: "🦠", sub: "줄 지키기 디펜스", color: "#5FA777", badge: "HIT!", node: <Defense ranks={norm(defense)} /> },
     { id: "omok", name: "온라인 오목", icon: "⚫", sub: "1:1 · 팀전 5:5", color: "#E6B97A", badge: "NEW", node: <div className="card"><h3>⚫⚪ 온라인 오목</h3><div className="muted">회원끼리 실시간 오목! 1:1부터 5:5 팀전(같은 팀끼리 번갈아 두기)까지. 내기 걸고 한 판 ☕ 혼자일 땐 🤖 컴퓨터와 연습</div><Link className="btn" href="/games/omok">오목 로비로 →</Link></div> },
+    { id: "draw", name: "그림 맞히기", icon: "🎨", sub: "캐치마인드식", color: "#F8BBD0", badge: "NEW", node: <div /> },
     { id: "lightning", name: "번개 모드", icon: "⚡", sub: "5초 미니게임 연속", color: "#F4D35E", badge: "NEW", node: <Lightning ranks={norm(lightning)} best={my.lightning ?? 0} /> },
     { id: "runner", name: "복도 질주", icon: "🏃‍♀️", sub: "무한 달리기", color: "#98C1D9", node: <Runner ranks={norm(runner)} best={my.runner ?? 0} /> },
     { id: "cpr", name: "코드블루 CPR", icon: "🫀", sub: "리듬 탭", color: "#EE6C8F", node: <Cpr ranks={norm(cpr)} best={my.cpr ?? 0} /> },
@@ -38,11 +39,11 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
     { id: "sword", name: "검 강화하기", icon: "⚔️", sub: "확률 강화", color: "#3D5A80", node: <Sword ranks={norm(sword)} best={my.sword ?? 0} /> },
     { id: "roulette", name: "커피 룰렛", icon: "☕", sub: "내기 정하기", color: "#B08968", node: <Roulette /> },
   ];
-  const cur = games.find(g => g.id === searchParams.g && g.id !== "omok") ?? games[0];
+  const cur = games.find(g => g.id === searchParams.g && g.id !== "omok" && g.id !== "draw") ?? games[0];
   return (
     <div className="games">
       <Hero img="/img/games.jpg" pos="center 42%" title="미니게임" sub="기록은 명예의 전당에, 퀘스트는 경험치로" />
-      <div className="gtiles">{games.map(g => <Link key={g.id} href={g.id === "omok" ? "/games/omok" : `/games?g=${g.id}`} scroll={false} className={"gtile" + (cur.id === g.id ? " on" : "")}><span className="gtile-ico">{g.icon}</span><span className="gtile-name">{g.name}</span>{g.badge && <span className="gtile-badge">{g.badge}</span>}</Link>)}</div>
+      <div className="gtiles">{games.map(g => <Link key={g.id} href={g.id === "omok" ? "/games/omok" : g.id === "draw" ? "/games/draw" : `/games?g=${g.id}`} scroll={false} className={"gtile" + (cur.id === g.id ? " on" : "")}><span className="gtile-ico">{g.icon}</span><span className="gtile-name">{g.name}</span>{g.badge && <span className="gtile-badge">{g.badge}</span>}</Link>)}</div>
       <section key={cur.id} id={cur.id} className="game-sec">{cur.node}</section>
     </div>
   );
