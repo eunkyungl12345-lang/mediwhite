@@ -971,3 +971,7 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .om-chat .dr-feed{max-height:150px}
 .om-cb{color:var(--ink)}.om-cw{color:#6b7280}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--ink)}
+
+.ty-hint{border:1px dashed var(--scrub);background:var(--scrub-soft);color:var(--ink);border-radius:12px;padding:8px 10px;font-size:13px;text-align:left;cursor:pointer;animation:sw-in .3s}
+.ty-hud-cash.bump{animation:ty-bump .18s ease-out}
+@keyframes ty-bump{50%{transform:scale(1.06)}}

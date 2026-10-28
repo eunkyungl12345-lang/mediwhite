@@ -91,7 +91,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const [toast, setToast] = useState("");
   const [combo, setCombo] = useState(comboOf(0));
   const [talk, setTalk] = useState<number | null>(null);
-  const [, setTick] = useState(0);
+  const [, setTick] = useState(0); const [tapN, setTapN] = useState(0);
   const ref = useRef(s); ref.current = s;
   const box = useRef<HTMLDivElement>(null);
   const clicks = useRef<number[]>([]);
@@ -146,7 +146,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const tap = (e: React.PointerEvent) => {
     const now = performance.now(); clicks.current = [...clicks.current.filter(t => now - t < 1000), now]; const c = comboOf(clicks.current.length); setCombo(c);
     const g = Math.round(click * c.m), br = box.current!.getBoundingClientRect(), bricks = ref.current.props[0] ? 1 + Math.floor(ref.current.clickLv / 50) : 0;
-    setS(x => ({ ...x, cash: x.cash + g, total: x.total + g, patients: x.patients + 1, bricks: x.bricks + bricks })); sfx.coin(); haptic(6);
+    setS(x => ({ ...x, cash: x.cash + g, total: x.total + g, patients: x.patients + 1, bricks: x.bricks + bricks })); sfx.coin(); haptic(6); setTapN(n => n + 1);
     pop(box.current, e.clientX - br.left, e.clientY - br.top, "+" + fmt(g) + (c.m > 1 ? ` ×${c.m}` : ""), "good"); dirty.current = true;
   };
   const claimVip = () => {
@@ -201,7 +201,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
       {season && <div className="warn">🆕 <span><b>시즌 3 오픈!</b> 거지키우기처럼 새로 짜였어요. 갖고 있던 <b>현금·내 집·가구는 그대로 옮겨왔고</b>, 병원(직원·시설)은 새로 키워요. 진료 클릭 → 직원 17명 → 부동산·미술품 → 직원 복지 → 기업·분원·우주병원 → 환생까지!</span></div>}
       <div className="ty-top" ref={box}>
         <div className="ty-hud" onPointerDown={tap} role="button" aria-label="탭해서 진료">
-          <div className="ty-hud-cash">💰 {fmt(s.cash)}원</div>
+          <div key={tapN} className={"ty-hud-cash" + (tapN ? " bump" : "")}>💰 {fmt(s.cash)}원</div>
           <div className="ty-hud-rates"><span style={{ color: combo.c }}>+{fmt(click * combo.m)}원/클릭{combo.m > 1 ? ` ×${combo.m}` : ""}</span><span>+{showRate(rate)}원/초</span></div>
         </div>
         <div className="ty-rate" style={{ textAlign: "center" }}>총자산 {fmt(assets)}원{ms ? ` · 직원 보너스 +${fmt(ms)}%` : ""}{s.rebirthBonus ? ` · 환생 +${s.rebirthBonus}%` : ""}{s.pills ? ` · 💊${s.pills}` : ""}</div>
@@ -211,6 +211,8 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
         </div>
         <div onPointerDown={scene === "hosp" ? tap : undefined} className="ty-scene">{scene === "hosp" ? <HospitalScene s={s} /> : <HomeScene s={s} />}</div>
         {scene === "hosp" && <div className="ty-combo"><span style={{ background: combo.c }} />👆 병원을 탭하면 진료 · 1초에 5번↑ ×1.2 · 8번↑ ×1.3 · 11번↑ ×1.4 · 14번↑ ×1.5{helping > 0 ? ` · 🤖 도우미 진료 중 ${helping}초` : ""}</div>}
+        {scene === "hosp" && !s.staff[0] && s.cash >= 1e4 && <button type="button" className="ty-hint" onClick={() => setTab("staff")}>💡 진료만으로는 조금씩 벌려요. <b>👥 직원</b>을 고용하면 가만히 있어도 돈이 쌓여요 →</button>}
+        {scene === "hosp" && s.staff[0] > 0 && rate < click && s.cash > clickCost(s.clickLv) * 50 && <button type="button" className="ty-hint" onClick={() => setTab("doc")}>💡 돈이 넉넉해요! <b>👨‍⚕️ 원장</b> 레벨을 올리면 한 번 탭할 때 버는 돈이 확 늘어요 →</button>}
         {vip && <button type="button" className="ty-vip" onClick={claimVip}>💼 VIP 환자 도착! <small>탭하면 큰 보상 + 가끔 황금 왕진가방</small></button>}
         {talk !== null && <div className="ty-welcome" onClick={() => setTalk(null)}><div className="ty-welcome-card ty-talk">
           <div className="big">{STAFF[talk].icon} {STAFF[talk].name} 입사!</div>
@@ -237,7 +239,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           <div className="ty-row next">
             <span className="def-ico" style={{ background: "var(--scrub-soft)" }}>👨‍⚕️</span>
             <div style={{ flex: 1, minWidth: 0 }}><b>원장 진료</b> <span className="tag">Lv{s.clickLv}</span><div className="muted" style={{ fontSize: 12 }}>클릭당 {fmt(click)}원 → 다음 {fmt(clickOf({ ...s, clickLv: s.clickLv + 1 }))}원 · 레벨 n이면 기본 n(n+1)/2+1원{perkSum(s) ? ` · 복지 +${fmt(perkSum(s))}%` : ""}</div></div>
-            <div className="ty-btns"><Btn cost={clickCost(s.clickLv)} onClick={() => upClick(1)} label="+1" /><Btn cost={sumCost(clickCost, s.clickLv, 10)} onClick={() => upClick(10)} label="+10" /></div>
+            <div className="ty-btns"><Btn cost={clickCost(s.clickLv)} onClick={() => upClick(1)} label="+1" /><Btn cost={sumCost(clickCost, s.clickLv, 10)} onClick={() => upClick(10)} label="+10" /><Btn cost={sumCost(clickCost, s.clickLv, 100)} onClick={() => upClick(100)} label="+100" /></div>
           </div>
           <div className={"ty-row" + (s.clickLv >= REBIRTH_LV ? " next" : " locked")}>
             <span className="def-ico">🌅</span>
@@ -255,7 +257,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
               {open && lv > 0 && lv < 20 && <div className="ty-bar"><i style={{ width: `${lv / 20 * 100}%` }} /></div>}
               {open && lv > 0 && Object.entries(s.coupons).some(([, n]) => n > 0) && <div className="row" style={{ gap: 4, marginTop: 4 }}>{["1", "5", "10"].filter(k => s.coupons[k] > 0).map(k => <button key={k} type="button" className="link" onClick={() => useCoupon(i, k)}>🎟️ +{k} 쿠폰 쓰기 ({s.coupons[k]})</button>)}</div>}
             </div>
-            {open && <div className="ty-btns"><Btn cost={staffCost(i, lv)} onClick={() => upStaff(i, 1)} label={lv ? "+1" : "고용"} />{lv > 0 && <Btn cost={sumCost(k => staffCost(i, k), lv, 10)} onClick={() => upStaff(i, 10)} label="+10" />}</div>}
+            {open && <div className="ty-btns"><Btn cost={staffCost(i, lv)} onClick={() => upStaff(i, 1)} label={lv ? "+1" : "고용"} />{lv > 0 && <Btn cost={sumCost(k => staffCost(i, k), lv, 10)} onClick={() => upStaff(i, 10)} label="+10" />}{lv > 0 && s.cash >= sumCost(k => staffCost(i, k), lv, 50) && <Btn cost={sumCost(k => staffCost(i, k), lv, 50)} onClick={() => upStaff(i, 50)} label="+50" />}</div>}
           </div>; })}
 
         {tab === "prop" && <>
