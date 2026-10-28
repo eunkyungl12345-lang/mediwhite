@@ -752,3 +752,8 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .ss-pic img{width:100%;height:100%;object-fit:cover;display:block}
 .ss-pic img.blur{filter:blur(14px);transform:scale(1.2)}
 .ss-pic span{position:absolute;inset:auto 0 10px;text-align:center;font-size:12px;font-weight:600;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+
+.ss-post{display:grid;gap:4px;padding:10px 0;border-top:1px solid var(--line);color:var(--ink);text-decoration:none}
+.ss-post-t{font-weight:700;font-size:15px}
+.ss-post-b{font-size:14px;color:var(--ink);opacity:.85;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.ss-post-m{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)}

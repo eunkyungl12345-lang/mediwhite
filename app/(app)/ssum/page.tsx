@@ -41,14 +41,20 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
   let body: React.ReactNode = null;
   if (tab === "lounge") {
     const [{ data: posts }] = await Promise.all([
-      d.from("posts").select("id,title,topic,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(40),
+      d.from("posts").select("id,title,body,topic,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(40),
     ]);
+    const pids = (posts ?? []).map((p: any) => p.id);
+    const [{ data: cc }, { data: rc }] = pids.length ? await Promise.all([d.from("comments").select("post_id").in("post_id", pids), d.from("reactions").select("target_id").eq("kind", "post").in("target_id", pids)]) : [{ data: [] as any[] }, { data: [] as any[] }];
+    const nC: Record<string, number> = {}, nR: Record<string, number> = {};
+    for (const c of cc ?? []) nC[c.post_id] = (nC[c.post_id] ?? 0) + 1;
+    for (const r of rc ?? []) nR[r.target_id] = (nR[r.target_id] ?? 0) + 1;
     body = <>
+      <div className="muted" style={{ fontSize: 12 }}>💡 글을 누르면 열려요. 안에서 공감·댓글을 달 수 있고, 내 글은 <b>글 삭제</b>, 남의 글은 <b>🚩 신고</b>(즉시 가려짐)할 수 있어요.</div>
       {SSUM_TOPICS.map(t => { const list = (posts ?? []).filter((p: any) => p.topic === t.key).slice(0, 8);
         return <section key={t.key} className="card">
           <div className="ss-head"><h3>{t.icon} {t.name}</h3><Link className="btn" style={{ padding: "6px 12px" }} href={`/board/new?cat=${encodeURIComponent("썸")}&topic=${t.key}`}>글쓰기</Link></div>
           <div className="muted" style={{ fontSize: 12 }}>{t.hint}</div>
-          {list.length ? list.map((p: any) => <Link key={p.id} href={`/board/${p.id}`} className="h-row"><span className="h-topic">{topicOf(p.topic).icon}</span><span className="h-title">{p.title}</span><span className="h-meta">{p.author ? display(p.author.dept, p.author.nickname) : ""} · {fmt(p.created_at)}</span></Link>) : <div className="h-empty">첫 글을 기다려요.</div>}
+          {list.length ? list.map((p: any) => <Link key={p.id} href={`/board/${p.id}`} className="ss-post"><div className="ss-post-t">{p.title}</div>{p.body && <div className="ss-post-b">{p.body}</div>}<div className="ss-post-m"><span>{p.author ? display(p.author.dept, p.author.nickname) : ""} · {fmt(p.created_at)}</span><span>💬 {nC[p.id] ?? 0} · 👍 {nR[p.id] ?? 0} ›</span></div></Link>) : <div className="h-empty">첫 글을 기다려요.</div>}
         </section>; })}
     </>;
   }
