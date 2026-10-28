@@ -48,7 +48,7 @@ function stageDef(id: number, forced?: Mod): StageDef {
   const pool = [0]; if (id >= 2) pool.push(1); if (id >= 4) pool.push(2); if (id >= 7) pool.push(4); if (id >= 11) pool.push(5); if (id >= 14) pool.push(6);
   const mod: Mod = forced ?? (no === 4 ? "night" : no === 7 ? "iso" : no === 9 ? "rush" : "none");
   const boss = id % 5 === 0 ? (id >= 25 ? 7 : 3) : 0;
-  return { id, ch, no, name: `${ch}-${no}`, waves: id <= 2 ? 2 : Math.min(12, 3 + Math.floor((id - 1) / 3)), mod, boss, pool, mult: (id <= 2 ? .6 : id <= 4 ? .8 : 1) * (1 + (id - 1) * .10), spd: (id <= 2 ? .75 : id <= 4 ? .9 : 1) * (1 + (id - 1) * .02) };
+  return { id, ch, no, name: `${ch}-${no}`, waves: id <= 3 ? 2 : id <= 6 ? 3 : Math.min(10, 3 + Math.floor((id - 1) / 3)), mod, boss, pool, mult: (id <= 3 ? .45 : id <= 6 ? .6 : id <= 10 ? .75 : id <= 15 ? .9 : 1) * (1 + (id - 1) * .08), spd: (id <= 3 ? .7 : id <= 6 ? .85 : 1) * (1 + (id - 1) * .015) };
 }
 const kstDay = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
 const hash = (s: string) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
@@ -56,6 +56,10 @@ const lvCost = (k: UnitKind, lv: number) => Math.round((40 + ORDER.indexOf(k) * 
 const lvMult = (lv: number) => 1 + .2 * (lv - 1);
 /** 수액 걸이: 레벨마다 생산량 +10, 간격 -0.5초 */
 const ivAmt = (lv: number) => 25 + 10 * (lv - 1), ivGap = (lv: number) => 8 - .5 * (lv - 1);
+/** 연속 실패 시 자동 지원 (스테이지별, 최대 3단계) */
+const helpKey = (id: number) => `mw-def-help-${id}`;
+const getHelp = (id: number) => { try { return Math.min(3, Number(localStorage.getItem(helpKey(id)) ?? 0) || 0); } catch { return 0; } };
+const setHelp = (id: number, n: number) => { try { n ? localStorage.setItem(helpKey(id), String(n)) : localStorage.removeItem(helpKey(id)); } catch {} };
 const stageCoins = (id: number, stars: number) => Math.round((15 + id * 5) * stars / 3);
 
 export default function Defense({ ranks }: { ranks: Row[] }) {
@@ -72,7 +76,8 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
   const [showUp, setShowUp] = useState(false);
   const [unlockCard, setUnlockCard] = useState<UnitDef | null>(null);
   const [toast, setToast] = useState("");
-  const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], fx: [] as Fx[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, paused: false, assist: false, carts: [true, true, true, true, true] as boolean[], cartFx: [] as { r: number; x: number }[], raf: 0, W: 0, H: 0, last: 0, lost: 0, stage: null as StageDef | null, daily: false, levels: {} as Partial<Record<UnitKind, number>>, sunDrops: [] as { x: number; y: number; t: number }[] });
+  const [fast, setFast] = useState(false);
+  const g = useRef({ units: [] as Unit[], germs: [] as Germ[], shots: [] as Shot[], fx: [] as Fx[], sun: 150, t: 0, wave: 0, nextSpawn: 4, spawned: 0, waveSize: 3, running: false, paused: false, assist: false, carts: [true, true, true, true, true] as boolean[], cartFx: [] as { r: number; x: number }[], raf: 0, help: 0, speed: 1, W: 0, H: 0, last: 0, lost: 0, stage: null as StageDef | null, daily: false, levels: {} as Partial<Record<UnitKind, number>>, sunDrops: [] as { x: number; y: number; t: number }[] });
   const saveRef = useRef(save); saveRef.current = save;
 
   const persist = (next: typeof save) => { setSave(next); saveGameState("defense", next).catch(() => {}); };
@@ -141,14 +146,15 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
     const randRow = () => { const rows = [0, 1, 2, 3, 4].filter(rowOk); return rows[Math.floor(Math.random() * rows.length)]; };
     const spawn = (kind: number, r = randRow(), x0 = s.W + 10, hpScale = 1) => {
       const st = s.stage!, w = s.wave, m = st.mult * (st.mod === "tough" ? 1.5 : 1) * (1 + w * .06), sp = st.spd * (st.mod === "rush" ? 1.3 : 1) * (1 + w * .03);
-      const base = [60, 150, 340, 1800, 120, 260, 50, 3500][kind] * m * hpScale * (s.assist ? .65 : 1), speed = [15, 11, 9, 7, 13, 9, 28, 6][kind] * sp * (1 + Math.random() * .2), dmg = [10, 16, 30, 80, 12, 20, 8, 100][kind];
+      const base = [60, 150, 340, 1800, 120, 260, 50, 3500][kind] * m * hpScale * (s.assist ? .65 : 1) * (1 - .15 * s.help), speed = [15, 11, 9, 7, 13, 9, 28, 6][kind] * sp * (1 + Math.random() * .2), dmg = [10, 16, 30, 80, 12, 20, 8, 100][kind];
       s.germs.push({ r, x: x0, hp: base, max: base, speed, dmg, kind, eating: false, slow: 0, poison: 0, cd: 6 });
     };
     const spawnGerm = () => { const st = s.stage!, w = s.wave; const pool = st.pool.filter(k => k === 0 || Math.random() < Math.min(.6, .2 + w * .05 + st.id * .01)); spawn(pool[Math.floor(Math.random() * pool.length)]); };
     const finish = (win: boolean) => {
       s.running = false; cancelAnimationFrame(s.raf); draw();
       const st = s.stage!, cur = saveRef.current;
-      if (!win) { sfx.boom(); haptic([60, 40, 60]); shake(box.current, "l"); setUi(u => ({ ...u, running: false })); setResult({ win: false, stars: 0, coins: 0, first: false }); return; }
+      if (!win) { sfx.boom(); haptic([60, 40, 60]); shake(box.current, "l"); if (!s.daily) setHelp(st.id, Math.min(3, s.help + 1)); setUi(u => ({ ...u, running: false })); setResult({ win: false, stars: 0, coins: 0, first: false }); return; }
+      setHelp(st.id, 0);
       const stars = Math.min(s.assist ? 2 : 3, s.lost === 0 ? 3 : s.lost <= 3 ? 2 : 1);
       const prevStars = cur.stars[st.id] ?? 0, first = prevStars === 0;
       let coins = stageCoins(st.id, stars) + (first ? 30 : 0);
@@ -163,7 +169,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
     const laneGerms = (r: number, fromX: number) => s.germs.filter(z => z.r === r && z.x > fromX);
     const tick = (now: number) => {
       if (s.paused) { s.last = now; s.raf = requestAnimationFrame(tick); return; }
-      const dt = Math.min(.05, (now - s.last) / 1000); s.last = now; s.t += dt; const CW = cw(), CH = ch(); const st = s.stage!;
+      const dt = Math.min(.05, (now - s.last) / 1000) * s.speed; s.last = now; s.t += dt; const CW = cw(), CH = ch(); const st = s.stage!;
       s.nextSpawn -= dt;
       if (s.nextSpawn <= 0) {
         if (s.spawned < s.waveSize) { spawnGerm(); s.spawned++; if (st.boss && s.wave === st.waves && s.spawned === s.waveSize) { spawn(st.boss); sfx.boom(); pop(box.current, s.W / 2, s.H * .3, "⚠ BOSS", "bad big"); shake(box.current, "m"); } s.nextSpawn = Math.max(.5, 2.3 - s.wave * .1 - st.id * .02); }
@@ -210,7 +216,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       for (const c of s.cartFx) c.x += 520 * dt; s.cartFx = s.cartFx.filter(c => c.x < s.W + 40);
       draw(); s.raf = requestAnimationFrame(tick);
     };
-    (box.current as any).__start = (st: StageDef, isDaily: boolean, assist = false) => { sfx.level(); size(); s.stage = st; s.daily = isDaily; s.assist = assist; s.carts = [true, true, true, true, true]; s.cartFx = []; s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = (st.mod === "rush" ? 400 : st.id <= 3 ? 300 : 250) + (assist ? 150 : 0); s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = st.id <= 2 ? 2 : Math.round((2 + 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = st.id <= 2 ? 8 : 6; s.sunDrops = []; s.lost = 0; s.running = true; s.paused = false; s.last = performance.now(); setUi({ sun: s.sun, wave: 1, running: true }); if (st.id === 1) { setTimeout(() => pop(box.current, s.W / 2, s.H / 2, "💡 가운데 줄에 간호사 2명 + 수액 걸이!", "good"), 400); setTimeout(() => pop(box.current, s.W / 2, s.H * .7, "세균은 8초 뒤에 와요", "good"), 2200); } s.raf = requestAnimationFrame(tick); };
+    (box.current as any).__start = (st: StageDef, isDaily: boolean, assist = false) => { sfx.level(); size(); s.stage = st; s.daily = isDaily; s.assist = assist; s.help = isDaily ? 0 : getHelp(st.id); s.carts = [true, true, true, true, true]; s.cartFx = []; s.units = []; s.germs = []; s.shots = []; s.fx = []; s.sun = (st.mod === "rush" ? 400 : st.id <= 3 ? 300 : 250) + (assist ? 150 : 0) + 75 * s.help; s.t = 0; s.wave = 1; s.spawned = 0; s.waveSize = st.id <= 2 ? 2 : Math.round((2 + 1.5 + Math.floor(st.id / 5)) * (st.mod === "double" ? 2 : 1)); s.nextSpawn = st.id <= 2 ? 8 : 6; s.sunDrops = []; s.lost = 0; s.running = true; s.paused = false; s.last = performance.now(); setUi({ sun: s.sun, wave: 1, running: true }); if (s.help) setTimeout(() => pop(box.current, s.W / 2, s.H * .4, `🩹 자동 지원 Lv${s.help}: 세균 체력 -${15 * s.help}% · 수액 +${75 * s.help}`, "good"), 300); if (st.id === 1) { setTimeout(() => pop(box.current, s.W / 2, s.H / 2, "💡 가운데 줄에 간호사 2명 + 수액 걸이!", "good"), 400); setTimeout(() => pop(box.current, s.W / 2, s.H * .7, "세균은 8초 뒤에 와요", "good"), 2200); } s.raf = requestAnimationFrame(tick); };
     (box.current as any).__place = (kind: UnitKind, px: number, py: number) => {
       if (!s.running) return; const CW = cw(), CH = ch();
       const hit = s.sunDrops.findIndex(d => Math.hypot(d.x - px, d.y - py) < CH * .4);
@@ -221,6 +227,17 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       const hp = Math.round(UNITS[kind].hp * lv(kind));
       s.sun -= cost; s.units.push({ kind, r, c, hp, max: hp, cd: kind === "iv" ? ivGap(s.levels.iv ?? 1) : 0 }); setUi(u => ({ ...u, sun: s.sun })); sfx.tap(); haptic(8); burst(box.current, px, py, UCOLOR[kind], 8);
     };
+    (box.current as any).__auto = () => {
+      if (!s.running) return; const CW = cw(), CH = ch(); let n = 0;
+      const rows = [2, 1, 3, 0, 4].filter(rowOk), has = (k: UnitKind) => UNITS[k].unlock <= saveRef.current.cleared;
+      const plan: [UnitKind, number, number][] = [];
+      for (const r of rows) { plan.push(["iv", r, 0]); plan.push(["nurse", r, 1]); }
+      for (const r of rows) { plan.push([has("doctor") ? "doctor" : "nurse", r, 2]); }
+      for (const r of rows) { plan.push(["iv", r, 3]); plan.push(["wall", r, 5]); }
+      for (const [k, r, c] of plan) { if (s.units.some(u => u.r === r && u.c === c)) continue; if (s.sun < UNITS[k].cost) break; const hp = Math.round(UNITS[k].hp * lv(k)); s.sun -= UNITS[k].cost; s.units.push({ kind: k, r, c, hp, max: hp, cd: k === "iv" ? ivGap(s.levels.iv ?? 1) : 0 }); burst(box.current, c * CW + CW / 2, r * CH + CH / 2, UCOLOR[k], 6); n++; }
+      setUi(u => ({ ...u, sun: s.sun })); if (n) { sfx.tap(); haptic(10); } else pop(box.current, s.W / 2, s.H / 2, "수액을 더 모아주세요", "bad");
+    };
+    (box.current as any).__speed = () => { s.speed = s.speed === 1 ? 2 : 1; return s.speed; };
     try { if (location.search.includes("devwin")) (box.current as any).__win = () => finish(true); } catch {}
     const ro = new ResizeObserver(size); ro.observe(box.current!); size();
     return () => { ro.disconnect(); cancelAnimationFrame(s.raf); };
@@ -278,6 +295,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
 
       <div style={{ display: view === "play" ? "grid" : "none", gap: 10 }}>
         {stage && <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">{daily ? "📅 " : ""}{stage.name} · 웨이브 {ui.wave}/{stage.waves}{stage.mod !== "none" ? ` · ${MODS[stage.mod].name}` : ""}</span><span className="muted">잃은 의료진 {g.current.lost}</span></div>}
+        {stage && <div className="row" style={{ gap: 6 }}><button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={() => (box.current as any)?.__auto()}>✨ 추천 배치</button><button type="button" className={"btn" + (fast ? "" : " ghost")} style={{ padding: "6px 12px" }} onClick={() => setFast(((box.current as any)?.__speed() ?? 1) === 2)}>⏩ {fast ? "2배속 ON" : "2배속"}</button></div>}
         <div className="def-shop">{unlocked.map(k => <button key={k} type="button" className={"def-unit" + (sel === k ? " sel" : "") + (ui.sun < UNITS[k].cost ? " poor" : "")} onClick={() => setSel(k)} title={UNITS[k].desc}><span className="def-ico" style={{ background: UCOLOR[k] }}>{UNITS[k].icon}</span><span className="def-name">{UNITS[k].name}{(save.levels[k] ?? 1) > 1 ? ` +${(save.levels[k] ?? 1) - 1}` : ""}</span><span className="def-cost">{UNITS[k].cost}</span></button>)}
           {locked.map(k => <div key={k} className="def-unit locked" title={`${stageDef(UNITS[k].unlock).name} 클리어 시 해금`}><span className="def-ico">🔒</span><span className="def-name">{UNITS[k].name}</span><span className="def-cost">{stageDef(UNITS[k].unlock).name}</span></div>)}</div>
         <div className="def-stage" ref={box} onPointerDown={e => { const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect(); (e.currentTarget as any).__place(sel, e.clientX - r.left, e.clientY - r.top); }}>
@@ -295,7 +313,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
                     {!daily && stage && stage.id < STAGES && <button type="button" className="btn" onClick={() => start(stageDef(stage.id + 1))}>다음 스테이지 ▶</button>}
                   </div>
                 </> : <>
-                  <div className="muted">웨이브 {ui.wave}/{stage?.waves}에서 실패<br /><b>🩹 지원 받고 다시</b>: 세균 체력 -35%, 시작 수액 +150 (별은 최대 2개)</div>
+                  <div className="muted">웨이브 {ui.wave}/{stage?.waves}에서 실패<br />{!daily && stage && <><b>🩹 다음 판 자동 지원 Lv{Math.min(3, g.current.help + 1)}</b>: 세균 체력 -{15 * Math.min(3, g.current.help + 1)}% · 수액 +{75 * Math.min(3, g.current.help + 1)} (질수록 쉬워져요)<br /></>}<b>🩹 지원 받고 다시</b>: 세균 체력 -35%, 시작 수액 +150 (별은 최대 2개)</div>
                   <div className="row">
                     <button type="button" className="btn ghost" onClick={() => { setResult(null); setView("map"); }}>맵으로</button>
                     <button type="button" className="btn ghost" onClick={() => stage && start(stage, daily)}>다시 도전</button>
