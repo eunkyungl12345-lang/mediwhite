@@ -31,40 +31,41 @@ const LINES: Record<Dept, string[]> = {
   방사선: ["숨 참으세요~", "촬영 들어갑니다", "CT 대기 5명!"],
   응급구조: ["응급 환자 이송 중!", "비켜주세요!!", "구급차 출동!"],
 };
-/** 로비 장면: 고용한 직원이 큼직한 캐릭터로 돌아다니고 가끔 말풍선 */
+const SPRITE: Record<Dept, string> = { 원무: "wonmu", 간호: "nurse", 의사: "doctor", 총괄: "director", 물리치료: "pt", 임상병리: "lab", 방사선: "xray", 응급구조: "ems" };
+/** 병원 외관(단계별 그림) + 로비(직원 캐릭터가 돌아다니고 가끔 말풍선) */
 function HospitalScene({ s }: { s: Saved }) {
-  const CAP = 22, total = DORDER.reduce((a, d) => a + (s.staff[d]?.n ?? 0), 0);
+  const CAP = 16, total = DORDER.reduce((a, d) => a + (s.staff[d]?.n ?? 0), 0);
   const people: { d: Dept; i: number }[] = [];
   for (const d of DORDER) { const n = s.staff[d]?.n ?? 0; if (!n) continue; const k = total <= CAP ? n : Math.max(1, Math.round(n / total * CAP)); for (let i = 0; i < k; i++) people.push({ d, i }); }
   const shown = people.slice(0, CAP);
   const [bubble, setBubble] = useState<{ k: number; t: string } | null>(null);
   useEffect(() => { if (!shown.length) return; const id = setInterval(() => { const k = Math.floor(Math.random() * shown.length), L = LINES[shown[k].d]; setBubble({ k, t: L[Math.floor(Math.random() * L.length)] }); setTimeout(() => setBubble(null), 2400); }, 3200); return () => clearInterval(id); }, [shown.length]); // eslint-disable-line
-  const pos = (k: number) => { const h = (k * 2654435761) >>> 0, x = 6 + (h % 1000) / 1000 * 80, row = k % 4, y = 30 + row * 16 + ((h >>> 10) % 100) / 100 * 8; return { x, y, sc: .78 + (y - 30) / 70 * .55 }; };
-  const opened = ROOMS.slice(1, s.rooms + 1);
-  const uni = s.rooms >= 9;
+  // 로비 바닥(마름모) 안쪽에 흩뿌리기
+  const pos = (k: number) => { const h = (k * 2654435761) >>> 0, u = (h % 1000) / 1000, v = ((h >>> 10) % 1000) / 1000; const y = 42 + v * 40, half = 18 + (y - 42) * .55; return { x: 50 + (u * 2 - 1) * half, y, sc: .8 + (y - 42) / 40 * .35 }; };
+  const big = s.rooms >= 4, uni = s.rooms >= 9;
   return (
     <div className={"lb" + (uni ? " uni" : "")}>
-      <div className="lb-facade">
+      <div className="lb-out">
+        <img src={big ? "/game/b7.webp" : "/game/b1.webp"} alt="" className={"lb-bld" + (big ? " big" : "")} key={big ? "b7" : "b1"} draggable={false} />
         {s.heli && <span className="lb-heli">🚁</span>}
-        <span className="lb-sign"><i>✚</i>{uni ? "메디화이트 대학교병원" : "메디화이트병원"}</span>
-        <span className="lb-floors">{s.rooms + 1}층{s.rooms >= 8 ? " · 신관" : ""}</span>
+        <span className="lb-sign"><i>✚</i>{uni ? "메디화이트 대학교병원" : "메디화이트병원"} · {s.rooms + 1}층</span>
+        {s.amb > 0 && <span className="lb-amb">{"🚑".repeat(s.amb)}</span>}
       </div>
       <div className="lb-room">
-        <div className="lb-wall">
-          <span className="lb-door">🏥 외래</span>
-          {opened.map(r => <span key={r.name} className={"lb-door" + (r.name === "응급실" ? " er" : "")}>{r.icon} {r.name}</span>)}
-          {s.gear.map(k => <span key={k} className="lb-gear" title={GEAR.find(g => g.key === k)?.name}>{GEAR.find(g => g.key === k)?.icon}</span>)}
-        </div>
-        <div className="lb-floor" />
-        {!shown.length && <div className="lb-empty">아직 직원이 없어요<br /><b>👇 아래에서 원무 직원을 고용해보세요</b></div>}
+        <img src="/game/lobby.webp" alt="" className="lb-bg" draggable={false} />
+        {!shown.length && <div className="lb-empty"><b>👇 아래에서 원무 직원을 고용해보세요</b></div>}
         {shown.map((p, k) => { const { x, y, sc } = pos(k); return (
-          <div key={p.d + p.i} className="lb-guy" style={{ left: `${x}%`, top: `${y}%`, zIndex: Math.round(y), ["--sc" as any]: sc, ["--dur" as any]: `${5 + (k % 5)}s`, ["--dx" as any]: `${(k % 2 ? 1 : -1) * (10 + (k * 7) % 22)}px` }}>
+          <div key={p.d + p.i} className="lb-guy" style={{ left: `${x}%`, top: `${y}%`, zIndex: Math.round(y), ["--sc" as any]: sc, ["--dur" as any]: `${5 + (k % 5)}s`, ["--dx" as any]: `${(k % 2 ? 1 : -1) * (8 + (k * 7) % 18)}px` }}>
             {bubble?.k === k && <span className="lb-bubble">{bubble.t}</span>}
-            <span className="lb-emoji">{PERSON[p.d]}</span>
+            <img src={`/game/${SPRITE[p.d]}.webp`} alt={p.d} className="lb-sprite" draggable={false} />
           </div>); })}
-        <div className="lb-park">{Array.from({ length: s.amb }, (_, i) => <span key={i}>🚑</span>)}</div>
       </div>
-      <div className="lb-legend">{DORDER.filter(d => s.staff[d]?.n).map(d => <span key={d}>{PERSON[d]} {d} <b>{s.staff[d]!.n}</b></span>)}<span className="lb-pat">🧍 환자 {fmt(s.patients)}명</span></div>
+      <div className="lb-legend">
+        {DORDER.filter(d => s.staff[d]?.n).map(d => <span key={d}><img src={`/game/${SPRITE[d]}.webp`} alt="" />{d} <b>{s.staff[d]!.n}</b></span>)}
+        {ROOMS.slice(1, s.rooms + 1).map(r => <span key={r.name} className="lb-room-tag">{r.icon} {r.name}</span>)}
+        {s.gear.map(k => <span key={k} className="lb-room-tag">{GEAR.find(g => g.key === k)?.icon} {GEAR.find(g => g.key === k)?.name}</span>)}
+        <span className="lb-pat">🧍 환자 {fmt(s.patients)}명</span>
+      </div>
     </div>
   );
 }
