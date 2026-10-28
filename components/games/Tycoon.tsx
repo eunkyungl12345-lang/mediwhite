@@ -115,10 +115,10 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const box = useRef<HTMLDivElement>(null);
   const mine = tycoonDept(myDept);
   const daily = dailyOf(s, mine), rate = daily / DAY;
-  const dirty = useRef(false), lastSave = useRef(0), lastScore = useRef(0);
+  const dirty = useRef(false), lastSave = useRef(0), lastScore = useRef(0), loadFailed = useRef(false);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 2200); };
-  const persist = (force = false) => { const now = Date.now(); if (!force && now - lastSave.current < 15000) { dirty.current = true; return; } lastSave.current = now; dirty.current = false; const cur = { ...ref.current, lastSeen: now }; saveGameState("tycoon", cur).catch(() => {}); const a = assetsOf(cur); if (a >= 1e6 && a > lastScore.current * 1.3) { lastScore.current = a; saveScore("tycoon", Math.floor(a)).catch(() => {}); } };
+  const persist = (force = false) => { const now = Date.now(); if (!force && now - lastSave.current < 15000) { dirty.current = true; return; } lastSave.current = now; dirty.current = false; if (loadFailed.current) return; const cur = { ...ref.current, lastSeen: now }; saveGameState("tycoon", cur).then(r => { if ((r as any)?.stale) { setToast("🔄 다른 화면에서 진행한 기록이 있어 불러올게요"); setTimeout(() => location.reload(), 1200); } }).catch(() => {}); const a = assetsOf(cur); if (a >= 1e6 && a > lastScore.current * 1.3) { lastScore.current = a; saveScore("tycoon", Math.floor(a)).catch(() => {}); } };
 
   useEffect(() => {
     loadGameState("tycoon").then(d => {
@@ -127,7 +127,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
         setS({ ...sv, cash: sv.cash + earn, total: sv.total + earn, patients: sv.patients + pts, lastSeen: now }); lastScore.current = assetsOf(sv); if (earn > 0 && sec > 60) setWelcome({ sec, earn, pts }); }
       else { if (d) setSeason(true); const f = fresh(); setS(f); saveGameState("tycoon", f).catch(() => {}); }
       setLoaded(true);
-    }).catch(() => setLoaded(true));
+    }).catch(() => { loadFailed.current = true; setLoaded(true); setToast("⚠️ 저장된 병원을 못 불러왔어요. 새로고침해 주세요"); });
   }, [mine]);
 
   // 관리자 지급금: 로드 직후 + 20초마다 확인

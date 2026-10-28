@@ -331,7 +331,14 @@ export async function saveGameState(game: string, state: Record<string, unknown>
   const u = await requireUser();
   if (JSON.stringify(state).length > 20000) return;
   bump(u.id, "game").catch(() => {});
+  // 병원 키우기: 누적 매출(total)은 줄어들 수 없어요. 예전 숫자를 든 다른 탭·기기가 덮어쓰는 걸 막음
+  if (game === "tycoon") {
+    const { data: cur } = await db().from("game_state").select("state").eq("user_id", u.id).eq("game", "tycoon").maybeSingle();
+    const ct = Number((cur?.state as any)?.total ?? 0), nt = Number((state as any).total ?? 0), sameV = (cur?.state as any)?.v === (state as any).v;
+    if (sameV && nt + 1 < ct) return { stale: true };
+  }
   await db().from("game_state").upsert({ user_id: u.id, game, state, updated_at: new Date().toISOString() });
+  return { ok: true };
 }
 
 /* ---------- 문의 ---------- */

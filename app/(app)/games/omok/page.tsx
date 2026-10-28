@@ -3,6 +3,7 @@ import { db } from "@/lib/supabase";
 import { display } from "@/lib/depts";
 import { fmt } from "@/lib/format";
 import OmokCreate from "@/components/games/OmokCreate";
+import OmokAI from "@/components/games/OmokAI";
 export const dynamic = "force-dynamic";
 
 export default async function OmokLobby() {
@@ -20,7 +21,7 @@ export default async function OmokLobby() {
       </div>
       <div className="card">
         <h3>열린 방</h3>
-        {!rooms?.length && <div className="muted">열린 방이 없어요. 첫 방을 만들어 친구를 불러보세요!</div>}
+        {!rooms?.length && <div className="muted">열린 방이 없어요. 첫 방을 만들어 친구를 불러보거나, 아래에서 컴퓨터랑 연습해보세요!</div>}
         {rooms?.map((r: any) => { const b = r.players.filter((p: any) => p.team === "b").length, w = r.players.filter((p: any) => p.team === "w").length;
           return <Link key={r.id} href={`/games/omok/${r.id}`} className="ss-post">
             <div className="ss-post-t">{r.status === "playing" ? "🔴 " : "🟢 "}{r.title}</div>
@@ -28,6 +29,7 @@ export default async function OmokLobby() {
             <div className="ss-post-m"><span>{r.per_team === 1 ? "1:1" : `${r.per_team}:${r.per_team} 팀전`} · ⚫{b} vs ⚪{w} · 방장 {r.host_u ? display(r.host_u.dept, r.host_u.nickname) : "-"}</span><span>{r.status === "playing" ? "게임 중 · 구경" : "참가하기 ›"}</span></div>
           </Link>; })}
       </div>
+      <OmokAI />
     </div>
   );
 }
