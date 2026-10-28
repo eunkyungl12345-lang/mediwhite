@@ -10,7 +10,7 @@ import {
 
 /** 우리 병원 키우기 — 시즌 2. 병원을 키워 번 돈으로 집·가구·미술품·차를 사요. (계정 저장) */
 const ROOM_OF: Record<Dept, number> = { 원무: 0, 간호: 0, 의사: 0, 총괄: 0, 물리치료: 1, 임상병리: 2, 방사선: 3, 응급구조: 4 };
-const GEAR_ROOM: Record<string, number> = { kiosk: 0, emr: 0, rehab: 1, analyzer: 2, ct: 3, mri: 3, robot: 5 };
+const GEAR_ROOM: Record<string, number> = { kiosk: 0, emr: 0, rehab: 1, analyzer: 2, ct: 3, mri: 3, checkup: 5 };
 const MAIN_FLOORS = [0, 1, 2, 3, 5, 6, 7]; // 응급실(4)은 별동, 신관(8)·대학병원(9)은 건물 변화
 
 /** 직원은 사람 캐릭터로: 최대 5명까지 그리고 나머지는 +N. 고용하면 새 캐릭터가 톡 튀어나와요 */
@@ -215,8 +215,8 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
             {ok && <div className="ty-btns"><Btn cost={hireCost(d, st.n)} onClick={() => hire(d)} label="고용" />{st.n > 0 && st.lv < MAX_EDU && <Btn cost={lvCost(d, st.lv)} onClick={() => edu(d)} label="교육" />}</div>}
           </div>; })}
 
-        {tab === "rooms" && ROOMS.map((r, i) => <div key={r.name} className={"ty-row" + (i > s.rooms ? " locked" : "")}>
-          <span className="def-ico" style={{ background: i <= s.rooms ? "var(--scrub-soft)" : undefined }}>{i <= s.rooms ? r.icon : "🔒"}</span>
+        {tab === "rooms" && ROOMS.map((r, i) => <div key={r.name} className={"ty-row" + (i > s.rooms + 1 ? " locked" : i === s.rooms + 1 ? " next" : "")}>
+          <span className="def-ico" style={{ background: i <= s.rooms ? "var(--scrub-soft)" : undefined }}>{i <= s.rooms + 1 ? r.icon : "🔒"}</span>
           <div style={{ flex: 1 }}><b>{r.name}</b> {i <= s.rooms && <span className="tag">운영 중</span>}<div className="muted" style={{ fontSize: 12 }}>{r.desc}</div></div>
           {i === s.rooms + 1 && <div className="ty-btns"><Btn cost={r.cost} onClick={buyRoom} label="개설" /></div>}
         </div>)}

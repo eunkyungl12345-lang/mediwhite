@@ -43,7 +43,7 @@ export const GEAR: Gear[] = [
   { key: "analyzer", name: "자동 혈액분석기", icon: "🔬", cost: 40_000_000, need: 2, boost: { 임상병리: .6 }, desc: "임상병리 +60%" },
   { key: "ct", name: "CT", icon: "🩻", cost: 800_000_000, need: 3, boost: { 방사선: .6 }, desc: "방사선 +60%" },
   { key: "mri", name: "MRI", icon: "🧲", cost: 2_000_000_000, need: 3, boost: { 방사선: 1 }, desc: "방사선 +100%" },
-  { key: "robot", name: "수술 로봇", icon: "🤖", cost: 3_000_000_000, need: 5, boost: { 의사: .6 }, desc: "의사 +60%" },
+  { key: "checkup", name: "건강검진센터", icon: "📋", cost: 3_000_000_000, need: 5, boost: { 의사: .3, 임상병리: .6, 방사선: .4, 간호: .2 }, desc: "의사 +30% · 임상병리 +60% · 방사선 +40% · 간호 +20%" },
 ];
 /** 병원 차량 */
 export const AMBULANCE = { name: "특수 구급차", icon: "🚑", cost: 150_000_000, max: 5, boost: .2, need: 4 };
@@ -105,7 +105,7 @@ export type Saved = {
   home: number; items: Record<string, number>; // slot key → 단계 index (+1, 0=없음)
 };
 export const fresh = (): Saved => ({ v: VERSION, cash: 300_000, total: 0, patients: 0, lastSeen: Date.now(), staff: {}, rooms: 0, gear: [], amb: 0, heli: false, home: 0, items: {} });
-export const isCurrent = (x: any): x is Saved => !!x && x.v === VERSION && typeof x.cash === "number";
+export const isCurrent = (x: any): x is Saved => { if (!x || x.v !== VERSION || typeof x.cash !== "number") return false; if (Array.isArray(x.gear)) x.gear = x.gear.map((k: string) => k === "robot" ? "checkup" : k); return true; };
 
 export const fmt = (n: number) => {
   n = Math.floor(n); const a = Math.abs(n);
