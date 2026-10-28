@@ -1,4 +1,5 @@
 "use client";
+import { HERO_SVG, GERM_SVG, art } from "./defArt";
 import { useEffect, useRef, useState } from "react";
 import { saveScore, loadGameState, saveGameState, defenseDaily } from "@/lib/actions";
 import Board, { type Row } from "./Board";
@@ -12,12 +13,12 @@ const UNITS: Record<UnitKind, UnitDef> = {
   iv:      { name: "수액 걸이",   icon: "🧃", cost: 50,  hp: 60,  unlock: 0,  desc: "8초마다 수액 25 생산", skill: "", dmg: 0 },
   nurse:   { name: "간호사",      icon: "💉", cost: 100, hp: 80,  unlock: 0,  desc: "주사기 발사", skill: "", dmg: 25 },
   wall:    { name: "원무 바리케이드", icon: "🚧", cost: 50, hp: 400, unlock: 0, desc: "튼튼한 벽", skill: "", dmg: 0 },
-  xray:    { name: "방사선사",    icon: "☢️", cost: 200, hp: 80,  unlock: 3,  desc: "같은 줄 전체 관통 빔", skill: "관통 빔", dmg: 10 },
-  doctor:  { name: "내과 의사",   icon: "🩺", cost: 150, hp: 90,  unlock: 5,  desc: "느리지만 강한 처방", skill: "", dmg: 60 },
+  xray:    { name: "방사선사",    icon: "☢️", cost: 200, hp: 80,  unlock: 3,  desc: "🔴 레이저: 같은 줄 전체를 한 번에 관통", skill: "관통 빔", dmg: 10 },
+  doctor:  { name: "내과 의사",   icon: "🩺", cost: 150, hp: 90,  unlock: 5,  desc: "💥 처방 샷건: 가까운 적 4마리(옆 줄 포함) 산탄", skill: "", dmg: 60 },
   ortho:   { name: "정형외과 의사", icon: "🦴", cost: 225, hp: 120, unlock: 8, desc: "앞 2칸 망치 강타 (광역)", skill: "🔨 망치", dmg: 90 },
-  anes:    { name: "마취과 의사", icon: "💤", cost: 175, hp: 80,  unlock: 12, desc: "같은 줄 세균 느려짐 + 약한 공격", skill: "💤 수면가스", dmg: 8 },
+  anes:    { name: "마취과 의사", icon: "💤", cost: 175, hp: 80,  unlock: 12, desc: "💤 수면 가스: 같은 줄 느려짐 + 가스 피해", skill: "💤 수면가스", dmg: 8 },
   lab:     { name: "임상병리사",  icon: "🧪", cost: 200, hp: 80,  unlock: 15, desc: "독병 투척, 맞은 세균 지속 피해", skill: "☠️ 독", dmg: 15 },
-  ems:     { name: "응급구조사",  icon: "⚡", cost: 300, hp: 100, unlock: 20, desc: "8초마다 번개로 줄 전체 타격", skill: "⚡ 번개", dmg: 120 },
+  ems:     { name: "응급구조사",  icon: "⚡", cost: 300, hp: 100, unlock: 20, desc: "⚡ 연쇄 번개: 6초마다 적 6마리까지 튕겨 가며 감전", skill: "⚡ 번개", dmg: 120 },
   ornurse: { name: "수술실 간호사", icon: "✂️", cost: 250, hp: 90, unlock: 25, desc: "가위 투척, 세균 3마리 관통", skill: "✂️ 가위", dmg: 35 },
 };
 const ORDER = Object.keys(UNITS) as UnitKind[];
@@ -28,10 +29,10 @@ const GCOLOR = ["#7CCB8F", "#9BD6E0", "#C48BE8", "#E26B6B", "#F0A6D2", "#B0BEC5"
 const GNAME = ["일반 세균", "끈질긴 균", "돌연변이", "보스 🧟", "변이균(분열)", "내성균", "날벌레", "슈퍼박테리아"];
 const CHAPTERS = ["응급실", "일반병동", "중환자실"];
 const MAXLV = 5;
-type Unit = { kind: UnitKind; r: number; c: number; hp: number; max: number; cd: number };
-type Germ = { r: number; x: number; hp: number; max: number; speed: number; dmg: number; kind: number; eating: boolean; slow: number; poison: number; cd: number; warn?: boolean };
+type Unit = { kind: UnitKind; r: number; c: number; hp: number; max: number; cd: number; atk?: number };
+type Germ = { r: number; x: number; hp: number; max: number; speed: number; dmg: number; kind: number; eating: boolean; slow: number; poison: number; cd: number; warn?: boolean; hit?: number };
 type Shot = { r: number; x: number; dmg: number; kind: "needle" | "beam" | "pill" | "poison" | "scissor"; hit: Set<Germ>; pierce: number; spin: number };
-type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg"; r: number; x: number; t: number; w?: number; txt?: string; y?: number };
+type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg" | "laser" | "blast" | "chain" | "gas"; r: number; x: number; t: number; w?: number; txt?: string; y?: number; pts?: [number, number][] };
 type Saved = { bestWave?: number; stars?: Record<string, number>; coins?: number; levels?: Partial<Record<UnitKind, number>>; dailyDone?: string; cleared?: number };
 type Mod = "none" | "night" | "iso" | "rush" | "tough" | "double";
 const MODS: Record<Mod, { name: string; desc: string }> = {
@@ -107,18 +108,19 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       x.fillStyle = "#B8C9C1"; x.fillRect(s.W - 6, 0, 6, s.H);
       for (const u of s.units) if (u.kind === "anes") { x.fillStyle = "rgba(120,100,220,.10)"; x.fillRect(u.c * CW, u.r * CH, s.W - u.c * CW, CH); }
       x.textAlign = "center"; x.textBaseline = "middle";
-      for (const u of s.units) { const cx = u.c * CW + CW / 2, cy = u.r * CH + CH / 2, wob = Math.sin(s.t * 4 + u.c + u.r) * 1.5, R = Math.min(CW, CH) * .42;
-        x.fillStyle = "rgba(0,0,0,.12)"; x.beginPath(); x.ellipse(cx, u.r * CH + CH - 4, R * .9, 3, 0, 0, 7); x.fill();
-        x.fillStyle = UCOLOR[u.kind]; x.beginPath(); x.arc(cx, cy + wob, R, 0, 7); x.fill(); x.strokeStyle = "rgba(255,255,255,.8)"; x.lineWidth = 2; x.stroke();
-        if (u.cd > 0 && u.kind !== "iv" && u.kind !== "wall") { x.strokeStyle = "rgba(0,0,0,.18)"; x.lineWidth = 3; x.beginPath(); x.arc(cx, cy + wob, R + 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, u.cd / 3)); x.stroke(); }
-        x.font = `${Math.floor(R * 1.25)}px system-ui`; x.fillText(UNITS[u.kind].icon, cx, cy + wob + 1);
-        const l = s.levels[u.kind] ?? 1; if (l > 1) { x.font = `700 ${Math.floor(CH * .22)}px system-ui`; x.fillStyle = "#fff"; x.strokeStyle = "#2C6B5E"; x.lineWidth = 3; x.strokeText("Lv" + l, cx + R * .7, cy - R * .7); x.fillText("Lv" + l, cx + R * .7, cy - R * .7); }
-        const p = u.hp / u.max; x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 6, CW - 8, 3); x.fillStyle = p > .5 ? "#2C6B5E" : p > .25 ? "#E6B341" : "#E2574C"; x.fillRect(u.c * CW + 4, u.r * CH + CH - 6, (CW - 8) * p, 3); }
+      for (const u of s.units) { const cx = u.c * CW + CW / 2, cy = u.r * CH + CH / 2, wob = Math.sin(s.t * 3 + u.c + u.r) * 1.2, S = Math.min(CW * 1.25, CH * 1.3);
+        const kick = u.atk && u.atk > 0 ? Math.sin(u.atk * Math.PI) * 4 : 0;
+        const im = art(u.kind, HERO_SVG[u.kind]);
+        if (im) { x.save(); x.translate(cx - kick, cy + wob); if (u.kind === "ortho" && u.atk && u.atk > 0) x.rotate(-Math.sin(u.atk * Math.PI) * .25); x.drawImage(im, -S / 2, -S * .62, S, S); x.restore(); }
+        else { x.fillStyle = UCOLOR[u.kind]; x.beginPath(); x.arc(cx, cy, CH * .38, 0, 7); x.fill(); x.font = `${Math.floor(CH * .45)}px system-ui`; x.fillText(UNITS[u.kind].icon, cx, cy + 1); }
+        if (u.cd > 0 && u.kind !== "iv" && u.kind !== "wall") { x.strokeStyle = "rgba(255,255,255,.7)"; x.lineWidth = 2.5; x.beginPath(); x.arc(cx + S * .32, cy - S * .42, 4, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, 1 - Math.min(1, u.cd / 3))); x.stroke(); }
+        const l = s.levels[u.kind] ?? 1; if (l > 1) { x.font = `700 ${Math.floor(CH * .2)}px system-ui`; x.fillStyle = "#fff"; x.strokeStyle = "#2C6B5E"; x.lineWidth = 3; x.strokeText("Lv" + l, cx - S * .3, cy - S * .45); x.fillText("Lv" + l, cx - S * .3, cy - S * .45); }
+        const p = u.hp / u.max; if (p < 1) { x.fillStyle = "rgba(0,0,0,.25)"; x.fillRect(u.c * CW + 6, u.r * CH + CH - 5, CW - 12, 3); x.fillStyle = p > .5 ? "#2C6B5E" : p > .25 ? "#E6B341" : "#E2574C"; x.fillRect(u.c * CW + 6, u.r * CH + CH - 5, (CW - 12) * p, 3); } }
       for (const sh of s.shots) {
-        const cy = sh.r * CH + CH / 2;
-        if (sh.kind === "scissor") { x.save(); x.translate(sh.x, cy); x.rotate(sh.spin); x.font = `${Math.floor(CH * .45)}px system-ui`; x.fillText("✂️", 0, 0); x.restore(); }
-        else if (sh.kind === "poison") { x.font = `${Math.floor(CH * .4)}px system-ui`; x.fillText("🧪", sh.x, cy - Math.sin(Math.min(1, sh.spin)) * CH * .5); }
-        else { x.fillStyle = sh.kind === "beam" ? "#E2574C" : sh.kind === "pill" ? "#3B5BA9" : "#2C6B5E"; x.beginPath(); x.arc(sh.x, cy, sh.kind === "beam" ? 3 : sh.kind === "pill" ? 5 : 4, 0, 7); x.fill(); }
+        const cy = sh.r * CH + CH / 2 - CH * .08;
+        if (sh.kind === "scissor") { x.save(); x.translate(sh.x, cy); x.rotate(sh.spin); x.shadowColor = "#BFF6FF"; x.shadowBlur = 10; for (let k = 0; k < 3; k++) { x.rotate(Math.PI * 2 / 3); x.fillStyle = "#E9EEF4"; x.beginPath(); x.moveTo(0, -2); x.lineTo(CH * .32, 0); x.lineTo(0, 2); x.fill(); } x.restore(); }
+        else if (sh.kind === "poison") { const yy = cy - Math.sin(Math.min(Math.PI, sh.spin * 2.2)) * CH * .6; x.save(); x.shadowColor = "#8CFF6A"; x.shadowBlur = 12; x.fillStyle = "#5BE37D"; x.beginPath(); x.arc(sh.x, yy, CH * .1, 0, 7); x.fill(); x.fillStyle = "#DFFFE6"; x.fillRect(sh.x - 2, yy - CH * .18, 4, CH * .1); x.restore(); }
+        else { x.save(); const col = sh.kind === "pill" ? "#FFD36E" : "#5FD1F5"; x.shadowColor = col; x.shadowBlur = 10; const g2 = x.createLinearGradient(sh.x - CW * .5, 0, sh.x, 0); g2.addColorStop(0, "rgba(255,255,255,0)"); g2.addColorStop(1, col); x.strokeStyle = g2; x.lineWidth = 3; x.beginPath(); x.moveTo(sh.x - CW * .5, cy); x.lineTo(sh.x, cy); x.stroke(); x.fillStyle = "#fff"; x.beginPath(); x.arc(sh.x, cy, 2.6, 0, 7); x.fill(); x.restore(); }
       }
       for (const z of s.germs) {
         const big = z.kind === 3 || z.kind === 7;
@@ -126,16 +128,21 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         x.fillStyle = "rgba(0,0,0,.12)"; x.beginPath(); x.ellipse(z.x, z.r * CH + CH - 4, R * .8, 3, 0, 0, 7); x.fill();
         if (big) { x.save(); x.globalAlpha = .25 + Math.sin(s.t * 5) * .1; x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R * 1.35, 0, 7); x.fill(); x.restore(); }
         if (z.poison > 0) { x.save(); x.globalAlpha = .35; x.fillStyle = "#4CAF50"; x.beginPath(); x.arc(z.x, cy, R * 1.2, 0, 7); x.fill(); x.restore(); }
-        x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R, 0, 7); x.fill(); x.strokeStyle = z.kind === 5 ? "#546E7A" : "rgba(0,0,0,.15)"; x.lineWidth = z.kind === 5 ? 3 : 2; x.stroke();
-        x.font = `${Math.floor(R * 1.3)}px system-ui`; x.fillText(GICON[z.kind], z.x, cy + 1);
+        const gim = art("g" + z.kind, GERM_SVG[z.kind]), GS = R * (big ? 2.7 : 2.9), squash = z.eating ? 1 + Math.sin(s.t * 14) * .06 : 1;
+        if (gim) { x.save(); x.translate(z.x, cy); x.scale(squash, 2 - squash); x.drawImage(gim, -GS / 2, -GS * .6, GS, GS); x.restore(); if (z.hit && z.hit > 0) { x.save(); x.globalAlpha = z.hit * 2.5; x.globalCompositeOperation = "lighter"; x.fillStyle = "#fff"; x.beginPath(); x.arc(z.x, cy, R * .9, 0, 7); x.fill(); x.restore(); } }
+        else { x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R, 0, 7); x.fill(); x.font = `${Math.floor(R * 1.3)}px system-ui`; x.fillText(GICON[z.kind], z.x, cy + 1); }
         if (z.slow > 0) { x.font = `${Math.floor(CH * .3)}px system-ui`; x.fillText("💤", z.x + R, cy - R); }
         x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(z.x - R, z.r * CH + 4, R * 2, 3); x.fillStyle = big ? "#B71C1C" : "#E2574C"; x.fillRect(z.x - R, z.r * CH + 4, R * 2 * (z.hp / z.max), 3);
       }
       for (const f of s.fx) {
         const cy = f.r * CH + CH / 2, a = Math.max(0, f.t);
         if (f.kind === "bolt") { x.save(); x.globalAlpha = a; x.strokeStyle = "#FFE766"; x.lineWidth = 3; x.shadowColor = "#FFE766"; x.shadowBlur = 12; x.beginPath(); let px = f.x, py = cy; x.moveTo(px, py); while (px < s.W) { px += 14; py = cy + (Math.random() - .5) * CH * .6; x.lineTo(px, py); } x.stroke(); x.restore(); }
-        if (f.kind === "boom") { x.save(); x.globalAlpha = a; x.strokeStyle = "#E6B341"; x.lineWidth = 4; x.beginPath(); x.arc(f.x, cy, (1 - a) * CW * 1.2 + 6, 0, 7); x.stroke(); x.font = `${Math.floor(CH * .5)}px system-ui`; x.fillText("🔨", f.x, cy - CH * .2); x.restore(); }
+        if (f.kind === "boom") { x.save(); x.globalAlpha = a; x.shadowColor = "#FFD36E"; x.shadowBlur = 14; x.strokeStyle = "#FFD36E"; x.lineWidth = 5 * a + 1; x.beginPath(); x.ellipse(f.x, cy + CH * .25, (1 - a) * CW * 1.6 + 8, ((1 - a) * CW * 1.6 + 8) * .35, 0, 0, 7); x.stroke(); x.fillStyle = "rgba(140,110,70,.5)"; for (let k = 0; k < 6; k++) { x.beginPath(); x.arc(f.x + Math.cos(k) * (1 - a) * CW * 1.3, cy + CH * .2 - Math.abs(Math.sin(k * 2)) * (1 - a) * CH * .5, 3, 0, 7); x.fill(); } x.restore(); }
         if (f.kind === "dmg") { x.save(); x.globalAlpha = a; x.font = `600 ${Math.floor(CH * .32)}px system-ui`; x.fillStyle = "#E2574C"; x.strokeStyle = "#fff"; x.lineWidth = 3; const yy = (f.y ?? cy) - (1 - a) * 18; x.strokeText(f.txt ?? "", f.x, yy); x.fillText(f.txt ?? "", f.x, yy); x.restore(); }
+        if (f.kind === "laser") { x.save(); x.globalAlpha = Math.min(1, a * 2); const w = (f.w ?? 6) * a; x.shadowColor = "#FF4D4D"; x.shadowBlur = 18; x.strokeStyle = "#FF5A4E"; x.lineWidth = w + 4; x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.lineTo(s.W, cy - CH * .08); x.stroke(); x.strokeStyle = "#FFF2F0"; x.lineWidth = Math.max(1, w * .4); x.stroke(); x.restore(); }
+        if (f.kind === "blast") { x.save(); x.globalAlpha = a; x.fillStyle = "rgba(255,210,110,.55)"; x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.arc(f.x, cy - CH * .08, CW * 1.4 * (1.2 - a * .4), -.45, .45); x.closePath(); x.fill(); x.strokeStyle = "#FFE08A"; x.lineWidth = 2; for (const [px, py] of f.pts ?? []) { x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.lineTo(px, py); x.stroke(); } x.restore(); }
+        if (f.kind === "chain") { x.save(); x.globalAlpha = a; x.shadowColor = "#FFF27A"; x.shadowBlur = 16; x.strokeStyle = "#FFF7B0"; x.lineWidth = 3; x.beginPath(); const P = f.pts ?? []; if (P.length) { x.moveTo(P[0][0], P[0][1]); for (let k = 1; k < P.length; k++) { const [ax, ay] = P[k - 1], [bx, by] = P[k]; for (let q = 1; q <= 5; q++) { const t2 = q / 5; x.lineTo(ax + (bx - ax) * t2 + (q < 5 ? (Math.random() - .5) * 14 : 0), ay + (by - ay) * t2 + (q < 5 ? (Math.random() - .5) * 14 : 0)); } } } x.stroke(); x.restore(); }
+        if (f.kind === "gas") { x.save(); x.globalAlpha = a * .45; for (let k = 0; k < 4; k++) { x.fillStyle = k % 2 ? "#C9A2FF" : "#B18CFF"; x.beginPath(); x.arc(f.x + k * CW * .6 + (1 - a) * CW, cy + Math.sin(k + s.t * 3) * 6, CH * (.3 + (1 - a) * .25), 0, 7); x.fill(); } x.restore(); }
         if (f.kind === "cloud") { x.save(); x.globalAlpha = a * .6; x.fillStyle = "#6CC070"; x.beginPath(); x.arc(f.x, cy, CW * .55, 0, 7); x.fill(); x.restore(); }
       }
       x.font = `${Math.floor(CH * .45)}px system-ui`;
@@ -180,26 +187,30 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       if (st.mod !== "night" && Math.random() < dt * Math.max(.05, .16 - s.wave * .008)) s.sunDrops.push({ x: 30 + Math.random() * (s.W - 60), y: 20 + Math.random() * (s.H - 40), t: 8 });
       for (const d of s.sunDrops) if ((d.t -= dt) < 5.5) { s.sun += 25; d.t = -1; setUi(u => ({ ...u, sun: s.sun })); pop(box.current, d.x, d.y, "+25", "good"); }
       s.sunDrops = s.sunDrops.filter(d => d.t > 0);
-      for (const u of s.units) { u.cd -= dt; const fx = u.c * CW + CW * .7, lane = laneGerms(u.r, u.c * CW), D = Math.round(UNITS[u.kind].dmg * lv(u.kind));
+      for (const z of s.germs) if (z.hit) z.hit = Math.max(0, z.hit - dt);
+      for (const u of s.units) { if (u.atk) u.atk = Math.max(0, u.atk - dt * 4); u.cd -= dt; const fx = u.c * CW + CW * .7, lane = laneGerms(u.r, u.c * CW), D = Math.round(UNITS[u.kind].dmg * lv(u.kind));
         switch (u.kind) {
           case "iv": if (u.cd <= 0) { const L = s.levels.iv ?? 1, amt = ivAmt(L); u.cd = ivGap(L); s.sun += amt; setUi(x => ({ ...x, sun: s.sun })); pop(box.current, u.c * CW + CW / 2, u.r * CH + CH * .2, `+${amt}💧`, "good"); } break;
-          case "nurse": if (u.cd <= 0 && lane.length) { u.cd = 1.4; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "xray": if (u.cd <= 0 && lane.length) { u.cd = 2.2; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "beam", hit: new Set(), pierce: 99, spin: 0 }); } break;
-          case "doctor": if (u.cd <= 0 && lane.length) { u.cd = 3.2; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "pill", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "ortho": { const near = lane.filter(z => z.x < u.c * CW + CW * 2.6); if (u.cd <= 0 && near.length) { u.cd = 2.8; for (const z of near) { z.hp -= D; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: String(D) }); } s.fx.push({ kind: "boom", r: u.r, x: u.c * CW + CW * 1.6, t: 1 }); } break; }
-          case "anes": for (const z of lane) z.slow = .6; if (u.cd <= 0 && lane.length) { u.cd = 2; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "lab": if (u.cd <= 0 && lane.length) { u.cd = 3; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "poison", hit: new Set(), pierce: 1, spin: 0 }); } break;
-          case "ems": if (u.cd <= 0 && lane.length) { u.cd = 8; for (const z of lane) { z.hp -= D; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: String(D) }); } s.fx.push({ kind: "bolt", r: u.r, x: fx, t: 1 }); } break;
-          case "ornurse": if (u.cd <= 0 && lane.length) { u.cd = 2.4; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "scissor", hit: new Set(), pierce: 3, spin: 0 }); } break;
+          case "nurse": if (u.cd <= 0 && lane.length) { u.cd = 1.4; u.atk = 1; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "needle", hit: new Set(), pierce: 1, spin: 0 }); } break;
+          case "xray": if (u.cd <= 0 && lane.length) { u.cd = 2.2; u.atk = 1; for (const z of lane) { const d = z.kind === 5 ? Math.round(D / 2) : D; z.hp -= d; z.hit = .25; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: String(d) }); } s.fx.push({ kind: "laser", r: u.r, x: fx, t: .5, w: 8 }); sfx.tick(); } break;
+          case "doctor": { const near = s.germs.filter(z => Math.abs(z.r - u.r) <= 1 && z.x > u.c * CW && z.x < u.c * CW + CW * 3.6).sort((a2, b2) => (a2.x + Math.abs(a2.r - u.r) * CW) - (b2.x + Math.abs(b2.r - u.r) * CW)).slice(0, 4);
+            if (u.cd <= 0 && near.length) { u.cd = 2.6; u.atk = 1; const pts: [number, number][] = []; for (const z of near) { const d = Math.round(D * (z.r === u.r ? 1 : .6)); z.hp -= d; z.hit = .25; pts.push([z.x, z.r * CH + CH / 2]); s.fx.push({ kind: "dmg", r: z.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(d) }); } s.fx.push({ kind: "blast", r: u.r, x: fx, t: .45, pts }); shake(box.current, "s"); sfx.hit(); } break; }
+          case "ortho": { const near = lane.filter(z => z.x < u.c * CW + CW * 2.6); if (u.cd <= 0 && near.length) { u.cd = 2.8; u.atk = 1; shake(box.current, "m"); sfx.boom(); for (const z of near) z.hit = .3; for (const z of near) { z.hp -= D; s.fx.push({ kind: "dmg", r: u.r, x: z.x, y: u.r * CH + CH * .3, t: 1, txt: String(D) }); } s.fx.push({ kind: "boom", r: u.r, x: u.c * CW + CW * 1.6, t: 1 }); } break; }
+          case "anes": for (const z of lane) z.slow = .6; if (u.cd <= 0 && lane.length) { u.cd = 2; u.atk = 1; for (const z of lane.filter(z2 => z2.x < u.c * CW + CW * 4)) { z.hp -= D; z.hit = .15; } s.fx.push({ kind: "gas", r: u.r, x: fx, t: 1 }); } break;
+          case "lab": if (u.cd <= 0 && lane.length) { u.cd = 3; u.atk = 1; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "poison", hit: new Set(), pierce: 1, spin: 0 }); } break;
+          case "ems": if (u.cd <= 0 && lane.length) { u.cd = 6; u.atk = 1; let cur = lane.reduce((m, z) => z.x < m.x ? z : m, lane[0]); const hitSet = new Set<Germ>(); const pts: [number, number][] = [[fx, u.r * CH + CH * .3]];
+            for (let k = 0; k < 6 && cur; k++) { hitSet.add(cur); const d = Math.round(D * Math.pow(.85, k)); cur.hp -= d; cur.hit = .3; pts.push([cur.x, cur.r * CH + CH / 2]); s.fx.push({ kind: "dmg", r: cur.r, x: cur.x, y: cur.r * CH + CH * .3, t: 1, txt: String(d) }); const from: Germ = cur; cur = s.germs.filter(o => !hitSet.has(o) && Math.hypot(o.x - from.x, (o.r - from.r) * CH) < CW * 2.4).sort((a2, b2) => Math.hypot(a2.x - from.x, (a2.r - from.r) * CH) - Math.hypot(b2.x - from.x, (b2.r - from.r) * CH))[0]; }
+            s.fx.push({ kind: "chain", r: u.r, x: fx, t: .6, pts }); shake(box.current, "s"); sfx.boom(); } break;
+          case "ornurse": if (u.cd <= 0 && lane.length) { u.cd = 2.4; u.atk = 1; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "scissor", hit: new Set(), pierce: 3, spin: 0 }); } break;
         } }
       for (const sh of s.shots) { sh.x += (sh.kind === "poison" ? 180 : sh.kind === "scissor" ? 300 : 260) * dt; sh.spin += dt * (sh.kind === "scissor" ? 14 : 1.2);
         for (const z of s.germs) { if (z.r === sh.r && !sh.hit.has(z) && Math.abs(z.x - sh.x) < CW * .3) {
             const d = z.kind === 5 && (sh.kind === "needle" || sh.kind === "beam") ? Math.round(sh.dmg / 2) : sh.dmg;
-            z.hp -= d; sh.hit.add(z); s.fx.push({ kind: "dmg", r: sh.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(d) }); if (z.hp <= 0) { sfx.hit(); burst(box.current, z.x, z.r * CH + CH / 2, GCOLOR[z.kind], 8); }
+            z.hp -= d; z.hit = .2; sh.hit.add(z); s.fx.push({ kind: "dmg", r: sh.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(d) }); if (z.hp <= 0) { sfx.hit(); burst(box.current, z.x, z.r * CH + CH / 2, GCOLOR[z.kind], 8); }
             if (sh.kind === "poison") { z.poison = 4; s.fx.push({ kind: "cloud", r: sh.r, x: z.x, t: .6 }); for (const o of s.germs) if (o !== z && o.r === z.r && Math.abs(o.x - z.x) < CW) o.poison = 4; }
             if (sh.hit.size >= sh.pierce) sh.x = 1e9; } } }
       s.shots = s.shots.filter(sh => sh.x < s.W + 20);
-      for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : f.kind === "dmg" ? 1.4 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
+      for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : f.kind === "dmg" ? 1.4 : f.kind === "laser" ? 2.2 : f.kind === "chain" ? 2 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
       for (const z of s.germs) { if (z.poison > 0) { z.poison -= dt; z.hp -= 12 * dt; } const sp = z.speed * (z.slow > 0 ? .5 : 1); z.slow = Math.max(0, z.slow - dt);
         if (z.kind === 7) { z.cd -= dt; if (z.cd <= 0) { z.cd = 6; spawn(0, z.r, z.x + 10, .6); pop(box.current, z.x, z.r * CH + CH * .2, "소환!", "bad"); } }
         const target = s.units.find(u => u.r === z.r && Math.abs(u.c * CW + CW / 2 - z.x) < CW * .45 && u.c * CW + CW / 2 <= z.x + 2);
@@ -238,7 +249,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       setUi(u => ({ ...u, sun: s.sun })); if (n) { sfx.tap(); haptic(10); } else pop(box.current, s.W / 2, s.H / 2, "수액을 더 모아주세요", "bad");
     };
     (box.current as any).__speed = () => { s.speed = s.speed === 1 ? 2 : 1; return s.speed; };
-    try { if (location.search.includes("devwin")) (box.current as any).__win = () => finish(true); } catch {}
+    try { if (location.search.includes("devwin")) { (box.current as any).__win = () => finish(true); (box.current as any).__sun = (n: number) => { s.sun += n; }; } } catch {}
     const ro = new ResizeObserver(size); ro.observe(box.current!); size();
     return () => { ro.disconnect(); cancelAnimationFrame(s.raf); };
   }, []);
