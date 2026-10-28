@@ -19,8 +19,9 @@ export function ConfessForm() {
   );
 }
 
-type P = { age?: number; region?: string | null; height?: number | null; personality?: string | null; hobby?: string | null; style?: string | null; want?: string | null; intro?: string | null; visible?: boolean };
+type P = { gender?: string | null; age?: number; region?: string | null; height?: number | null; personality?: string | null; hobby?: string | null; style?: string | null; want?: string | null; intro?: string | null; visible?: boolean };
 const Fields = ({ p }: { p: P }) => (<>
+  <div className="ss-gender">{["남", "여"].map(g => <label key={g}><input type="radio" name="gender" value={g} defaultChecked={p.gender === g} required /><span>{g === "남" ? "🙋‍♂️ 남" : "🙋‍♀️ 여"}</span></label>)}</div>
   <div className="ss-grid2">
     <label>나이<input name="age" type="number" min={19} max={70} defaultValue={p.age} required /></label>
     <label>키(cm)<input name="height" type="number" min={130} max={210} defaultValue={p.height ?? undefined} /></label>

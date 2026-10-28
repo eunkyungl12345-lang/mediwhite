@@ -43,9 +43,10 @@ export async function saveDatingProfile(_: R, fd: FormData): Promise<R> {
   if (fd.get("adult") !== "on") return { error: "만 19세 이상만 참여할 수 있어요" };
   const age = Number(fd.get("age")), height = Number(fd.get("height")) || null;
   if (!Number.isInteger(age) || age < 19 || age > 70) return { error: "나이를 확인해주세요 (만 19세 이상)" };
+  const gender = clean(fd.get("gender"), 2); if (!["남", "여"].includes(gender)) return { error: "성별을 골라주세요" };
   const f = { region: clean(fd.get("region"), 20), personality: clean(fd.get("personality"), 60), hobby: clean(fd.get("hobby"), 60), style: clean(fd.get("style"), 60), want: clean(fd.get("want"), 60), intro: clean(fd.get("intro"), 300) };
   if (Object.values(f).some(v => CONTACT.test(v))) return { error: "연락처·SNS 아이디는 적을 수 없어요. 서로 '관심 있어요'를 누르면 1:1 대화가 열려요." };
-  await db().from("dating_profiles").upsert({ user_id: u.id, age, height, ...f, visible: fd.get("visible") === "on", updated_at: new Date().toISOString() });
+  await db().from("dating_profiles").upsert({ user_id: u.id, age, height, gender, ...f, visible: fd.get("visible") === "on", updated_at: new Date().toISOString() });
   revalidatePath("/ssum"); return { ok: "프로필 카드를 저장했어요" };
 }
 export async function deleteDatingProfile() { const u = await me(); await db().from("dating_profiles").delete().eq("user_id", u.id); await db().from("likes").delete().eq("kind", "profile").eq("target", u.id); revalidatePath("/ssum"); }
@@ -56,11 +57,12 @@ export async function saveIntro(_: R, fd: FormData): Promise<R> {
   if (fd.get("consent") !== "on") return { error: "소개할 분께 동의를 받았는지 체크해주세요" };
   const age = Number(fd.get("age")), height = Number(fd.get("height")) || null;
   if (!Number.isInteger(age) || age < 19 || age > 70) return { error: "나이를 확인해주세요 (만 19세 이상)" };
+  const gender = clean(fd.get("gender"), 2); if (!["남", "여"].includes(gender)) return { error: "지인의 성별을 골라주세요" };
   const f = { dept: clean(fd.get("dept"), 20), region: clean(fd.get("region"), 20), personality: clean(fd.get("personality"), 60), hobby: clean(fd.get("hobby"), 60), style: clean(fd.get("style"), 60), want: clean(fd.get("want"), 60), intro: clean(fd.get("intro"), 300) };
   if (Object.values(f).some(v => CONTACT.test(v)) || personMention(f.intro)) return { error: "이름·연락처·SNS 등 지인을 알아볼 수 있는 정보는 빼주세요" };
   const { count } = await db().from("intros").select("id", { count: "exact", head: true }).eq("author_id", u.id);
   if ((count ?? 0) >= 5) return { error: "지인 소개는 5명까지 올릴 수 있어요" };
-  await db().from("intros").insert({ author_id: u.id, age, height, ...f });
+  await db().from("intros").insert({ author_id: u.id, age, height, gender, ...f });
   revalidatePath("/ssum"); return { ok: "지인 소개를 올렸어요" };
 }
 export async function deleteIntro(id: number) {

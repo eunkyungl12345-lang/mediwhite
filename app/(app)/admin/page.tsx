@@ -37,6 +37,8 @@ export default async function AdminPage() {
   const series = days.map(d => ({ day: d.slice(5), visitors: visByDay[d].size, signups: signByDay[d] }));
   const [{ data: inq }, email] = await Promise.all([db().from("inquiries").select("*").order("created_at", { ascending: false }).limit(50), contactEmail()]);
   const KIND: Record<string, string> = { ad: "광고", partner: "협업", bug: "오류", other: "기타" };
+  const [{ data: dps }, { data: its }, { count: dmCount }, { count: cfAcc }] = await Promise.all([db().from("dating_profiles").select("gender,visible"), db().from("intros").select("gender"), db().from("dms").select("id", { count: "exact", head: true }), db().from("confessions").select("id", { count: "exact", head: true }).eq("status", "accepted")]);
+  const gcount = (rows: any[] | null, g: string) => (rows ?? []).filter(r => r.gender === g).length;
   const { data: reports } = await db().from("reports").select("id,kind,target_id,reason,detail,status,created_at,reporter:users!reports_reporter_id_fkey(nickname,dept)").order("created_at", { ascending: false }).limit(50);
   const openR = (reports ?? []).filter(r => r.status === "open");
   const rPosts = openR.filter(r => r.kind === "post").map(r => r.target_id), rComs = openR.filter(r => r.kind === "comment").map(r => Number(r.target_id));
@@ -53,6 +55,16 @@ export default async function AdminPage() {
         <h3>전체 폰 알림 보내기</h3>
         <div className="muted">알림을 켠 회원 모두에게 푸시. 이벤트·공지용 (하루 1~2번만 — 많으면 다 꺼버려요).</div>
         <AdminBroadcast />
+      </div>
+      <div className="card">
+        <h3>💘 썸류센터 현황</h3>
+        <div className="h-stats">
+          <div className="h-stat"><b>{gcount(dps, "여")}</b><span>🙋‍♀️ 여 카드</span></div>
+          <div className="h-stat"><b>{gcount(dps, "남")}</b><span>🙋‍♂️ 남 카드</span></div>
+          <div className="h-stat"><b>{gcount(its, "여")}/{gcount(its, "남")}</b><span>지인 소개 여/남</span></div>
+          <div className="h-stat"><b>{cfAcc ?? 0}</b><span>성사된 고백</span></div>
+        </div>
+        <div className="muted">공개 카드 {(dps ?? []).filter(r => r.visible).length}장 · 1:1 대화 메시지 {dmCount ?? 0}개 · 유료 전환 신호: 공개 카드 50장 이상 + 남녀 비율 균형</div>
       </div>
       <div className="card">
         <h3>🚩 신고함 — 처리 대기 {openR.length}건</h3>

@@ -13,7 +13,7 @@ type Tab = "lounge" | "me" | "intro" | "box";
 const TABS: [Tab, string][] = [["lounge", "💘 라운지"], ["me", "🙋 나어때"], ["intro", "🤝 지인 소개"], ["box", "💌 내 썸함"]];
 
 function Card({ p, head, foot }: { p: any; head: React.ReactNode; foot?: React.ReactNode }) {
-  const rows: [string, any][] = [["나이", p.age ? `${p.age}세` : null], ["지역", p.region], ["키", p.height ? `${p.height}cm` : null], ["성격", p.personality], ["취미", p.hobby], ["연애 스타일", p.style], ["원하는 상대", p.want]];
+  const rows: [string, any][] = [["성별", p.gender ? (p.gender === "남" ? "🙋‍♂️ 남" : "🙋‍♀️ 여") : null], ["나이", p.age ? `${p.age}세` : null], ["지역", p.region], ["키", p.height ? `${p.height}cm` : null], ["성격", p.personality], ["취미", p.hobby], ["연애 스타일", p.style], ["원하는 상대", p.want]];
   return (
     <div className="ss-card">
       <div className="ss-card-head">{head}</div>
@@ -24,10 +24,12 @@ function Card({ p, head, foot }: { p: any; head: React.ReactNode; foot?: React.R
   );
 }
 
-export default async function SsumPage({ searchParams }: { searchParams: { tab?: string } }) {
+export default async function SsumPage({ searchParams }: { searchParams: { tab?: string; g?: string } }) {
   const s = (await getSession())!; const d = db();
   const tab = (TABS.some(t => t[0] === searchParams.tab) ? searchParams.tab : "lounge") as Tab;
   const admin = s.role === "admin";
+  const gf = searchParams.g === "남" || searchParams.g === "여" ? searchParams.g : "";
+  const GFilter = ({ t }: { t: string }) => <div className="sorts">{[["", "전체"], ["여", "🙋‍♀️ 여성"], ["남", "🙋‍♂️ 남성"]].map(([k, n]) => <Link key={k} href={`/ssum?tab=${t}${k ? `&g=${encodeURIComponent(k)}` : ""}`} aria-current={gf === k ? "true" : undefined}>{n}</Link>)}</div>;
   const [leaders, { data: myLikes }, { data: soloRow }] = await Promise.all([deptLeaders(), d.from("likes").select("kind,target").eq("from_id", s.id), d.from("settings").select("value").eq("key", "solo_pick").maybeSingle()]);
   const liked = (kind: string, t: string) => (myLikes ?? []).some(l => l.kind === kind && l.target === t);
   let solo: any = null;
@@ -56,11 +58,12 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
   if (tab === "me") {
     const [{ data: mine }, { data: profs }] = await Promise.all([
       d.from("dating_profiles").select("*").eq("user_id", s.id).maybeSingle(),
-      d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)").eq("visible", true).neq("user_id", s.id).order("updated_at", { ascending: false }).limit(60),
+      (gf ? d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)").eq("gender", gf) : d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)")).eq("visible", true).neq("user_id", s.id).order("updated_at", { ascending: false }).limit(60),
     ]);
     body = <>
       <details className="card ss-details" open={!mine}><summary><b>{mine ? "✏️ 내 프로필 카드 수정" : "🙋 나어때? 내 프로필 카드 만들기"}</b></summary><ProfileForm p={mine} /></details>
       {mine && <Card p={mine} head={<><b>{display(s.dept, s.nickname)}</b><span className="muted" style={{ fontSize: 12 }}>내 카드</span><span className="tag">{mine.visible ? "공개 중" : "비공개"}</span></>} />}
+      <GFilter t="me" />
       <div className="ss-cards">{(profs ?? []).filter((p: any) => !p.user.stealth).map((p: any) => <Card key={p.user_id} p={p}
         head={<Name r={rankFor(p.user, leaders)} dept={p.user.dept} nickname={p.user.nickname} username={p.user.username} />}
         foot={<><LikeButton kind="profile" target={p.user_id} liked={liked("profile", p.user_id)} />{admin && <PickSolo userId={p.user_id} />}</>} />)}
@@ -69,9 +72,10 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     </>;
   }
   if (tab === "intro") {
-    const { data: intros } = await d.from("intros").select("*,author:users(id,username,nickname,dept,xp)").order("created_at", { ascending: false }).limit(60);
+    const iq = d.from("intros").select("*,author:users(id,username,nickname,dept,xp)"); const { data: intros } = await (gf ? iq.eq("gender", gf) : iq).order("created_at", { ascending: false }).limit(60);
     body = <>
       <details className="card ss-details"><summary><b>🤝 지인을 소개합니다</b> <span className="muted">— 소개할 분의 동의를 꼭 받아주세요</span></summary><IntroForm /></details>
+      <GFilter t="intro" />
       <div className="ss-cards">{(intros ?? []).map((p: any) => <Card key={p.id} p={p}
         head={<><span className="tag">{p.dept || "지인"}</span><span className="muted" style={{ fontSize: 12 }}>{p.author ? `${display(p.author.dept, p.author.nickname)}님의 지인` : ""}</span></>}
         foot={<>{p.author_id !== s.id && <LikeButton kind="intro" target={String(p.id)} liked={liked("intro", String(p.id))} label="소개받고 싶어요" />}{(admin || p.author_id === s.id) && <form action={deleteIntro.bind(null, p.id)}><button className="link">삭제</button></form>}</>} />)}
