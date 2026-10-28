@@ -762,3 +762,31 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .dock-rooms::-webkit-scrollbar{display:none}
 .dock-rooms button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
 .dock-rooms button.on{background:var(--scrub);border-color:var(--scrub);color:#fff;font-weight:600}
+
+/* 병원 키우기 HUD + 로비 */
+.ty-hud{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#1F2A44;color:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.ty-hud-cash{font-family:var(--f-display);font-size:22px;color:#FFD54F;line-height:1.1;font-variant-numeric:tabular-nums}
+.ty-hud-rates{display:grid;justify-items:end;font-size:12px;font-weight:700;line-height:1.35;font-variant-numeric:tabular-nums}
+.ty-hud-rates span:last-child{color:#A5F3C9}
+.lb{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff;cursor:pointer}
+.lb-facade{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;background:#2C6B5E;color:#fff;padding:6px 10px}
+.lb.uni .lb-facade{background:linear-gradient(90deg,#1E4E8C,#2C6B5E)}
+.lb-sign{font-weight:800;font-size:14px}.lb-sign i{font-style:normal;color:#FF8A80;margin-right:4px}
+.lb-floors{font-size:11px;opacity:.85;background:rgba(255,255,255,.15);border-radius:999px;padding:1px 8px}
+.lb-heli{position:absolute;left:10px;font-size:20px;animation:hop 1.2s ease-in-out infinite}
+.lb-room{position:relative;height:300px;overflow:hidden;background:#EAF2EE}
+.lb-wall{position:absolute;inset:0 0 auto;height:28%;background:linear-gradient(180deg,#DCEBE5,#CFE2DA);border-bottom:4px solid #B6CFC5;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;padding:6px}
+.lb-door{font-size:11px;font-weight:700;background:#fff;color:#2C6B5E;border:1px solid #B6CFC5;border-radius:6px;padding:2px 6px;white-space:nowrap}
+.lb-door.er{background:#E2574C;color:#fff;border-color:#E2574C}
+.lb-gear{font-size:16px}
+.lb-floor{position:absolute;inset:28% 0 0;background:repeating-linear-gradient(90deg,#F6FAF8 0 38px,#EDF4F0 38px 76px),#F3F8F5;background-blend-mode:multiply;box-shadow:inset 0 10px 20px rgba(0,0,0,.05)}
+.lb-empty{position:absolute;inset:40% 0 auto;text-align:center;color:#5F7A72;font-size:13px;line-height:1.6}
+.lb-guy{position:absolute;transform:translate(-50%,-100%);animation:wander var(--dur) ease-in-out infinite alternate}
+@keyframes wander{from{margin-left:0}to{margin-left:var(--dx)}}
+.lb-emoji{display:block;font-size:calc(44px * var(--sc));line-height:1;filter:drop-shadow(0 4px 3px rgba(0,0,0,.25));animation:pop .45s cubic-bezier(.2,1.6,.4,1) both,walk 1s ease-in-out infinite}
+.lb-bubble{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;background:#fff;color:#222;border:1.5px solid #333;border-radius:10px;padding:3px 7px;font-size:11px;font-weight:700;white-space:nowrap;animation:pop .25s cubic-bezier(.2,1.6,.4,1);z-index:200}
+.lb-bubble::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#333}
+.lb-park{position:absolute;right:6px;bottom:4px;font-size:22px;display:flex;gap:2px}
+.lb-legend{display:flex;flex-wrap:wrap;gap:4px 10px;padding:6px 10px;font-size:12px;background:var(--surface);color:var(--ink);border-top:1px solid var(--line)}
+.lb-legend b{color:var(--scrub)}
+.lb-pat{margin-left:auto;color:var(--muted)}

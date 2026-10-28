@@ -21,32 +21,50 @@ function Crowd({ d, n }: { d: Dept; n: number }) {
   return <span className="hs-crowd" title={`${d} ${n}명`}>{Array.from({ length: shown }, (_, i) => <i key={i} style={{ animationDelay: `${(i * 0.37) % 1.2}s` }}>{PERSON[d]}</i>)}{n > shown && <b>+{n - shown}</b>}</span>;
 }
 
+const LINES: Record<Dept, string[]> = {
+  원무: ["접수 도와드릴게요~", "3번 진료실로 가세요!", "수납은 이쪽이에요", "대기 12번째예요"],
+  간호: ["수액 바꿔드릴게요", "혈압 잴게요~", "오늘 인계 빨리 끝내자!", "콜벨 누구야?!"],
+  의사: ["다음 환자분 들어오세요", "검사 결과 좋네요", "오늘 수술 3건…", "커피 한 잔만…"],
+  총괄: ["오늘 매출 좋은데?", "다들 수고 많아요!", "회의는 3시입니다", "인력 충원하자!"],
+  물리치료: ["하나, 둘, 셋!", "천천히 걸어보세요", "어깨 풀어드릴게요"],
+  임상병리: ["피 뽑을게요~ 따끔!", "결과 30분 뒤 나와요", "검체 접수 완료"],
+  방사선: ["숨 참으세요~", "촬영 들어갑니다", "CT 대기 5명!"],
+  응급구조: ["응급 환자 이송 중!", "비켜주세요!!", "구급차 출동!"],
+};
+/** 로비 장면: 고용한 직원이 큼직한 캐릭터로 돌아다니고 가끔 말풍선 */
 function HospitalScene({ s }: { s: Saved }) {
-  const floors = MAIN_FLOORS.filter(i => i <= s.rooms);
-  const staffOn = (room: number) => DORDER.filter(d => ROOM_OF[d] === room && d !== "응급구조").map(d => <Crowd key={d} d={d} n={s.staff[d]?.n ?? 0} />);
-  const gearOn = (room: number) => s.gear.filter(k => GEAR_ROOM[k] === room).map(k => <span key={k} className="hs-gear" title={GEAR.find(g => g.key === k)?.name}>{GEAR.find(g => g.key === k)?.icon}</span>);
-  const uni = s.rooms >= 9, annex = s.rooms >= 8, er = s.rooms >= 4;
+  const CAP = 22, total = DORDER.reduce((a, d) => a + (s.staff[d]?.n ?? 0), 0);
+  const people: { d: Dept; i: number }[] = [];
+  for (const d of DORDER) { const n = s.staff[d]?.n ?? 0; if (!n) continue; const k = total <= CAP ? n : Math.max(1, Math.round(n / total * CAP)); for (let i = 0; i < k; i++) people.push({ d, i }); }
+  const shown = people.slice(0, CAP);
+  const [bubble, setBubble] = useState<{ k: number; t: string } | null>(null);
+  useEffect(() => { if (!shown.length) return; const id = setInterval(() => { const k = Math.floor(Math.random() * shown.length), L = LINES[shown[k].d]; setBubble({ k, t: L[Math.floor(Math.random() * L.length)] }); setTimeout(() => setBubble(null), 2400); }, 3200); return () => clearInterval(id); }, [shown.length]); // eslint-disable-line
+  const pos = (k: number) => { const h = (k * 2654435761) >>> 0, x = 6 + (h % 1000) / 1000 * 80, row = k % 4, y = 30 + row * 16 + ((h >>> 10) % 100) / 100 * 8; return { x, y, sc: .78 + (y - 30) / 70 * .55 }; };
+  const opened = ROOMS.slice(1, s.rooms + 1);
+  const uni = s.rooms >= 9;
   return (
-    <div className={"hs" + (uni ? " uni" : "")}>
-      <div className="hs-sky"><span className="hs-sun" /></div>
-      <div className="hs-campus">
-        {er && <div className="hs-er" key="er"><div className="hs-er-sign">🚨 응급실</div><div className="hs-er-body"><Crowd d="응급구조" n={s.staff.응급구조?.n ?? 0} /></div></div>}
-        <div className="hs-tower" key={"t" + floors.length}>
-          <div className="hs-roof">
-            {s.heli && <span className="hs-heli">🚁</span>}
-            <span className="hs-sign"><i>✚</i>{uni ? "메디화이트 대학교병원" : "메디화이트병원"}</span>
-          </div>
-          {[...floors].reverse().map((ri, k) => (
-            <div key={ri} className="hs-floor">
-              <span className="hs-fl">{floors.length - k}F {ROOMS[ri].icon} {ROOMS[ri].name}</span>
-              <span className="hs-staff">{staffOn(ri)}{ri >= 5 && <span className="hs-beds">{"🛏️".repeat(ri === 5 ? 1 : 2)}</span>}{gearOn(ri)}</span>
-            </div>
-          ))}
-          <div className="hs-lobby"><span>🚪</span><span className="hs-patients">환자 {fmt(s.patients)}명</span></div>
-        </div>
-        {annex && <div className="hs-annex"><div className="hs-roof small"><span className="hs-sign small">신관</span></div>{[0, 1, 2, 3, 4].map(i => <div key={i} className="hs-floor blank" />)}</div>}
+    <div className={"lb" + (uni ? " uni" : "")}>
+      <div className="lb-facade">
+        {s.heli && <span className="lb-heli">🚁</span>}
+        <span className="lb-sign"><i>✚</i>{uni ? "메디화이트 대학교병원" : "메디화이트병원"}</span>
+        <span className="lb-floors">{s.rooms + 1}층{s.rooms >= 8 ? " · 신관" : ""}</span>
       </div>
-      <div className="hs-park">{Array.from({ length: s.amb }, (_, i) => <span key={i}>🚑</span>)}{!s.amb && <span className="muted">주차장</span>}</div>
+      <div className="lb-room">
+        <div className="lb-wall">
+          <span className="lb-door">🏥 외래</span>
+          {opened.map(r => <span key={r.name} className={"lb-door" + (r.name === "응급실" ? " er" : "")}>{r.icon} {r.name}</span>)}
+          {s.gear.map(k => <span key={k} className="lb-gear" title={GEAR.find(g => g.key === k)?.name}>{GEAR.find(g => g.key === k)?.icon}</span>)}
+        </div>
+        <div className="lb-floor" />
+        {!shown.length && <div className="lb-empty">아직 직원이 없어요<br /><b>👇 아래에서 원무 직원을 고용해보세요</b></div>}
+        {shown.map((p, k) => { const { x, y, sc } = pos(k); return (
+          <div key={p.d + p.i} className="lb-guy" style={{ left: `${x}%`, top: `${y}%`, zIndex: Math.round(y), ["--sc" as any]: sc, ["--dur" as any]: `${5 + (k % 5)}s`, ["--dx" as any]: `${(k % 2 ? 1 : -1) * (10 + (k * 7) % 22)}px` }}>
+            {bubble?.k === k && <span className="lb-bubble">{bubble.t}</span>}
+            <span className="lb-emoji">{PERSON[p.d]}</span>
+          </div>); })}
+        <div className="lb-park">{Array.from({ length: s.amb }, (_, i) => <span key={i}>🚑</span>)}</div>
+      </div>
+      <div className="lb-legend">{DORDER.filter(d => s.staff[d]?.n).map(d => <span key={d}>{PERSON[d]} {d} <b>{s.staff[d]!.n}</b></span>)}<span className="lb-pat">🧍 환자 {fmt(s.patients)}명</span></div>
     </div>
   );
 }
@@ -147,10 +165,11 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
       <div><h3>우리 병원 키우기</h3><div className="muted">직원을 고용하고 시설·장비를 늘리면 <b>접속 안 해도 매출이 쌓여요</b>(최대 8시간, 50%). 번 돈으로 <b>내 집·가구·미술품·차</b>를 사서 꾸며요. 내 직종(<b>{mine}</b>) 직원은 매출 +20%. 명예의 전당은 <b>총자산</b> 순. (계정 저장)</div></div>
       {season && <div className="warn">🆕 <span><b>시즌 2 오픈!</b> 경제가 새로 짜여서 병원을 처음부터 다시 시작해요. 이제 집·가구·미술품·차를 살 수 있어요.</span></div>}
       <div className="ty-top" ref={box}>
-        <div className="ty-money" onPointerDown={tap} role="button" aria-label="병원 탭해서 직접 진료">
-          <div className="ty-cash">₩ {fmt(s.cash)}</div>
-          <div className="ty-rate">하루 +{fmt(daily)}원 · 초당 +{rate < 10 ? rate.toFixed(1) : fmt(rate)}원 · 총자산 {fmt(assets)}원</div>
+        <div className="ty-hud" onPointerDown={tap} role="button" aria-label="병원 탭해서 직접 진료">
+          <div className="ty-hud-cash">💰 {fmt(s.cash)}원</div>
+          <div className="ty-hud-rates"><span>+{fmt(tapBonus)}원/클릭</span><span>+{rate < 10 ? rate.toFixed(1) : fmt(rate)}원/초</span></div>
         </div>
+        <div className="ty-rate" style={{ textAlign: "center" }}>하루 +{fmt(daily)}원 · 총자산 {fmt(assets)}원</div>
         <div className="ty-scene-tabs">
           <button type="button" className={scene === "hosp" ? "on" : ""} onClick={() => { setScene("hosp"); setTab("staff"); }}>🏥 우리 병원</button>
           <button type="button" className={scene === "home" ? "on" : ""} onClick={() => { setScene("home"); setTab("home"); }}>🏠 내 집</button>
