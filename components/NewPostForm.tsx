@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createPost, type FormState } from "@/lib/actions";
-import { DEPTS, NOTICE_CAT, TOPICS } from "@/lib/depts";
+import { DEPTS, NOTICE_CAT, TOPICS, SSUM_TOPICS } from "@/lib/depts";
 import { personMention } from "@/lib/safety";
 function Submit() { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "올리는 중…" : "올리기"}</button>; }
 export default function NewPostForm({ defaultCat, defaultTab, defaultTopic = "free", canNotice, boards }: { defaultCat: string; defaultTab: string; defaultTopic?: string; canNotice: boolean; boards: { id: string; name: string; dept: string }[] }) {
@@ -16,12 +16,12 @@ export default function NewPostForm({ defaultCat, defaultTab, defaultTopic = "fr
   return (
     <form action={action} className="form">
       <div className="bar"><strong>새 글</strong><Link className="link" href="/board">취소</Link></div>
-      <select name="category" value={cat} onChange={e => setCat(e.target.value)}>{canNotice && <option value={NOTICE_CAT}>📢 공지 (전체)</option>}{DEPTS.map(d => <option key={d} value={d}>{d}</option>)}</select>
+      <select name="category" value={cat} onChange={e => { setCat(e.target.value); if (e.target.value === "썸") setTopic(t => SSUM_TOPICS.some(x => x.key === t) ? t : "moment"); else if (SSUM_TOPICS.some(x => x.key === topic)) setTopic("free"); }}>{canNotice && <option value={NOTICE_CAT}>📢 공지 (전체)</option>}{DEPTS.map(d => <option key={d} value={d}>{d}</option>)}<option value="썸">💘 썸 (썸 탭에만 보여요)</option></select>
       {tabs.length > 0 && <select name="board_id" defaultValue={defaultTab}><option value="">자유</option>{tabs.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>}
       <div className="topic-pick">
         <div className="muted" style={{ fontSize: 12 }}>어떤 주제인가요?</div>
-        <div className="topics">{TOPICS.map(t => <button key={t.key} type="button" className={"topic" + (topic === t.key ? " on" : "")} onClick={() => setTopic(t.key)}><span>{t.icon}</span>{t.name}</button>)}</div>
-        <div className="muted" style={{ fontSize: 12 }}>{TOPICS.find(t => t.key === topic)?.hint}</div>
+        <div className="topics">{(cat === "썸" ? SSUM_TOPICS : TOPICS).map(t => <button key={t.key} type="button" className={"topic" + (topic === t.key ? " on" : "")} onClick={() => setTopic(t.key)}><span>{t.icon}</span>{t.name}</button>)}</div>
+        <div className="muted" style={{ fontSize: 12 }}>{(cat === "썸" ? SSUM_TOPICS : TOPICS as readonly { key: string; hint: string }[]).find(t => t.key === topic)?.hint ?? (cat === "썸" ? "주제를 골라주세요" : "")}</div>
         <input type="hidden" name="topic" value={topic} />
       </div>
       <input name="title" maxLength={80} placeholder="제목" required />

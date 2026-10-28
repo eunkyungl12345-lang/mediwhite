@@ -22,6 +22,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const d = db();
   let q = d.from("posts").select("id,category,title,body,pinned,boosted,created_at,board_id,topic,hidden,author:users(id,username,nickname,dept,xp)").limit(300);
   if (s.role !== "admin") q = q.eq("hidden", false);
+  q = q.neq("category", "썸");
   if (topic) q = q.eq("topic", topic);
   if (cat === TOP) { if (top) q = q.eq("category", top); else q = q.eq("category", "__none__"); } else if (cat !== "전체") q = q.eq("category", cat);
   const tab = isDept ? (searchParams.tab || "") : "";

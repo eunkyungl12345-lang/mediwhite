@@ -21,7 +21,7 @@ export default async function HomePage() {
     d.from("users").select("id,username,nickname,dept,xp").eq("id", s.id).single(),
     deptLeaders(),
     dailyStatus(s.id),
-    d.from("posts").select("id,title,topic,category,created_at,pinned,author_id,author:users(id,username,nickname,dept,xp)").eq("hidden", false).gte("created_at", week).order("created_at", { ascending: false }).limit(150),
+    d.from("posts").select("id,title,topic,category,created_at,pinned,author_id,author:users(id,username,nickname,dept,xp)").eq("hidden", false).neq("category", "썸").gte("created_at", week).order("created_at", { ascending: false }).limit(150),
     d.from("posts").select("id", { count: "exact", head: true }).gte("created_at", day),
     d.from("messages").select("id", { count: "exact", head: true }).gte("created_at", day),
     d.from("visits").select("user_id").eq("day", today),

@@ -25,4 +25,10 @@ export const TOPICS = [
   { key: "qna", name: "질문", icon: "❓", hint: "궁금한 거 뭐든 물어보기" },
 ] as const;
 export type TopicKey = typeof TOPICS[number]["key"];
-export const topicOf = (k: string | null | undefined) => TOPICS.find(t => t.key === k) ?? TOPICS[0];
+/** 썸 탭 글 (메인 게시판엔 안 보임) */
+export const SSUM_CAT = "썸";
+export const SSUM_TOPICS = [
+  { key: "moment", name: "오늘 설렌 순간", icon: "💓", hint: "사람을 특정하지 않는 설렘 썰 (병원명·실명·직함 X)" },
+  { key: "advice", name: "썸 상담소", icon: "💭", hint: "\"이 정도면 저한테 관심 있는 걸까요?\"" },
+] as const;
+export const topicOf = (k: string | null | undefined) => (TOPICS as readonly { key: string; name: string; icon: string; hint: string }[]).concat(SSUM_TOPICS).find(t => t.key === k) ?? TOPICS[0];

@@ -13,7 +13,7 @@ export default async function AboutPage() {
   const d = db(), week = new Date(Date.now() - 7 * 86400000).toISOString(), today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
   const [{ count }, { data: recent }, { data: promos }, { count: todayPosts }, { data: visits }] = await Promise.all([
     d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false),
-    d.from("posts").select("id,title,topic,category,created_at,pinned,author:users(nickname,dept)").eq("hidden", false).gte("created_at", week).order("created_at", { ascending: false }).limit(120),
+    d.from("posts").select("id,title,topic,category,created_at,pinned,author:users(nickname,dept)").eq("hidden", false).neq("category", "썸").gte("created_at", week).order("created_at", { ascending: false }).limit(120),
     d.from("events").select("text,created_at").eq("kind", "promotion").gte("created_at", week).order("created_at", { ascending: false }).limit(5),
     d.from("posts").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 86400000).toISOString()),
     d.from("visits").select("user_id").eq("day", today),
