@@ -128,7 +128,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         x.fillStyle = "rgba(0,0,0,.12)"; x.beginPath(); x.ellipse(z.x, z.r * CH + CH - 4, R * .8, 3, 0, 0, 7); x.fill();
         if (big) { x.save(); x.globalAlpha = .25 + Math.sin(s.t * 5) * .1; x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R * 1.35, 0, 7); x.fill(); x.restore(); }
         if (z.poison > 0) { x.save(); x.globalAlpha = .35; x.fillStyle = "#4CAF50"; x.beginPath(); x.arc(z.x, cy, R * 1.2, 0, 7); x.fill(); x.restore(); }
-        const gim = art("g" + z.kind, GERM_SVG[z.kind]), GS = R * (big ? 3.1 : 3.4), squash = z.eating ? 1 + Math.sin(s.t * 14) * .06 : 1;
+        const gim = art("g" + z.kind, GERM_SVG[z.kind]), GS = R * (big ? 3.4 : 3.7), squash = z.eating ? 1 + Math.sin(s.t * 14) * .06 : 1;
         if (gim) { x.save(); x.translate(z.x, cy); x.scale(squash, 2 - squash); x.drawImage(gim, -GS / 2, -GS * .6, GS, GS); x.restore(); if (z.hit && z.hit > 0) { x.save(); x.globalAlpha = z.hit * 2.5; x.globalCompositeOperation = "lighter"; x.fillStyle = "#fff"; x.beginPath(); x.arc(z.x, cy, R * .9, 0, 7); x.fill(); x.restore(); } }
         else { x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R, 0, 7); x.fill(); x.font = `${Math.floor(R * 1.3)}px system-ui`; x.fillText(GICON[z.kind], z.x, cy + 1); }
         if (z.slow > 0) { x.font = `${Math.floor(CH * .3)}px system-ui`; x.fillText("💤", z.x + R, cy - R); }
