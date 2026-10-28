@@ -835,3 +835,5 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .om-stone.last::after{content:"";position:absolute;inset:34%;border-radius:50%;background:#E2574C}
 .om-ghost{opacity:0}.om-cell.can:hover .om-ghost{opacity:.35}
 .om-ghost.b{background:#111}.om-ghost.w{background:#fff}
+/* 게임 그림 속 캐릭터가 채팅창 위로 튀어나오지 않게 */
+.lb,.lb-room,.hm,.def-stage,.ty-top{isolation:isolate}
