@@ -986,3 +986,6 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 
 .def-ico.art{overflow:hidden;display:grid;place-items:end center}
 .def-ico.art img{width:120%;height:120%;object-fit:contain;margin-bottom:-14%;pointer-events:none}
+.quiz-note{font-size:13px;background:var(--bg);border-left:3px solid var(--signal);padding:6px 10px;border-radius:6px;margin-top:6px;display:grid;gap:2px}
+.quiz-review summary{cursor:pointer;font-weight:600;font-size:14px}
+.quiz-review{display:grid;gap:4px}

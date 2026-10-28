@@ -194,7 +194,7 @@ export async function deleteBoard(id: string, dept: string) {
 }
 
 /* ---------- 게임 ---------- */
-export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner" | "lightning" | "tycoon", value: number, mode?: string) {
+export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner" | "lightning" | "tycoon" | "trivia" | "econ", value: number, mode?: string) {
   const u = await requireUser();
   if (!Number.isFinite(value) || value < 0) return;
   await bump(u.id, "game");
@@ -203,6 +203,7 @@ export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" 
   if (game === "lightning") { const cleared = Math.floor(value / 10); for (const [th, xp] of [[10, 150], [25, 400]] as const) if (cleared >= th) await awardXp(u.id, xp, `lightning_${th}`); }
   if (game === "runner") { for (const [th, xp] of [[700, 150], [1500, 400]] as const) if (value >= th) await awardXp(u.id, xp, `runner_${th}`); }
   if (game === "cpr") { for (const [th, xp] of [[600, 150], [900, 400]] as const) if (value >= th) await awardXp(u.id, xp, `cpr_${th}`); }
+  if (game === "trivia" || game === "econ") { for (const [th, xp] of [[300, 150], [500, 400]] as const) if (value >= th) await awardXp(u.id, xp, `${game}_${th}`); }
   if (game === "quiz") { for (const [th, xp] of [[300, 150], [500, 400]] as const) if (value >= th) await awardXp(u.id, xp, `quiz_${th}`); }
   if (game === "vein") { for (const [th, xp] of [[500, 150], [800, 400]] as const) if (value >= th) await awardXp(u.id, xp, `vein_${th}`); }
   if (game === "bowling") { for (const [th, xp] of [[100, 100], [150, 250], [200, 500]] as const) if (value >= th) await awardXp(u.id, xp, `bowling_${th}`); }
