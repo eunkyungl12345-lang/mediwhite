@@ -36,7 +36,7 @@ const MAXLV = 5;
 type Unit = { kind: UnitKind; r: number; c: number; hp: number; max: number; cd: number; atk?: number; run?: number; fuse?: number };
 type Germ = { r: number; x: number; hp: number; max: number; speed: number; dmg: number; kind: number; eating: boolean; slow: number; poison: number; cd: number; warn?: boolean; hit?: number; cd2?: number; seed?: number };
 type Shot = { r: number; x: number; dmg: number; kind: "needle" | "beam" | "pill" | "poison" | "scissor"; hit: Set<Germ>; pierce: number; spin: number };
-type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg" | "laser" | "blast" | "chain" | "gas" | "nuke"; r: number; x: number; t: number; w?: number; txt?: string; y?: number; pts?: [number, number][] };
+type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg" | "laser" | "blast" | "chain" | "gas" | "nuke" | "die"; r: number; x: number; t: number; w?: number; txt?: string; y?: number; pts?: [number, number][]; k?: number; gs?: number };
 type Saved = { bestWave?: number; stars?: Record<string, number>; coins?: number; levels?: Partial<Record<UnitKind, number>>; dailyDone?: string; cleared?: number };
 type Mod = "none" | "night" | "iso" | "rush" | "tough" | "double";
 const MODS: Record<Mod, { name: string; desc: string }> = {
@@ -67,6 +67,11 @@ const getHelp = (id: number) => { try { return Math.min(3, Number(localStorage.g
 const setHelp = (id: number, n: number) => { try { n ? localStorage.setItem(helpKey(id), String(n)) : localStorage.removeItem(helpKey(id)); } catch {} };
 const stageCoins = (id: number, stars: number) => Math.round((15 + id * 5) * stars / 3);
 
+/** 그림을 가로 띠로 잘라 휘게 그려요: 윗몸은 크게, 발은 고정 → 걷기·덮치기·움찔 */
+function drawWarp(x: CanvasRenderingContext2D, im: CanvasImageSource, cx: number, footY: number, GS: number, dxAt: (h: number) => number, stretch = 1) {
+  const iw = (im as HTMLImageElement).naturalWidth || 200, ih = (im as HTMLImageElement).naturalHeight || 200, N = 18, bh = ih / N, dh = GS * stretch / N;
+  for (let i = 0; i < N; i++) { const h = 1 - (i + .5) / N; x.drawImage(im, 0, i * bh, iw, bh + .6, cx - GS / 2 + dxAt(h), footY - GS * stretch + i * dh, GS, dh + .8); }
+}
 export default function Defense({ ranks }: { ranks: Row[] }) {
   const cv = useRef<HTMLCanvasElement>(null), box = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<UnitKind>("nurse");
@@ -133,12 +138,15 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         if (big) { x.save(); x.globalAlpha = .18 + Math.sin(s.t * 5) * .08; const ag = x.createRadialGradient(z.x, cy, 0, z.x, cy, R * 1.6); ag.addColorStop(0, z.kind === 7 ? "#FF5A1A" : "#B5FF5A"); ag.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = ag; x.beginPath(); x.arc(z.x, cy, R * 1.6, 0, 7); x.fill(); x.restore(); }
         if (z.poison > 0) { x.save(); x.globalAlpha = .35; x.fillStyle = "#4CAF50"; x.beginPath(); x.arc(z.x, cy, R * 1.2, 0, 7); x.fill(); x.restore(); }
         const gim = art("g" + z.kind, GERM_SVG[z.kind]), GS = R * (big ? 3.4 : 3.7), squash = z.eating ? 1 + Math.sin(s.t * 14) * .06 : 1;
-        const sd = z.seed ?? 0, atkPh = z.eating ? Math.sin(s.t * 9 + sd) : 0;
-        // 걷기: 좌우로 흔들 / 공격: 앞으로 덮치며 크게 휘두르기 / 모기: 날갯짓
-        const rot = z.eating ? (atkPh > 0 ? -atkPh * .22 : atkPh * .06) : Math.sin(s.t * 5 + sd) * .05;
-        const lunge = z.eating ? Math.max(0, atkPh) * GS * .08 : 0;
-        if (gim) { x.save(); x.translate(z.x - lunge, cy + GS * .4); x.rotate(rot); if (z.kind === 6) x.scale(1 + Math.sin(s.t * 40) * .03, 1); x.scale(squash, 2 - squash); x.drawImage(gim, -GS / 2, -GS, GS, GS); x.restore();
-          if (z.eating && atkPh > .85) { x.save(); x.globalAlpha = (atkPh - .85) * 5; x.strokeStyle = "#FFF"; x.lineWidth = 3; x.shadowColor = "#FF4040"; x.shadowBlur = 10; x.beginPath(); x.arc(z.x - GS * .3, cy, GS * .32, Math.PI * .6, Math.PI * 1.35); x.stroke(); x.restore(); } if (z.hit && z.hit > 0) { x.save(); x.globalAlpha = z.hit * 2.5; x.globalCompositeOperation = "lighter"; x.fillStyle = "#fff"; x.beginPath(); x.arc(z.x, cy, R * .9, 0, 7); x.fill(); x.restore(); } }
+        const sd = z.seed ?? 0, foot = z.r * CH + CH / 2 + GS * .4;
+        const wp = s.t * (z.kind === 2 ? 11 : z.kind === 6 ? 14 : big ? 4.5 : 7) + sd, ap = s.t * (big ? 4.5 : 6.5) + sd, strike = z.eating ? Math.max(0, Math.sin(ap)) ** 3 : 0, wind = z.eating ? Math.max(0, -Math.sin(ap)) : 0;
+        const hitK = (z.hit ?? 0) * 3, stomp = z.eating ? 0 : Math.abs(Math.sin(wp)) * GS * (big ? .035 : .025);
+        const dxAt = (h: number) => (z.eating ? -h * h * GS * .26 * strike + h * h * GS * .07 * wind : h ** 1.5 * Math.sin(wp) * GS * .045 + (h < .3 ? (.3 - h) / .3 * Math.sin(wp * 2) * GS * .03 : 0)) + h * GS * .08 * hitK;
+        const stretch = (z.eating ? 1 - strike * .07 + wind * .05 : 1 + Math.sin(wp * 2) * .025) * (z.kind === 6 ? 1 + Math.sin(s.t * 40) * .03 : 1);
+        if (gim) { drawWarp(x, gim, z.x, foot - stomp * (z.kind === 6 ? 3 : 1), GS, dxAt, stretch);
+          if (hitK > 0) { x.save(); x.globalAlpha = Math.min(.7, hitK * .5); x.globalCompositeOperation = "lighter"; drawWarp(x, gim, z.x, foot - stomp, GS, dxAt, stretch); x.restore(); }
+          if (z.eating && strike > .6) { x.save(); x.globalAlpha = (strike - .6) * 2.5; x.strokeStyle = "#FFF"; x.lineWidth = big ? 5 : 3; x.shadowColor = "#FF3030"; x.shadowBlur = 14; x.beginPath(); x.arc(z.x - GS * .28, cy - GS * .05, GS * .34, Math.PI * .55, Math.PI * 1.4); x.stroke(); x.restore(); }
+          if (big && !z.eating && Math.abs(Math.sin(wp)) < .08) { x.save(); x.globalAlpha = .35; x.fillStyle = "#8C7B66"; for (let k = 0; k < 4; k++) { x.beginPath(); x.arc(z.x + (k - 1.5) * GS * .12, foot - 2, GS * .04, 0, 7); x.fill(); } x.restore(); } }
         else { x.fillStyle = GCOLOR[z.kind]; x.beginPath(); x.arc(z.x, cy, R, 0, 7); x.fill(); x.font = `${Math.floor(R * 1.3)}px system-ui`; x.fillText(GICON[z.kind], z.x, cy + 1); }
         if (z.slow > 0) { x.font = `${Math.floor(CH * .3)}px system-ui`; x.fillText("💤", z.x + R, cy - R); }
         x.fillStyle = "rgba(0,0,0,.15)"; x.fillRect(z.x - R, z.r * CH + 4, R * 2, 3); x.fillStyle = big ? "#B71C1C" : "#E2574C"; x.fillRect(z.x - R, z.r * CH + 4, R * 2 * (z.hp / z.max), 3);
@@ -149,6 +157,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         if (f.kind === "bolt") { x.save(); x.globalAlpha = a; x.strokeStyle = "#FFE766"; x.lineWidth = 3; x.shadowColor = "#FFE766"; x.shadowBlur = 12; x.beginPath(); let px = f.x, py = cy; x.moveTo(px, py); while (px < s.W) { px += 14; py = cy + (Math.random() - .5) * CH * .6; x.lineTo(px, py); } x.stroke(); x.restore(); }
         if (f.kind === "boom") { x.save(); x.globalAlpha = a; x.shadowColor = "#FFD36E"; x.shadowBlur = 14; x.strokeStyle = "#FFD36E"; x.lineWidth = 5 * a + 1; x.beginPath(); x.ellipse(f.x, cy + CH * .25, (1 - a) * CW * 1.6 + 8, ((1 - a) * CW * 1.6 + 8) * .35, 0, 0, 7); x.stroke(); x.fillStyle = "rgba(140,110,70,.5)"; for (let k = 0; k < 6; k++) { x.beginPath(); x.arc(f.x + Math.cos(k) * (1 - a) * CW * 1.3, cy + CH * .2 - Math.abs(Math.sin(k * 2)) * (1 - a) * CH * .5, 3, 0, 7); x.fill(); } x.restore(); }
         if (f.kind === "dmg") { x.save(); x.globalAlpha = a; x.font = `600 ${Math.floor(CH * .32)}px system-ui`; x.fillStyle = "#E2574C"; x.strokeStyle = "#fff"; x.lineWidth = 3; const yy = (f.y ?? cy) - (1 - a) * 18; x.strokeText(f.txt ?? "", f.x, yy); x.fillText(f.txt ?? "", f.x, yy); x.restore(); }
+        if (f.kind === "die" && f.k !== undefined) { const im = art("g" + f.k, GERM_SVG[f.k]); if (im) { const GS3 = f.gs ?? CH; x.save(); x.globalAlpha = Math.min(1, a * 1.6); x.translate(f.x, f.r * CH + CH / 2 + GS3 * .4); x.rotate((1 - a) * 1.25); x.scale(1, 1 - (1 - a) * .25); x.drawImage(im, -GS3 / 2, -GS3, GS3, GS3); x.restore(); } }
         if (f.kind === "nuke") { x.save(); const rr = (1 - a) * CW * 1.9 + 10; const gr = x.createRadialGradient(f.x, cy, 0, f.x, cy, rr); gr.addColorStop(0, `rgba(255,250,200,${a})`); gr.addColorStop(.4, `rgba(255,150,40,${a * .9})`); gr.addColorStop(1, "rgba(200,40,20,0)"); x.fillStyle = gr; x.beginPath(); x.arc(f.x, cy, rr, 0, 7); x.fill(); x.globalAlpha = a; x.strokeStyle = "#FFE08A"; x.lineWidth = 3; x.beginPath(); x.arc(f.x, cy, rr * 1.15, 0, 7); x.stroke(); x.restore(); }
         if (f.kind === "laser") { x.save(); x.globalAlpha = Math.min(1, a * 2); const w = (f.w ?? 6) * a; x.shadowColor = "#FF4D4D"; x.shadowBlur = 18; x.strokeStyle = "#FF5A4E"; x.lineWidth = w + 4; x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.lineTo(s.W, cy - CH * .08); x.stroke(); x.strokeStyle = "#FFF2F0"; x.lineWidth = Math.max(1, w * .4); x.stroke(); x.restore(); }
         if (f.kind === "blast") { x.save(); x.globalAlpha = a; x.fillStyle = "rgba(255,210,110,.55)"; x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.arc(f.x, cy - CH * .08, CW * 1.4 * (1.2 - a * .4), -.45, .45); x.closePath(); x.fill(); x.strokeStyle = "#FFE08A"; x.lineWidth = 2; for (const [px, py] of f.pts ?? []) { x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.lineTo(px, py); x.stroke(); } x.restore(); }
@@ -226,7 +235,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
             if (sh.kind === "poison") { z.poison = 4; s.fx.push({ kind: "cloud", r: sh.r, x: z.x, t: .6 }); for (const o of s.germs) if (o !== z && o.r === z.r && Math.abs(o.x - z.x) < CW) o.poison = 4; }
             if (sh.hit.size >= sh.pierce) sh.x = 1e9; } } }
       s.shots = s.shots.filter(sh => sh.x < s.W + 20);
-      for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : f.kind === "dmg" ? 1.4 : f.kind === "laser" ? 2.2 : f.kind === "chain" ? 2 : f.kind === "nuke" ? 1.4 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
+      for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : f.kind === "dmg" ? 1.4 : f.kind === "laser" ? 2.2 : f.kind === "chain" ? 2 : f.kind === "nuke" ? 1.4 : f.kind === "die" ? 1.3 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
       // 괴물 연출: 입·코에서 피/침 뚝뚝, 보스 스킬
       for (const z of s.germs) { if (z.seed === undefined) { z.seed = Math.random() * 6; z.cd2 = 3 + Math.random() * 3; }
         const big2 = z.kind === 3 || z.kind === 7, Rr = big2 ? CH * .46 : z.kind === 6 ? CH * .22 : CH * .3, GS2 = Rr * (big2 ? 3.4 : 3.7), [mx, my] = MOUTH[z.kind];
@@ -253,6 +262,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       for (const z of s.germs) if (!z.warn && z.x < CW * 1.2) { z.warn = true; sfx.tick(); shake(box.current, "s"); }
       // 변이균: 죽으면 둘로 분열
       for (const z of s.germs) if (z.hp <= 0 && z.kind === 4) { spawn(0, z.r, z.x - 6, .4); spawn(0, z.r, z.x + 14, .4); pop(box.current, z.x, z.r * CH + CH * .2, "분열!", "bad"); }
+      for (const z of s.germs) if (z.hp <= 0) { const bg2 = z.kind === 3 || z.kind === 7, R2 = bg2 ? CH * .46 : z.kind === 6 ? CH * .22 : CH * .3; s.fx.push({ kind: "die", r: z.r, x: z.x, t: 1, k: z.kind, gs: R2 * (bg2 ? 3.4 : 3.7) }); for (let k = 0; k < 10; k++) s.drops.push({ x: z.x, y: z.r * CH + CH * .3, vx: (Math.random() - .5) * 120, vy: -60 - Math.random() * 80, c: DRIP[z.kind], t: 1.2, floor: z.r * CH + CH - 6 }); }
       s.lost += s.units.filter(u => u.hp <= 0 && u.kind !== "punk").length; s.units = s.units.filter(u => u.hp > 0); s.germs = s.germs.filter(z => z.hp > 0);
       for (const c of s.cartFx) c.x += 520 * dt; s.cartFx = s.cartFx.filter(c => c.x < s.W + 40);
       draw(); s.raf = requestAnimationFrame(tick);
