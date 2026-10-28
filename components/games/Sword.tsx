@@ -23,7 +23,12 @@ export default function Sword({ ranks, best = 0 }: { ranks: Row[]; best?: number
   const [log, setLog] = useState<{ t: string; c: string }>({ t: "강화 버튼을 눌러 검을 강화하세요.", c: "" });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    loadGameState("sword").then(r => { const x = r as unknown as S | null; if (x && x.v === 2) setSt({ ...INIT, ...x }); }).catch(() => {}).finally(() => setLoaded(true));
+    loadGameState("sword").then(r => { const x = r as any;
+      if (x && x.v === 2) setSt({ ...INIT, ...x });
+      else if (x && typeof x.gold === "number") { // 예전 버전 기록: 돈과 최고 기록을 두 모드에 옮겨요
+        const carry = (): M => ({ ...fresh(), gold: Math.max(START, Math.floor(x.gold)), best: x.best ?? 0, tickets: x.protect ?? 0 });
+        const n: S = { ...INIT, easy: carry(), hard: carry() }; setSt(n); saveGameState("sword", n as any).catch(() => {});
+        setLog({ t: `예전 기록에서 ${won(Math.max(START, Math.floor(x.gold)))}과 방지권을 옮겨왔어요`, c: "good" }); } }).catch(() => {}).finally(() => setLoaded(true));
   }, []);
   const save = (n: S) => { setSt(n); if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => { saveGameState("sword", n as any).catch(() => {}); }, 600); };
   const mode = st.mode, m = mode ? st[mode] : fresh();

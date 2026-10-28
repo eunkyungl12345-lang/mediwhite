@@ -103,8 +103,10 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const persist = (force = false) => { const now = Date.now(); if (!force && now - lastSave.current < 15000) { dirty.current = true; return; } lastSave.current = now; dirty.current = false; if (loadFailed.current) return; const cur = { ...ref.current, lastSeen: now }; saveGameState("tycoon", cur as any).then(r => { if ((r as any)?.stale) { setToast("🔄 다른 화면에서 진행한 기록이 있어 불러올게요"); setTimeout(() => location.reload(), 1200); } }).catch(() => {}); const a = assetsOf(cur); if (a >= 1e6 && a > lastScore.current * 1.3) { lastScore.current = a; saveScore("tycoon", Math.floor(a)).catch(() => {}); } };
 
   useEffect(() => {
-    loadGameState("tycoon").then(d => {
-      const now = Date.now();
+    loadGameState("tycoon").then(raw => {
+      const now = Date.now(); let d: any = raw;
+      // 예전 시즌 기록은 버리지 않고 옮겨요: 현금·누적매출·내 집·가구는 그대로
+      if (d && d.v !== 3 && typeof d.cash === "number") { d = fresh({ cash: d.cash, total: d.total ?? 0, patients: d.patients ?? 0, home: typeof d.home === "number" ? d.home : 0, items: d.items ?? {}, lastSeen: now }); setSeason(true); saveGameState("tycoon", d).catch(() => {}); }
       if (isCurrent(d)) { const sv = { ...fresh(), ...d } as Saved; const sec = Math.min(OFFLINE_CAP, Math.max(0, (now - sv.lastSeen) / 1000)); const earn = Math.floor(rateOf(sv, mine) * sec * OFFLINE_RATE * (sv.pet === "ham" ? 1.5 : 1));
         setS({ ...sv, cash: sv.cash + earn, total: sv.total + earn, bricks: sv.bricks + (sv.props[0] ? sv.workers * WORKER_BRICKS * sec * OFFLINE_RATE : 0), lastSeen: now }); lastScore.current = assetsOf(sv); if (earn > 0 && sec > 60) setWelcome({ sec, earn }); }
       else { if (d) setSeason(true); const f = fresh(); setS(f); saveGameState("tycoon", f as any).catch(() => {}); }
@@ -196,7 +198,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   return (
     <div className="card">
       <div><h3>우리 병원 키우기</h3><div className="muted">병원을 <b>탭해서 진료</b>하고(빠르게 연타하면 보너스), 모은 돈으로 직원을 고용·성장시키면 <b>접속 안 해도 매출이 쌓여요</b>(최대 8시간, 50%). 부동산·미술품은 갖고 있는 동안 값이 올라요. 내 직종(<b>{mine}</b>) 직원은 +20%. 명예의 전당은 <b>총자산</b> 순.</div></div>
-      {season && <div className="warn">🆕 <span><b>시즌 3 오픈!</b> 거지키우기처럼 새로 짜여서 병원을 처음부터 다시 시작해요. 진료 클릭 → 직원 17명 → 부동산·미술품 → 직원 복지 → 기업·분원·우주병원 → 환생까지!</span></div>}
+      {season && <div className="warn">🆕 <span><b>시즌 3 오픈!</b> 거지키우기처럼 새로 짜였어요. 갖고 있던 <b>현금·내 집·가구는 그대로 옮겨왔고</b>, 병원(직원·시설)은 새로 키워요. 진료 클릭 → 직원 17명 → 부동산·미술품 → 직원 복지 → 기업·분원·우주병원 → 환생까지!</span></div>}
       <div className="ty-top" ref={box}>
         <div className="ty-hud" onPointerDown={tap} role="button" aria-label="탭해서 진료">
           <div className="ty-hud-cash">💰 {fmt(s.cash)}원</div>
