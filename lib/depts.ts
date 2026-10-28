@@ -28,7 +28,7 @@ export type TopicKey = typeof TOPICS[number]["key"];
 /** 썸 탭 글 (메인 게시판엔 안 보임) */
 export const SSUM_CAT = "썸";
 export const SSUM_TOPICS = [
-  { key: "confess", name: "공개고백", icon: "💌", hint: "마음 편하게 고백 글을 남겨요. 실명·병원명·직함은 빼고, 그 사람만 알아볼 수 있게 💘" },
+  { key: "confess", name: "공개고백", icon: "💌", hint: "초성으로 마음을 전해요 (예: ㄱㅁㅈ 쌤, 늘 고마워요). 실명·병원명·병동·층은 X — 당사자가 원하면 바로 내려가요 💘" },
   { key: "moment", name: "오늘 설렌 순간", icon: "💓", hint: "사람을 특정하지 않는 설렘 썰 (병원명·실명·직함 X)" },
   { key: "advice", name: "썸 상담소", icon: "💭", hint: "\"이 정도면 저한테 관심 있는 걸까요?\"" },
 ] as const;
