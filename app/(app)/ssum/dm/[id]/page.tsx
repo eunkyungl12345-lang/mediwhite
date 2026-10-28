@@ -21,6 +21,7 @@ export default async function DmPage({ params }: { params: { id: string } }) {
       <div className="muted" style={{ fontSize: 12 }}>둘만 보는 대화예요. 연락처 교환은 충분히 대화해본 뒤 신중하게. 불쾌한 일이 있으면 문의하기로 알려주세요.</div>
       <div className="ss-dm">{msgs?.length ? msgs.map(m => <div key={m.id} className={"ss-bub" + (m.sender === s.id ? " me" : "")}><span>{m.text}</span><small>{fmt(m.created_at)}</small></div>) : <div className="muted">첫 인사를 건네보세요 👋</div>}</div>
       <DmForm other={other} />
+      <a className="ss-promo small" style={{ marginTop: 12 }} href="https://ssumcenter.vercel.app" target="_blank" rel="noopener"><span className="ss-promo-ico">💞</span><span className="ss-promo-txt"><b>썸류센터</b><small>더 많은 인연은 강남 퇴근 후 소개팅에서</small></span><span className="ss-promo-go">→</span></a>
     </div>
   );
 }

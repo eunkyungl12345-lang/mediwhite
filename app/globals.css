@@ -727,3 +727,10 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .ss-bub{justify-self:start;max-width:80%;background:var(--surface);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:8px 12px;display:grid;gap:2px}
 .ss-bub.me{justify-self:end;background:#F8BBD0;border-color:#F8BBD0;color:#4A1228;border-radius:14px 14px 4px 14px}
 .ss-bub small{font-size:10px;opacity:.6}
+
+.ss-promo{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#E91E63,#FF7A9A);color:#fff;border-radius:14px;padding:12px 14px;text-decoration:none;box-shadow:0 8px 22px rgba(233,30,99,.25)}
+.ss-promo.small{padding:10px 12px;box-shadow:none}
+.ss-promo-ico{font-size:28px;line-height:1}
+.ss-promo-txt{flex:1;display:grid;gap:2px;min-width:0}
+.ss-promo-txt b{font-size:15px}.ss-promo-txt small{font-size:12px;opacity:.9}
+.ss-promo-go{font-weight:700;white-space:nowrap;background:rgba(255,255,255,.22);border-radius:999px;padding:5px 10px;font-size:13px}

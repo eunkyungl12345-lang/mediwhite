@@ -93,6 +93,10 @@ export default async function HomePage() {
             {tyPending > 0 && <div className="h-ty-pending">💰 자리 비운 동안 <b>+{won(tyPending)}원</b> 쌓였어요 — 받으러 가기</div>}
           </> : <div className="h-empty">시즌 2 오픈! 병원을 키워서 한강뷰 집·외제차까지 사보세요.</div>}
         </Link>
+        <Link href="/ssum" className="h-card" style={{ background: "linear-gradient(135deg,#FFE3EC,#FFF4F7)", borderColor: "#F6C6D5", color: "#7A2E4A" }}>
+          <div className="h-head"><h3>💘 썸류센터</h3><span className="h-link" style={{ color: "#C2185B" }}>들어가기 →</span></div>
+          <div className="h-empty" style={{ color: "#7A2E4A" }}>닉네임 고백 · 나어때 프로필 카드 · 지인 소개 · 오늘의 솔로</div>
+        </Link>
         <section className="h-card h-jobs">
           <div className="h-head"><h3>💼 채용</h3><Link href="/board?topic=job" className="h-link">이직·채용 글</Link></div>
           <div className="h-empty">병원 채용 공고가 곧 여기에 올라와요. 좋은 공고를 보셨다면 <Link href="/board/new?topic=job">이직·채용</Link>에 공유해 주세요.</div>

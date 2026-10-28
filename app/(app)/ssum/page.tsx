@@ -101,6 +101,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         {lastBy.length ? lastBy.map(t => <Link key={t.other} href={`/ssum/dm/${t.other}`} className="h-row"><span className="h-topic">💬</span><span className="h-title">{nameOf(t.other)}</span><span className="h-meta">{t.sender === s.id ? "나: " : ""}{t.text.slice(0, 40)} · {fmt(t.created_at)}</span></Link>) : <div className="muted">서로 관심이 생기거나 고백이 수락되면 여기서 대화할 수 있어요.</div>}
         {[...mutual.map((l: any) => l.from_id), ...acceptedIds, ...(introLikers ?? []).map((l: any) => l.from_id)].filter(id => !seen.has(id)).filter((v, i, a) => a.indexOf(v) === i).map(id => <Link key={id} href={`/ssum/dm/${id}`} className="ss-newdm">💘 {(likers ?? []).find((l: any) => l.from_id === id)?.user ? display((likers as any).find((l: any) => l.from_id === id).user.dept, (likers as any).find((l: any) => l.from_id === id).user.nickname) : (introLikers ?? []).find((l: any) => l.from_id === id)?.user ? display((introLikers as any).find((l: any) => l.from_id === id).user.dept, (introLikers as any).find((l: any) => l.from_id === id).user.nickname) : nameOf(id)} 님과 대화 시작하기 →</Link>)}
       </section>
+      <a className="ss-promo small" href="https://ssumcenter.vercel.app" target="_blank" rel="noopener"><span className="ss-promo-ico">☕</span><span className="ss-promo-txt"><b>대화가 잘 통한다면, 썸류센터에서 직접 만나보세요</b><small>오프라인 로테이션 소개팅 · 1:1 매칭</small></span><span className="ss-promo-go">보기 →</span></a>
       <section className="card"><h3>💌 받은 고백</h3>
         {got?.length ? got.map(c => <div key={c.id} className="ss-conf"><div className="ss-conf-text">“{c.text}”</div><div className="meta"><span className="time">{fmt(c.created_at)}</span>
           {c.status === "pending" ? <><form action={answerConfession.bind(null, c.id, true)}><button className="btn" style={{ padding: "4px 12px" }}>💘 수락 (공개)</button></form><form action={answerConfession.bind(null, c.id, false)}><button className="link">정중히 거절</button></form></> : <span className="tag">{c.status === "accepted" ? `수락함 · ${nameOf(c.from_id)}` : "거절함"}</span>}</div></div>) : <div className="muted">아직 받은 고백이 없어요.</div>}
@@ -116,7 +117,12 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
 
   return (
     <div className="games">
-      <div className="ss-hero"><div><b>💘 썸</b><span>병원 사람끼리, 조심스럽게 설레는 곳</span></div><span className="muted" style={{ fontSize: 11 }}>만 19세 이상 · 실명·연락처 금지</span></div>
+      <div className="ss-hero"><div><b>💘 썸류센터</b><span>병원 사람끼리, 조심스럽게 설레는 곳</span></div><span className="muted" style={{ fontSize: 11 }}>만 19세 이상 · 실명·연락처 금지</span></div>
+      <a className="ss-promo" href="https://ssumcenter.vercel.app" target="_blank" rel="noopener">
+        <span className="ss-promo-ico">💞</span>
+        <span className="ss-promo-txt"><b>진짜 만남은 썸류센터에서</b><small>강남 퇴근 후 로테이션 소개팅 · 1:1 매칭 · 성향 테스트</small></span>
+        <span className="ss-promo-go">신청하기 →</span>
+      </a>
       {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
       <div className="cats" style={{ paddingBottom: 0 }}>{TABS.map(([k, n]) => <Link key={k} href={`/ssum?tab=${k}`} aria-current={tab === k ? "true" : undefined}>{n}</Link>)}</div>
       {body}
