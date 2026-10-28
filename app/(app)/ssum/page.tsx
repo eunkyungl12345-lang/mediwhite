@@ -81,7 +81,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
       <GFilter t="intro" />
       <div className="ss-cards">{(intros ?? []).map((p: any) => <Card key={p.id} p={p} see={admin || p.author_id === s.id}
         head={<><span className="tag">{p.dept || "지인"}</span><span className="muted" style={{ fontSize: 12 }}>{p.author ? `${display(p.author.dept, p.author.nickname)}님의 지인` : ""}</span></>}
-        foot={<>{p.author_id !== s.id && <LikeButton kind="intro" target={String(p.id)} liked={liked("intro", String(p.id))} label="소개받고 싶어요" />}{(admin || p.author_id === s.id) && <form action={deleteIntro.bind(null, p.id)}><button className="link">삭제</button></form>}</>} />)}
+        foot={<>{p.author_id !== s.id && <LikeButton kind="intro" target={String(p.id)} liked={liked("intro", String(p.id))} label="소개받고 싶어요" dm={p.author_id} />}{(admin || p.author_id === s.id) && <form action={deleteIntro.bind(null, p.id)}><button className="link">삭제</button></form>}</>} />)}
         {!intros?.length && <div className="muted">아직 소개된 분이 없어요.</div>}
       </div>
     </>;

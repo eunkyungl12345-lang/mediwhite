@@ -63,9 +63,11 @@ export function IntroForm() {
   );
 }
 
-export function LikeButton({ kind, target, liked: l0, label = "관심 있어요" }: { kind: "profile" | "intro"; target: string; liked: boolean; label?: string }) {
+export function LikeButton({ kind, target, liked: l0, label = "관심 있어요", dm }: { kind: "profile" | "intro"; target: string; liked: boolean; label?: string; dm?: string }) {
   const [liked, setLiked] = useState(l0), [mutual, setMutual] = useState(false), [p, start] = useTransition();
-  return <button type="button" className={"btn" + (liked ? "" : " ghost")} disabled={p} onClick={() => start(async () => { const r = await toggleLike(kind, target); setLiked(r.liked); setMutual(r.mutual); })}>{liked ? (mutual ? "💘 연결됐어요!" : "💗 관심 보냄") : `🤍 ${label}`}</button>;
+  const toggle = () => start(async () => { const r = await toggleLike(kind, target); setLiked(r.liked); setMutual(r.mutual); });
+  if (dm && liked) return <span className="row" style={{ gap: 8, alignItems: "center" }}><a className="btn" href={`/ssum/dm/${dm}`}>💬 소개해준 분과 대화하기 →</a><button type="button" className="link" disabled={p} onClick={toggle}>취소</button></span>;
+  return <button type="button" className={"btn" + (liked ? "" : " ghost")} disabled={p} onClick={toggle}>{liked ? (mutual ? "💘 연결됐어요!" : "💗 관심 보냄") : `🤍 ${label}`}</button>;
 }
 
 export function PickSolo({ userId }: { userId: string }) {
