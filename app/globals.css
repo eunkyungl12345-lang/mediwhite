@@ -983,3 +983,6 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .hm-garage.has .hm-car-name{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font-weight:700;letter-spacing:.5px;background:rgba(0,0,0,.45);padding:2px 10px;border-radius:999px;white-space:nowrap}
 .hm-garage.t6 .hm-spot,.hm-garage.t7 .hm-spot{background:radial-gradient(ellipse at 50% 0%,rgba(255,215,120,.45),transparent 65%)}
 .hm-garage.t7 .hm-car-name{background:linear-gradient(90deg,#8a6a1c,#e8c35a,#8a6a1c);color:#1a1205}
+
+.def-ico.art{overflow:hidden;display:grid;place-items:end center}
+.def-ico.art img{width:120%;height:120%;object-fit:contain;margin-bottom:-14%;pointer-events:none}
