@@ -74,6 +74,7 @@ export const QUESTS: { key: string; title: string; xp: number }[] = [
   { key: "tycoon_1000m", title: "우리 병원 누적 매출 1,000만원", xp: 400 },
   { key: "tycoon_1eok", title: "우리 병원 누적 매출 1억원", xp: 800 },
   { key: "omok_win_1", title: "온라인 오목 첫 승리", xp: 100 },
+  { key: "food_1", title: "병원 앞 맛집 첫 등록", xp: 50 },
 ];
 /** 반복 보상: 1건당 XP와 하루 상한 */
 export const REPEAT: Record<string, { each: number; dailyCap: number }> = {

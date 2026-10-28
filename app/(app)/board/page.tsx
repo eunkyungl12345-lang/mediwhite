@@ -46,6 +46,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const canManage = isDept && (s.role === "admin" || leader?.id === s.id);
   return (
     <>
+      <a href="/food" className="food-link">🍚 병원 앞 맛집 보러 가기 ›</a>
       <div className="filters">
         <DeptSelect value={isDept ? cat : "전체"} options={DEPTS} mine={s.dept} topic={topic} sort={sort} />
         <div className="sorts">{[["rank", "🎖️ 계급순"], ["new", "🕒 새 글"], ["best", "🔥 핫한 글"]].map(([k, n]) => <Link key={k} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(k !== "rank" ? { sort: k } : {}) }).toString()}`} aria-current={sort === k ? "true" : undefined}>{n}</Link>)}</div>

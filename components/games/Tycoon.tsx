@@ -72,6 +72,7 @@ function HospitalScene({ s }: { s: Saved }) {
   );
 }
 
+const SCENE: Record<string, string> = { wall: "🧱🧱🧱", alley: "🏚️🏪🛵", city: "🏢🏬🏢🏣", river: "🏙️🌉⛵", nightriver: "🌃🌉✨🎆", garden: "🌳⛲🌷🌳" };
 const VIEWS: Record<string, string> = { wall: "벽뷰", alley: "골목뷰", city: "시티뷰", river: "한강뷰", nightriver: "한강 야경", garden: "정원뷰" };
 function HomeScene({ s }: { s: Saved }) {
   const h = HOMES[s.home];
@@ -82,7 +83,7 @@ function HomeScene({ s }: { s: Saved }) {
   return (
     <div className={"hm" + (dark ? " dark" : "")} style={{ ["--wall" as any]: h.wall, ["--floor" as any]: h.floor }}>
       <div className="hm-wall">
-        <div className={"hm-win v-" + h.view}><span className="hm-view-label">{VIEWS[h.view]}</span></div>
+        <div className={"hm-win v-" + h.view}><span className="hm-scene">{SCENE[h.view]}</span><span className="hm-view-label">{VIEWS[h.view]}</span></div>
         {art && <div className={"hm-art t" + art.t} title={art.name}><span>{art.t >= 4 ? "🎨" : "🖼️"}</span></div>}
         <Thing k="light" cls="hm-light" />
         <Thing k="tv" cls="hm-tv" />
@@ -163,7 +164,11 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const buyGear = (k: string) => { const g = GEAR.find(x => x.key === k)!; spend(g.cost, x => ({ ...x, gear: [...x.gear, k] }), `${g.icon} ${g.name} 도입!`, true); };
   const buyAmb = () => spend(AMBULANCE.cost, x => ({ ...x, amb: x.amb + 1 }), `🚑 구급차 ${s.amb + 1}대째 출동 대기`, true);
   const buyHeli = () => spend(HELI.cost, x => ({ ...x, heli: true }), "🚁 닥터헬기 도입! 옥상에 헬기장", true);
-  const buyHome = (i: number) => { const h = HOMES[i]; spend(h.price, x => ({ ...x, home: i }), `🏠 ${h.area} ${h.name}(으)로 이사!`, true); };
+  /** 이사: 지금 집을 90%에 팔고 새 집을 사요 (더 작은 집으로도 가능, 차액은 돌려받음) */
+  const moveCost = (i: number) => HOMES[i].price - Math.floor(HOMES[s.home].price * .9);
+  const buyHome = (i: number) => { const h = HOMES[i], c = moveCost(i);
+    if (c <= 0) { setS(x => ({ ...x, home: i, cash: x.cash - c })); flash(`🏠 ${h.area} ${h.name}(으)로 이사! 차액 +${fmt(-c)}원 돌려받았어요`); sfx.coin(); setTimeout(() => persist(true), 60); }
+    else spend(c, x => ({ ...x, home: i }), `🏠 ${h.area} ${h.name}(으)로 이사!`, true); };
   const buySlot = (sl: Slot) => { const t = s.items[sl.key] ?? 0, nx = sl.tiers[t]; if (nx) spend(nx.price, x => ({ ...x, items: { ...x.items, [sl.key]: t + 1 } }), `${nx.icon} ${nx.name} 들였어요`, t + 1 === sl.tiers.length); };
 
   const Btn = ({ cost, onClick, label = "구매" }: { cost: number; onClick: () => void; label?: string }) => <button type="button" className={"btn" + (s.cash < cost ? " ghost" : "")} onClick={onClick}>{label}<br /><small>{fmt(cost)}</small></button>;
@@ -244,10 +249,10 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
 
         {tab === "home" && HOMES.map((h, i) => <div key={i} className={"ty-row" + (i === s.home ? " cur" : i < s.home ? " past" : "")}>
           <span className="def-ico" style={{ background: i <= s.home ? "var(--scrub-soft)" : undefined }}>{i === 0 ? "🛏️" : i < 3 ? "🏢" : i < 7 ? "🏙️" : i < 9 ? "🌉" : "🏯"}</span>
-          <div style={{ flex: 1 }}><b>{h.area} {h.name}</b> {i === s.home && <span className="tag">거주 중</span>}<div className="muted" style={{ fontSize: 12 }}>{i ? `${fmt(h.price)}원 · ${VIEWS[h.view]}` : "시작 집"}</div></div>
-          {i > s.home && <div className="ty-btns"><Btn cost={h.price} onClick={() => buyHome(i)} label="이사" /></div>}
+          <div style={{ flex: 1 }}><b>{h.area} {h.name}</b> {i === s.home && <span className="tag">거주 중</span>}<div className="muted" style={{ fontSize: 12 }}>{i ? `${fmt(h.price)}원` : "시작 집"} · {VIEWS[h.view]}{i !== s.home && s.home > 0 ? ` · 지금 집 90%에 팔고 이사` : ""}</div></div>
+          {i !== s.home && (moveCost(i) > 0 ? <div className="ty-btns"><Btn cost={moveCost(i)} onClick={() => buyHome(i)} label="이사" /></div> : <div className="ty-btns"><button type="button" className="btn ghost" onClick={() => buyHome(i)}>이사<br /><small>+{fmt(-moveCost(i))} 환급</small></button></div>)}
         </div>)}
-        {tab === "home" && <div className="muted" style={{ fontSize: 12 }}>서울 매매 시세를 대략 반영했어요. 이사하면 벽지·바닥·창밖 풍경이 바뀌어요.</div>}
+        {tab === "home" && <div className="muted" style={{ fontSize: 12 }}>서울 매매 시세를 대략 반영했어요. 이사하면 지금 집은 90%에 팔려요(작은 집으로 가면 차액 환급). 벽지·바닥·창밖 풍경이 바뀌어요.</div>}
 
         {(tab === "furn" || tab === "art" || tab === "car") && SLOTS.filter(sl => sl.cat === tab).map(sl => { const t = s.items[sl.key] ?? 0, cur = t ? sl.tiers[t - 1] : null, nx = sl.tiers[t];
           return <div key={sl.key} className="ty-row">

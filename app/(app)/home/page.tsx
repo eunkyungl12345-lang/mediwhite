@@ -97,6 +97,10 @@ export default async function HomePage() {
           <div className="h-head"><h3>💘 썸</h3><span className="h-link" style={{ color: "#C2185B" }}>들어가기 →</span></div>
           <div className="h-empty" style={{ color: "#7A2E4A" }}>닉네임 고백 · 셀소 카드 · 지인 소개 · 오늘의 솔로</div>
         </Link>
+        <a href="/food" className="h-card" style={{ background: "linear-gradient(135deg,#FFF1DC,#FFF8EE)", borderColor: "#F2D6A8", color: "#6B4A12" }}>
+          <div className="h-head"><h3>🍚 병원 앞 맛집</h3><span className="h-link" style={{ color: "#B7791F" }}>보러 가기 →</span></div>
+          <div className="h-empty" style={{ color: "#6B4A12" }}>서울·경기·인천·대구 · 혼밥 / 회식 / 야식·배달 / 보호자 추천</div>
+        </a>
         <section className="h-card h-jobs">
           <div className="h-head"><h3>💼 채용</h3><Link href="/board?topic=job" className="h-link">이직·채용 글</Link></div>
           <div className="h-empty">병원 채용 공고가 곧 여기에 올라와요. 좋은 공고를 보셨다면 <Link href="/board/new?topic=job">이직·채용</Link>에 공유해 주세요.</div>
