@@ -475,3 +475,13 @@ export async function reportOnline(n: number) {
   const { data } = await s.from("online_peaks").select("peak").eq("day", day).maybeSingle();
   if (!data) await s.from("online_peaks").insert({ day, peak: n }); else if (n > data.peak) await s.from("online_peaks").update({ peak: n, at: new Date().toISOString() }).eq("day", day);
 }
+
+/** 병원 키우기 지급금(관리자가 넣어둔 돈) 받기: 열려 있는 게임 화면이 덮어쓰지 않도록 따로 보관했다가 게임이 가져감 */
+export async function claimTycoonGrant() {
+  const u = await requireUser(); const s = db();
+  const { data } = await s.from("game_state").select("state").eq("user_id", u.id).eq("game", "tycoon_grant").maybeSingle();
+  const amt = Number((data?.state as any)?.amount ?? 0);
+  if (!amt) return 0;
+  await s.from("game_state").delete().eq("user_id", u.id).eq("game", "tycoon_grant");
+  return amt;
+}

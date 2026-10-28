@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { saveScore, loadGameState, saveGameState } from "@/lib/actions";
+import { saveScore, loadGameState, saveGameState, claimTycoonGrant } from "@/lib/actions";
 import Board, { type Row } from "./Board";
 import { sfx, haptic, burst, pop } from "@/lib/juice";
 import {
@@ -130,6 +130,12 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
     }).catch(() => setLoaded(true));
   }, [mine]);
 
+  // 관리자 지급금: 로드 직후 + 20초마다 확인
+  useEffect(() => {
+    if (!loaded) return;
+    const grab = () => claimTycoonGrant().then(a => { if (a > 0) { setS(x => ({ ...x, cash: x.cash + a, total: x.total + a })); setToast(`🎁 운영팀 지급 +${fmt(a)}원`); setTimeout(() => setToast(""), 4000); setTimeout(() => persist(true), 100); } }).catch(() => {});
+    grab(); const id = setInterval(grab, 20000); return () => clearInterval(id);
+  }, [loaded]); // eslint-disable-line
   useEffect(() => {
     if (!loaded) return;
     const id = setInterval(() => { const r = dailyOf(ref.current, mine) / DAY; if (r > 0) { setS(x => ({ ...x, cash: x.cash + r, total: x.total + r, patients: x.patients + r / 30000 })); dirty.current = true; }
