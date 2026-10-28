@@ -7,7 +7,7 @@ import { sfx, haptic, shake, burst, pop } from "@/lib/juice";
 
 /** 병동 사수 — 스테이지형 줄 지키기 디펜스. 스테이지를 깨면 별·처방전 코인·새 의료진. (계정 저장) */
 const ROWS = 5, COLS = 9, STAGES = 30;
-type UnitKind = "iv" | "nurse" | "wall" | "xray" | "doctor" | "ortho" | "anes" | "lab" | "ems" | "ornurse";
+type UnitKind = "iv" | "nurse" | "wall" | "xray" | "doctor" | "ortho" | "anes" | "lab" | "ems" | "ornurse" | "punk";
 type UnitDef = { name: string; icon: string; cost: number; hp: number; desc: string; unlock: number; skill: string; dmg: number };
 const UNITS: Record<UnitKind, UnitDef> = {
   iv:      { name: "수액 걸이",   icon: "🧃", cost: 50,  hp: 60,  unlock: 0,  desc: "8초마다 수액 25 생산", skill: "", dmg: 0 },
@@ -20,19 +20,20 @@ const UNITS: Record<UnitKind, UnitDef> = {
   lab:     { name: "임상병리사",  icon: "🧪", cost: 200, hp: 80,  unlock: 15, desc: "독병 투척, 맞은 세균 지속 피해", skill: "☠️ 독", dmg: 15 },
   ems:     { name: "응급구조사",  icon: "⚡", cost: 300, hp: 100, unlock: 20, desc: "⚡ 연쇄 번개: 6초마다 적 6마리까지 튕겨 가며 감전", skill: "⚡ 번개", dmg: 120 },
   ornurse: { name: "수술실 간호사", icon: "✂️", cost: 250, hp: 90, unlock: 25, desc: "가위 투척, 세균 3마리 관통", skill: "✂️ 가위", dmg: 35 },
+  punk:    { name: "당일 펑크 알바", icon: "💣", cost: 125, hp: 40, unlock: 2, desc: "💣 자폭맨: \"저 오늘 못 가요!\" 외치고 달려가서 펑! 주변 3줄 큰 피해 (1회용)", skill: "💣 자폭", dmg: 450 },
 };
 const ORDER = Object.keys(UNITS) as UnitKind[];
-const UCOLOR: Record<UnitKind, string> = { iv: "#8FD3C2", nurse: "#F5A3B7", wall: "#E6B341", xray: "#B8A1E8", doctor: "#A9C7F0", ortho: "#F0B48C", anes: "#C9B6F0", lab: "#9FE0A8", ems: "#FFD36E", ornurse: "#F7C6D9" };
+const UCOLOR: Record<UnitKind, string> = { iv: "#8FD3C2", nurse: "#F5A3B7", wall: "#E6B341", xray: "#B8A1E8", doctor: "#A9C7F0", ortho: "#F0B48C", anes: "#C9B6F0", lab: "#9FE0A8", ems: "#FFD36E", ornurse: "#F7C6D9", punk: "#FF8A3D" };
 // 세균: 0 일반 1 끈질긴 2 돌연변이(빠름) 3 보스 4 변이균(죽으면 분열) 5 내성균(주사·빔 피해 절반) 6 날벌레(아주 빠름) 7 슈퍼박테리아(소환 보스)
 const GICON = ["🦠", "🧫", "👾", "🧟", "🧬", "🛡️", "🦟", "👑"];
 const GCOLOR = ["#7CCB8F", "#9BD6E0", "#C48BE8", "#E26B6B", "#F0A6D2", "#B0BEC5", "#D7CCA1", "#FFB74D"];
 const GNAME = ["일반 세균", "끈질긴 균", "돌연변이", "보스 🧟", "변이균(분열)", "내성균", "날벌레", "슈퍼박테리아"];
 const CHAPTERS = ["응급실", "일반병동", "중환자실"];
 const MAXLV = 5;
-type Unit = { kind: UnitKind; r: number; c: number; hp: number; max: number; cd: number; atk?: number };
+type Unit = { kind: UnitKind; r: number; c: number; hp: number; max: number; cd: number; atk?: number; run?: number; fuse?: number };
 type Germ = { r: number; x: number; hp: number; max: number; speed: number; dmg: number; kind: number; eating: boolean; slow: number; poison: number; cd: number; warn?: boolean; hit?: number };
 type Shot = { r: number; x: number; dmg: number; kind: "needle" | "beam" | "pill" | "poison" | "scissor"; hit: Set<Germ>; pierce: number; spin: number };
-type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg" | "laser" | "blast" | "chain" | "gas"; r: number; x: number; t: number; w?: number; txt?: string; y?: number; pts?: [number, number][] };
+type Fx = { kind: "bolt" | "boom" | "cloud" | "zzz" | "dmg" | "laser" | "blast" | "chain" | "gas" | "nuke"; r: number; x: number; t: number; w?: number; txt?: string; y?: number; pts?: [number, number][] };
 type Saved = { bestWave?: number; stars?: Record<string, number>; coins?: number; levels?: Partial<Record<UnitKind, number>>; dailyDone?: string; cleared?: number };
 type Mod = "none" | "night" | "iso" | "rush" | "tough" | "double";
 const MODS: Record<Mod, { name: string; desc: string }> = {
@@ -109,9 +110,9 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       for (const u of s.units) if (u.kind === "anes") { x.fillStyle = "rgba(120,100,220,.10)"; x.fillRect(u.c * CW, u.r * CH, s.W - u.c * CW, CH); }
       x.textAlign = "center"; x.textBaseline = "middle";
       for (const u of s.units) { const cx = u.c * CW + CW / 2, cy = u.r * CH + CH / 2, wob = Math.sin(s.t * 3 + u.c + u.r) * 1.2, S = Math.min(CW * 1.25, CH * 1.3);
-        const kick = u.atk && u.atk > 0 ? Math.sin(u.atk * Math.PI) * 4 : 0;
+        const kick = (u.atk && u.atk > 0 ? Math.sin(u.atk * Math.PI) * 4 : 0) - (u.run ?? 0); const runBob = u.run ? Math.abs(Math.sin(s.t * 18)) * 4 : 0;
         const im = art(u.kind, HERO_SVG[u.kind]);
-        if (im) { x.save(); x.translate(cx - kick, cy + wob); if (u.kind === "ortho" && u.atk && u.atk > 0) x.rotate(-Math.sin(u.atk * Math.PI) * .25); x.drawImage(im, -S / 2, -S * .62, S, S); x.restore(); }
+        if (im) { x.save(); x.translate(cx - kick, cy + wob - runBob); if (u.kind === "punk" && (u.fuse ?? 1) > 0) x.translate(Math.sin(s.t * 40) * 1.5, 0); if (u.kind === "ortho" && u.atk && u.atk > 0) x.rotate(-Math.sin(u.atk * Math.PI) * .25); x.drawImage(im, -S / 2, -S * .62, S, S); x.restore(); }
         else { x.fillStyle = UCOLOR[u.kind]; x.beginPath(); x.arc(cx, cy, CH * .38, 0, 7); x.fill(); x.font = `${Math.floor(CH * .45)}px system-ui`; x.fillText(UNITS[u.kind].icon, cx, cy + 1); }
         if (u.cd > 0 && u.kind !== "iv" && u.kind !== "wall") { x.strokeStyle = "rgba(255,255,255,.7)"; x.lineWidth = 2.5; x.beginPath(); x.arc(cx + S * .32, cy - S * .42, 4, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, 1 - Math.min(1, u.cd / 3))); x.stroke(); }
         const l = s.levels[u.kind] ?? 1; if (l > 1) { x.font = `700 ${Math.floor(CH * .2)}px system-ui`; x.fillStyle = "#fff"; x.strokeStyle = "#2C6B5E"; x.lineWidth = 3; x.strokeText("Lv" + l, cx - S * .3, cy - S * .45); x.fillText("Lv" + l, cx - S * .3, cy - S * .45); }
@@ -139,6 +140,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         if (f.kind === "bolt") { x.save(); x.globalAlpha = a; x.strokeStyle = "#FFE766"; x.lineWidth = 3; x.shadowColor = "#FFE766"; x.shadowBlur = 12; x.beginPath(); let px = f.x, py = cy; x.moveTo(px, py); while (px < s.W) { px += 14; py = cy + (Math.random() - .5) * CH * .6; x.lineTo(px, py); } x.stroke(); x.restore(); }
         if (f.kind === "boom") { x.save(); x.globalAlpha = a; x.shadowColor = "#FFD36E"; x.shadowBlur = 14; x.strokeStyle = "#FFD36E"; x.lineWidth = 5 * a + 1; x.beginPath(); x.ellipse(f.x, cy + CH * .25, (1 - a) * CW * 1.6 + 8, ((1 - a) * CW * 1.6 + 8) * .35, 0, 0, 7); x.stroke(); x.fillStyle = "rgba(140,110,70,.5)"; for (let k = 0; k < 6; k++) { x.beginPath(); x.arc(f.x + Math.cos(k) * (1 - a) * CW * 1.3, cy + CH * .2 - Math.abs(Math.sin(k * 2)) * (1 - a) * CH * .5, 3, 0, 7); x.fill(); } x.restore(); }
         if (f.kind === "dmg") { x.save(); x.globalAlpha = a; x.font = `600 ${Math.floor(CH * .32)}px system-ui`; x.fillStyle = "#E2574C"; x.strokeStyle = "#fff"; x.lineWidth = 3; const yy = (f.y ?? cy) - (1 - a) * 18; x.strokeText(f.txt ?? "", f.x, yy); x.fillText(f.txt ?? "", f.x, yy); x.restore(); }
+        if (f.kind === "nuke") { x.save(); const rr = (1 - a) * CW * 1.9 + 10; const gr = x.createRadialGradient(f.x, cy, 0, f.x, cy, rr); gr.addColorStop(0, `rgba(255,250,200,${a})`); gr.addColorStop(.4, `rgba(255,150,40,${a * .9})`); gr.addColorStop(1, "rgba(200,40,20,0)"); x.fillStyle = gr; x.beginPath(); x.arc(f.x, cy, rr, 0, 7); x.fill(); x.globalAlpha = a; x.strokeStyle = "#FFE08A"; x.lineWidth = 3; x.beginPath(); x.arc(f.x, cy, rr * 1.15, 0, 7); x.stroke(); x.restore(); }
         if (f.kind === "laser") { x.save(); x.globalAlpha = Math.min(1, a * 2); const w = (f.w ?? 6) * a; x.shadowColor = "#FF4D4D"; x.shadowBlur = 18; x.strokeStyle = "#FF5A4E"; x.lineWidth = w + 4; x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.lineTo(s.W, cy - CH * .08); x.stroke(); x.strokeStyle = "#FFF2F0"; x.lineWidth = Math.max(1, w * .4); x.stroke(); x.restore(); }
         if (f.kind === "blast") { x.save(); x.globalAlpha = a; x.fillStyle = "rgba(255,210,110,.55)"; x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.arc(f.x, cy - CH * .08, CW * 1.4 * (1.2 - a * .4), -.45, .45); x.closePath(); x.fill(); x.strokeStyle = "#FFE08A"; x.lineWidth = 2; for (const [px, py] of f.pts ?? []) { x.beginPath(); x.moveTo(f.x, cy - CH * .08); x.lineTo(px, py); x.stroke(); } x.restore(); }
         if (f.kind === "chain") { x.save(); x.globalAlpha = a; x.shadowColor = "#FFF27A"; x.shadowBlur = 16; x.strokeStyle = "#FFF7B0"; x.lineWidth = 3; x.beginPath(); const P = f.pts ?? []; if (P.length) { x.moveTo(P[0][0], P[0][1]); for (let k = 1; k < P.length; k++) { const [ax, ay] = P[k - 1], [bx, by] = P[k]; for (let q = 1; q <= 5; q++) { const t2 = q / 5; x.lineTo(ax + (bx - ax) * t2 + (q < 5 ? (Math.random() - .5) * 14 : 0), ay + (by - ay) * t2 + (q < 5 ? (Math.random() - .5) * 14 : 0)); } } } x.stroke(); x.restore(); }
@@ -201,6 +203,11 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
           case "ems": if (u.cd <= 0 && lane.length) { u.cd = 6; u.atk = 1; let cur = lane.reduce((m, z) => z.x < m.x ? z : m, lane[0]); const hitSet = new Set<Germ>(); const pts: [number, number][] = [[fx, u.r * CH + CH * .3]];
             for (let k = 0; k < 6 && cur; k++) { hitSet.add(cur); const d = Math.round(D * Math.pow(.85, k)); cur.hp -= d; cur.hit = .3; pts.push([cur.x, cur.r * CH + CH / 2]); s.fx.push({ kind: "dmg", r: cur.r, x: cur.x, y: cur.r * CH + CH * .3, t: 1, txt: String(d) }); const from: Germ = cur; cur = s.germs.filter(o => !hitSet.has(o) && Math.hypot(o.x - from.x, (o.r - from.r) * CH) < CW * 2.4).sort((a2, b2) => Math.hypot(a2.x - from.x, (a2.r - from.r) * CH) - Math.hypot(b2.x - from.x, (b2.r - from.r) * CH))[0]; }
             s.fx.push({ kind: "chain", r: u.r, x: fx, t: .6, pts }); shake(box.current, "s"); sfx.boom(); } break;
+          case "punk": { if (u.fuse === undefined) { if (!lane.length) break; u.fuse = .6; pop(box.current, u.c * CW + CW / 2, u.r * CH, ["😅 저 오늘 못 가요!", "ㅈㅅ 펑크요!", "급한 일이 생겨서…", "단톡 나갑니다"][Math.floor(Math.random() * 4)], "bad"); }
+            u.fuse -= dt; if (u.fuse <= 0) { u.run = (u.run ?? 0) + 190 * dt; const px = u.c * CW + CW / 2 + u.run; const hitG = s.germs.find(z => z.r === u.r && Math.abs(z.x - px) < CW * .5);
+              if (hitG || px > s.W - CW * .3) { u.hp = 0; sfx.boom(); haptic([80, 40, 120]); shake(box.current, "l"); s.fx.push({ kind: "nuke", r: u.r, x: px, t: 1 });
+                for (const z of s.germs) if (Math.abs(z.r - u.r) <= 1 && Math.abs(z.x - px) < CW * 1.4) { const d = z.kind === 3 || z.kind === 7 ? Math.round(D * .6) : D; z.hp -= d; z.hit = .4; s.fx.push({ kind: "dmg", r: z.r, x: z.x, y: z.r * CH + CH * .3, t: 1, txt: String(d) }); }
+                pop(box.current, px, u.r * CH + CH / 2, "💥 펑!!", "bad big"); } } break; }
           case "ornurse": if (u.cd <= 0 && lane.length) { u.cd = 2.4; u.atk = 1; s.shots.push({ r: u.r, x: fx, dmg: D, kind: "scissor", hit: new Set(), pierce: 3, spin: 0 }); } break;
         } }
       for (const sh of s.shots) { sh.x += (sh.kind === "poison" ? 180 : sh.kind === "scissor" ? 300 : 260) * dt; sh.spin += dt * (sh.kind === "scissor" ? 14 : 1.2);
@@ -210,10 +217,10 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
             if (sh.kind === "poison") { z.poison = 4; s.fx.push({ kind: "cloud", r: sh.r, x: z.x, t: .6 }); for (const o of s.germs) if (o !== z && o.r === z.r && Math.abs(o.x - z.x) < CW) o.poison = 4; }
             if (sh.hit.size >= sh.pierce) sh.x = 1e9; } } }
       s.shots = s.shots.filter(sh => sh.x < s.W + 20);
-      for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : f.kind === "dmg" ? 1.4 : f.kind === "laser" ? 2.2 : f.kind === "chain" ? 2 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
+      for (const f of s.fx) f.t -= dt * (f.kind === "bolt" ? 3 : f.kind === "dmg" ? 1.4 : f.kind === "laser" ? 2.2 : f.kind === "chain" ? 2 : f.kind === "nuke" ? 1.4 : 1.6); s.fx = s.fx.filter(f => f.t > 0);
       for (const z of s.germs) { if (z.poison > 0) { z.poison -= dt; z.hp -= 12 * dt; } const sp = z.speed * (z.slow > 0 ? .5 : 1); z.slow = Math.max(0, z.slow - dt);
         if (z.kind === 7) { z.cd -= dt; if (z.cd <= 0) { z.cd = 6; spawn(0, z.r, z.x + 10, .6); pop(box.current, z.x, z.r * CH + CH * .2, "소환!", "bad"); } }
-        const target = s.units.find(u => u.r === z.r && Math.abs(u.c * CW + CW / 2 - z.x) < CW * .45 && u.c * CW + CW / 2 <= z.x + 2);
+        const target = s.units.find(u => !(u.kind === "punk" && (u.fuse ?? 1) <= 0) && u.r === z.r && Math.abs(u.c * CW + CW / 2 - z.x) < CW * .45 && u.c * CW + CW / 2 <= z.x + 2);
         if (target) { z.eating = true; target.hp -= z.dmg * dt; } else { z.eating = false; z.x -= sp * dt; }
         if (z.x < CW * .25 && s.carts[z.r]) { // 응급 카트: 그 줄을 한 번 싹 쓸어줌
           s.carts[z.r] = false; s.cartFx.push({ r: z.r, x: 0 }); sfx.boom(); haptic([40, 30, 40]); shake(box.current, "m"); pop(box.current, s.W / 2, z.r * CH + CH / 2, "🛒 응급 카트 출동!", "bad big");
@@ -223,7 +230,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       for (const z of s.germs) if (!z.warn && z.x < CW * 1.2) { z.warn = true; sfx.tick(); shake(box.current, "s"); }
       // 변이균: 죽으면 둘로 분열
       for (const z of s.germs) if (z.hp <= 0 && z.kind === 4) { spawn(0, z.r, z.x - 6, .4); spawn(0, z.r, z.x + 14, .4); pop(box.current, z.x, z.r * CH + CH * .2, "분열!", "bad"); }
-      const before = s.units.length; s.units = s.units.filter(u => u.hp > 0); s.lost += before - s.units.length; s.germs = s.germs.filter(z => z.hp > 0);
+      s.lost += s.units.filter(u => u.hp <= 0 && u.kind !== "punk").length; s.units = s.units.filter(u => u.hp > 0); s.germs = s.germs.filter(z => z.hp > 0);
       for (const c of s.cartFx) c.x += 520 * dt; s.cartFx = s.cartFx.filter(c => c.x < s.W + 40);
       draw(); s.raf = requestAnimationFrame(tick);
     };
