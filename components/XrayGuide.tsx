@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { XRAY, XRAY_PARTS } from "@/lib/xrayGuide";
+import XrayFig from "./XrayFig";
 export default function XrayGuide() {
   const [part, setPart] = useState<string>("전체"), [q, setQ] = useState(""), [open, setOpen] = useState<string | null>(null);
   const list = XRAY.filter(x => (part === "전체" || x.part === part) && (!q || (x.name + x.pos + x.cr).toLowerCase().includes(q.toLowerCase())));
@@ -13,6 +14,7 @@ export default function XrayGuide() {
           <div key={x.name} className={"xg-item" + (on ? " on" : "")}>
             <button type="button" className="xg-head" onClick={() => setOpen(on ? null : x.name)}><span className="xg-part">{x.part}</span><b>{x.name}</b><span className="xg-cr">CR {x.cr}</span><span className="xg-arr">{on ? "▲" : "▼"}</span></button>
             {on && <div className="xg-body">
+              <XrayFig name={x.name} />
               <div><span className="xg-k">자세</span>{x.pos}</div>
               <div><span className="xg-k">중심선(CR)</span>{x.cr}</div>
               {x.sid && <div><span className="xg-k">SID</span>{x.sid}</div>}
