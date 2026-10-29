@@ -55,6 +55,6 @@ async function upbit(): Promise<Quote[]> {
   } catch { return []; }
 }
 export async function getQuotes(): Promise<Quote[]> {
-  const ys = await Promise.all([yahoo("^IXIC", "나스닥"), yahoo("^GSPC", "S&P500"), yahoo("^DJI", "다우"), yahoo("^KS11", "코스피"), yahoo("^KQ11", "코스닥"), yahoo("KRW=X", "원/달러", "원")]);
-  return [...ys.filter(Boolean) as Quote[], ...(await upbit())];
+  const ys = await Promise.all([yahoo("^IXIC", "나스닥"), yahoo("^GSPC", "S&P500"), yahoo("^DJI", "다우"), yahoo("^KS11", "코스피"), yahoo("^KQ11", "코스닥"), yahoo("KRW=X", "원/달러", "원"), yahoo("JPYKRW=X", "엔화(100엔)", "원")]);
+  return [...(ys.filter(Boolean) as Quote[]).map(q => q.name.startsWith("엔화") ? { ...q, price: q.price * 100 } : q), ...(await upbit())];
 }

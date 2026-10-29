@@ -17,6 +17,8 @@ import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { RANKS, GENERAL, rankOf } from "@/lib/ranks";
 import { OFFICIAL } from "@/lib/depts";
 import { db } from "@/lib/supabase";
+import { Suspense } from "react";
+import TodayBar from "@/components/TodayBar";
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -26,7 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   runSchedulers().catch(() => {});
   if (memoOnce("visit:" + s.id, 30 * 60_000)) { d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {}); bump(s.id, "visit").catch(() => {}); }
   const [{ data: me }, { data: msgs }, { pub }, { data: offs }, roomsOn] = await Promise.all([
-    d.from("users").select("id,dept,xp,stealth,onboarded").eq("id", s.id).maybeSingle(),
+    d.from("users").select("id,dept,xp,stealth,onboarded,birth_date,birth_time,fortune_name").eq("id", s.id).maybeSingle(),
     d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").eq("room", "all").order("created_at", { ascending: false }).limit(40),
     vapid(),
     memo("officials", 5 * 60_000, async () => d.from("users").select("id,username").in("username", Object.keys(OFFICIAL))),
@@ -42,6 +44,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <TourButton /><div className="me"><Name r={rank} dept={s.dept} nickname={s.nickname} username={s.username} />{s.role === "admin" && <span className="tag">관리자</span>}<form action={logout}><button>나가기</button></form></div>
       </header>
       <Tabs admin={s.role === "admin"} />
+      <Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense>
       {pub && <PushSetup vapidPublic={pub} />}
       <main>{children}</main>
       <PromoToast />
