@@ -29,7 +29,7 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const password = String(fd.get("password") ?? "");
   const nickname = clean(fd.get("nickname"), 12);
   const dept = clean(fd.get("dept"), 30);
-  const invite = clean(fd.get("invite"), 20).toUpperCase().replace(/\s/g, "") || (cookies().get("mw_inv")?.value ?? "").toUpperCase();
+  const ref = clean(fd.get("ref"), 20).toLowerCase() || cookies().get("mw_ref")?.value || null;
   if (fd.get("agree") !== "on") return { error: "커뮤니티 규칙에 동의해주세요" };
   if (!/^[a-z0-9_]{3,20}$/.test(username)) return { error: "아이디는 영문 소문자·숫자·밑줄 3~20자예요" };
   if (password.length < 4) return { error: "비밀번호는 4자 이상이에요" };
@@ -39,21 +39,10 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const { data: exists } = await s.from("users").select("id").eq("username", username).maybeSingle();
   if (exists) return { error: "이미 쓰는 아이디예요" };
   const role = admins().includes(username) ? "admin" : "member";
-  // 초대장 필수 (운영자 계정 제외): 먼저 코드를 잡아두고, 가입 실패 시 돌려놔요
-  let inv: { code: string; owner_id: string | null } | null = null;
-  if (role !== "admin") {
-    if (!invite) return { error: "초대 코드가 필요해요. 병원 동료에게 초대장을 받아주세요 💌" };
-    const { data: claimed } = await s.from("invites").update({ used_at: new Date().toISOString() }).eq("code", invite).is("used_at", null).select("code,owner_id");
-    if (!claimed?.length) return { error: "사용할 수 없는 초대 코드예요. 코드를 다시 확인하거나 새 초대장을 받아주세요" };
-    inv = claimed[0] as any;
-  }
-  const { data: owner } = inv?.owner_id ? await s.from("users").select("username").eq("id", inv.owner_id).maybeSingle() : { data: null };
-  const ref = owner?.username ?? null;
   const { count } = await s.from("users").select("id", { count: "exact", head: true }).eq("stealth", false);
   const order = (count ?? 0) + 1;
   const { data, error } = await s.from("users").insert({ username, password_hash: await bcrypt.hash(password, 10), nickname, dept, role, join_order: order, referred_by: ref && ref !== username ? ref : null }).select("id").single();
-  if (error || !data) { if (inv) await s.from("invites").update({ used_at: null }).eq("code", inv.code); return { error: "가입에 실패했어요. 잠시 후 다시 시도해주세요" }; }
-  if (inv) await s.from("invites").update({ used_by: data.id }).eq("code", inv.code);
+  if (error || !data) return { error: "가입에 실패했어요. 잠시 후 다시 시도해주세요" };
   await awardXp(data.id, signupBonus(order), "signup", "signup");
   if (ref && ref !== username) { const { data: r } = await s.from("users").select("id").eq("username", ref).maybeSingle(); if (r) await repeatXp(r.id, "referral"); }
   await createSession({ id: data.id, username, nickname, dept, role });
@@ -519,24 +508,4 @@ export async function saveBirth(_: FormState, fd: FormData): Promise<FormState> 
   await db().from("users").update({ fortune_name: name || null, birth_date: date, birth_time: /^\d{2}:\d{2}$/.test(time) ? time : null }).eq("id", u.id);
   revalidatePath("/fortune"); revalidatePath("/home");
   return { ok: "저장했어요! 오늘의 운세가 매일 자동으로 바뀌어요 🔮" };
-}
-
-/* ---------- 초대장 ---------- */
-const INV_CH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-export async function createInvite(): Promise<{ code?: string; error?: string }> {
-  const u = await requireUser(); const s = db();
-  const { data: me } = await s.from("users").select("invites_left").eq("id", u.id).single();
-  const admin = u.role === "admin";
-  if (!admin && (me?.invites_left ?? 0) <= 0) return { error: "남은 초대장이 없어요" };
-  for (let t = 0; t < 5; t++) {
-    const code = "MW-" + Array.from({ length: 6 }, () => INV_CH[Math.floor(Math.random() * INV_CH.length)]).join("");
-    const { error } = await s.from("invites").insert({ code, owner_id: u.id });
-    if (!error) { if (!admin) await s.from("users").update({ invites_left: (me?.invites_left ?? 1) - 1 }).eq("id", u.id); revalidatePath("/rank"); return { code }; }
-  }
-  return { error: "잠시 후 다시 시도해주세요" };
-}
-export async function adminGrantInvites(username: string, n: number) {
-  const u = await requireAdmin(); void u; const s = db();
-  const { data: t } = await s.from("users").select("id,invites_left").eq("username", username).maybeSingle(); if (!t) return { error: "없는 아이디예요" };
-  await s.from("users").update({ invites_left: (t.invites_left ?? 0) + n }).eq("id", t.id); return {};
 }
