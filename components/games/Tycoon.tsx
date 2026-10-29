@@ -9,7 +9,7 @@ import { sfx, haptic, burst, pop } from "@/lib/juice";
 import {
   STAFF, staffCost, staffRate, PROPS, ARTS, PERKS, CORPS, CITIES, PLANETS, REMODEL, WORKER_BRICKS, workerCost, VIP_UNLOCK, HELPER_UNLOCK, vipDrop,
   helperTps, helperDur, helperCd, helperUp, PETS, PET_COST, REBIRTH_LV, rebirthGain, OFFLINE_CAP, OFFLINE_RATE, HOMES, SLOTS, YIELD,
-  clickOf, clickCost, comboOf, rateOf, assetsOf, valueOf, milestoneSum, remodelBuff, perkSum, staffMine, fmt, tycoonDept, fresh, HOSP_TIERS, propBuyFee, propSellFee, artBuyFee, artSellFee, homeBuyFee, homeSellAgent, isCurrent, type Saved, type Slot, type Asset,
+  clickOf, clickCost, comboOf, rateOf, assetsOf, valueOf, milestoneSum, remodelBuff, perkSum, staffMine, fmt, tycoonDept, fresh, HOSP_TIERS, migrateStaff, propBuyFee, propSellFee, artBuyFee, artSellFee, homeBuyFee, homeSellAgent, isCurrent, type Saved, type Slot, type Asset,
 } from "@/lib/tycoon";
 
 const SCENE: Record<string, string> = { wall: "🧱🧱🧱", alley: "🏚️🏪🛵", city: "🏢🏬🏢🏣", river: "🏙️🌉⛵", nightriver: "🌃🌉✨🎆", garden: "🌳⛲🌷🌳" };
@@ -56,7 +56,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
       const now = Date.now(); let d: any = raw;
       // 예전 시즌 기록은 버리지 않고 옮겨요: 현금·누적매출·내 집·가구는 그대로
       if (d && d.v !== 3 && typeof d.cash === "number") { d = fresh({ cash: d.cash, total: d.total ?? 0, patients: d.patients ?? 0, home: typeof d.home === "number" ? d.home : 0, items: d.items ?? {}, lastSeen: now }); setSeason(true); saveGameState("tycoon", d).catch(() => {}); }
-      if (isCurrent(d)) { const sv = { ...fresh(), ...d } as Saved; const sec = Math.min(OFFLINE_CAP, Math.max(0, (now - sv.lastSeen) / 1000)); const earn = Math.floor(rateOf(sv, mine) * sec * OFFLINE_RATE * (sv.pet === "ham" ? 1.5 : 1));
+      if (isCurrent(d)) { const sv = migrateStaff({ ...fresh(), staffV: undefined, ...d } as Saved); const sec = Math.min(OFFLINE_CAP, Math.max(0, (now - sv.lastSeen) / 1000)); const earn = Math.floor(rateOf(sv, mine) * sec * OFFLINE_RATE * (sv.pet === "ham" ? 1.5 : 1));
         setS({ ...sv, cash: sv.cash + earn, total: sv.total + earn, bricks: sv.bricks + (sv.props[0] ? sv.workers * WORKER_BRICKS * sec * OFFLINE_RATE : 0), lastSeen: now }); lastScore.current = assetsOf(sv); if (earn > 0 && sec > 60) setWelcome({ sec, earn }); }
       else { if (d) setSeason(true); const f = fresh(); setS(f); saveGameState("tycoon", f as any).catch(() => {}); }
       setLoaded(true);
@@ -206,7 +206,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           </div>
         </>}
 
-        {tab === "staff" && STAFF.map((st, i) => { const lv = s.staff[i], open = i === 0 || s.staff[i - 1] >= 10; if (!open && !(i > 0 && (i === 1 || s.staff[i - 2] >= 10))) return null;
+        {tab === "staff" && STAFF.map((st, i) => { const lv = s.staff[i], open = i === 0 || s.staff[i - 1] >= 10; 
           return <div key={i} className={"ty-row" + (open ? (lv ? "" : " next") : " locked")}>
             <span className="def-ico" style={{ background: lv ? "var(--scrub-soft)" : undefined }}>{open ? st.icon : "🔒"}</span>
             <div style={{ flex: 1, minWidth: 0 }}>

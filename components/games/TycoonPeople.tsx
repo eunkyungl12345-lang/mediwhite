@@ -77,11 +77,11 @@ export const STAFF_OUTFIT: Outfit[] = [
   { top: "#E8FFF0", pants: "#2D5A3D", hair: "#6B4226", style: "side", coat: true, glasses: true },           // 임상병리사
   { top: "#6E5BB8", pants: "#3E3570", hair: "#1F1B2E", style: "short", badge: "RT" },                       // 방사선사
   { top: "#F2A900", pants: "#2B3A55", hair: "#1C1C1C", style: "short", cap: "ems" },                          // 응급구조사
-  { top: "#FFFFFF", top2: "#3D7DD8", pants: "#1E2A44", hair: "#2B1E18", style: "bun", cap: "nurse", steth: true, badge: "수간" }, // 수간호사
+  { top: "#FFFFFF", tie: "#1E2533", pants: "#1E2533", hair: "#1A1A1A", style: "side", vest: "#1E2533" },      // 총괄실장
   { top: "#59C2BB", pants: "#2F8F8A", hair: "#151515", style: "messy", coat: true, steth: true },         // 전공의
+  { top: "#FFFFFF", top2: "#3D7DD8", pants: "#1E2A44", hair: "#2B1E18", style: "bun", cap: "nurse", steth: true, badge: "수간" }, // 수간호사
   { top: "#9FC5E8", tie: "#3D5A80", pants: "#2F3B4F", hair: "#2A1E18", style: "side", coat: true, steth: true },      // 전문의
   { top: "#D9E3EE", tie: "#8C1C1C", pants: "#2F3B4F", hair: "#8A8A8A", style: "side", coat: true, glasses: true, steth: true }, // 교수
-  { top: "#FFFFFF", tie: "#1E2533", pants: "#1E2533", hair: "#1A1A1A", style: "side", vest: "#1E2533" },      // 총괄실장
   { top: "#FFFFFF", tie: "#7A1D2E", pants: "#2B2B33", hair: "#555", style: "side", vest: "#2B2B33", glasses: true }, // 부원장
   { top: "#FFFFFF", tie: "#C9A227", pants: "#14161C", hair: "#CFCFCF", style: "side", coat: true, steth: true },      // 병원장
   { top: "#FFFFFF", tie: "#C9A227", pants: "#14161C", hair: "#E6E6E6", style: "bald", vest: "#3A1F2B", glasses: true }, // 이사장

@@ -21,11 +21,11 @@ export const STAFF: Staff[] = [
   { name: "임상병리사", icon: "🧪", sprite: "lab", hire: 5e6, bonus: 25, ask: "검사실 장비 최신으로 깔아드릴게요", yes: "자동분석기 있으면 바로 갑니다", line: "검체 접수 완료!", dept: "임상병리" },
   { name: "방사선사", icon: "☢️", sprite: "xray", hire: 1e7, bonus: 40, ask: "CT·MRI 둘 다 들여놨어요", yes: "숨 참으세요~ 바로 시작하죠", line: "CT 대기 5명!", dept: "방사선" },
   { name: "응급구조사", icon: "🚑", sprite: "ems", hire: 5e7, bonus: 80, ask: "응급실 열었어요. 같이 뛰어요!", yes: "구급차 키부터 주세요", line: "비켜주세요!!", dept: "응급구조" },
-  { name: "수간호사", icon: "📋", sprite: "nurse", hire: 1e8, bonus: 200, ask: "병동 전체를 맡아주세요", yes: "인계는 15분 안에 끝냅니다", line: "오늘 근무표 나왔어요" },
+  { name: "총괄실장", icon: "👔", sprite: "director", hire: 1e8, bonus: 200, ask: "병원 살림 전부 맡겨볼게요", yes: "인건비부터 다시 봅시다", line: "회의는 3시입니다", dept: "총괄" },
   { name: "전공의", icon: "🥼", sprite: "doctor", hire: 1e10, bonus: 600, ask: "당직비 두 배로 드릴게요", yes: "…잠은 언제 자요?", line: "커피 한 잔만…", dept: "의사" },
-  { name: "전문의", icon: "🩺", sprite: "doctor", hire: 5e10, bonus: 1000, ask: "선생님 이름 걸고 클리닉 열어요", yes: "외래 3시간 대기 각오하세요", line: "다음 환자분 들어오세요", dept: "의사" },
-  { name: "의대 교수", icon: "🎓", sprite: "doctor", hire: 1e11, bonus: 1500, ask: "부속 의대 강의도 맡아주세요", yes: "논문은 1저자로 부탁해요", line: "오늘 회진은 8시다", dept: "의사" },
-  { name: "총괄실장", icon: "👔", sprite: "director", hire: 1e12, bonus: 2000, ask: "병원 살림 전부 맡겨볼게요", yes: "인건비부터 다시 봅시다", line: "회의는 3시입니다", dept: "총괄" },
+  { name: "수간호사", icon: "📋", sprite: "nurse", hire: 5e10, bonus: 1000, ask: "병동 전체를 맡아주세요", yes: "인계는 15분 안에 끝냅니다", line: "오늘 근무표 나왔어요" },
+  { name: "전문의", icon: "🩺", sprite: "doctor", hire: 1e11, bonus: 1500, ask: "선생님 이름 걸고 클리닉 열어요", yes: "외래 3시간 대기 각오하세요", line: "다음 환자분 들어오세요", dept: "의사" },
+  { name: "의대 교수", icon: "🎓", sprite: "doctor", hire: 1e12, bonus: 2000, ask: "부속 의대 강의도 맡아주세요", yes: "논문은 1저자로 부탁해요", line: "오늘 회진은 8시다", dept: "의사" },
   { name: "진료부원장", icon: "🏅", sprite: "director", hire: 1e13, bonus: 2500, ask: "진료 쪽은 부원장님 결재로!", yes: "결재판 가져와요", line: "이번 분기 실적 좋네요" },
   { name: "병원장", icon: "🏥", sprite: "director", hire: 1e14, bonus: 3000, ask: "드디어 병원장님 모십니다", yes: "전 직원 회식부터 하죠!", line: "다들 고생 많아요" },
   { name: "의료재단 이사장", icon: "🏛️", sprite: "director", hire: 1e15, bonus: 4000, ask: "재단 하나 세워보실래요?", yes: "분원 열 곳부터 시작하죠", line: "다음 분원은 어디로?" },
@@ -155,14 +155,14 @@ export type Saved = {
   perks: number[]; corps: number[]; cities: number[]; planets: number[];
   vipOn: boolean; vipLv: number; vipSeen: number; helperOn: boolean; helperLv: number; helperAt: number;
   pills: number; bags: number; coupons: Record<string, number>; pets: string[]; pet: string | null;
-  rebirths: number; rebirthBonus: number; hosp?: number;
+  rebirths: number; rebirthBonus: number; hosp?: number; staffV?: number;
   home: number; items: Record<string, number>;
 };
 export const fresh = (keep?: Partial<Saved>): Saved => ({
   v: VERSION, cash: 0, total: 0, patients: 0, lastSeen: Date.now(), clickLv: 0, staff: STAFF.map(() => 0),
   props: {}, arts: {}, bricks: 0, workers: 0, remodel: 0, perks: [], corps: [], cities: [], planets: [],
   vipOn: false, vipLv: 0, vipSeen: 0, helperOn: false, helperLv: 1, helperAt: 0, pills: 0, bags: 0, coupons: {}, pets: [], pet: null,
-  rebirths: 0, rebirthBonus: 0, home: 0, items: {}, ...keep,
+  rebirths: 0, rebirthBonus: 0, staffV: 2, home: 0, items: {}, ...keep,
 });
 export const isCurrent = (x: any): x is Saved => !!x && x.v === VERSION && typeof x.cash === "number" && Array.isArray(x.staff);
 
@@ -236,3 +236,10 @@ export const artSellFee = (value: number, price: number) => ({ tax: Math.max(0, 
 /** 주택: 취득세 6억 이하 1.1% · 9억 이하 2.2% · 초과 3.3% / 복비 0.4~0.7% / 1주택 양도세 비과세 */
 export const homeBuyFee = (price: number) => ({ tax: Math.floor(price * (price <= 6e8 ? .011 : price <= 9e8 ? .022 : .033)), agent: Math.floor(price * (price < 2e8 ? .005 : price < 9e8 ? .004 : price < 1.2e9 ? .005 : price < 1.5e9 ? .006 : .007)) });
 export const homeSellAgent = (price: number) => homeBuyFee(price).agent;
+
+/** 직원 순서 변경(총괄실장을 1억 자리로) 이전 저장분 옮기기 */
+export function migrateStaff(x: Saved): Saved {
+  if (x.staffV === 2 || !Array.isArray(x.staff)) return x;
+  const o = x.staff, n = [...o]; n[8] = o[12] ?? 0; n[9] = o[9] ?? 0; n[10] = o[8] ?? 0; n[11] = o[10] ?? 0; n[12] = o[11] ?? 0;
+  return { ...x, staff: n, staffV: 2 };
+}
