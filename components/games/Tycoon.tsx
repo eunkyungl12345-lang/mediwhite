@@ -3,75 +3,23 @@ import { useEffect, useRef, useState } from "react";
 import { saveScore, loadGameState, saveGameState, claimTycoonGrant } from "@/lib/actions";
 import Board, { type Row } from "./Board";
 import CarArt from "./CarArt";
+import HospitalRoom from "./HospitalRoom";
+import HomeRoom from "./HomeRoom";
 import { sfx, haptic, burst, pop } from "@/lib/juice";
 import {
   STAFF, staffCost, staffRate, PROPS, ARTS, PERKS, CORPS, CITIES, PLANETS, REMODEL, WORKER_BRICKS, workerCost, VIP_UNLOCK, HELPER_UNLOCK, vipDrop,
   helperTps, helperDur, helperCd, helperUp, PETS, PET_COST, REBIRTH_LV, rebirthGain, OFFLINE_CAP, OFFLINE_RATE, HOMES, SLOTS, YIELD,
-  clickOf, clickCost, comboOf, rateOf, assetsOf, valueOf, milestoneSum, remodelBuff, perkSum, staffMine, fmt, tycoonDept, fresh, propBuyFee, propSellFee, artBuyFee, artSellFee, homeBuyFee, homeSellAgent, isCurrent, type Saved, type Slot, type Asset,
+  clickOf, clickCost, comboOf, rateOf, assetsOf, valueOf, milestoneSum, remodelBuff, perkSum, staffMine, fmt, tycoonDept, fresh, HOSP_TIERS, propBuyFee, propSellFee, artBuyFee, artSellFee, homeBuyFee, homeSellAgent, isCurrent, type Saved, type Slot, type Asset,
 } from "@/lib/tycoon";
-
-/** 우리 병원 키우기 — 시즌 3: 거지키우기식 방치형. 원장 진료(클릭) → 직원 → 부동산·미술품 → 복지 → 기업·분원·우주병원 → 환생 */
-function HospitalScene({ s }: { s: Saved }) {
-  const CAP = 16;
-  const people: { i: number; k: number }[] = [];
-  s.staff.forEach((lv, i) => { if (lv) for (let k = 0; k < Math.min(3, Math.ceil(lv / 10)); k++) people.push({ i, k }); });
-  const shown = people.slice(-CAP);
-  const [bubble, setBubble] = useState<{ k: number; t: string } | null>(null);
-  useEffect(() => { if (!shown.length) return; const id = setInterval(() => { const k = Math.floor(Math.random() * shown.length); setBubble({ k, t: STAFF[shown[k].i].line }); setTimeout(() => setBubble(null), 2400); }, 3200); return () => clearInterval(id); }, [shown.length]); // eslint-disable-line
-  const pos = (k: number) => { const h = (k * 2654435761) >>> 0, u = (h % 1000) / 1000, v = ((h >>> 10) % 1000) / 1000; const y = 42 + v * 40, half = 18 + (y - 42) * .55; return { x: 50 + (u * 2 - 1) * half, y, sc: .8 + (y - 42) / 40 * .35 }; };
-  const types = s.staff.filter(Boolean).length;
-  const bld = types >= 15 ? "b6" : types >= 12 ? "b5" : types >= 8 ? "b4" : types >= 5 ? "b3" : types >= 3 ? "b2" : "b1";
-  const uni = types >= 15;
-  return (
-    <div className={"lb" + (uni ? " uni" : "")}>
-      <div className="lb-out">
-        <img src={`/game/${bld}.webp`} alt="" className={"lb-bld s-" + bld} key={bld} draggable={false} />
-        {s.planets.length > 0 && <span className="lb-heli">🚀</span>}
-        <span className="lb-sign"><i>✚</i>{uni ? "메디화이트 의료재단" : "메디화이트병원"}{s.rebirths ? ` · 환생 ${s.rebirths}회` : ""}</span>
-      </div>
-      <div className="lb-room">
-        <img src="/game/lobby.webp" alt="" className="lb-bg" draggable={false} />
-        {!shown.length && <div className="lb-empty"><b>👆 병원을 탭해서 진료하고, 모은 돈으로 실습생을 고용해보세요</b></div>}
-        {shown.map((p, k) => { const { x, y, sc } = pos(k); return (
-          <div key={p.i + "-" + p.k} className="lb-guy" style={{ left: `${x}%`, top: `${y}%`, zIndex: Math.round(y), ["--sc" as any]: sc, ["--dur" as any]: `${5 + (k % 5)}s`, ["--dx" as any]: `${(k % 2 ? 1 : -1) * (8 + (k * 7) % 18)}px` }}>
-            {bubble?.k === k && <span className="lb-bubble">{bubble.t}</span>}
-            <img src={`/game/${STAFF[p.i].sprite}.webp`} alt={STAFF[p.i].name} className="lb-sprite" draggable={false} />
-          </div>); })}
-      </div>
-      <div className="lb-legend">
-        {s.staff.map((lv, i) => lv ? <span key={i}>{STAFF[i].icon} {STAFF[i].name} <b>Lv{lv}</b></span> : null)}
-        <span className="lb-pat">🧍 환자 {fmt(s.patients)}명</span>
-      </div>
-    </div>
-  );
-}
 
 const SCENE: Record<string, string> = { wall: "🧱🧱🧱", alley: "🏚️🏪🛵", city: "🏢🏬🏢🏣", river: "🏙️🌉⛵", nightriver: "🌃🌉✨🎆", garden: "🌳⛲🌷🌳" };
 const VIEWS: Record<string, string> = { wall: "벽뷰", alley: "골목뷰", city: "시티뷰", river: "한강뷰", nightriver: "한강 야경", garden: "정원뷰" };
-function HomeScene({ s }: { s: Saved }) {
-  const h = HOMES[s.home];
+function HomeScene({ s, onSlot }: { s: Saved; onSlot: (c: "furn" | "art") => void }) {
   const it = (key: string) => { const sl = SLOTS.find(x => x.key === key)!; const t = s.items[key] ?? 0; return t ? { ...sl.tiers[t - 1], t, max: sl.tiers.length } : null; };
-  const Thing = ({ k, cls }: { k: string; cls: string }) => { const x = it(k); if (!x) return null; const lux = x.t / x.max; return <div className={"hm-thing " + cls + (lux >= .99 ? " top" : lux > .6 ? " lux" : "")} style={{ ["--sc" as any]: 0.8 + x.t * 0.18 }} title={x.name}><span>{x.icon}</span></div>; };
-  const art = it("art");
-  const dark = s.home === 8;
   return (
-    <div className={"hm" + (dark ? " dark" : "")} style={{ ["--wall" as any]: h.wall, ["--floor" as any]: h.floor }}>
-      <div className="hm-wall">
-        <div className={"hm-win v-" + h.view}><span className="hm-scene">{SCENE[h.view]}</span><span className="hm-view-label">{VIEWS[h.view]}</span></div>
-        {art && <div className={"hm-art t" + art.t} title={art.name}><span>{art.t >= 4 ? "🎨" : "🖼️"}</span></div>}
-        <Thing k="light" cls="hm-light" />
-        <Thing k="tv" cls="hm-tv" />
-      </div>
-      <div className="hm-floor">
-        <Thing k="bed" cls="hm-bed" />
-        <Thing k="sofa" cls="hm-sofa" />
-        <Thing k="table" cls="hm-table" />
-        <Thing k="plant" cls="hm-plant" />
-        <Thing k="sculpt" cls="hm-sculpt" />
-        {!Object.values(s.items).some(Boolean) && <span className="hm-empty">텅 빈 방… 가구를 들여볼까요?</span>}
-      </div>
+    <div className="hm2">
+      <HomeRoom home={s.home} items={s.items} onSlot={onSlot} />
       <div className={"hm-garage" + (it("car") ? " has t" + it("car")!.t : "")}>{it("car") ? <><div className="hm-spot" /><CarArt tier={it("car")!.t} /><span className="hm-car-name">{it("car")!.name}</span></> : <span className="muted">🚶 뚜벅이 · 🚗 내 차 탭에서 차를 사보세요</span>}</div>
-      <div className="hm-plate">{h.area} {h.name}</div>
     </div>
   );
 }
@@ -214,7 +162,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           <button type="button" className={scene === "hosp" ? "on" : ""} onClick={() => { setScene("hosp"); setTab("doc"); }}>🏥 우리 병원</button>
           <button type="button" className={scene === "home" ? "on" : ""} onClick={() => { setScene("home"); setTab("home"); }}>🏠 내 집</button>
         </div>
-        <div onPointerDown={scene === "hosp" ? tap : undefined} className="ty-scene">{scene === "hosp" ? <HospitalScene s={s} /> : <HomeScene s={s} />}</div>
+        <div onPointerDown={scene === "hosp" ? tap : undefined} className="ty-scene">{scene === "hosp" ? <div className="hr-wrap"><HospitalRoom tier={s.hosp ?? 0} staff={s.staff} clickLv={s.clickLv} /></div> : <HomeScene s={s} onSlot={c => setTab(c === "art" ? "hart" : "furn")} />}</div>
         {scene === "hosp" && <div className="ty-combo"><span style={{ background: combo.c }} />👆 병원을 탭하면 진료 · 1초에 5번↑ ×1.2 · 8번↑ ×1.3 · 11번↑ ×1.4 · 14번↑ ×1.5{helping > 0 ? ` · 🤖 도우미 진료 중 ${helping}초` : ""}</div>}
         {scene === "hosp" && !s.staff[0] && s.cash >= 1e4 && <button type="button" className="ty-hint" onClick={() => setTab("staff")}>💡 진료만으로는 조금씩 벌려요. <b>👥 직원</b>을 고용하면 가만히 있어도 돈이 쌓여요 →</button>}
         {scene === "hosp" && s.staff[0] > 0 && rate < click && s.cash > clickCost(s.clickLv) * 50 && <button type="button" className="ty-hint" onClick={() => setTab("doc")}>💡 돈이 넉넉해요! <b>👨‍⚕️ 원장</b> 레벨을 올리면 한 번 탭할 때 버는 돈이 확 늘어요 →</button>}
@@ -241,6 +189,11 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
 
       <div className="ty-list">
         {tab === "doc" && <>
+          {(() => { const h = s.hosp ?? 0, nx = HOSP_TIERS[h + 1]; return <div className={"ty-row" + (nx ? " next" : " cur")}>
+            <span className="def-ico" style={{ background: "var(--scrub-soft)" }}>🏥</span>
+            <div style={{ flex: 1, minWidth: 0 }}><b>{HOSP_TIERS[h].name}</b> <span className="tag">{h + 1}/{HOSP_TIERS.length}</span><div className="muted" style={{ fontSize: 12 }}>{nx ? `다음: ${nx.name} (${nx.desc}) · 병원 확장할 때마다 전체 초당 매출 +30%` : "최고 규모 달성! 🎉"}</div></div>
+            {nx && <div className="ty-btns"><Btn cost={nx.price} onClick={() => spend(nx.price, x => ({ ...x, hosp: (x.hosp ?? 0) + 1 }), `🏥 ${nx.name}(으)로 확장!`, true)} label="확장" /></div>}
+          </div>; })()}
           <div className="ty-row next">
             <span className="def-ico" style={{ background: "var(--scrub-soft)" }}>👨‍⚕️</span>
             <div style={{ flex: 1, minWidth: 0 }}><b>원장 진료</b> <span className="tag">Lv{s.clickLv}</span><div className="muted" style={{ fontSize: 12 }}>클릭당 {fmt(click)}원 → 다음 {fmt(clickOf({ ...s, clickLv: s.clickLv + 1 }))}원 · 레벨 n이면 기본 n(n+1)/2+1원{perkSum(s) ? ` · 복지 +${fmt(perkSum(s))}%` : ""}</div></div>

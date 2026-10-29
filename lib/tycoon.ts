@@ -155,7 +155,7 @@ export type Saved = {
   perks: number[]; corps: number[]; cities: number[]; planets: number[];
   vipOn: boolean; vipLv: number; vipSeen: number; helperOn: boolean; helperLv: number; helperAt: number;
   pills: number; bags: number; coupons: Record<string, number>; pets: string[]; pet: string | null;
-  rebirths: number; rebirthBonus: number;
+  rebirths: number; rebirthBonus: number; hosp?: number;
   home: number; items: Record<string, number>;
 };
 export const fresh = (keep?: Partial<Saved>): Saved => ({
@@ -183,9 +183,23 @@ export const staffMine = (i: number, mine: string) => !!STAFF[i].dept && (STAFF[
 /** 직원 한 명(그 레벨)의 초당 매출 */
 export const staffRate = (s: Saved, i: number, mine: string) => staffBase(i) * s.staff[i] * (staffMine(i, mine) ? 1.2 : 1);
 /** 초당 매출 */
+/* ---------- 병원 규모 (폐허의원 → 수도권 대학병원) ---------- */
+export const HOSP_TIERS = [
+  { name: "폐허의원", price: 0, desc: "벌레·거미줄 가득한 망하기 직전 의원" },
+  { name: "촌구석 보건의원", price: 1e7, desc: "읍·면·리 시골 의원" },
+  { name: "지방 작은의원", price: 1e8, desc: "읍내 상가 2층 의원" },
+  { name: "수도권 작은의원", price: 1e9, desc: "신도시 메디컬 상가" },
+  { name: "서울 강남의원", price: 1e10, desc: "강남대로 고급 클리닉" },
+  { name: "지방병원", price: 1e11, desc: "병상 100개 종합병원" },
+  { name: "서울병원", price: 1e12, desc: "서울 도심 대형병원" },
+  { name: "지방 대학병원", price: 1e13, desc: "의과대학 부속병원" },
+  { name: "수도권 대학병원", price: 1e14, desc: "한강이 보이는 초대형 대학병원" },
+];
+/** 병원 규모마다 전체 초당 매출 +30% */
+export const hospMult = (s: Saved) => 1 + .3 * (s.hosp ?? 0);
 export function rateOf(s: Saved, mine: string) {
   let sum = 0; for (let i = 0; i < STAFF.length; i++) if (s.staff[i]) sum += staffRate(s, i, mine);
-  sum *= (1 + milestoneSum(s) / 100) * (1 + remodelBuff(s) / 100) * (1 + s.rebirthBonus / 100);
+  sum *= (1 + milestoneSum(s) / 100) * (1 + remodelBuff(s) / 100) * (1 + s.rebirthBonus / 100) * hospMult(s);
   for (const i of s.corps) sum += CORPS[i].price * YIELD;
   for (const i of s.cities) sum += CITIES[i].price * YIELD;
   for (const i of s.planets) sum += PLANETS[i].price * YIELD;

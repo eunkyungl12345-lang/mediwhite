@@ -989,3 +989,43 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .quiz-note{font-size:13px;background:var(--bg);border-left:3px solid var(--signal);padding:6px 10px;border-radius:6px;margin-top:6px;display:grid;gap:2px}
 .quiz-review summary{cursor:pointer;font-weight:600;font-size:14px}
 .quiz-review{display:grid;gap:4px}
+
+/* 병원 키우기: 병원 내부 */
+.hr-wrap{overflow-x:auto;overflow-y:hidden;border-radius:14px;border:1px solid var(--line);background:#222;-webkit-overflow-scrolling:touch;cursor:pointer}
+.hr-svg{display:block;height:auto}
+.hr-svg *{transform-box:fill-box}
+.hr-flicker{animation:hr-flicker 4s steps(1) infinite}
+@keyframes hr-flicker{0%,100%{opacity:1}42%{opacity:.25}44%{opacity:1}46%{opacity:.4}48%{opacity:1}}
+.hr-drip{animation:hr-drip 2.2s ease-in infinite}
+@keyframes hr-drip{0%{transform:translateY(0);opacity:1}90%{transform:translateY(200px);opacity:1}100%{transform:translateY(200px);opacity:0}}
+.hr-spider{animation:hr-spider 5s ease-in-out infinite;transform-origin:top}
+@keyframes hr-spider{0%,100%{transform:translateY(0)}50%{transform:translateY(26px)}}
+.hr-roach{animation:hr-roach 7s linear infinite}
+@keyframes hr-roach{0%{transform:translateX(-30px)}100%{transform:translateX(1200px)}}
+.hr-roach2{animation:hr-roach2 9s ease-in-out infinite}
+@keyframes hr-roach2{0%,100%{transform:translate(0,0)}25%{transform:translate(20px,40px)}50%{transform:translate(-30px,60px)}75%{transform:translate(-10px,10px)}}
+.hr-fly{animation:hr-fly 1.8s ease-in-out infinite}
+@keyframes hr-fly{0%,100%{transform:translate(0,0)}25%{transform:translate(14px,-8px)}50%{transform:translate(4px,10px)}75%{transform:translate(-12px,-4px)}}
+.hr-pat{opacity:0;animation:hr-pat 14s linear infinite}
+@keyframes hr-pat{0%{opacity:0;transform:translateX(46px)}4%{opacity:1}40%{transform:translateX(var(--far))}52%{transform:translateX(var(--far))}53%{transform:translateX(var(--far)) scaleX(-1)}92%{opacity:1;transform:translateX(46px) scaleX(-1)}96%,100%{opacity:0;transform:translateX(46px) scaleX(-1)}}
+.hr-beg{animation:hr-beg 1.4s ease-in-out infinite;transform-origin:bottom}
+@keyframes hr-beg{0%,100%{transform:rotate(0)}50%{transform:rotate(-2deg) translateY(-1px)}}
+.hr-idle{animation:hr-idle 3s ease-in-out infinite;transform-origin:bottom}
+@keyframes hr-idle{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.015)}}
+.tp-can{animation:tp-can .5s ease-in-out infinite;transform-origin:center}
+@keyframes tp-can{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+.tp-legs{animation:tp-legs .5s ease-in-out infinite;transform-origin:top}
+@keyframes tp-legs{0%,100%{transform:skewX(8deg)}50%{transform:skewX(-8deg)}}
+.tp-wave{animation:tp-wave 1.6s ease-in-out infinite;transform-origin:bottom left}
+@keyframes tp-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-12deg)}}
+@media (prefers-reduced-motion:reduce){.hr-svg *{animation:none!important}}
+
+/* 내 집 (새 거실) */
+.hm2{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#222}
+.hm-svg{display:block;width:100%;height:auto}
+.hm-ph{animation:hm-ph 2s ease-in-out infinite}
+@keyframes hm-ph{50%{opacity:.6}}
+.hm-shimmer{animation:hm-sh 1.6s ease-in-out infinite}
+@keyframes hm-sh{50%{opacity:.25}}
+.hm-fire{animation:hm-fire .5s ease-in-out infinite alternate;transform-origin:bottom;transform-box:fill-box}
+@keyframes hm-fire{to{transform:scaleY(1.15) scaleX(.92)}}
