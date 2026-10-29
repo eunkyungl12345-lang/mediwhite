@@ -6,13 +6,13 @@ import { DEPTS, display } from "@/lib/depts";
 
 function Submit({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "잠시만요…" : label}</button>; }
 
-export default function AuthForm({ refCode }: { refCode?: string }) {
-  const [mode, setMode] = useState<"login" | "signup" | "find">(refCode ? "signup" : "login");
+export default function AuthForm({ refCode, invite }: { refCode?: string; invite?: string }) {
+  const [mode, setMode] = useState<"login" | "signup" | "find">(refCode || invite ? "signup" : "login");
   const [fs, findAction] = useFormState<FormState, FormData>(findUsername, undefined);
   const [ls, loginAction] = useFormState<FormState, FormData>(login, undefined);
   const [ss, signupAction] = useFormState<FormState, FormData>(signup, undefined);
   const [nick, setNick] = useState(""); const [dept, setDept] = useState("");
-  useEffect(() => { if (refCode) try { document.cookie = `mw_ref=${encodeURIComponent(refCode)}; path=/; max-age=${60 * 60 * 24 * 7}`; } catch {} }, [refCode]);
+  useEffect(() => { if (invite) try { document.cookie = `mw_inv=${encodeURIComponent(invite)}; path=/; max-age=${60 * 60 * 24 * 7}`; } catch {} }, [invite]);
   return (
     <>
       <div className="switch" role="tablist">
@@ -39,7 +39,8 @@ export default function AuthForm({ refCode }: { refCode?: string }) {
         </form>
       ) : (
         <form action={signupAction} className="form">
-          {refCode && <><input type="hidden" name="ref" value={refCode} /><div className="muted">초대 링크로 오셨어요 (초대한 사람: {refCode})</div></>}
+          <div className="inv-gate">💌 메디화이트웹은 <b>병원 사람들만 초대장으로</b> 가입할 수 있어요.</div>
+          <input name="invite" defaultValue={invite ?? ""} placeholder="초대 코드 (예: MW-AB12CD)" autoCapitalize="characters" required style={{ textTransform: "uppercase", letterSpacing: 1 }} />
           <input name="username" placeholder="아이디 (영문 소문자·숫자 3~20자)" autoComplete="username" required />
           <input name="password" type="password" placeholder="비밀번호 (4자 이상)" autoComplete="new-password" required />
           <select name="dept" value={dept} onChange={e => setDept(e.target.value)} required>

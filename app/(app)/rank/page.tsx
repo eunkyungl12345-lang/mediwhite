@@ -10,7 +10,7 @@ import DeleteAccount from "@/components/DeleteAccount";
 import BirthForm from "@/components/BirthForm";
 import ProfileForm from "@/components/ProfileForm";
 import PasswordForm from "@/components/PasswordForm";
-import InviteLink from "@/components/InviteLink";
+import InvitePanel from "@/components/InvitePanel";
 import Hero from "@/components/Hero";
 import { dailyStatus, DAILY_BONUS, STREAK_BONUS } from "@/lib/daily";
 export const dynamic = "force-dynamic";
@@ -18,14 +18,15 @@ export const dynamic = "force-dynamic";
 export default async function RankPage() {
   const s = (await getSession())!;
   const d = db();
-  const [{ data: me }, { data: done }, { data: top }, { count }, leaders, commanders, { count: invited }, daily] = await Promise.all([
-    d.from("users").select("id,username,nickname,dept,xp,join_order,bio,fortune_name,birth_date,birth_time").eq("id", s.id).single(),
+  const [{ data: me }, { data: done }, { data: top }, { count }, leaders, commanders, { count: invited }, daily, { data: myInv }] = await Promise.all([
+    d.from("users").select("id,username,nickname,dept,xp,join_order,bio,fortune_name,birth_date,birth_time,invites_left").eq("id", s.id).single(),
     d.from("xp_log").select("key").eq("user_id", s.id).not("key", "is", null),
     d.from("users").select("id,username,nickname,dept,xp").eq("stealth", false).order("xp", { ascending: false }).limit(30),
     d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false),
     deptLeaders(), deptCommanders(),
     d.from("users").select("id", { count: "exact", head: true }).eq("referred_by", s.username),
     dailyStatus(s.id),
+    d.from("invites").select("code,used_at,user:users!invites_used_by_fkey(nickname,dept)").eq("owner_id", s.id).order("created_at", { ascending: false }).limit(30),
   ]);
   const xp = me?.xp ?? 0, r = rankFor(me, leaders), doneKeys = new Set((done ?? []).map(x => x.key));
   const n = count ?? 0;
@@ -57,7 +58,7 @@ export default async function RankPage() {
       <div className="card">
         <h3>초대 링크 (링크 공유 지수)</h3>
         <div className="muted">이 링크로 가입하면 한 명당 {REPEAT.referral.each} XP (하루 {REPEAT.referral.dailyCap}까지). 지금까지 {invited ?? 0}명 초대.</div>
-        <InviteLink username={s.username} />
+        <InvitePanel invites={(myInv ?? []).map((i: any) => ({ code: i.code, used: !!i.used_at, usedBy: i.user ? `[${i.user.dept}]${i.user.nickname}` : null }))} left={(me as any)?.invites_left ?? 0} admin={s.role === "admin"} />
       </div>
 
       <div className="card">

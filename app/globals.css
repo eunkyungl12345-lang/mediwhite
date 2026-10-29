@@ -1143,3 +1143,12 @@ main{padding-bottom:88px}
 .detail .meta{gap:6px}
 .tb-pin{flex:0 0 auto;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 9px;background:var(--surface)}
 .tb-pin.up{color:#D93A3A}.tb-pin.down{color:#2F67B8}
+
+/* 초대장 */
+.inv{display:grid;gap:8px}
+.inv-list{display:grid;gap:4px}
+.inv-item{display:flex;align-items:center;gap:10px;border:1px dashed var(--line);border-radius:10px;padding:7px 10px;font-size:13px}
+.inv-item code{font-weight:700;letter-spacing:1px;font-size:14px}
+.inv-item span{color:var(--muted);flex:1}
+.inv-item.used{opacity:.6;border-style:solid}
+.inv-gate{font-size:13px;background:#FFF6E8;border:1px solid #F2D6A8;border-radius:10px;padding:8px 10px;color:#6B4A12}
