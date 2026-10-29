@@ -8,6 +8,7 @@ import Roulette from "@/components/games/Roulette";
 import Defense from "@/components/games/Defense";
 import PlantGame from "@/components/games/Plant";
 import SpeedQuiz from "@/components/games/SpeedQuiz";
+import Quiz from "@/components/games/Quiz";
 import Runner from "@/components/games/Runner";
 import Lightning from "@/components/games/Lightning";
 import Tycoon from "@/components/games/Tycoon";
@@ -27,6 +28,7 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
     { id: "draw", name: "그림 맞히기", icon: "🎨", sub: "캐치마인드식", color: "#F8BBD0", badge: "NEW", node: <div /> },
     { id: "lightning", name: "번개 모드", icon: "⚡", sub: "5초 미니게임 연속", color: "#F4D35E", badge: "NEW", node: <Lightning ranks={norm(lightning)} best={my.lightning ?? 0} /> },
     { id: "runner", name: "복도 질주", icon: "🏃‍♀️", sub: "무한 달리기", color: "#98C1D9", node: <Runner ranks={norm(runner)} best={my.runner ?? 0} /> },
+    { id: "quiz", name: "의학용어 퀴즈", icon: "📚", sub: "45초 4지선다", color: "#7E6BC4", node: <Quiz ranks={norm(quiz)} best={my.quiz ?? 0} myDept={sess.dept} /> },
     { id: "trivia", name: "상식 스피드퀴즈", icon: "🧠", sub: "45초 4지선다", color: "#9B7EDE", badge: "NEW", node: <SpeedQuiz kind="trivia" ranks={norm(trivia)} best={my.trivia ?? 0} /> },
     { id: "econ", name: "경제 스피드 뉴스", icon: "📈", sub: "헤드라인 퀴즈", color: "#3FA27A", badge: "NEW", node: <SpeedQuiz kind="econ" ranks={norm(econ)} best={my.econ ?? 0} /> },
     { id: "plant", name: "창가 화분", icon: "🪴", sub: "실시간 키우기", color: "#A8C256", node: <PlantGame /> },
