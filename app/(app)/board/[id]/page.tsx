@@ -35,7 +35,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     <div className={`detail t${r.tier}`}>
       <Link className="link" href={p.category === "썸" ? "/ssum" : `/board?cat=${encodeURIComponent(p.category)}${p.board_id ? `&tab=${p.board_id}` : ""}`}>← {p.category}{(p as any).board?.name ? ` › ${(p as any).board.name}` : ""}</Link>
       <div className="meta" style={{ marginTop: 10 }}>
-        {p.pinned && <span className="pin">📌 공지</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}<span className="tag">{p.category}</span><Link href={`/board?topic=${(p as any).topic ?? "free"}`} className="topic-tag">{topicOf((p as any).topic).icon} {topicOf((p as any).topic).name}</Link>
+        {p.pinned && <span className="pin">📌 공지</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{!p.pinned && <span className="tag">{p.category}</span>}<Link href={`/board?topic=${(p as any).topic ?? "free"}`} className="topic-tag">{topicOf((p as any).topic).icon} {topicOf((p as any).topic).name}</Link>
         {a ? <Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(p.created_at)}</span>
         {admin && <form action={togglePin.bind(null, p.id, !p.pinned)}><button className="link">{p.pinned ? "고정 해제" : "상단 고정"}</button></form>}
         {mine && can(myR, "소령") && <form action={boostPost.bind(null, p.id, !p.boosted)}><button className="link">{p.boosted ? "밀어올리기 해제" : "밀어올리기"}</button></form>}

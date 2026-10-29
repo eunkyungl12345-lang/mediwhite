@@ -1099,3 +1099,47 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .sj-gods span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 10px}
 .sj-gods b{color:#6B5BB8}
 .sj-flow{display:grid;gap:3px;border-left:3px solid #B39DDB;padding:4px 10px;font-size:14px}
+
+/* ===== 홈·게시판 정리 (v2) ===== */
+main{padding-bottom:88px}
+.time,.h-dq-item small,.dq-n{font-family:inherit}
+.h-greet{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.h-online{font-size:12px;color:var(--scrub);background:var(--scrub-soft);border-radius:999px;padding:2px 8px}
+.h-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (min-width:720px){.h-tiles{grid-template-columns:repeat(6,1fr)}}
+.h-tile{display:grid;justify-items:center;gap:2px;text-align:center;padding:12px 6px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);text-decoration:none;transition:transform .12s}
+.h-tile:active{transform:scale(.97)}
+.h-tile-ico{font-size:24px;line-height:1.1}
+.h-tile b{font-size:13px}
+.h-tile small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.h-tile small.up{color:#D93A3A}.h-tile small.down{color:#2F67B8}
+.h-tile.ft{background:linear-gradient(135deg,#2B2156,#4B3B8F);color:#F4F1FF;border-color:#4B3B8F}.h-tile.ft small{color:#FFD36E}
+.h-rank-name{font-size:14px}
+.h-rank .xpbar{margin:6px 0 4px}
+.h-head h3{font-size:15px}
+/* 게시판 */
+.filters{padding-bottom:6px}
+.topics.scroll{padding-bottom:8px}
+.topics.scroll .topic{padding:5px 10px;font-size:13px;border-radius:999px}
+.bd-bar{display:flex;align-items:center;gap:8px;padding:6px 0 8px;border-bottom:1px solid var(--line)}
+.bd-bar .sorts{margin-left:auto;padding:0}
+.bd-bar .sorts a{padding:4px 9px;font-size:12px}
+.bd-bar .btn{padding:7px 14px;font-size:13px}
+.post{gap:5px;padding:14px 2px}
+.post-top{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:18px}
+.post-top .topic-tag{margin-right:0}
+.bd-cat{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 6px}
+.post h3{font-size:16px;line-height:1.4}
+.post p{-webkit-line-clamp:1;font-size:13px}
+.post-meta{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.post-meta .post-cnt{margin-left:auto;white-space:nowrap}
+.post.pinned{background:color-mix(in srgb,#F2C94C 10%,transparent);border-radius:10px;padding-left:10px;padding-right:10px;border-bottom-color:transparent;margin-bottom:4px}
+/* 계급별 강조는 얇은 왼쪽 선만 */
+.post.t1,.post.t2,.post.t3,.post.t4,.post.t5{background:none;box-shadow:none;animation:none;padding-left:10px}
+.post.t1{border-left:2px solid transparent}.post.t2{border-left:2px solid var(--scrub)}.post.t3{border-left:2px solid #3B5BA9}.post.t4{border-left:2px solid #6A3FB5}.post.t5{border-left:2px solid #F2C94C}
+.post.pinned.t5,.post.pinned{background:color-mix(in srgb,#F2C94C 10%,transparent)}
+.detail.t5 h2{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--ink)}
+.detail h2{font-family:inherit;font-weight:700;font-size:22px}
+.detail .meta{gap:6px}
+.tb-pin{flex:0 0 auto;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 9px;background:var(--surface)}
+.tb-pin.up{color:#D93A3A}.tb-pin.down{color:#2F67B8}

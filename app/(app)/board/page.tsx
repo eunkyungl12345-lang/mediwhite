@@ -46,26 +46,24 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const canManage = isDept && (s.role === "admin" || leader?.id === s.id);
   return (
     <>
-      <a href="/food" className="food-link">🍚 병원 앞 맛집 보러 가기 ›</a>
       <div className="filters">
         <DeptSelect value={isDept ? cat : "전체"} options={DEPTS} mine={s.dept} topic={topic} sort={sort} />
-        <div className="sorts">{[["rank", "🎖️ 계급순"], ["new", "🕒 새 글"], ["best", "🔥 핫한 글"]].map(([k, n]) => <Link key={k} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(k !== "rank" ? { sort: k } : {}) }).toString()}`} aria-current={sort === k ? "true" : undefined}>{n}</Link>)}</div>
       </div>
-      <div className="topics wrap">
+      <div className="topics scroll">
         <Link href="/board?cat=%EA%B3%B5%EC%A7%80" className={"topic notice" + (cat === NOTICE_CAT ? " on" : "")}><span>📢</span>공지</Link>
         {[{ key: "", name: "전체", icon: "✨" }, ...TOPICS].map(t => <Link key={t.key} href={`/board?${new URLSearchParams({ ...(cat !== "전체" && cat !== NOTICE_CAT ? { cat } : {}), ...(tab ? { tab } : {}), ...(t.key ? { topic: t.key } : {}), ...(sort !== "rank" ? { sort } : {}) }).toString()}`} className={"topic" + (topic === t.key && cat !== NOTICE_CAT ? " on" : "")}><span>{t.icon}</span>{t.name}</Link>)}
       </div>
       {isDept && <BoardTabs dept={cat} boards={boards ?? []} current={tab} canManage={!!canManage} leaderName={leader ? `[${leader.dept}]${leader.nickname}` : null} />}
-      <div className="bar"><span className="muted">{cat === TOP ? "대표 파트" : cat}{tab && boards?.find((b: any) => b.id === tab) ? ` › ${boards!.find((b: any) => b.id === tab)!.name}` : ""} · {posts.length}개</span>
+      <div className="bd-bar"><span className="muted">{cat === TOP ? "대표 파트" : cat}{tab && boards?.find((b: any) => b.id === tab) ? ` › ${boards!.find((b: any) => b.id === tab)!.name}` : ""} · {posts.length}</span><div className="sorts">{[["rank", "계급순"], ["new", "최신"], ["best", "인기"]].map(([k, n]) => <Link key={k} href={`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(k !== "rank" ? { sort: k } : {}) }).toString()}`} aria-current={sort === k ? "true" : undefined}>{n}</Link>)}</div>
         <Link className="btn" href={`/board/new?${new URLSearchParams({ ...(cat !== "전체" && cat !== TOP ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}) }).toString()}`}>글쓰기</Link></div>
       <div className="posts">
         {!posts.length && <div className="empty">{cat === "전체" ? "아직 글이 없어요. 첫 글을 올려보세요." : `${cat} 칸에 아직 글이 없어요.`}</div>}
         {posts.map((p: any) => (
-          <Link key={p.id} href={`/board/${p.id}`} className={`post t${p.r.tier}`}>
-            <div className="meta">{p.pinned && <span className="pin">📌 공지</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}<span className={"tag" + (top && p.category === top ? " top-tag" : "")}>{top && p.category === top ? "🏆 " : ""}{p.category}</span>
-              {p.author ? <Name r={p.r} dept={p.author.dept} nickname={p.author.nickname} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(p.created_at)}</span></div>
-            <h3>{p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff", marginRight: 6 }}>블라인드</span>}<span className="topic-tag">{topicOf(p.topic).icon} {topicOf(p.topic).name}</span>{p.title}</h3><p>{p.body}</p>
-            <div className="post-foot"><span>💬 댓글 {p.nc}</span><span>👍 공감 {p.nr}</span></div>
+          <Link key={p.id} href={`/board/${p.id}`} className={`post t${p.r.tier}${p.pinned ? " pinned" : ""}`}>
+            <div className="post-top">{p.pinned ? <span className="pin">📌 공지</span> : <span className="topic-tag">{topicOf(p.topic).icon} {topicOf(p.topic).name}</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{cat === "전체" && !p.pinned && p.category !== NOTICE_CAT && <span className="bd-cat">{p.category}</span>}{p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드</span>}</div>
+            <h3>{p.title}</h3>
+            {p.body && <p>{p.body}</p>}
+            <div className="post-meta">{p.author ? <Name r={p.r} dept={p.author.dept} nickname={p.author.nickname} /> : <span>탈퇴한 회원</span>}<span>· {fmt(p.created_at)}</span><span className="post-cnt">💬 {p.nc}　👍 {p.nr}</span></div>
           </Link>
         ))}
       </div>
