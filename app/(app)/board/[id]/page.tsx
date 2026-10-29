@@ -12,6 +12,7 @@ import Reactions from "@/components/Reactions";
 import { topicOf } from "@/lib/depts";
 import ReportButton from "@/components/ReportButton";
 import Linkify from "@/components/Linkify";
+import { memoOnce } from "@/lib/memo";
 export const dynamic = "force-dynamic";
 
 export default async function PostPage({ params }: { params: { id: string } }) {
@@ -29,6 +30,8 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const agg = (kind: string, id: string) => { const counts: Record<string, number> = {}; let mine: string | null = null; for (const r of rx ?? []) if (r.kind === kind && String(r.target_id) === id) { counts[r.emoji] = (counts[r.emoji] ?? 0) + 1; if (r.user_id === s.id) mine = r.emoji; } return { counts, mine }; };
   const admin = s.role === "admin", mine = p.author_id === s.id;
   if (p.hidden && !admin && !mine) return <div className="detail"><Link className="link" href="/board">← 게시판</Link><div className="empty" style={{ marginTop: 20 }}>🚩 신고가 접수되어 임시로 가려진 글이에요.<br /><span className="muted">운영팀 확인 후 복구되거나 삭제돼요 (최대 30일).</span></div></div>;
+  const counted = memoOnce(`pv:${p.id}:${s.id}`, 6 * 3600_000);
+  if (counted) d.rpc("bump_view", { p_id: p.id }).then(() => {}, () => {});
   const r = rankFor((p as any).author, leaders), myR = rankFor(me, leaders);
   const a = (p as any).author;
   return (
@@ -36,7 +39,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
       <Link className="link" href={p.category === "썸" ? "/ssum" : `/board?cat=${encodeURIComponent(p.category)}${p.board_id ? `&tab=${p.board_id}` : ""}`}>← {p.category}{(p as any).board?.name ? ` › ${(p as any).board.name}` : ""}</Link>
       <div className="meta" style={{ marginTop: 10 }}>
         {p.pinned && <span className="pin">📌 공지</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{!p.pinned && <span className="tag">{p.category}</span>}<Link href={`/board?topic=${(p as any).topic ?? "free"}`} className="topic-tag">{topicOf((p as any).topic).icon} {topicOf((p as any).topic).name}</Link>
-        {a ? <Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(p.created_at)}</span>
+        {a ? <Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(p.created_at)}</span><span className="time">· 조회 {((p as any).views ?? 0) + (counted ? 1 : 0)}</span>
         {admin && <form action={togglePin.bind(null, p.id, !p.pinned)}><button className="link">{p.pinned ? "고정 해제" : "상단 고정"}</button></form>}
         {mine && can(myR, "소령") && <form action={boostPost.bind(null, p.id, !p.boosted)}><button className="link">{p.boosted ? "밀어올리기 해제" : "밀어올리기"}</button></form>}
         {(admin || mine) && <form action={deletePost.bind(null, p.id)}><button className="link">글 삭제</button></form>}
