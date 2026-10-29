@@ -8,7 +8,7 @@ export default function DeptGuide({ slug }: { slug: string }) {
   const list = g.items.filter(x => (cat === "전체" || x.cat === cat) && (!k || [x.name, x.sub ?? "", ...x.rows.flat(), ...(x.check ?? []), x.tip ?? ""].join(" ").toLowerCase().includes(k)));
   return (
     <div className="xg">
-      <input className="xg-search" value={q} onChange={e => setQ(e.target.value)} placeholder="검색 (예: 연차, Lachman, 수액)" />
+      <input className="xg-search" value={q} onChange={e => setQ(e.target.value)} placeholder={`검색 (예: ${[g.items[0], g.items[g.items.length - 1]].map(i => i.name.split(" ")[0]).join(", ")})`} />
       <div className="topics scroll">{["전체", ...g.cats].map(c => <button key={c} type="button" className={"topic" + (cat === c ? " on" : "")} onClick={() => setCat(c)}>{c}</button>)}</div>
       <div className="xg-list">
         {list.map(x => { const on = open === x.name || !!k; return (
