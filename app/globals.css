@@ -1163,7 +1163,7 @@ main{padding-bottom:88px}
 .xg-part{grid-area:p;font-size:11px;font-weight:700;color:#6E5BB8;background:#EFEAFB;border-radius:6px;padding:1px 6px}
 .xg-head b{grid-area:n;font-size:15px}
 .xg-arr{grid-area:a;color:var(--muted);font-size:11px}
-.xg-cr{grid-area:c;font-size:12px;color:var(--muted)}
+.xg-cr{grid-area:c;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .xg-body{display:grid;gap:8px;padding:0 12px 12px;font-size:14px;line-height:1.6}
 .xg-k{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:#6E5BB8;border-radius:6px;padding:1px 7px;margin-right:6px;vertical-align:1px}
 .xg-body ul{margin:4px 0 0;padding-left:18px}
