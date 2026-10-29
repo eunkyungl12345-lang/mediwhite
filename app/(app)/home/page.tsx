@@ -43,7 +43,7 @@ export default async function HomePage() {
   const hot = [...posts].filter(p => !p.pinned && p.id !== q?.id).sort((a, b) => b.score - a.score || +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 5);
   const mine = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 5);
   const [news, quotes] = await Promise.all([memo("tb-news", 30 * 60_000, getNews).catch(() => null), memo("tb-quotes", 10 * 60_000, getQuotes).catch(() => [])]);
-  const heads = news ? [...news.global.slice(0, 1), ...news.stock.slice(0, 1), ...news.med.slice(0, 1)] : [];
+  const heads = news ? [...news.global.slice(0, 2), ...news.stock.slice(0, 1), ...news.macro.slice(0, 1), ...news.med.slice(0, 1)] : [];
   const ndq = quotes.find(x => x.name === "나스닥"), ksp = quotes.find(x => x.name === "코스피");
   const ft = (me as any)?.birth_date ? fortune((me as any).birth_date, (me as any).birth_time, (me as any).fortune_name, new Date()) : null;
   const doneN = daily.quests.filter(x => x.done).length;
@@ -58,7 +58,11 @@ export default async function HomePage() {
     <div className="home">
       <div className="h-greet"><b>{hourGreet()},</b> {me?.nickname ?? s.nickname}님{online >= 10 && <span className="h-online">오늘 {online}명 방문</span>}</div>
 
-      {q && <Link href={`/board/${q.id}`} className="h-card h-q"><span className="h-q-tag">오늘의 질문</span><b>{q.title.replace(/^\[오늘의 질문\]\s*/, "")}</b><span className="h-link">답하러 가기 →</span></Link>}
+
+      {heads.length > 0 && <section className="h-card">
+        <div className="h-head"><h3>오늘의 핫뉴스</h3><Link href="/news" className="h-link">더보기</Link></div>
+        {heads.map((h, i) => <a key={i} href={h.link} target="_blank" rel="noopener noreferrer" className="h-row"><span className="h-topic">{["🌙", "🌙", "📈", "🏦", "🏥"][i]}</span><span className="h-title">{h.title}</span><span className="h-meta">{h.source}</span></a>)}
+      </section>}
 
       <div className="h-grid">
         <section className="h-card">
@@ -80,10 +84,6 @@ export default async function HomePage() {
         <Link href="/games" className="h-tile"><span className="h-tile-ico">🎮</span><b>게임</b><small>{ksp ? `코스피 ${pct(ksp)}` : "오목·그림 맞히기"}</small></Link>
       </nav>
 
-      {heads.length > 0 && <section className="h-card">
-        <div className="h-head"><h3>오늘의 핫뉴스</h3><Link href="/news" className="h-link">더보기</Link></div>
-        {heads.map((h, i) => <a key={i} href={h.link} target="_blank" rel="noopener noreferrer" className="h-row"><span className="h-topic">{["🌙", "📈", "🏥"][i]}</span><span className="h-title">{h.title}</span><span className="h-meta">{h.source}</span></a>)}
-      </section>}
 
       <section className={`h-card h-rank t${r.tier}`}>
         <div className="h-rank-top">

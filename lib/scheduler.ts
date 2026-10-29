@@ -1,5 +1,4 @@
 import { db } from "./supabase";
-import { DAILY_POSTS } from "./seedContent";
 import { memoOnce } from "./memo";
 
 /** 접속이 있을 때마다 가볍게 확인: 오늘 슬롯이 아직 안 돌았으면 실행 (크론 없이). */
@@ -18,13 +17,4 @@ export async function runSchedulers() {
     const claim = async (name: string) => { const { error } = await s.from("daily_runs").insert({ day, slot: name }); return !error; };
   if (await claim("blinds")) restoreExpiredBlinds().catch(() => {});
 
-  // 1) 오늘의 질문 (08시 이후 하루 1회)
-  if (hour >= 8 && await claim("post")) {
-    const { data: team } = await s.from("users").select("id,dept").eq("username", "mw_team").maybeSingle();
-    if (team) {
-      const { count } = await s.from("posts").select("id", { count: "exact", head: true }).eq("author_id", team.id);
-      const idx = (count ?? 0) % DAILY_POSTS.length; const q = DAILY_POSTS[idx];
-      await s.from("posts").insert({ author_id: team.id, category: q.category, dept: team.dept, title: `[오늘의 질문] ${q.title}`, body: q.body + "\n\n— 메디화이트 운영팀" });
-    }
-  }
 }
