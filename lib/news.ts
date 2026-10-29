@@ -21,20 +21,33 @@ async function feed(url: string, source: string): Promise<News[]> {
     }).filter(x => x.title && /^https?:\/\//.test(x.link));
   } catch { return []; }
 }
+/** 건강보험심사평가원 게시판(공지: 고시·심사기준 안내 / 보도자료) — 제목·링크·날짜만 */
+async function hira(pgmid: string, label: string): Promise<News[]> {
+  try {
+    const r = await fetch(`https://www.hira.or.kr/bbsDummy.do?pgmid=${pgmid}`, { headers: { "User-Agent": "Mozilla/5.0 (MediWhite news reader)" }, next: { revalidate: 3600 } });
+    if (!r.ok) return [];
+    const html = await r.text();
+    return [...html.matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map(m => m[1]).filter(x => x.includes("col-tit")).map(row => {
+      const a = row.match(/class="col-tit"[^>]*>\s*<a href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/), dep = un((row.match(/class="col-depart"[^>]*>([\s\S]*?)<\/td>/) ?? [])[1] ?? ""), date = (row.match(/class="col-date"[^>]*>\s*([\d-]+)/) ?? [])[1];
+      return a ? { title: un(a[2]).replace(/\s+/g, " "), link: "https://www.hira.or.kr/bbsDummy.do" + a[1].replace(/&amp;/g, "&"), source: `심평원 ${label}${dep ? " · " + dep : ""}`, at: date ? Date.parse(date + "T09:00:00+09:00") : 0 } : null;
+    }).filter(Boolean) as News[];
+  } catch { return []; }
+}
 const uniq = (a: News[]) => { const seen = new Set<string>(); return a.filter(x => { const k = x.title.slice(0, 18); if (seen.has(k)) return false; seen.add(k); return true; }); };
 export const NEWS_TABS = [
   { key: "global", name: "🌙 간밤 미국증시" }, { key: "stock", name: "📈 주식" }, { key: "macro", name: "🏦 거시경제" },
-  { key: "coin", name: "🪙 코인" }, { key: "estate", name: "🏠 부동산" }, { key: "med", name: "🏥 의료·병원" },
+  { key: "coin", name: "🪙 코인" }, { key: "estate", name: "🏠 부동산" }, { key: "med", name: "🏥 의료·병원" }, { key: "hira", name: "📋 심평원" },
 ] as const;
 export async function getNews() {
   const all = Object.fromEntries(await Promise.all(Object.entries(FEEDS).map(async ([k, fs]) => [k, uniq((await Promise.all(fs.map(f => feed(f.url, f.source)))).flat().sort((a, b) => b.at - a.at))]))) as Record<string, News[]>;
+  const [hNotice, hPress] = await Promise.all([hira("HIRAA020002000100", "공지"), hira("HIRAA020041000100", "보도자료")]);
   const pool = uniq([...all.macro, ...all.stock, ...all.global, ...all.it].sort((a, b) => b.at - a.at));
   const usRe = /뉴욕증시|뉴욕 증시|나스닥|S&P|다우|월가|미 증시|미국 증시|엔비디아|테슬라|애플|빅테크|미 국채|파월|연준|Fed|FOMC/;
   const coinRe = /비트코인|가상자산|코인|이더리움|암호화폐|업비트|빗썸|스테이블|가상화폐|리플|솔라나/;
   const global = uniq([...all.global.filter(x => usRe.test(x.title)), ...pool.filter(x => usRe.test(x.title))]).sort((a, b) => b.at - a.at);
   return {
     global: global.length >= 4 ? global : uniq([...global, ...all.global]),
-    stock: all.stock, macro: all.macro, coin: uniq([...all.coin, ...pool.filter(x => coinRe.test(x.title))]).sort((a, b) => b.at - a.at), estate: all.estate, med: all.med,
+    stock: all.stock, macro: all.macro, coin: uniq([...all.coin, ...pool.filter(x => coinRe.test(x.title))]).sort((a, b) => b.at - a.at), estate: all.estate, med: all.med, hira: [...hNotice, ...hPress],
   } as Record<(typeof NEWS_TABS)[number]["key"], News[]>;
 }
 

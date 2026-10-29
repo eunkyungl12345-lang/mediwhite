@@ -15,7 +15,8 @@ export default async function NewsPage({ searchParams }: { searchParams: { t?: s
         <div className="cats nw-tabs">{NEWS_TABS.map(x => <Link key={x.key} href={`/news?t=${x.key}`} className="cats-btn" aria-pressed={tab === x.key}>{x.name}</Link>)}</div>
       </div>
       <div className="card nw-list">
-        {list.length ? list.map((n, i) => <a key={i} href={n.link} target="_blank" rel="noopener noreferrer" className="nw-item"><span className="nw-rank">{i + 1}</span><span className="nw-t">{n.title}</span><span className="nw-m">{n.source}{n.at ? ` · ${ago(n.at)}` : ""}</span></a>)
+        {tab === "hira" && <div className="muted" style={{ fontSize: 12, paddingBottom: 6 }}>건강보험심사평가원 공지(고시·급여기준·평가 안내)와 보도자료 최신 글이에요. 1시간마다 갱신돼요.</div>}
+        {list.length ? list.map((n, i) => <a key={i} href={n.link} target="_blank" rel="noopener noreferrer" className="nw-item"><span className="nw-rank">{i + 1}</span><span className="nw-t">{n.title}</span><span className="nw-m">{n.source}{n.at ? ` · ${n.source.startsWith("심평원") ? new Date(n.at).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", timeZone: "Asia/Seoul" }) : ago(n.at)}` : ""}</span></a>)
           : <div className="muted">지금은 소식을 불러오지 못했어요. 잠시 후 다시 확인해주세요.</div>}
         <div className="muted" style={{ fontSize: 11 }}>기사 제목과 링크만 모아 보여드려요. 원문은 각 언론사 사이트에서 열려요. 시세는 지연될 수 있어요(투자 판단의 근거로 쓰지 마세요).</div>
       </div>
