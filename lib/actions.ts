@@ -497,3 +497,15 @@ export async function claimTycoonGrant() {
   await s.from("game_state").delete().eq("user_id", u.id).eq("game", "tycoon_grant");
   return amt;
 }
+
+/* ---------- 오늘의 운세용 정보 (본인만 보임) ---------- */
+export async function saveBirth(_: FormState, fd: FormData): Promise<FormState> {
+  const u = await requireUser();
+  const name = clean(fd.get("fortune_name"), 20), date = String(fd.get("birth_date") ?? ""), time = String(fd.get("birth_time") ?? "");
+  if (fd.get("clear")) { await db().from("users").update({ fortune_name: null, birth_date: null, birth_time: null }).eq("id", u.id); revalidatePath("/fortune"); return { ok: "지웠어요" }; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "생년월일을 입력해주세요" };
+  const y = Number(date.slice(0, 4)); if (y < 1920 || y > new Date().getFullYear()) return { error: "생년월일을 다시 확인해주세요" };
+  await db().from("users").update({ fortune_name: name || null, birth_date: date, birth_time: /^\d{2}:\d{2}$/.test(time) ? time : null }).eq("id", u.id);
+  revalidatePath("/fortune"); revalidatePath("/home");
+  return { ok: "저장했어요! 오늘의 운세가 매일 자동으로 바뀌어요 🔮" };
+}

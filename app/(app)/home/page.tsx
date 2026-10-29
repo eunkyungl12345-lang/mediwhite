@@ -93,6 +93,14 @@ export default async function HomePage() {
             {tyPending > 0 && <div className="h-ty-pending">💰 자리 비운 동안 <b>+{won(tyPending)}원</b> 쌓였어요 — 받으러 가기</div>}
           </> : <div className="h-empty">시즌 2 오픈! 병원을 키워서 한강뷰 집·외제차까지 사보세요.</div>}
         </Link>
+        <Link href="/news" className="h-card" style={{ background: "linear-gradient(135deg,#E6F0FF,#F5F9FF)", borderColor: "#C6D8F6", color: "#1E3A6B" }}>
+          <div className="h-head"><h3>📰 오늘의 핫뉴스</h3><span className="h-link" style={{ color: "#2F67B8" }}>보러 가기 →</span></div>
+          <div className="h-empty" style={{ color: "#1E3A6B" }}>간밤 미국증시 · 주식 · 거시경제 · 코인 · 부동산 · 의료·병원 + 실시간 시세</div>
+        </Link>
+        <Link href="/fortune" className="h-card" style={{ background: "linear-gradient(135deg,#2B2156,#4B3B8F)", borderColor: "#4B3B8F", color: "#F4F1FF" }}>
+          <div className="h-head"><h3>🔮 오늘의 운세</h3><span className="h-link" style={{ color: "#FFD36E" }}>확인하기 →</span></div>
+          <div className="h-empty" style={{ color: "#DCD6F7" }}>생년월일·태어난 시간으로 매일 바뀌는 나만의 운세</div>
+        </Link>
         <Link href="/ssum" className="h-card" style={{ background: "linear-gradient(135deg,#FFE3EC,#FFF4F7)", borderColor: "#F6C6D5", color: "#7A2E4A" }}>
           <div className="h-head"><h3>💘 썸</h3><span className="h-link" style={{ color: "#C2185B" }}>들어가기 →</span></div>
           <div className="h-empty" style={{ color: "#7A2E4A" }}>닉네임 고백 · 셀소 카드 · 지인 소개 · 오늘의 솔로</div>

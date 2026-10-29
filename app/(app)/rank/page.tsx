@@ -7,6 +7,7 @@ import RankBadge from "@/components/RankBadge";
 import Name from "@/components/Name";
 import Insignia from "@/components/Insignia";
 import DeleteAccount from "@/components/DeleteAccount";
+import BirthForm from "@/components/BirthForm";
 import ProfileForm from "@/components/ProfileForm";
 import PasswordForm from "@/components/PasswordForm";
 import InviteLink from "@/components/InviteLink";
@@ -18,7 +19,7 @@ export default async function RankPage() {
   const s = (await getSession())!;
   const d = db();
   const [{ data: me }, { data: done }, { data: top }, { count }, leaders, commanders, { count: invited }, daily] = await Promise.all([
-    d.from("users").select("id,username,nickname,dept,xp,join_order,bio").eq("id", s.id).single(),
+    d.from("users").select("id,username,nickname,dept,xp,join_order,bio,fortune_name,birth_date,birth_time").eq("id", s.id).single(),
     d.from("xp_log").select("key").eq("user_id", s.id).not("key", "is", null),
     d.from("users").select("id,username,nickname,dept,xp").eq("stealth", false).order("xp", { ascending: false }).limit(30),
     d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false),
@@ -49,6 +50,7 @@ export default async function RankPage() {
       <div className="card">
         <h3>내 정보</h3>
         <ProfileForm nickname={me?.nickname ?? s.nickname} bio={me?.bio ?? ""} dept={me?.dept ?? s.dept} />
+        <details className="ss-details" style={{ marginTop: 8 }}><summary><b>🔮 운세용 생일 정보</b> <span className="muted" style={{ fontSize: 12 }}>(본인만 보여요)</span></summary><BirthForm name={(me as any)?.fortune_name} date={(me as any)?.birth_date} time={(me as any)?.birth_time} /></details>
         <details><summary className="muted" style={{ cursor: "pointer" }}>비밀번호 변경</summary><div style={{ paddingTop: 10 }}><PasswordForm /></div></details>
       </div>
 
