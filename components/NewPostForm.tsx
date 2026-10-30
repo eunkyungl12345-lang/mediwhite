@@ -6,11 +6,11 @@ import { createPost, type FormState } from "@/lib/actions";
 import { DEPTS, NOTICE_CAT, TOPICS, SSUM_TOPICS } from "@/lib/depts";
 import { personMention } from "@/lib/safety";
 function Submit() { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "올리는 중…" : "올리기"}</button>; }
-export default function NewPostForm({ defaultCat, defaultTab, defaultTopic = "free", canNotice, boards }: { defaultCat: string; defaultTab: string; defaultTopic?: string; canNotice: boolean; boards: { id: string; name: string; dept: string }[] }) {
+export default function NewPostForm({ defaultCat, defaultTab, defaultTopic = "free", canNotice, boards, defaultTitle = "", defaultBody = "" }: { defaultCat: string; defaultTab: string; defaultTopic?: string; canNotice: boolean; boards: { id: string; name: string; dept: string }[]; defaultTitle?: string; defaultBody?: string }) {
   const [state, action] = useFormState<FormState, FormData>(createPost, undefined);
   const [cat, setCat] = useState(defaultCat);
   const [topic, setTopic] = useState(defaultTopic);
-  const [txt, setTxt] = useState("");
+  const [txt, setTxt] = useState(defaultBody);
   const pm = personMention(txt);
   const tabs = boards.filter(b => b.dept === cat);
   return (
@@ -24,8 +24,8 @@ export default function NewPostForm({ defaultCat, defaultTab, defaultTopic = "fr
         <div className="muted" style={{ fontSize: 12 }}>{(cat === "썸" ? SSUM_TOPICS : TOPICS as readonly { key: string; hint: string }[]).find(t => t.key === topic)?.hint ?? (cat === "썸" ? "주제를 골라주세요" : "")}</div>
         <input type="hidden" name="topic" value={topic} />
       </div>
-      <input name="title" maxLength={80} placeholder="제목" required />
-      <textarea name="body" maxLength={4000} placeholder="실명·환자 정보 없이, 솔직하게." required onChange={e => setTxt(e.target.value)} />
+      <input name="title" maxLength={80} placeholder="제목" required defaultValue={defaultTitle} />
+      <textarea name="body" maxLength={4000} placeholder="실명·환자 정보 없이, 솔직하게." required defaultValue={defaultBody} onChange={e => setTxt(e.target.value)} />
       {pm && <label className="warn"><input type="checkbox" name="confirm_anon" /> <span>"<b>{pm}</b>" — 특정 사람을 가리키는 표현 같아요. 실명·식별 정보가 들어가면 <b>명예훼손 책임</b>이 글쓴이에게 생길 수 있어요. 개인을 식별할 수 없는 내용이 맞다면 체크하고 올려주세요.</span></label>}
       <div className="muted" style={{ fontSize: 12 }}>올리면 <a href="/rules" target="_blank">커뮤니티 규칙</a>에 동의한 것으로 봐요. 신고가 들어오면 임시로 가려질 수 있어요.</div>
       {state?.error && <div className="error">{state.error}</div>}

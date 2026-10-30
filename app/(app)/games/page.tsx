@@ -6,6 +6,8 @@ import Dodge from "@/components/games/Dodge";
 import Sword from "@/components/games/Sword";
 import Roulette from "@/components/games/Roulette";
 import Defense from "@/components/games/Defense";
+import Wordle from "@/components/games/Wordle";
+import OneShot from "@/components/games/OneShot";
 import PlantGame from "@/components/games/Plant";
 import SpeedQuiz from "@/components/games/SpeedQuiz";
 import Quiz from "@/components/games/Quiz";
@@ -23,6 +25,8 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
   const norm = (r: { data: any[] | null }) => (r.data ?? []).map(x => ({ value: Number(x.value), mode: x.mode as string | undefined, nickname: x.users ? display(x.users.dept, x.users.nickname) : "?", dept: x.users?.dept ?? "" }));
   const games = [
     { id: "tycoon", name: "우리 병원 키우기", icon: "🏥", sub: "방치형 경영", color: "#6FBFA9", badge: "NEW", node: <Tycoon ranks={norm(tycoon)} myDept={sess.dept} /> },
+    { id: "wordle", name: "오늘의 메디워들", icon: "🟩", sub: "하루 한 문제", color: "#7BC47F", badge: "DAILY", node: <Wordle /> },
+    { id: "iv", name: "원샷원킬 IV", icon: "🎯", sub: "하루 3번 랭킹전", color: "#F2A65A", badge: "DAILY", node: <OneShot /> },
     { id: "defense", name: "병동 사수", icon: "🦠", sub: "줄 지키기 디펜스", color: "#5FA777", badge: "HIT!", node: <Defense ranks={norm(defense)} /> },
     { id: "omok", name: "온라인 오목", icon: "⚫", sub: "1:1 · 팀전 5:5", color: "#E6B97A", badge: "NEW", node: <div className="card"><h3>⚫⚪ 온라인 오목</h3><div className="muted">회원끼리 실시간 오목! 1:1부터 5:5 팀전(같은 팀끼리 번갈아 두기)까지. 내기 걸고 한 판 ☕ 혼자일 땐 🤖 컴퓨터와 연습</div><Link className="btn" href="/games/omok">오목 로비로 →</Link></div> },
     { id: "draw", name: "그림 맞히기", icon: "🎨", sub: "캐치마인드식", color: "#F8BBD0", badge: "NEW", node: <div /> },

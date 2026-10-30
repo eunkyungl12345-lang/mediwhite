@@ -42,6 +42,9 @@ export default async function HomePage() {
   const q = question?.[0] as any;
   const hot = [...posts].filter(p => !p.pinned && p.id !== q?.id).sort((a, b) => b.score - a.score || +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 5);
   const mine = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 5);
+  const kday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+  const { data: dps } = await d.from("daily_plays").select("game,attempts,best,data").eq("user_id", s.id).eq("day", kday);
+  const wd = (dps ?? []).find((r: any) => r.game === "wordle") as any, iv = (dps ?? []).find((r: any) => r.game === "iv") as any;
   const [news, quotes] = await Promise.all([memo("tb-news", 30 * 60_000, getNews).catch(() => null), memo("tb-quotes", 10 * 60_000, getQuotes).catch(() => [])]);
   const heads = news ? [...news.global.slice(0, 2), ...news.stock.slice(0, 1), ...news.macro.slice(0, 1), ...news.med.slice(0, 1)] : [];
   const ndq = quotes.find(x => x.name === "나스닥"), ksp = quotes.find(x => x.name === "코스피");
@@ -83,6 +86,10 @@ export default async function HomePage() {
         <Link href="/food" className="h-tile"><span className="h-tile-ico">🍚</span><b>병원 앞 맛집</b><small>혼밥·회식·배달</small></Link>
         <Link href="/games" className="h-tile"><span className="h-tile-ico">🎮</span><b>게임</b><small>{ksp ? `코스피 ${pct(ksp)}` : "오목·그림 맞히기"}</small></Link>
       </nav>
+      <div className="h-daily">
+        <Link href="/games?g=wordle" className={"h-dly" + (wd?.data?.done ? " done" : "")}><span>🟩</span><div><b>오늘의 메디워들</b><small>{wd?.data?.done ? (wd.data.won ? `✅ ${wd.attempts}번 만에 정답` : "❌ 내일 다시") : "하루 한 문제 · 최대 300 XP"}</small></div></Link>
+        <Link href="/games?g=iv" className={"h-dly" + ((iv?.attempts ?? 0) >= 3 ? " done" : "")}><span>🎯</span><div><b>원샷원킬 IV</b><small>{iv ? `오늘 최고 ${Number(iv.best).toLocaleString()}점 · 남은 기회 ${3 - iv.attempts}` : "하루 3번 · 1등은 「명사수」"}</small></div></Link>
+      </div>
 
 
       <section className={`h-card h-rank t${r.tier}`}>
