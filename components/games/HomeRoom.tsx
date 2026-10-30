@@ -35,6 +35,64 @@ function View({ v, w, h, id }: { v: V; w: number; h: number; id: string }) {
   );
 }
 
+/** 집 등급별 구조물 */
+function Struct({ home, W, FY, dark }: { home: number; W: number; FY: number; dark: boolean }) {
+  const ceil = [34, 24, 16, 12, 10, 0, 0, 0, 0, 0][home];
+  return (
+    <g>
+      {ceil > 0 && <><rect width={W} height={ceil} fill={home === 0 ? "#8F887A" : "#E9E4DA"} /><rect y={ceil} width={W} height="3" fill="#00000022" /></>}
+      {home === 0 && <g>
+        <path d="M0 22 H480" stroke="#6E6A62" strokeWidth="6" /><path d="M0 30 H480" stroke="#7E7A70" strokeWidth="3" />
+        <path d="M240 34 v22" stroke="#222" /><circle cx="240" cy="60" r="5" fill="#FFE9A0" />
+        <path d="M120 70 Q200 84 330 66" stroke="#555" fill="none" /><rect x="150" y="74" width="16" height="22" fill="#9FC5E8" /><rect x="190" y="78" width="14" height="18" fill="#F4A261" /><rect x="280" y="72" width="18" height="20" fill="#E9EEF4" />
+        <rect x="300" y="150" width="56" height="40" fill="#8A7A5A" /><rect x="304" y="140" width="30" height="12" fill="#2B3245" /><rect x="306" y="142" width="26" height="8" fill="#9FD3F5" />
+        <text x="420" y="60" fontSize="7" fill="#4A4639" fontFamily="sans-serif" transform="rotate(-4 420 60)">공용샤워실 →</text>
+      </g>}
+      {home === 1 && <g>
+        <rect x="320" y="26" width="150" height="34" fill="#F2EEE6" stroke="#D2C8B7" />{[0, 1, 2].map(i => <path key={i} d={`M${320 + (i + 1) * 50} 26 v34`} stroke="#D2C8B7" />)}
+        <rect x="300" y="110" width="30" height="84" rx="3" fill="#E9EEF4" stroke="#BFC6CE" /><path d="M300 140 h30" stroke="#BFC6CE" />
+        <g transform="translate(130 150)"><path d="M0 0 h40 M4 0 v40 M36 0 v40 M0 14 h40" stroke="#9AA3AD" strokeWidth="1.5" /><rect x="6" y="2" width="10" height="12" fill="#F4A261" /><rect x="20" y="2" width="12" height="10" fill="#9FC5E8" /></g>
+      </g>}
+      {home === 2 && <g>
+        <rect x="380" y="24" width="70" height="20" rx="4" fill="#FFFFFF" stroke="#C9CED4" /><path d="M386 38 h58" stroke="#C9CED4" />
+        {[90, 240, 400].map(x => <circle key={x} cx={x} cy="20" r="3" fill="#FFF3C8" stroke="#D8D0C2" />)}
+        <rect x="128" y="70" width="34" height="122" fill="#EDE7DA" stroke="#C9BFAE" /><circle cx="156" cy="132" r="2" fill="#8A7A62" /><rect x="132" y="84" width="10" height="14" rx="2" fill="#2B3245" />
+      </g>}
+      {home === 3 && <g>
+        <rect x="160" y="36" width="240" height="120" fill="none" stroke="#C9C3B8" strokeWidth="6" /><path d="M160 128 H400" stroke="#9AA3AD" strokeWidth="2" />{Array.from({ length: 12 }, (_, i) => <path key={i} d={`M${170 + i * 20} 128 v26`} stroke="#9AA3AD" strokeWidth="1.5" />)}
+        <rect x="408" y="104" width="30" height="88" rx="4" fill="#FFFFFF" stroke="#C9CED4" /><path d="M412 116 h22 M412 122 h22" stroke="#C9CED4" />
+      </g>}
+      {home === 4 && <g>
+        <rect x="350" y="22" width="120" height="170" fill="#EFE8DC" /><rect x="350" y="22" width="120" height="170" fill="none" stroke="#D8CFC0" strokeWidth="4" />
+        <rect x="358" y="34" width="104" height="30" fill="#FFFFFF" stroke="#D8D0C2" /><rect x="358" y="120" width="104" height="10" fill="#C9C3B8" /><rect x="358" y="130" width="104" height="62" fill="#FFFFFF" stroke="#D8D0C2" />
+        <path d="M410 22 v30" stroke="#333" /><path d="M398 60 q12 -14 24 0 z" fill="#2A2F38" />
+      </g>}
+      {home === 5 && <g>
+        <rect x="14" y="20" width="110" height="172" fill="#5B4632" />{Array.from({ length: 5 }, (_, r) => <g key={r}><rect x="18" y={28 + r * 33} width="102" height="3" fill="#3E2F22" />{Array.from({ length: 9 }, (_, i) => <rect key={i} x={22 + i * 11} y={8 + r * 33 + (i % 3) * 3} width="8" height={20 - (i % 3) * 3} fill={["#E76F51", "#2A9D8F", "#E9C46A", "#264653", "#F4A261"][(i + r) % 5]} />)}</g>)}
+      </g>}
+      {home === 6 && <g>
+        <rect x="300" y="168" width="150" height="24" rx="4" fill="#F4F1EA" stroke="#D8D0C2" /><rect x="300" y="160" width="150" height="10" rx="3" fill="#E9E4DA" />{[318, 352, 386, 420].map(x => <g key={x}><rect x={x} y="176" width="14" height="4" fill="#2A2F38" /><rect x={x + 6} y="180" width="2" height="12" fill="#2A2F38" /></g>)}
+        <rect x="40" y="20" width="80" height="120" rx="40" fill="#EDE7DA" stroke="#D8D0C2" /><ellipse cx="80" cy="44" rx="30" ry="10" fill="#FFF3C8" opacity=".6" />
+      </g>}
+      {home >= 7 && <g>
+        {/* 복층: 위층 난간 */}
+        <rect x="0" y="0" width={W} height="10" fill={dark ? "#14110E" : "#F6F3EE"} />
+        <rect x={home === 8 ? 300 : 330} y="62" width={W - (home === 8 ? 300 : 330)} height="8" fill={dark ? "#2E2A26" : "#D8CFC0"} />
+        {Array.from({ length: 8 }, (_, i) => <path key={i} d={`M${(home === 8 ? 304 : 334) + i * 20} 34 v28`} stroke={dark ? "#9AA3AD" : "#B8A880"} strokeWidth={home === 8 ? 1 : 2} />)}
+        <path d={`M${home === 8 ? 300 : 330} 34 H${W}`} stroke={dark ? "#C9D1DC" : "#8A7A62"} strokeWidth="3" />
+        {home === 8 && <rect x="300" y="34" width={W - 300} height="28" fill="#BFE3FF" opacity=".15" />}
+        {/* 계단 */}
+        {Array.from({ length: 7 }, (_, i) => <rect key={i} x={home === 9 ? 300 + i * 12 : 280 + i * 8} y={70 + i * 17} width={home === 9 ? 46 : 40} height="5" rx="1" fill={dark ? "#3A342E" : home === 9 ? "#EFE9DD" : "#C9A27A"} stroke={dark ? "#C9D1DC" : "#9A8A6A"} strokeWidth=".6" />)}
+        {home !== 8 && <path d={home === 9 ? "M300 70 L384 189" : "M280 70 L336 189"} stroke="#8A7A62" strokeWidth="2" />}
+        {home === 8 && <g><rect x="30" y="150" width="90" height="42" rx="4" fill="#1E1A16" stroke="#C9A227" /><rect x="30" y="146" width="90" height="6" fill="#C9A227" />{[44, 60, 76, 92].map(x => <rect key={x} x={x} y="120" width="8" height="22" rx="2" fill={["#7FB3C8", "#C9A227", "#9A3B3B", "#7FB069"][(x / 16) % 4 | 0]} opacity=".85" />)}</g>}
+        {home === 9 && <g>{[132, 448].map(x => <g key={x}><rect x={x - 8} y="10" width="16" height="182" fill="#F4F1EA" stroke="#D8CFC0" /><rect x={x - 12} y="10" width="24" height="8" fill="#E9E2D6" /><rect x={x - 12} y="184" width="24" height="8" fill="#E9E2D6" /></g>)}
+          <path d="M150 26 Q240 -6 330 26" fill="none" stroke="#D8CFC0" strokeWidth="5" /></g>}
+        {home === 7 && <path d="M160 36 Q215 6 270 36 M280 36 Q335 6 390 36" fill="none" stroke="#D8CFC0" strokeWidth="5" />}
+      </g>}
+    </g>
+  );
+}
+
 const Ph = ({ x, y, w, h, label, icon, on }: { x: number; y: number; w: number; h: number; label: string; icon: string; on?: () => void }) => (
   <g className="hm-ph" onClick={on} style={{ cursor: on ? "pointer" : undefined }}><rect x={x} y={y} width={w} height={h} rx="6" fill="rgba(255,255,255,.12)" stroke="#E7B93C" strokeWidth="2" strokeDasharray="5 4" />
     <circle cx={x + w / 2} cy={y + h / 2 - 3} r="10" fill="#C98A2E" stroke="#fff" strokeWidth="1.6" /><text x={x + w / 2} y={y + h / 2 + 1} fontSize="11" textAnchor="middle">{icon}</text>
@@ -66,6 +124,8 @@ export default function HomeRoom({ home, items, onSlot }: { home: number; items:
         {glassWall ? <path d={`M${wd.x + wd.w / 3} ${wd.y} V${wd.y + wd.h} M${wd.x + wd.w * 2 / 3} ${wd.y} V${wd.y + wd.h}`} stroke="#3A3F48" strokeWidth="2" /> : <path d={`M${wd.x + wd.w / 2} ${wd.y} V${wd.y + wd.h}`} stroke="#FFFFFF" strokeWidth="3" />}
         {home >= 2 && <><path d={`M${wd.x - 16} ${wd.y - 8} q8 ${wd.h / 2} -2 ${wd.h + 14} h14 q-6 -${wd.h / 2} 2 -${wd.h + 14} z`} fill={dark ? "#3A3F55" : home >= 5 ? "#3F4A5E" : "#E8D9C0"} /><path d={`M${wd.x + wd.w + 16} ${wd.y - 8} q-8 ${wd.h / 2} 2 ${wd.h + 14} h-14 q6 -${wd.h / 2} -2 -${wd.h + 14} z`} fill={dark ? "#3A3F55" : home >= 5 ? "#3F4A5E" : "#E8D9C0"} /><rect x={wd.x - 20} y={wd.y - 12} width={wd.w + 40} height="4" rx="2" fill="#8A7A62" /></>}
       </g>)}
+      {/* 집마다 다른 구조 (천장 높이 · 옆벽 원근 · 붙박이 구조물) */}
+      <Struct home={home} W={W} FY={FY} dark={dark} />
       {/* 벽난로 (저택) */}
       {home === 9 && <g><rect x="12" y="96" width="80" height="100" fill="#EDE6DA" stroke="#C9BFAE" /><rect x="26" y="130" width="52" height="66" fill="#2A221C" /><path d="M38 196 q6 -24 14 -10 q4 -16 12 0 q6 -10 6 10 z" fill="#FF8A1A" className="hm-fire" /><path d="M44 196 q4 -12 8 -4 q4 -8 8 4 z" fill="#FFE066" className="hm-fire" /><rect x="6" y="90" width="92" height="8" fill="#D8CFC0" /></g>}
       {/* 벽 그림 */}
@@ -88,6 +148,8 @@ export default function HomeRoom({ home, items, onSlot }: { home: number; items:
         : <g opacity=".35">{Array.from({ length: 6 }, (_, r) => <path key={r} d={`M0 ${FY + 6 + r * 18} H${W}`} stroke="#000" strokeWidth=".6" />)}{Array.from({ length: 24 }, (_, i) => <path key={i} d={`M${(i * 53) % W} ${FY + 6 + (i % 6) * 18} v18`} stroke="#000" strokeWidth=".6" />)}</g>}
       <rect y={FY} width={W} height="22" fill="#fff" opacity=".08" />
       <rect y={FY - 4} width={W} height="5" fill={dark ? "#1E1A16" : "#FFFFFF"} opacity=".8" />
+      {/* 옆벽 원근 (작은 집일수록 좁고 답답하게) */}
+      {(() => { const sw = [58, 40, 30, 22, 16, 10, 6, 0, 0, 0][home], c = dark ? "#1A1714" : "#000"; return sw ? <g opacity={home === 0 ? .42 : .22}><path d={`M0 0 L${sw} ${sw * .6} L${sw} ${FY + 8} L0 ${H} Z`} fill={c} /><path d={`M${W} 0 L${W - sw} ${sw * .6} L${W - sw} ${FY + 8} L${W} ${H} Z`} fill={c} /></g> : null; })()}
       {/* 러그 */}
       {(sofa || table) && home >= 1 && <ellipse cx="240" cy="258" rx={home >= 5 ? 170 : 130} ry="30" fill={home >= 5 ? "#B9A7C9" : "#C9B9A0"} opacity=".9" />}
       {/* TV·콘솔 */}

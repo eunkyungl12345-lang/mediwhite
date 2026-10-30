@@ -8,7 +8,7 @@ import HomeRoom from "./HomeRoom";
 import { sfx, haptic, burst, pop } from "@/lib/juice";
 import {
   STAFF, staffCost, staffRate, PROPS, ARTS, PERKS, CORPS, CITIES, PLANETS, REMODEL, WORKER_BRICKS, workerCost, VIP_UNLOCK, HELPER_UNLOCK, vipDrop,
-  helperTps, helperDur, helperCd, helperUp, PETS, PET_COST, REBIRTH_LV, rebirthGain, OFFLINE_CAP, OFFLINE_RATE, HOMES, SLOTS, YIELD,
+  helperTps, helperDur, helperCd, helperUp, PETS, PET_COST, REBIRTH_LV, rebirthGain, canRebirth, OFFLINE_CAP, OFFLINE_RATE, HOMES, SLOTS, YIELD,
   clickOf, clickCost, comboOf, rateOf, assetsOf, valueOf, milestoneSum, remodelBuff, perkSum, staffMine, fmt, tycoonDept, fresh, HOSP_TIERS, migrateStaff, propBuyFee, propSellFee, artBuyFee, artSellFee, homeBuyFee, homeSellAgent, isCurrent, type Saved, type Slot, type Asset,
 } from "@/lib/tycoon";
 
@@ -130,8 +130,8 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const buyList = (key: "perks" | "corps" | "cities" | "planets", i: number, a: { name: string; icon: string; price: number }) => spend(a.price, x => ({ ...x, [key]: [...x[key], i] }), `${a.icon} ${a.name} ${key === "perks" ? "오픈" : "인수"}!`, true);
   const startHelper = () => { const cur = ref.current, cd = helperCd(cur.helperLv) * 1000; if (Date.now() - cur.helperAt < cd || helping > 0) return; setHelping(helperDur(cur.helperLv)); setS(x => ({ ...x, helperAt: Date.now() + helperDur(x.helperLv) * 1000 })); flash(`🤖 자동 진료 도우미 출동! ${helperDur(cur.helperLv)}초 동안 초당 ${helperTps(cur.helperLv)}회 진료`); };
   const rebirth = () => {
-    if (s.clickLv < REBIRTH_LV) return; const gain = rebirthGain(s.clickLv);
-    if (!confirm(`환생하면 돈·직원·부동산·미술품·복지·인수한 것들이 모두 초기화되고, 영구 보너스 +${gain}%p를 받아요. (영양제·펫·쿠폰·VIP·도우미·내 집은 유지)`)) return;
+    if (!canRebirth(s)) return; const gain = rebirthGain(s.clickLv, s.hosp ?? 0);
+    if (!confirm(`병원을 매각하면 돈·직원·병원 규모(우주 포함)·부동산·미술품·복지·인수한 것들이 모두 초기화되고, 영구 보너스 +${gain}%p를 받아요. (영양제·펫·쿠폰·VIP·도우미·내 집은 유지)`)) return;
     const k = ref.current; const n = fresh({ total: k.total, patients: k.patients, pills: k.pills, pets: k.pets, pet: k.pet, coupons: k.coupons, vipOn: k.vipOn, vipLv: k.vipLv, vipSeen: k.vipSeen, helperOn: k.helperOn, helperLv: k.helperLv, rebirths: k.rebirths + 1, rebirthBonus: k.rebirthBonus + gain, home: k.home, items: k.items });
     setS(n); ref.current = n; flash(`🌅 환생 완료! 영구 보너스 ${n.rebirthBonus}%`); sfx.record(); setTimeout(() => persist(true), 60);
   };
@@ -199,10 +199,10 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
             <div style={{ flex: 1, minWidth: 0 }}><b>원장 진료</b> <span className="tag">Lv{s.clickLv}</span><div className="muted" style={{ fontSize: 12 }}>클릭당 {fmt(click)}원 → 다음 {fmt(clickOf({ ...s, clickLv: s.clickLv + 1 }))}원 · 레벨 n이면 기본 n(n+1)/2+1원{perkSum(s) ? ` · 복지 +${fmt(perkSum(s))}%` : ""}</div></div>
             <div className="ty-btns"><Btn cost={clickCost(s.clickLv)} onClick={() => upClick(1)} label="+1" /><Btn cost={sumCost(clickCost, s.clickLv, 10)} onClick={() => upClick(10)} label="+10" /><Btn cost={sumCost(clickCost, s.clickLv, 100)} onClick={() => upClick(100)} label="+100" /></div>
           </div>
-          <div className={"ty-row" + (s.clickLv >= REBIRTH_LV ? " next" : " locked")}>
+          <div className={"ty-row" + (canRebirth(s) ? " next" : " locked")}>
             <span className="def-ico">🌅</span>
-            <div style={{ flex: 1 }}><b>환생</b> {s.rebirths > 0 && <span className="tag">{s.rebirths}회 · +{s.rebirthBonus}%</span>}<div className="muted" style={{ fontSize: 12 }}>원장 Lv{REBIRTH_LV}부터 · 모두 초기화하고 영구 보너스(원장 5레벨마다 +1%p){s.clickLv >= REBIRTH_LV ? ` · 지금 하면 +${rebirthGain(s.clickLv)}%p` : ""}. 진료·매출 모두에 적용</div></div>
-            {s.clickLv >= REBIRTH_LV && <div className="ty-btns"><button type="button" className="btn" onClick={rebirth}>환생</button></div>}
+            <div style={{ flex: 1 }}><b>병원 매각 · 환생</b> {s.rebirths > 0 && <span className="tag">{s.rebirths}회 · +{s.rebirthBonus}%</span>}<div className="muted" style={{ fontSize: 12 }}>원장 Lv{REBIRTH_LV} 또는 🔴 화성 종합병원부터 · 병원을 팔고 처음부터 다시, 대신 영구 보너스 (원장 5레벨마다 +1%p, 우주 병원 한 단계마다 +30%p){canRebirth(s) ? ` · 지금 하면 +${rebirthGain(s.clickLv, s.hosp ?? 0)}%p` : ""}. 진료·매출 모두에 적용</div></div>
+            {canRebirth(s) && <div className="ty-btns"><button type="button" className="btn" onClick={rebirth}>매각·환생</button></div>}
           </div>
         </>}
 

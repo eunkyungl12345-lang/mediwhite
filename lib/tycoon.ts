@@ -115,7 +115,9 @@ export type PetKey = typeof PETS[number]["key"];
 export const PET_COST = 15;
 export const REBIRTH_LV = 300;
 /** 환생 보너스: 원장 레벨 5마다 +1%p (최소 1%p) */
-export const rebirthGain = (clickLv: number) => Math.max(1, Math.floor(clickLv / 5));
+export const rebirthGain = (clickLv: number, hosp = 0) => Math.max(1, Math.floor(clickLv / 5)) + Math.max(0, hosp - 8) * 30;
+/** 환생(병원 매각) 가능: 원장 Lv300 또는 화성 종합병원 이상 */
+export const canRebirth = (s: { clickLv: number; hosp?: number }) => s.clickLv >= REBIRTH_LV || (s.hosp ?? 0) >= 10;
 export const OFFLINE_CAP = 8 * 3600, OFFLINE_RATE = .5;
 
 /* ---------- 내 집 (꾸미기용, 시즌 2에서 유지) ---------- */
@@ -168,7 +170,7 @@ export const isCurrent = (x: any): x is Saved => !!x && x.v === VERSION && typeo
 
 export const fmt = (n: number) => {
   n = Math.floor(n); const a = Math.abs(n);
-  const U: [number, string][] = [[1e20, "해"], [1e16, "경"], [1e12, "조"]];
+  const U: [number, string][] = [[1e24, "자"], [1e20, "해"], [1e16, "경"], [1e12, "조"]];
   for (const [u, s] of U) if (a >= u) { const v = n / u; return (v >= 100 ? Math.floor(v).toLocaleString() : v.toFixed(v < 10 ? 2 : 1).replace(/\.?0+$/, "")) + s; }
   if (a >= 1e8) { const eok = Math.floor(n / 1e8), man = Math.floor((n % 1e8) / 1e4); return eok.toLocaleString() + "억" + (man && eok < 100 ? " " + man.toLocaleString() + "만" : ""); }
   if (a >= 1e4) return Math.floor(n / 1e4).toLocaleString() + "만" + (a < 1e5 && n % 1e4 ? " " + (n % 1e4).toLocaleString() : "");
@@ -194,7 +196,14 @@ export const HOSP_TIERS = [
   { name: "서울병원", price: 1e12, desc: "서울 도심 대형병원" },
   { name: "지방 대학병원", price: 1e13, desc: "의과대학 부속병원" },
   { name: "수도권 대학병원", price: 1e14, desc: "한강이 보이는 초대형 대학병원" },
+  { name: "🌕 달 기지 의원", price: 1e16, desc: "지구가 창밖에 뜨는 첫 우주 의원" },
+  { name: "🔴 화성 종합병원", price: 1e18, desc: "붉은 사막 위 돔 병원 · 화성 가즈아!" },
+  { name: "🪐 유로파 메디컬센터", price: 1e20, desc: "목성이 하늘을 가득 채우는 얼음 위성 병원" },
+  { name: "🛰️ 궤도정거장 대학병원", price: 1e22, desc: "무중력 수술실이 있는 우주정거장" },
+  { name: "🌌 은하연합 중앙병원", price: 1e24, desc: "온 은하의 환자가 찾아오는 최종 병원" },
 ];
+/** 우주 단계 시작 인덱스 */
+export const SPACE_TIER = 9;
 /** 병원 규모마다 전체 초당 매출 +30% */
 export const hospMult = (s: Saved) => 1 + .3 * (s.hosp ?? 0);
 export function rateOf(s: Saved, mine: string) {

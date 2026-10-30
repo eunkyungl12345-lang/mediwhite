@@ -1240,3 +1240,6 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .xg-meta span{background:var(--bg);border-radius:6px;padding:2px 8px}
 .xg-view{display:grid;gap:6px;border-left:3px solid #CFC6F0;padding:2px 0 4px 10px}
 .xg-vh{font-weight:800;font-size:14px;color:var(--ink)}
+
+.hr-float{animation:hr-float 3.2s ease-in-out infinite}
+@keyframes hr-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
