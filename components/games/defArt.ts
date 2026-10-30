@@ -94,7 +94,7 @@ export const HERO_SVG: Record<string, string> = {
 export { GERM_SVG } from "./defMonsters";
 
 /** 고퀄 원화(webp)를 넣으면 여기에 키를 추가해요 */
-export const HAS_WEBP = new Set<string>(["g0", "g1", "g2", "g3", "g4", "g5", "g7"]);
+export const HAS_WEBP = new Set<string>(["g0", "g1", "g2", "g3", "g4", "g5", "g7", "nurse", "doctor", "xray", "lab", "ortho"]);
 export const artSrc = (key: string, svg: string) => HAS_WEBP.has(key) ? `/game/def/${key}.webp` : "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 const cache: Record<string, CanvasImageSource | null> = {};
 export function art(key: string, svg: string): CanvasImageSource | null {

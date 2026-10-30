@@ -7,18 +7,19 @@ import Board, { type Row } from "./Board";
 
 /** 병원묵시록 DAY 0 — 병원을 지키는 생존 타워디펜스. 낮엔 배치·수색, 밤엔 좀비 웨이브 */
 const COLS = 11, ROWS = 7, HC = 5, HR = 3; // 병원 위치(가운데)
-type UKind = "nurse" | "doctor" | "ortho" | "ems" | "anes" | "lab" | "wall";
+type UKind = "nurse" | "doctor" | "xray" | "ortho" | "ems" | "anes" | "lab" | "wall";
 const UNITS: Record<UKind, { name: string; icon: string; cost: number; hp: number; range: number; dmg: number; cd: number; desc: string; color: string }> = {
   nurse: { name: "간호사", icon: "💉", cost: 50, hp: 120, range: 3, dmg: 14, cd: .7, desc: "주사기 연사 · 싸고 무난", color: "#F48FB1" },
   wall: { name: "바리케이드", icon: "🧱", cost: 30, hp: 420, range: 0, dmg: 0, cd: 0, desc: "병상·휠체어로 길막", color: "#8C6A3D" },
   doctor: { name: "의사", icon: "🩺", cost: 90, hp: 140, range: 4.5, dmg: 42, cd: 1.4, desc: "멀리서 한 방이 큰 저격", color: "#5FA8E8" },
-  ortho: { name: "정형외과", icon: "🔨", cost: 80, hp: 280, range: 1.3, dmg: 48, cd: 1.1, desc: "망치로 주변 좀비 광역 타격", color: "#2E7D6B" },
+  xray: { name: "방사선사", icon: "☢️", cost: 110, hp: 130, range: 4, dmg: 34, cd: 1.5, desc: "X선 빔: 일직선 위 좀비 모두 관통", color: "#6E5BB8" },
+  ortho: { name: "물리치료사", icon: "💪", cost: 80, hp: 280, range: 1.3, dmg: 48, cd: 1.1, desc: "근접 강타로 주변 좀비 광역 타격", color: "#2E7D6B" },
   ems: { name: "응급구조사", icon: "⚡", cost: 120, hp: 150, range: 3.5, dmg: 30, cd: 1.6, desc: "제세동 번개가 3마리 연쇄", color: "#F2A900" },
   anes: { name: "마취과", icon: "💨", cost: 100, hp: 150, range: 2, dmg: 6, cd: 0, desc: "마취 가스: 주변 좀비 50% 느리게", color: "#8C7AC9" },
-  lab: { name: "수간호사", icon: "🩹", cost: 110, hp: 130, range: 1.8, dmg: 0, cd: 0, desc: "주변 의료진·병원 치료 (초당 12)", color: "#7ED69B" },
+  lab: { name: "임상병리사", icon: "🧪", cost: 110, hp: 130, range: 1.8, dmg: 0, cd: 0, desc: "치료제 분석: 주변 의료진·병원 치료 (초당 12)", color: "#7ED69B" },
 };
 const ORDER = Object.keys(UNITS) as UKind[];
-const ART: Record<UKind, string> = { nurse: "nurse", wall: "wall", doctor: "doctor", ortho: "ortho", ems: "ems", anes: "anes", lab: "lab" };
+const ART: Record<UKind, string> = { nurse: "nurse", wall: "wall", doctor: "doctor", xray: "xray", ortho: "ortho", ems: "ems", anes: "anes", lab: "lab" };
 const ZT = [
   { name: "좀비", hp: 60, spd: .45, dps: 10, rew: 3, size: .58, body: "#7E9C7A", cloth: "#C9D6E3" },
   { name: "러너", hp: 40, spd: .95, dps: 8, rew: 4, size: .52, body: "#8FA88A", cloth: "#E8A0A0" },
@@ -121,6 +122,7 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
       u.cd = U.cd; u.atk = 1; u.face = tgt.x >= ux ? 1 : -1;
       if (u.k === "ortho") { for (const z of inR) { z.hp -= U.dmg * m; z.hit = 1; } s.fx.push({ kind: "ring", x: ux, y: uy, t: 1, c: "#FFD36E", s: U.range * CS }); sfx.boom(); }
       else if (u.k === "ems") { const chain: Z[] = [tgt]; while (chain.length < 3) { const last = chain[chain.length - 1]; const nx = s.zs.filter(z => !chain.includes(z)).sort((a, b) => Math.hypot(a.x - last.x, a.y - last.y) - Math.hypot(b.x - last.x, b.y - last.y))[0]; if (!nx || Math.hypot(nx.x - last.x, nx.y - last.y) > CS * 2) break; chain.push(nx); } for (const z of chain) { z.hp -= U.dmg * m; z.hit = 1; } s.fx.push({ kind: "bolt", x: ux, y: uy, t: 1, pts: [[ux, uy], ...chain.map(z => [z.x, z.y] as [number, number])] }); }
+      else if (u.k === "xray") { const dx = tgt.x - ux, dy = tgt.y - uy, L = Math.hypot(dx, dy) || 1, nx = dx / L, ny = dy / L, ex = ux + nx * U.range * CS * 1.4, ey = uy + ny * U.range * CS * 1.4; for (const z of s.zs) { const px = z.x - ux, py = z.y - uy, along = px * nx + py * ny, perp = Math.abs(px * ny - py * nx); if (along > 0 && along < U.range * CS * 1.4 && perp < CS * .45) { z.hp -= U.dmg * m; z.hit = 1; } } s.fx.push({ kind: "line", x: ux, y: uy - CS * .1, x2: ex, y2: ey, t: 1, c: "#B9A6FF" }); }
       else { tgt.hp -= U.dmg * m; tgt.hit = 1; s.fx.push({ kind: "line", x: ux + u.face * CS * .25, y: uy - CS * .1, x2: tgt.x, y2: tgt.y - ZT[tgt.t].size * CS * .3, t: 1, c: u.k === "doctor" ? "#FFE08A" : "#7FE3FF" }); if (u.k === "doctor") sfx.tap(); }
     }
     // 죽음 처리
