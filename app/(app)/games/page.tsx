@@ -7,6 +7,7 @@ import Sword from "@/components/games/Sword";
 import Roulette from "@/components/games/Roulette";
 import Defense from "@/components/games/Defense";
 import Wordle from "@/components/games/Wordle";
+import Apoc from "@/components/games/Apoc";
 import PlantGame from "@/components/games/Plant";
 import SpeedQuiz from "@/components/games/SpeedQuiz";
 import Quiz from "@/components/games/Quiz";
@@ -20,12 +21,13 @@ export const dynamic = "force-dynamic";
 export default async function GamesPage({ searchParams }: { searchParams: { g?: string; c?: string } }) {
   const d = db(); const sess = (await getSession())!;
   const top = (game: string) => d.from("scores").select("value,mode,users(nickname,dept)").eq("game", game).order("value", { ascending: false }).limit(10);
-  const [dodge, sword, defense, bowling, cpr, quiz, vein, runner, lightning, tycoon, trivia, econ, mine] = await Promise.all([...["dodge", "sword", "defense", "bowling", "cpr", "quiz", "vein", "runner", "lightning", "tycoon", "trivia", "econ"].map(top), d.from("scores").select("game,value").eq("user_id", sess.id)]);
+  const [dodge, sword, defense, bowling, cpr, quiz, vein, runner, lightning, tycoon, trivia, econ, apoc, mine] = await Promise.all([...["dodge", "sword", "defense", "bowling", "cpr", "quiz", "vein", "runner", "lightning", "tycoon", "trivia", "econ", "apoc"].map(top), d.from("scores").select("game,value").eq("user_id", sess.id)]);
   const my: Record<string, number> = Object.fromEntries(((mine as any).data ?? []).map((r: any) => [r.game, Number(r.value)]));
   const norm = (r: { data: any[] | null }) => (r.data ?? []).map(x => ({ value: Number(x.value), mode: x.mode as string | undefined, nickname: x.users ? display(x.users.dept, x.users.nickname) : "?", dept: x.users?.dept ?? "" }));
   const games = [
     { id: "tycoon", name: "우리 병원 키우기", icon: "🏥", sub: "방치형 경영", color: "#6FBFA9", badge: "NEW", node: <Tycoon ranks={norm(tycoon)} myDept={sess.dept} /> },
     { id: "wordle", name: "오늘의 메디워들", icon: "🟩", sub: "하루 한 문제", color: "#7BC47F", badge: "DAILY", node: <Wordle /> },
+    { id: "apoc", name: "병원묵시록", icon: "🧟", sub: "좀비 생존 디펜스", color: "#6B7B5E", badge: "NEW", node: <Apoc ranks={norm(apoc)} best={my.apoc ?? 0} /> },
     { id: "defense", name: "병동 사수", icon: "🦠", sub: "줄 지키기 디펜스", color: "#5FA777", badge: "HIT!", node: <Defense ranks={norm(defense)} /> },
     { id: "omok", name: "온라인 오목", icon: "⚫", sub: "1:1 · 팀전 5:5", color: "#E6B97A", badge: "NEW", node: <div className="card"><h3>⚫⚪ 온라인 오목</h3><div className="muted">회원끼리 실시간 오목! 1:1부터 5:5 팀전(같은 팀끼리 번갈아 두기)까지. 내기 걸고 한 판 ☕ 혼자일 땐 🤖 컴퓨터와 연습</div><Link className="btn" href="/games/omok">오목 로비로 →</Link></div> },
     { id: "draw", name: "그림 맞히기", icon: "🎨", sub: "캐치마인드식", color: "#F8BBD0", badge: "NEW", node: <div /> },
@@ -42,12 +44,12 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
   const cur = games.find(g => g.id === searchParams.g && g.id !== "omok" && g.id !== "draw") ?? games[0];
   const [battle, lastTop, live, mis] = await Promise.all([deptBattle(weekStart(0)), settleDeptWeek().catch(() => null), liveRooms().catch(() => null), myMissions(sess.id)]);
   const CATS: { key: string; name: string; ids: string[] }[] = [
-    { key: "", name: "전체", ids: [] }, { key: "daily", name: "📅 데일리", ids: ["wordle", "roulette"] }, { key: "rank", name: "🔥 랭킹전", ids: ["defense", "lightning", "runner", "dodge", "sword"] },
+    { key: "", name: "전체", ids: [] }, { key: "daily", name: "📅 데일리", ids: ["wordle", "roulette"] }, { key: "rank", name: "🔥 랭킹전", ids: ["apoc", "defense", "lightning", "runner", "dodge", "sword"] },
     { key: "together", name: "👥 같이하기", ids: ["omok", "draw"] }, { key: "quiz", name: "🧠 퀴즈", ids: ["wordle", "quiz", "trivia", "econ"] }, { key: "heal", name: "🪴 방치·힐링", ids: ["tycoon", "plant", "roulette"] },
   ];
   const cat = CATS.find(c => c.key === (searchParams.c ?? "")) ?? CATS[0];
   const shown = cat.ids.length ? games.filter(g => cat.ids.includes(g.id)) : games;
-  const kday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10), hotPool = ["defense", "lightning", "runner", "dodge", "sword", "quiz", "trivia", "econ"];
+  const kday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10), hotPool = ["apoc", "defense", "lightning", "runner", "dodge", "sword", "quiz", "trivia", "econ"];
   const hot = games.find(g => g.id === hotPool[(Number(kday.replace(/-/g, "")) * 7) % hotPool.length])!;
   const liveOf = (id: string) => id === "omok" && live ? live.omok : id === "draw" && live ? live.draw : null;
   const href = (id: string) => id === "omok" ? "/games/omok" : id === "draw" ? "/games/draw" : `/games?${new URLSearchParams({ g: id, ...(cat.key ? { c: cat.key } : {}) })}`;

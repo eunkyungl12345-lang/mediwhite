@@ -194,7 +194,7 @@ export async function deleteBoard(id: string, dept: string) {
 }
 
 /* ---------- 게임 ---------- */
-export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner" | "lightning" | "tycoon" | "trivia" | "econ", value: number, mode?: string) {
+export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner" | "lightning" | "tycoon" | "trivia" | "econ" | "apoc", value: number, mode?: string) {
   const u = await requireUser();
   if (!Number.isFinite(value) || value < 0) return;
   await bump(u.id, "game");
@@ -208,6 +208,7 @@ export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" 
   if (game === "quiz") { for (const [th, xp] of [[300, 150], [500, 400]] as const) if (value >= th) await awardXp(u.id, xp, `quiz_${th}`); }
   if (game === "vein") { for (const [th, xp] of [[500, 150], [800, 400]] as const) if (value >= th) await awardXp(u.id, xp, `vein_${th}`); }
   if (game === "bowling") { for (const [th, xp] of [[100, 100], [150, 250], [200, 500]] as const) if (value >= th) await awardXp(u.id, xp, `bowling_${th}`); }
+  if (game === "apoc") { for (const [th, xp] of [[3, 150], [7, 400], [12, 800]] as const) if (value >= th) await awardXp(u.id, xp, `apoc_${th}`); }
   if (game === "defense") { for (const [th, xp] of [[5, 150], [10, 400], [20, 800]] as const) if (value >= th) await awardXp(u.id, xp, `defense_${th}`); }
   if (game === "sword") { for (const [th, xp] of [[5, 100], [10, 300], [15, 700]] as const) if (value >= th) await awardXp(u.id, xp, `sword_${th}`); }
   if (game === "tycoon") { for (const [th, xp, k] of [[1e6, 150, "100m"], [1e7, 400, "1000m"], [1e8, 800, "1eok"]] as const) if (value >= th) await awardXp(u.id, xp, `tycoon_${k}`); }
@@ -215,6 +216,7 @@ export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" 
   if (cur && Number(cur.value) >= value) return;
   await s.from("scores").upsert({ user_id: u.id, game, value, mode: mode ?? null, updated_at: new Date().toISOString() });
   { const who = u.nickname ? `[${u.dept}]${u.nickname}` : "누군가";
+    if (game === "apoc" && value >= 5 && value % 5 === 0) await gameEvent(`${who}님이 병원묵시록에서 ${value}일 생존! 🧟`);
     if (game === "sword" && value >= 15) await gameEvent(`${who}님이 검 +${value} 강화 성공! ⚔️`);
     if (game === "defense" && value % 5 === 0) await gameEvent(`${who}님이 병동사수 ${Math.ceil(value / 10)}-${((value - 1) % 10) + 1} 보스 스테이지 클리어! 🛡️`); }
   revalidatePath("/games"); revalidatePath("/rank");
