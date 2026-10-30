@@ -91,6 +91,194 @@ const FIGS: Record<string, Fig> = {
   "Foot AP / Oblique": { cap: "무릎 굽혀 발바닥 IR에 · 10° 후방(뒤꿈치 쪽) · 3rd 중족골 기저부", svg: <><Table y={124} /><IR x={118} y={116} w={92} h={8} /><Limb p={[[14, 104], [100, 46]]} w={20} /><Limb p={[[100, 46], [134, 104]]} w={16} /><Limb p={[[128, 110], [196, 112]]} w={11} /><Beam x={162} y={106} deg={100} refDeg={90} len={80} label="10°" /><Txt x={64} y={136} c="Obl: 30~40° 내회전 · 수직" s={8} /></> },
 };
 
+
+/* ───── 추가 자세 조각 ───── */
+const IRb = ({ x, y, w, h }: { x: number; y: number; w: number; h: number }) => <g><rect x={x} y={y} width={w} height={h} rx={4} fill={IRC} opacity={0.1} stroke={IRC} strokeOpacity={0.35} strokeDasharray="4 3" /><text x={x + 5} y={y + h - 6} fontSize={7} fill="#64748B" fontWeight={700}>IR (몸 옆)</text></g>;
+const Note = ({ c }: { c: string }) => <text x={232} y={12} fontSize={7.5} fill="#94A3B8" textAnchor="end" fontWeight={700}>{c}</text>;
+
+/** 위에서 내려다본 단면: 회전 각도 표현 (IR 아래, X선 위에서) */
+function TopView({ rot, kind = "body", face = "up", lab }: { rot: number; kind?: "body" | "head" | "hand" | "foot"; face?: "up" | "down"; lab?: string }) {
+  const cx = 120, cy = 80, f = face === "up" ? -1 : 1;
+  const shape = kind === "head" ? <><ellipse cx={-27} cy={0} rx={4} ry={7} fill={SKIN} stroke={SKIN_L} /><ellipse cx={27} cy={0} rx={4} ry={7} fill={SKIN} stroke={SKIN_L} /><circle r={26} fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} /><path d={`M-6,${f * 24} L0,${f * 34} L6,${f * 24} Z`} fill={SKIN} stroke={SKIN_L} /></>
+    : kind === "hand" ? <><ellipse rx={44} ry={11} fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} /><circle cx={-42} cy={f * 9} r={7} fill={SKIN} stroke={SKIN_L} /><text x={-42} y={f * 9 + 3} fontSize={7} textAnchor="middle" fill="#7C5A47">엄지</text></>
+    : kind === "foot" ? <><ellipse rx={18} ry={14} fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} /><path d={`M-8,${f * 12} L0,${f * 30} L8,${f * 12} Z`} fill={SKIN} stroke={SKIN_L} /><text x={0} y={f * 40 + 3} fontSize={7} textAnchor="middle" fill="#7C5A47">발끝</text></>
+    : <><ellipse rx={52} ry={21} fill={GOWN} stroke={GOWN_L} strokeWidth={1.5} /><circle r={11} fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} /><path d={`M-4,${f * 10} L0,${f * 17} L4,${f * 10} Z`} fill={SKIN_L} /></>;
+  return (
+    <g>
+      <IR x={30} y={124} w={180} h={8} />
+      <line x1={50} y1={cy} x2={190} y2={cy} stroke="#CBD5E1" strokeDasharray="3 3" />
+      <g transform={`translate(${cx},${cy}) rotate(${rot})`}>{shape}<line x1={-70} y1={0} x2={70} y2={0} stroke="#0EA5E9" strokeDasharray="3 3" strokeWidth={1.1} /></g>
+      {rot !== 0 && <text x={196} y={cy - Math.sign(rot) * 14 + 3} fontSize={10} fontWeight={800} fill={RED} textAnchor="middle">{Math.abs(rot)}°</text>}
+      <Beam x={cx} y={cy - (kind === "body" ? 24 : kind === "head" ? 28 : 14)} deg={90} len={44} />
+      <Note c={lab ?? "위에서 본 모습"} />
+    </g>
+  );
+}
+
+/** 옆모습 기립 (얼굴 오른쪽) — trunk/neck 굴곡각, mark = CR 표시 위치 */
+function ProfileStand({ trunk = 0, neck = 0, mark }: { trunk?: number; neck?: number; mark?: "neck" | "ct" | "thor" | "lumb" }) {
+  return (
+    <g>
+      <Limb p={[[138, 100], [137, 145]]} w={13} /><Limb p={[[150, 100], [152, 145]]} w={13} />
+      <g transform={`rotate(${trunk} 144 100)`}>
+        <Torso x={126} y={40} w={38} h={64} />
+        <Limb p={[[140, 48], [136, 76], [142, 94]]} w={8} />
+        {mark === "thor" && <Cross x={136} y={64} />}{mark === "lumb" && <Cross x={136} y={90} />}
+        <g transform={`rotate(${neck} 144 40)`}>
+          <Limb p={[[144, 30], [145, 42]]} w={9} /><HeadC x={147} y={22} r={11} /><path d="M157,19 L163,24 L157,26 Z" fill={SKIN} stroke={SKIN_L} />
+          {mark === "neck" && <Cross x={143} y={33} />}{mark === "ct" && <Cross x={142} y={42} />}
+        </g>
+      </g>
+    </g>
+  );
+}
+
+/** 정면 기립 (환자 오른쪽 = 화면 왼쪽) */
+function FrontStand({ arms = "down", weights = false }: { arms?: "down" | "up" | "swim" | "swimL" | "front" | "belly"; weights?: boolean }) {
+  const L: P[] = arms === "up" ? [[99, 47], [92, 24], [112, 12]] : arms === "swimL" ? [[99, 47], [94, 22], [100, 4]] : arms === "front" ? [[99, 47], [104, 60], [114, 50]] : arms === "belly" ? [[98, 48], [90, 76], [108, 84]] : [[98, 48], [92, 104]];
+  const R: P[] = arms === "up" ? [[121, 47], [128, 24], [108, 12]] : arms === "swim" ? [[121, 47], [126, 22], [120, 4]] : arms === "front" ? [[121, 47], [116, 60], [106, 50]] : [[122, 48], [128, 104]];
+  return (
+    <g>
+      <Limb p={[[104, 100], [102, 145]]} w={13} /><Limb p={[[116, 100], [118, 145]]} w={13} />
+      <Torso x={94} y={42} w={32} h={62} />
+      <Limb p={L} w={8} /><Limb p={R} w={8} />
+      {weights && <><rect x={86} y={106} width={12} height={10} rx={2} fill="#475569" /><rect x={122} y={106} width={12} height={10} rx={2} fill="#475569" /></>}
+      <Limb p={[[110, 32], [110, 44]]} w={8} /><HeadC x={110} y={24} r={11} />
+    </g>
+  );
+}
+
+/** 정면 얼굴 */
+const FaceFront = ({ x, y, open = false, tilt = 0 }: { x: number; y: number; open?: boolean; tilt?: number }) => (
+  <g transform={`rotate(${tilt} ${x} ${y})`}>
+    <Limb p={[[x, y + 26], [x, y + 60]]} w={20} />
+    <ellipse cx={x - 23} cy={y + 2} rx={4} ry={7} fill={SKIN} stroke={SKIN_L} /><ellipse cx={x + 23} cy={y + 2} rx={4} ry={7} fill={SKIN} stroke={SKIN_L} />
+    <ellipse cx={x} cy={y} rx={22} ry={28} fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} />
+    <circle cx={x - 8} cy={y - 6} r={2} fill="#374151" /><circle cx={x + 8} cy={y - 6} r={2} fill="#374151" />
+    <path d={`M${x},${y - 4} L${x - 3},${y + 6} L${x + 2},${y + 6}`} fill="none" stroke={SKIN_L} strokeWidth={1.3} />
+    {open ? <ellipse cx={x} cy={y + 15} rx={6} ry={5} fill="#7A2E2E" /> : <line x1={x - 6} y1={y + 14} x2={x + 6} y2={y + 14} stroke={SKIN_L} strokeWidth={1.4} />}
+  </g>
+);
+
+/** 손등 위에서 본 손 (PA) */
+const HandTop = () => (
+  <g>
+    <Limb p={[[120, 112], [120, 150]]} w={30} />
+    <rect x={96} y={68} width={50} height={48} rx={12} fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} />
+    <Limb p={[[102, 74], [94, 36]]} w={9} /><Limb p={[[114, 72], [111, 26]]} w={10} /><Limb p={[[126, 72], [128, 22]]} w={10} /><Limb p={[[138, 74], [145, 30]]} w={10} /><Limb p={[[146, 100], [166, 76]]} w={11} />
+  </g>
+);
+/** 옆에서 본 손 (척측이 IR) */
+const HandSide = ({ one = false }: { one?: boolean }) => (
+  <g>
+    <IR x={10} y={112} w={220} h={7} />
+    <Limb p={[[14, 98], [96, 98]]} w={22} />
+    <rect x={92} y={84} width={58} height={28} rx={11} fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} />
+    {one ? <><Limb p={[[146, 92], [204, 90]]} w={8} /><circle cx={154} cy={104} r={10} fill={SKIN} stroke={SKIN_L} /></> : <><Limb p={[[146, 92], [198, 70]]} w={7} /><Limb p={[[146, 96], [204, 84]]} w={7} /><Limb p={[[146, 100], [204, 98]]} w={7} /><Limb p={[[146, 104], [198, 110]]} w={7} /></>}
+    <Limb p={[[110, 84], [130, 64]]} w={9} />
+  </g>
+);
+/** 옆에서 본 발 (측면) */
+const FootSide = () => (
+  <g>
+    <IR x={40} y={120} w={170} h={7} />
+    <Limb p={[[72, 8], [76, 96]]} w={18} />
+    <path d="M62,94 Q54,118 74,118 L178,118 Q188,116 182,108 L126,98 Q96,90 84,92 Z" fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} />
+    <circle cx={78} cy={96} r={4} fill="none" stroke={SKIN_L} />
+  </g>
+);
+/** 발바닥 쪽에서 본 발 (AP) */
+const FootTop = ({ rot = 0 }: { rot?: number }) => (
+  <g transform={`rotate(${rot} 120 90)`}>
+    <rect x={98} y={40} width={44} height={92} rx={20} fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} />
+    {[100, 110, 120, 130, 139].map((x, i) => <circle key={x} cx={x + 2} cy={36 - (i === 0 ? 2 : i * 0.5)} r={i === 0 ? 7 : 5} fill={SKIN} stroke={SKIN_L} />)}
+  </g>
+);
+/** 위에서 본 누운 다리 (양측) */
+const LegsTop = ({ ruler = false }: { ruler?: boolean }) => (
+  <g>
+    <rect x={10} y={40} width={74} height={72} rx={18} fill={GOWN} stroke={GOWN_L} strokeWidth={1.5} />
+    <Limb p={[[84, 62], [220, 60]]} w={18} /><Limb p={[[84, 90], [220, 92]]} w={18} />
+    <Limb p={[[220, 60], [226, 50]]} w={9} /><Limb p={[[220, 92], [226, 102]]} w={9} />
+    {ruler && <g><rect x={84} y={73} width={140} height={6} fill="#F59E0B" />{Array.from({ length: 14 }, (_, i) => <line key={i} x1={88 + i * 10} y1={73} x2={88 + i * 10} y2={77} stroke="#7C4A03" />)}</g>}
+  </g>
+);
+
+const FIGS2: Record<string, Fig> = {
+  "skull-ap": { cap: "앙와위 · OML ⟂ IR · 수직 → 비근점", svg: <><Table y={116} /><IR x={52} y={116} w={60} h={7} /><Torso x={112} y={88} w={116} h={26} r={10} /><Head x={82} y={90} rot={-90} /><Beam x={92} y={66} deg={90} len={60} /><Txt x={170} y={40} c="수직 (0°)" /></> },
+  "skull-obl": { cap: "머리를 관심 쪽으로 약 45° 회전 · 좌·우 각각", svg: <TopView rot={45} kind="head" /> },
+  "tmj-close": { cap: "측면 · 입 다묾 · 25~30° 미측 → IR 쪽 TMJ (Schüller)", svg: <><IR x={150} y={20} w={9} h={110} /><FaceFront x={118} y={70} /><Beam x={96} y={60} deg={27} refDeg={0} label="25~30°" len={82} /><Txt x={178} y={140} c="좌·우 각각" s={8} /><Note c="정면에서 본 모습 · IR = 환측 옆" /></> },
+  "tmj-open": { cap: "같은 자세 · 입 최대한 벌림 · 각도 그대로", svg: <><IR x={150} y={20} w={9} h={110} /><FaceFront x={118} y={70} open /><Beam x={96} y={60} deg={27} refDeg={0} label="25~30°" len={82} /><Txt x={178} y={140} c="좌·우 각각" s={8} /><Note c="정면에서 본 모습 · IR = 환측 옆" /></> },
+  "mand-pa": { cap: "이마·코 IR에 · OML ⟂ IR · 수직 → 입술 접합부", svg: <><IR x={182} y={14} w={9} h={112} /><Limb p={[[146, 98], [146, 146]]} w={18} /><Head x={152} y={72} /><Beam x={128} y={82} deg={0} len={92} /><Txt x={60} y={66} c="수직 (0°)" /></> },
+  "mand-obl": { cap: "측면에서 목 젖히고 IR 쪽으로 기울임 · 25° 두측", svg: <><IR x={150} y={20} w={9} h={110} /><FaceFront x={118} y={70} tilt={18} /><Beam x={100} y={94} deg={-25} refDeg={0} label="25°" len={80} /><Txt x={60} y={140} c="하악지 0° · 하악체 30° · 턱끝 45° 회전" s={8} /><Note c="정면에서 본 모습 · IR = 환측 옆" /></> },
+  "nasal-lat": { cap: "측면 · IPL ⟂ IR · 수직 → 비근점 1.3cm 아래", svg: <><IR x={150} y={30} w={9} h={90} /><FaceFront x={118} y={72} /><Beam x={96} y={72} deg={0} len={80} /><Txt x={178} y={140} c="좌·우 각각" s={8} /><Note c="정면에서 본 모습 · IR = 코 옆" /></> },
+  "zyg-smv": { cap: "고개 최대한 젖혀 정수리 IR에 · IOML ∥ IR · 턱 아래 입사", svg: <><IR x={76} y={20} w={9} h={110} /><Limb p={[[124, 84], [150, 128]]} w={18} /><Torso x={138} y={110} w={70} h={36} /><Head x={110} y={74} rot={-90} /><Beam x={136} y={78} deg={180} len={80} /><Txt x={186} y={40} c="IOML에 수직" s={8} /></> },
+  "cs-obl": { cap: "몸 전체 45° 회전 · AP사위 15~20° 두측 / PA사위 미측 · C4", svg: <TopView rot={45} /> },
+  "cs-flex": { cap: "측면 기립 · 턱을 가슴 쪽으로 최대 굴곡 · CR 수평 C4", svg: <><Floor /><IRb x={96} y={4} w={98} h={140} /><ProfileStand neck={38} mark="neck" /><Txt x={50} y={60} c="CR ⊕ 수평" /><Note c="옆모습 · X선은 화면 앞에서 수직으로" /></> },
+  "cs-ext": { cap: "측면 기립 · 고개 최대 신전 · CR 수평 C4", svg: <><Floor /><IRb x={96} y={4} w={98} h={140} /><ProfileStand neck={-32} mark="neck" /><Txt x={50} y={60} c="CR ⊕ 수평" /><Note c="옆모습 · X선은 화면 앞에서 수직으로" /></> },
+  "ct-flex": { cap: "측면 · 최대 굴곡 · CR 수평 C7~T1", svg: <><Floor /><IRb x={96} y={4} w={98} h={140} /><ProfileStand neck={36} trunk={8} mark="ct" /><Txt x={50} y={60} c="CR ⊕ 수평" /><Note c="옆모습 · X선은 화면 앞에서 수직으로" /></> },
+  "ct-ext": { cap: "측면 · 최대 신전 · CR 수평 C7~T1", svg: <><Floor /><IRb x={96} y={4} w={98} h={140} /><ProfileStand neck={-30} mark="ct" /><Txt x={50} y={60} c="CR ⊕ 수평" /><Note c="옆모습 · X선은 화면 앞에서 수직으로" /></> },
+  "ct-ap": { cap: "앙와위 · 수직(또는 약간 두측) · C7~T1 경정맥절흔", svg: <><Table /><IR x={30} y={110} w={56} h={7} /><Supine /><Beam x={56} y={86} deg={90} /><Txt x={140} y={40} c="수직 (0°)" /></> },
+  "ct-lat": { cap: "수영자 자세 · IR 쪽 팔 위로 · 반대 어깨 내림 · 수평 T1", svg: <><Floor /><IR x={132} y={2} w={9} h={110} /><FrontStand arms="swim" /><Beam x={94} y={46} deg={0} len={80} /><Txt x={186} y={70} c="반대 어깨 ↓" s={8} /></> },
+  "ts-ap": { cap: "앙와위 · 무릎 굽힘 · 수직 · T7 (경정맥절흔–검상돌기 중간)", svg: <><Table /><IR x={44} y={110} w={84} h={7} /><Supine bent /><Beam x={86} y={84} deg={90} /><Txt x={170} y={40} c="수직 (0°)" /><Txt x={170} y={52} c="머리 쪽 = 양극" s={8} /></> },
+  "ts-lat": { cap: "측와위 · 팔 앞으로 90° · 허리 받침 · 수직 T7", svg: <><Table /><IR x={44} y={110} w={84} h={7} /><rect x={96} y={106} width={24} height={5} rx={2} fill="#F59E0B" /><Supine bent /><Beam x={80} y={84} deg={90} /><Txt x={170} y={40} c="수직 (0°)" /><Txt x={170} y={52} c="옆으로 누움 · 얕은 호흡" s={8} /></> },
+  "ts-flex": { cap: "측면 · 상체 최대 굴곡 · CR T7", svg: <><Floor /><IRb x={96} y={4} w={110} h={140} /><ProfileStand trunk={28} neck={10} mark="thor" /><Txt x={50} y={60} c="CR ⊕" /><Note c="옆모습 · X선은 화면 앞에서 수직으로" /></> },
+  "ts-ext": { cap: "측면 · 상체 최대 신전 · CR T7", svg: <><Floor /><IRb x={96} y={4} w={110} h={140} /><ProfileStand trunk={-14} neck={-8} mark="thor" /><Txt x={50} y={60} c="CR ⊕" /><Note c="옆모습 · X선은 화면 앞에서 수직으로" /></> },
+  "ls-obl": { cap: "45° 후사위 (RPO·LPO 각각) · 수직 · L3 · 아래쪽 후관절", svg: <TopView rot={45} /> },
+  "ls-flex": { cap: "측면 기립 · 앞으로 최대 숙임 · CR 수평 L3", svg: <><Floor /><IRb x={96} y={4} w={120} h={140} /><ProfileStand trunk={42} neck={12} mark="lumb" /><Txt x={50} y={60} c="CR ⊕ 수평" /><Note c="옆모습 · X선은 화면 앞에서 수직으로" /></> },
+  "ls-ext": { cap: "측면 기립 · 뒤로 최대 젖힘 · CR 수평 L3", svg: <><Floor /><IRb x={96} y={4} w={110} h={140} /><ProfileStand trunk={-16} neck={-8} mark="lumb" /><Txt x={50} y={60} c="CR ⊕ 수평" /><Note c="옆모습 · X선은 화면 앞에서 수직으로" /></> },
+  "sac-ap": { cap: "앙와위 · 15° 두측 · 치골결합 약 5cm 위", svg: <><Table /><IR x={94} y={110} w={62} h={7} /><Supine /><Beam x={124} y={84} deg={105} refDeg={90} label="15°" /><Txt x={36} y={30} c="머리 쪽(두측) ←" s={8} a="start" /></> },
+  "sac-lat": { cap: "측와위 · 무릎·고관절 굽힘 · 수직 · ASIS 8~10cm 뒤", svg: <><Table /><IR x={94} y={110} w={62} h={7} /><Supine bent /><Beam x={126} y={84} deg={90} /><Txt x={60} y={40} c="수직 (0°)" /><Txt x={60} y={52} c="옆으로 누움" s={8} /></> },
+  "coc-ap": { cap: "앙와위 · 10° 미측 · 치골결합 약 5cm 위", svg: <><Table /><IR x={98} y={110} w={62} h={7} /><Supine /><Beam x={126} y={84} deg={80} refDeg={90} label="10°" /><Txt x={196} y={30} c="→ 발 쪽(미측)" s={8} /></> },
+  "rib-ap": { cap: "상부: 기립·흡기 T7 / 하부: 앙와위·호기 T10 · 수직", svg: <><Floor /><IR x={116} y={14} w={9} h={112} /><StandSide /><Beam x={164} y={70} deg={180} len={60} /><Txt x={56} y={56} c="상부 늑골" /><Txt x={56} y={68} c="기립 · 흡기 정지" s={8} /><Note c="AP = 등이 IR 쪽" /></> },
+  "rib-obl": { cap: "45° 회전 · 환측 액와부 늑골 IR과 평행 · 좌·우 각각", svg: <TopView rot={45} /> },
+  "ster-lat": { cap: "기립 측면 · 어깨 뒤로 · 수평 흉골 중앙 · 흡기", svg: <><Floor /><IR x={130} y={14} w={9} h={112} /><FrontStand /><Beam x={94} y={62} deg={0} len={80} /><Txt x={186} y={70} c="어깨 뒤로 젖힘" s={8} /></> },
+  "ster-rao": { cap: "오른쪽 앞 15~20° 회전 (RAO) · 흉골을 심장 음영 위로", svg: <TopView rot={-18} face="down" lab="위에서 본 모습 · 앞면이 IR 쪽" /> },
+  "sh-lat": { cap: "환측 IR에 · 반대 팔 머리 위 · 수평 외과경", svg: <><Floor /><IR x={130} y={14} w={9} h={112} /><FrontStand arms="swimL" /><Beam x={94} y={56} deg={0} len={80} /><Txt x={186} y={70} c="환측 = IR 쪽" s={8} /></> },
+  "sh-y": { cap: "환측 앞면 IR에 · 몸 45~60° 회전 · 견갑상완관절", svg: <TopView rot={-50} face="down" lab="위에서 본 모습 · 앞면이 IR 쪽" /> },
+  "sh-axial": { cap: "앙와위 · 팔 90° 외전 · IR은 어깨 위 · 수평 15~30° 내측 → 액와", svg: <><rect x={70} y={40} width={70} height={106} rx={16} fill={GOWN} stroke={GOWN_L} strokeWidth={1.5} /><HeadC x={105} y={26} r={15} /><Limb p={[[138, 54], [222, 54]]} w={14} /><IR x={128} y={16} w={40} h={8} /><Beam x={150} y={58} deg={-112} refDeg={-90} label="15~30°" len={70} /><Note c="위에서 본 모습" /></> },
+  "ac-ap": { cap: "기립 · 양측 비교 (무게 有·無) · 수직 · 양 AC 관절", svg: <><Floor /><FrontStand weights /><Cross x={97} y={45} /><Cross x={123} y={45} /><Txt x={186} y={60} c="⊕ = CR (수직)" s={8} /><Txt x={186} y={110} c="손목에 2.5~4.5kg" s={8} /><Note c="정면 · IR은 등 뒤" /></> },
+  "ac-axial": { cap: "기립 AP · 15° 두측 → AC 관절", svg: <><Floor /><IR x={115} y={14} w={9} h={112} /><StandSide /><Beam x={160} y={46} deg={195} refDeg={180} label="15°" len={66} /><Note c="옆모습 · 등이 IR 쪽" /></> },
+  "clav-ap": { cap: "기립/앙와위 · 수직 · 쇄골 중앙", svg: <><Floor /><FrontStand /><line x1={97} y1={46} x2={109} y2={42} stroke={SKIN_L} strokeWidth={2} /><Cross x={102} y={45} /><Txt x={186} y={60} c="⊕ = CR (수직)" s={8} /><Note c="정면 · IR은 등 뒤" /></> },
+  "clav-axial": { cap: "AP 축 · 15~30° 두측 · 쇄골 중앙", svg: <><Floor /><IR x={115} y={14} w={9} h={112} /><StandSide /><Beam x={160} y={48} deg={200} refDeg={180} label="15~30°" len={66} /><Note c="옆모습 · 등이 IR 쪽" /></> },
+  "hum-ap": { cap: "팔 외회전 · 상과선 ∥ IR · 수직 · 상완 중앙", svg: <><Floor /><FrontStand /><Cross x={95} y={74} /><Txt x={186} y={60} c="⊕ = CR (수직)" s={8} /><Txt x={186} y={72} c="손바닥 앞(외회전)" s={8} /><Note c="정면 · IR은 등 뒤" /></> },
+  "hum-lat": { cap: "팔 내회전 (손등 배 쪽) · 상과선 ⟂ IR · 상완 중앙", svg: <><Floor /><FrontStand arms="belly" /><Cross x={94} y={64} /><Txt x={186} y={60} c="⊕ = CR (수직)" s={8} /><Txt x={186} y={72} c="내회전" s={8} /><Note c="정면 · IR은 등 뒤" /></> },
+  "hum-obl": { cap: "AP에서 약 45° 내·외측 회전 (각각) · 상완 중앙", svg: <TopView rot={45} /> },
+  "elb-obl": { cap: "내측: 회내 45° (구상돌기) / 외측: 외회전 45° (요골두)", svg: <TopView rot={45} kind="hand" face="up" lab="손끝 쪽에서 본 모습" /> },
+  "fa-ap": { cap: "손바닥 위 · 손목·팔꿈치 포함 · 수직 전완 중앙", svg: <><IR x={14} y={50} w={212} h={52} /><Limb p={[[18, 76], [200, 76]]} w={18} /><ellipse cx={212} cy={76} rx={14} ry={11} fill={SKIN} stroke={SKIN_L} /><Cross x={150} y={76} /><Txt x={60} y={120} c="상완" s={8} /><Txt x={150} y={120} c="전완" s={8} /><Note c="위에서 본 모습" /></> },
+  "fa-lat": { cap: "팔꿈치 90° · 엄지 위 · 수직 전완 중앙", svg: <><IR x={30} y={24} w={180} h={110} /><Limb p={[[60, 112], [130, 112], [130, 36]]} w={16} /><ellipse cx={130} cy={30} rx={10} ry={12} fill={SKIN} stroke={SKIN_L} /><Cross x={130} y={74} /><Note c="위에서 본 모습" /></> },
+  "fa-obl": { cap: "AP에서 45° 내회전 / 외회전 (각각)", svg: <TopView rot={45} kind="hand" lab="손끝 쪽에서 본 모습" /> },
+  "wr-lat": { cap: "척측 IR에 · 요골·척골 겹치게 · 요골 경상돌기", svg: <><HandSide one={false} /><Cross x={96} y={98} /><Note c="옆에서 본 모습" /></> },
+  "wr-obl": { cap: "내측: 엄지 쪽 45° 들기 / 외측: 새끼 쪽 45° 들기", svg: <TopView rot={45} kind="hand" face="down" lab="손끝 쪽에서 본 모습" /> },
+  "hand-lat": { cap: "척측 IR에 · 손가락 부채꼴(fan) · 엄지 앞 · 2nd MCP", svg: <><HandSide /><Cross x={146} y={94} /><Note c="옆에서 본 모습" /></> },
+  "hand-obl": { cap: "엄지 쪽 45° 들기 (받침) / Norgaard 양손 45°", svg: <TopView rot={45} kind="hand" face="down" lab="손끝 쪽에서 본 모습" /> },
+  "fin-ap": { cap: "손바닥 아래 · 해당 손가락 IR 중앙 · PIP 수직", svg: <><IR x={60} y={6} w={120} h={138} /><HandTop /><Cross x={128} y={44} /><Txt x={204} y={46} c="PIP" s={8} /></> },
+  "fin-lat": { cap: "해당 손가락만 펴고 나머지 주먹 · 받침으로 IR 평행 · PIP", svg: <><HandSide one /><Cross x={182} y={90} /><Note c="옆에서 본 모습" /></> },
+  "fin-obl": { cap: "45° 내측·외측 회전 (각각) · 손가락은 받침으로 평행", svg: <TopView rot={45} kind="hand" lab="손끝 쪽에서 본 모습" /> },
+  "pel-lat": { cap: "측와위 · 양 ASIS 수직으로 겹치게 · 수직 대전자", svg: <><Table /><IR x={98} y={110} w={64} h={7} /><Supine bent /><Beam x={130} y={84} deg={90} /><Txt x={60} y={40} c="수직 (0°)" /><Txt x={60} y={52} c="옆으로 누움" s={8} /></> },
+  "pel-obl": { cap: "Judet: 45° 후사위 (좌·우 각각) · 비구 전·후주", svg: <TopView rot={45} /> },
+  "hip-lat": { cap: "개구리 자세: 무릎 굽혀 발바닥 붙이고 40~45° 외전 · 대퇴경부", svg: <><rect x={84} y={6} width={72} height={84} rx={16} fill={GOWN} stroke={GOWN_L} strokeWidth={1.5} /><Limb p={[[100, 86], [56, 118], [112, 140]]} w={16} /><Limb p={[[140, 86], [184, 118], [128, 140]]} w={16} /><Cross x={104} y={82} /><Txt x={40} y={30} c="⊕ 대퇴경부" s={8} a="start" /><Note c="위에서 본 모습" /></> },
+  "fem-ap": { cap: "앙와위 · 5° 내회전 · 고관절·무릎 포함 · 대퇴 중앙", svg: <><IR x={86} y={36} w={84} h={70} /><LegsTop /><Cross x={128} y={61} /><Note c="위에서 본 모습" /></> },
+  "fem-lat": { cap: "환측 아래 측와위 · 무릎 약 45° 굽힘 · 대퇴 중앙", svg: <><Table /><IR x={118} y={110} w={64} h={7} /><Supine bent /><Beam x={148} y={86} deg={90} /><Txt x={60} y={40} c="수직 (0°)" /><Txt x={60} y={52} c="옆으로 누움" s={8} /></> },
+  "tib-ap": { cap: "앙와위 · 발 배굴 · 무릎·발목 포함 · 하퇴 중앙", svg: <><IR x={150} y={36} w={80} h={70} /><LegsTop /><Cross x={190} y={60} /><Note c="위에서 본 모습" /></> },
+  "tib-lat": { cap: "환측 아래 측와위 · 무릎 살짝 굽힘 · 하퇴 중앙", svg: <><Table /><IR x={150} y={110} w={64} h={7} /><Supine /><Beam x={186} y={92} deg={90} /><Txt x={60} y={40} c="수직 (0°)" /><Txt x={60} y={52} c="옆으로 누움" s={8} /></> },
+  "tib-obl": { cap: "다리 45° 내회전 / 외회전 (각각)", svg: <TopView rot={45} kind="foot" lab="발 쪽에서 본 모습" /> },
+  "ank-lat": { cap: "환측 아래 측면 · 배굴 90° · 수직 내과", svg: <><FootSide /><Cross x={78} y={96} /><Note c="옆에서 본 모습" /></> },
+  "calc-lat": { cap: "측면 · 배굴 · 내과 약 2.5cm 아래", svg: <><FootSide /><Cross x={74} y={108} /><Note c="옆에서 본 모습" /></> },
+  "calc-axial": { cap: "앙와위 · 끈으로 발 당겨 최대 배굴 · 40° 두측 → 발바닥", svg: <><Table /><IR x={150} y={110} w={60} h={7} /><Limb p={[[14, 100], [178, 101]]} w={18} /><Limb p={[[178, 101], [182, 56]]} w={12} /><line x1={182} y1={54} x2={110} y2={38} stroke="#B45309" strokeWidth={2} strokeDasharray="4 3" /><Beam x={190} y={84} deg={130} refDeg={90} label="40°" len={70} /><Txt x={60} y={30} c="끈으로 당김" s={8} /></> },
+  "foot-lat": { cap: "환측 아래 측면 · 발바닥 ⟂ IR · 내측 설상골", svg: <><FootSide /><Cross x={122} y={106} /><Note c="옆에서 본 모습" /></> },
+  "foot-obl": { cap: "AP에서 30~45° 내회전 · 수직 3rd 중족골 기저부", svg: <TopView rot={-38} kind="foot" lab="발 뒤쪽에서 본 모습" /> },
+  "fs-ap": { cap: "양발 체중부하 · 15° 후방(뒤꿈치 쪽) · 3rd 중족골 기저부", svg: <><Floor /><IR x={60} y={134} w={150} h={7} /><Limb p={[[100, 10], [102, 122]]} w={20} /><path d="M88,120 Q84,134 100,134 L176,134 Q184,132 178,126 L124,118 Q110,114 100,116 Z" fill={SKIN} stroke={SKIN_L} strokeWidth={1.5} /><Beam x={140} y={124} deg={105} refDeg={90} label="15°" len={80} /><Note c="옆모습 · 서서" /></> },
+  "fs-lat": { cap: "IR을 양발 사이에 세우고 체중부하 · 수평 · 좌·우 각각", svg: <><Floor /><Limb p={[[94, 10], [94, 128]]} w={20} /><Limb p={[[146, 10], [146, 128]]} w={20} /><ellipse cx={94} cy={136} rx={16} ry={7} fill={SKIN} stroke={SKIN_L} /><ellipse cx={146} cy={136} rx={16} ry={7} fill={SKIN} stroke={SKIN_L} /><IR x={116} y={92} w={8} h={50} /><Beam x={80} y={130} deg={0} len={64} /><Note c="앞에서 본 모습" /></> },
+  "toe-ap": { cap: "발바닥 IR에 · 10~15° 후방 · 해당 발가락 MTP", svg: <><IR x={60} y={10} w={120} h={134} /><FootTop /><Cross x={102} y={46} /><Txt x={204} y={46} c="MTP" s={8} /><Note c="위에서 본 모습" /></> },
+  "toe-lat": { cap: "다른 발가락 젖혀 분리 · 측면 · 해당 발가락", svg: <><FootSide /><Cross x={172} y={110} /><Note c="옆에서 본 모습" /></> },
+  "toe-obl": { cap: "30~45° 내회전 / 외회전 (각각)", svg: <TopView rot={-38} kind="foot" lab="발 뒤쪽에서 본 모습" /> },
+  "ws-ap": { cap: "기립 · 신발 벗고 무릎 펴기 · 장척 촬영 · 외이도~대퇴골두", svg: <><Floor /><IR x={115} y={2} w={9} h={144} /><StandSide /><Beam x={164} y={70} deg={180} len={60} /><Txt x={56} y={60} c="장척(stitching)" s={8} /><Note c="옆모습 · 등이 IR 쪽" /></> },
+  "ws-lat": { cap: "기립 측면 · 팔 앞으로 (쇄골 위 손) · 장척 촬영", svg: <><Floor /><IR x={130} y={2} w={9} h={144} /><FrontStand arms="front" /><Beam x={94} y={72} deg={0} len={80} /><Note c="정면에서 본 모습 · IR = 몸 옆" /></> },
+  "scano": { cap: "앙와위 · 다리 평행 · 자(ruler) · 고관절·슬관절·족관절 각각", svg: <><LegsTop ruler /><Cross x={92} y={62} /><Cross x={150} y={61} /><Cross x={214} y={60} /><Txt x={150} y={128} c="고관절 · 슬관절 · 족관절" s={8} /><Note c="위에서 본 모습" /></> },
+};
+Object.assign(FIGS, FIGS2);
+
 export default function XrayFig({ name }: { name: string }) {
   const f = FIGS[name];
   if (!f) return null;

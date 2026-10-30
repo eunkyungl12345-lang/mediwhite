@@ -189,3 +189,26 @@ export const XRAY: XrayExam[] = [
     { v: "Erect", pos: "기립 5분 후 촬영 (유리 공기·액면).", cr: "수평, 장골능선 약 5cm 위 (횡격막 포함)", fig: "Abdomen Erect" },
   ], check: ["신장 상극~치골결합 포함", "Erect: 횡격막 돔 포함"] },
 ];
+
+/** 뷰별 포지셔닝 그림 연결 (검사명|뷰 → 그림 키) */
+const AUTO: Record<string, string> = {
+  "두부|AP": "skull-ap", "두부|BOTH OBL": "skull-obl", "측두하악관절|CLOSE (양측)": "tmj-close", "측두하악관절|OPEN (양측)": "tmj-open",
+  "하악골|AP (PA)": "mand-pa", "하악골|BOTH OBL": "mand-obl", "코뼈|BOTH LAT": "nasal-lat", "관골 (협골궁)|SMV": "zyg-smv", "관골 (협골궁)|Towne 변형 (참고)": "Towne (AP 축)",
+  "경추|BOTH OBL": "cs-obl", "경추|FLEX": "cs-flex", "경추|EXT": "cs-ext",
+  "경흉추|AP": "ct-ap", "경흉추|LAT": "ct-lat", "경흉추|FLEX": "ct-flex", "경흉추|EXT": "ct-ext",
+  "흉추|AP": "ts-ap", "흉추|LAT": "ts-lat", "흉추|FLEX": "ts-flex", "흉추|EXT": "ts-ext",
+  "요추|BOTH OBL": "ls-obl", "요추|FLEX": "ls-flex", "요추|EXT": "ls-ext",
+  "천골|AP": "sac-ap", "천골|LAT": "sac-lat", "미골|AP": "coc-ap", "미골|LAT": "sac-lat",
+  "늑골|AP": "rib-ap", "늑골|BOTH OBL": "rib-obl", "흉골|LAT": "ster-lat", "흉골|OBL (RAO)": "ster-rao",
+  "어깨|LAT (경흉부)": "sh-lat", "어깨|Y VIEW": "sh-y", "어깨|AXIAL": "sh-axial",
+  "견쇄관절|AP": "ac-ap", "견쇄관절|AXIAL": "ac-axial", "쇄골|AP": "clav-ap", "쇄골|AXIAL": "clav-axial",
+  "상박골|AP": "hum-ap", "상박골|LAT": "hum-lat", "상박골|BOTH OBL": "hum-obl", "팔꿈치|BOTH OBL": "elb-obl",
+  "전완|AP": "fa-ap", "전완|LAT": "fa-lat", "전완|BOTH OBL": "fa-obl", "손목|LAT": "wr-lat", "손목|BOTH OBL": "wr-obl",
+  "손|LAT": "hand-lat", "손|BOTH OBL": "hand-obl", "손가락|AP (PA)": "fin-ap", "손가락|LAT": "fin-lat", "손가락|BOTH OBL": "fin-obl",
+  "골반|LAT": "pel-lat", "골반|BOTH OBL": "pel-obl", "고관절|LAT": "hip-lat", "대퇴골|AP": "fem-ap", "대퇴골|LAT": "fem-lat",
+  "하퇴골|AP": "tib-ap", "하퇴골|LAT": "tib-lat", "하퇴골|BOTH OBL": "tib-obl", "족관절|LAT": "ank-lat",
+  "종골|LAT": "calc-lat", "종골|AXIAL": "calc-axial", "족골|LAT": "foot-lat", "족골|OBL": "foot-obl",
+  "족골 Standing|BOTH AP": "fs-ap", "족골 Standing|BOTH LAT": "fs-lat", "족지골|AP": "toe-ap", "족지골|LAT": "toe-lat", "족지골|BOTH OBL": "toe-obl",
+  "전척추|AP": "ws-ap", "전척추|LAT": "ws-lat", "스캐노그램|AP": "scano",
+};
+for (const x of XRAY) for (const v of x.views) if (!v.fig && AUTO[`${x.name}|${v.v}`]) v.fig = AUTO[`${x.name}|${v.v}`];
