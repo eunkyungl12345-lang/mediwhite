@@ -10,21 +10,29 @@ const defs = `<defs>
 <radialGradient id="glowG"><stop offset="0" stop-color="#8CFF6A"/><stop offset="1" stop-color="#8CFF6A" stop-opacity="0"/></radialGradient>
 <radialGradient id="glowP"><stop offset="0" stop-color="#C9A2FF"/><stop offset="1" stop-color="#C9A2FF" stop-opacity="0"/></radialGradient>
 </defs>`;
-const wrap = (body: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="160" height="160">${defs}<g stroke="${OUT}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">${body}</g></svg>`;
+const wrap = (body: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="160" height="160">${defs}<g stroke="${OUT}" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round">${body}</g></svg>`;
 
-/** 영웅 공통 몸통: 옷 색, 바지 색, 머리 모양, 모자 */
+/** 영웅 공통 몸통 (세련된 비율: 작은 머리·긴 몸·음영) */
 function hero(o: { coat: string; coat2: string; pants: string; hair: string; hat?: string; extra?: string; weapon: string; back?: string; face?: string }) {
   return wrap(`
-  <ellipse cx="50" cy="95" rx="22" ry="4" fill="#000" opacity=".18" stroke="none"/>
+  <defs><linearGradient id="cg" x1="0" x2="1"><stop offset="0" stop-color="${o.coat}"/><stop offset=".55" stop-color="${o.coat}"/><stop offset="1" stop-color="${o.coat2}"/></linearGradient>
+  <linearGradient id="pg" x1="0" x2="1"><stop offset="0" stop-color="${o.pants}"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>
+  <radialGradient id="sk" cx=".4" cy=".35"><stop offset="0" stop-color="#FBE3D2"/><stop offset="1" stop-color="${SKIN2}"/></radialGradient>
+  <linearGradient id="hg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${o.hair}"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></linearGradient></defs>
+  <ellipse cx="50" cy="95.5" rx="20" ry="3.5" fill="#000" opacity=".22" stroke="none"/>
   ${o.back ?? ""}
-  <path d="M41 74 L39 92 L47 92 L49 76 Z M59 74 L61 92 L53 92 L51 76 Z" fill="${o.pants}"/>
-  <path d="M37 91 h11 v4 h-12 z M52 91 h11 l1 4 h-12 z" fill="#2A2F3A"/>
-  <path d="M33 50 Q50 42 67 50 L70 78 Q50 84 30 78 Z" fill="${o.coat}"/>
-  <path d="M50 46 L50 80" stroke="${o.coat2}" stroke-width="2.4"/>
-  <path d="M33 50 Q30 62 31 74 L37 74 L38 56 Z M67 50 Q70 62 69 74 L63 74 L62 56 Z" fill="${o.coat2}"/>
-  <circle cx="50" cy="33" r="14" fill="${SKIN}"/>
-  <path d="M36 32 Q37 17 50 17 Q64 17 64 32 Q60 24 50 24 Q41 24 36 32 Z" fill="${o.hair}"/>
-  ${o.face ?? `<ellipse cx="45" cy="34" rx="1.9" ry="2.6" fill="${OUT}" stroke="none"/><ellipse cx="55" cy="34" rx="1.9" ry="2.6" fill="${OUT}" stroke="none"/><path d="M46 40 Q50 42.5 54 40" fill="none"/><ellipse cx="41" cy="38.5" rx="2.6" ry="1.5" fill="#FF9A9A" opacity=".55" stroke="none"/><ellipse cx="59" cy="38.5" rx="2.6" ry="1.5" fill="#FF9A9A" opacity=".55" stroke="none"/>`}
+  <path d="M43 74 L42 92.5 L48 92.5 L49.5 76 Z M57 74 L58 92.5 L52 92.5 L50.5 76 Z" fill="url(#pg)"/>
+  <path d="M40.5 92 h8.5 v3 h-9.5 z M51 92 h8.5 l1 3 h-9.5 z" fill="#1A1E28"/>
+  <path d="M36 49 Q50 43 64 49 L67.5 79 Q50 84.5 32.5 79 Z" fill="url(#cg)"/>
+  <path d="M50 46 L50 81" stroke="${o.coat2}" stroke-width="1.8"/>
+  <path d="M44 46 L50 55 L56 46" fill="none" stroke="${o.coat2}" stroke-width="1.6"/>
+  <path d="M36 49 Q32.5 62 33.5 75 L38.5 75 L39.5 56 Z M64 49 Q67.5 62 66.5 75 L61.5 75 L60.5 56 Z" fill="${o.coat2}"/>
+  <path d="M38 52 Q36 64 37 76" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.2"/>
+  <path d="M46.5 40 h7 v6 h-7 z" fill="url(#sk)"/>
+  <ellipse cx="50" cy="31.5" rx="11.5" ry="12.5" fill="url(#sk)"/>
+  <path d="M38.2 31 Q38 17.5 50.5 17.2 Q63 17.5 62 31 Q60.5 23.5 53 22 Q55 26 50 27 Q44 25.5 41.5 25.5 Q39.5 27.5 38.2 31 Z" fill="url(#hg)"/>
+  <path d="M44 20.5 Q50 18.8 56 20.5" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1.1"/>
+  ${o.face ?? `<path d="M42.5 30.2 l5 -.6 M57.5 30.2 l-5 -.6" stroke-width="1.3"/><path d="M42.8 33.6 Q45.2 31.8 47.6 33.6 Q45.2 35 42.8 33.6 Z" fill="${OUT}" stroke="none"/><path d="M52.4 33.6 Q54.8 31.8 57.2 33.6 Q54.8 35 52.4 33.6 Z" fill="${OUT}" stroke="none"/><circle cx="46" cy="33.1" r=".55" fill="#fff" stroke="none"/><circle cx="55.6" cy="33.1" r=".55" fill="#fff" stroke="none"/><path d="M50 34.5 l-.8 3.2 h1.6" fill="none" stroke-width=".9" stroke-opacity=".6"/><path d="M47.2 39.6 Q50 40.6 52.8 39.6" fill="none" stroke-width="1.1"/>`}
   ${o.hat ?? ""}
   ${o.extra ?? ""}
   ${o.weapon}`);
