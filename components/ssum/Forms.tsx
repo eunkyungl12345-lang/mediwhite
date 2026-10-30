@@ -2,7 +2,7 @@
 import { useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { sendConfession, saveDatingProfile, saveIntro, toggleLike, pickSolo, sendDm, deleteDatingProfile, uploadSsumPhoto } from "@/lib/ssumActions";
+import { sendConfession, saveDatingProfile, saveIntro, toggleLike, pickSolo, sendDm, deleteDatingProfile, uploadSsumPhoto, requestDm, answerDmRequest } from "@/lib/ssumActions";
 import { DEPTS } from "@/lib/depts";
 
 function Submit({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "…" : label}</button>; }
@@ -117,4 +117,30 @@ export function PhotoField({ p, who = "내" }: { p: P; who?: string }) {
       </div>
     </div>
   );
+}
+
+
+/** 블라인드식 1:1 대화 신청: 첫 메시지 + 직종 가리기 + 월 횟수 표시 */
+export function DmRequestButton({ to, left, total, state }: { to: string; left: number; total: number; state: "none" | "pending" | "open" | "declined" | "incoming" }) {
+  const [open, setOpen] = useState(false), [msg, setMsg] = useState(""), [hide, setHide] = useState(false), [res, setRes] = useState<{ ok?: string; error?: string } | null>(null), [p, start] = useTransition(); const r = useRouter();
+  if (state === "open") return <a className="btn" href={`/ssum/dm/${to}`}>💬 대화방 열기</a>;
+  if (state === "pending" || res?.ok) return <span className="tag">💌 신청 보냄 · 수락 대기</span>;
+  if (state === "incoming") return <a className="btn" href="/ssum?tab=box">💌 이 분이 먼저 신청했어요 → 수락하기</a>;
+  if (state === "declined") return <span className="muted" style={{ fontSize: 12 }}>다음 기회에…</span>;
+  return <>
+    <button type="button" className="btn" onClick={() => setOpen(true)}>💬 1:1 대화 신청</button>
+    {open && <div className="ss-modal" onClick={() => setOpen(false)}><div className="ss-modal-box" onClick={e => e.stopPropagation()}>
+      <div className="ss-modal-head"><b>1:1 대화하기</b><button type="button" className="link" onClick={() => setOpen(false)}>✕</button></div>
+      <div className="muted" style={{ fontSize: 13 }}>이번 달 대화 신청 가능 횟수 <b style={{ color: left > 0 ? "#D81B60" : "inherit" }}>{left}회</b> 남았어요. (기본 5회 · 계급 보너스 포함 {total}회)</div>
+      <textarea value={msg} onChange={e => setMsg(e.target.value)} maxLength={200} rows={3} placeholder="첫 메시지 (선택) — 예: 글 잘 읽었어요! 저도 주말 오프라 커피 한잔 어때요?" />
+      <label className="row" style={{ gap: 8, alignItems: "center", fontSize: 13 }}><input type="checkbox" checked={hide} onChange={e => setHide(e.target.checked)} />내 직종 가리기 <span className="muted">(상대에게 [비공개]닉네임으로 보여요)</span></label>
+      {res?.error && <div className="error">{res.error}</div>}
+      <button type="button" className="btn" disabled={p || left <= 0} style={{ width: "100%" }} onClick={() => start(async () => { const x = await requestDm(to, msg, hide); setRes(x); if (x.ok) { setTimeout(() => { setOpen(false); r.refresh(); }, 900); } })}>{p ? "보내는 중…" : left > 0 ? "대화 신청 보내기" : "이번 달 횟수를 다 썼어요"}</button>
+      <div className="muted" style={{ fontSize: 11.5, lineHeight: 1.6 }}>· 상대가 수락해야 대화방이 열려요 (수락 전엔 상대가 내 첫 메시지만 봐요)<br />· 횟수는 매월 1일에 다시 채워져요 · 데일리 미션·계급으로 보너스 횟수가 늘어요<br />· 첫 메시지에 연락처·SNS는 쓸 수 없어요</div>
+    </div></div>}
+  </>;
+}
+export function DmRequestAnswer({ id }: { id: number }) {
+  const [p, start] = useTransition(); const r = useRouter();
+  return <span className="row" style={{ gap: 6 }}><button type="button" className="btn" style={{ padding: "4px 12px" }} disabled={p} onClick={() => start(async () => { await answerDmRequest(id, true); r.refresh(); })}>💘 수락 (대화하기)</button><button type="button" className="link" disabled={p} onClick={() => start(async () => { await answerDmRequest(id, false); r.refresh(); })}>정중히 거절</button></span>;
 }

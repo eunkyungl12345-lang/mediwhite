@@ -104,6 +104,8 @@ export async function canDm(a: string, b: string) {
   ]);
   if (l1 && l2) return true;
   if (cf?.length) return true;
+  const { data: rq } = await s.from("dm_requests").select("id").eq("status", "accepted").or(`and(from_id.eq.${a},to_id.eq.${b}),and(from_id.eq.${b},to_id.eq.${a})`).limit(1);
+  if (rq?.length) return true;
   const ids = (x: any[] | null) => (x ?? []).map(i => String(i.id));
   const [{ data: bLikesMine }, { data: aLikesTheirs }] = await Promise.all([
     ids(myIntros).length ? s.from("likes").select("from_id").eq("from_id", b).eq("kind", "intro").in("target", ids(myIntros)).limit(1) : Promise.resolve({ data: [] as any[] }),
@@ -144,3 +146,43 @@ export async function uploadSsumPhoto(fd: FormData): Promise<{ photo?: string; b
   return { photo: PUB() + `${u.id}/${id}.jpg`, blur: PUB() + `${u.id}/${id}_b.jpg` };
 }
 const okUrl = (v: string) => v === "" || v.startsWith(PUB());
+
+
+/* ---------- 1:1 대화 신청 (블라인드식: 월 횟수 제한 · 상대 수락 필요) ---------- */
+const DM_REQ_BASE = 5;
+const month = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 7);
+/** 이번 달 남은 신청 횟수: 기본 5 + 보너스(총괄/준장 이상 +5, 관리자 무제한) */
+export async function dmQuota() {
+  const u = await me(); const s = db();
+  const [{ count }, { data: me0 }] = await Promise.all([
+    s.from("dm_requests").select("id", { count: "exact", head: true }).eq("from_id", u.id).gte("created_at", month() + "-01"),
+    s.from("users").select("xp").eq("id", u.id).maybeSingle(),
+  ]);
+  const bonus = (me0?.xp ?? 0) >= 20000 ? 5 : (me0?.xp ?? 0) >= 5000 ? 2 : 0;
+  const total = u.role === "admin" ? 999 : DM_REQ_BASE + bonus;
+  return { used: count ?? 0, total, left: Math.max(0, total - (count ?? 0)), bonus };
+}
+export type DmReqResult = { ok?: string; error?: string; left?: number };
+export async function requestDm(to: string, msg: string, hideDept: boolean): Promise<DmReqResult> {
+  const u = await me(); const s = db(); const t = String(msg ?? "").trim().slice(0, 200);
+  if (to === u.id) return { error: "나에게는 보낼 수 없어요" };
+  if (CONTACT.test(t)) return { error: "첫 메시지엔 연락처·SNS를 넣을 수 없어요. 대화방에서 충분히 얘기한 뒤에요!" };
+  if (await canDm(u.id, to)) return { ok: "이미 대화할 수 있어요!" };
+  const { data: ex } = await s.from("dm_requests").select("id,status,from_id").or(`and(from_id.eq.${u.id},to_id.eq.${to}),and(from_id.eq.${to},to_id.eq.${u.id})`).maybeSingle();
+  if (ex?.status === "pending") return ex.from_id === u.id ? { error: "이미 신청했어요. 상대가 수락하면 알려드릴게요" } : { error: "이 분이 먼저 신청을 보냈어요! 매칭·채팅 탭에서 수락해 주세요" };
+  if (ex?.status === "declined" && ex.from_id === u.id) return { error: "이전 신청이 정중히 거절됐어요. 다음 기회에!" };
+  const q = await dmQuota(); if (q.left <= 0) return { error: `이번 달 대화 신청 ${q.total}회를 다 썼어요. 다음 달 1일에 다시 채워져요` };
+  const { data: tu } = await s.from("users").select("stealth").eq("id", to).maybeSingle(); if (!tu) return { error: "없는 회원이에요" };
+  if (ex) await s.from("dm_requests").delete().eq("id", ex.id);
+  await s.from("dm_requests").insert({ from_id: u.id, to_id: to, msg: t, hide_dept: hideDept });
+  pushToUsers([to], { title: "💌 1:1 대화 신청이 왔어요", body: t ? `"${t.slice(0, 50)}"` : "매칭·채팅 탭에서 확인해 보세요", url: "/ssum?tab=box", tag: "dmreq" }).catch(() => {});
+  revalidatePath("/ssum"); return { ok: "신청을 보냈어요! 수락하면 대화방이 열려요", left: q.left - 1 };
+}
+export async function answerDmRequest(id: number, accept: boolean) {
+  const u = await me(); const s = db();
+  const { data: r } = await s.from("dm_requests").select("id,from_id,to_id,status").eq("id", id).eq("to_id", u.id).maybeSingle();
+  if (!r || r.status !== "pending") return;
+  await s.from("dm_requests").update({ status: accept ? "accepted" : "declined", answered_at: new Date().toISOString() }).eq("id", id);
+  if (accept) pushToUsers([r.from_id], { title: "💘 대화 신청이 수락됐어요!", body: "지금 바로 인사를 건네보세요", url: `/ssum/dm/${u.id}`, tag: "dmreq" }).catch(() => {});
+  revalidatePath("/ssum");
+}

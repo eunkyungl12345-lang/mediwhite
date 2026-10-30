@@ -1398,3 +1398,12 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .rs-sounds button.on{background:#2B3245;color:#fff;border-color:#2B3245}
 .rs-xp{text-align:center;font-weight:800;color:#3FA34D}
 @media (prefers-color-scheme:dark){.rs-tools button.on,.rs-moods button.on{background:#251F42}.rs-rxb{background:#3A3020}.rs-help{background:#1B2A40}}
+
+/* 1:1 대화 신청 */
+.ss-modal{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.5);display:grid;place-items:end center;padding:0}
+.ss-modal-box{width:100%;max-width:520px;background:var(--surface);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:10px}
+.ss-modal-head{display:flex;justify-content:space-between;align-items:center;font-size:18px}
+.ss-modal-box textarea{width:100%;resize:none}
+.ss-reqbox{border-color:#F48FB1}
+.ss-req{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
+.ss-req-msg{font-size:13px;color:var(--muted);margin-top:2px}

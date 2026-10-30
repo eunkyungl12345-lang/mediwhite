@@ -3,10 +3,10 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { SSUM_TOPICS, topicOf, display } from "@/lib/depts";
-import { answerConfession, deleteIntro } from "@/lib/ssumActions";
+import { answerConfession, deleteIntro, dmQuota } from "@/lib/ssumActions";
 import { fmt } from "@/lib/format";
 import Name from "@/components/Name";
-import { ConfessForm, ProfileForm, IntroForm, LikeButton, PickSolo } from "@/components/ssum/Forms";
+import { ConfessForm, ProfileForm, IntroForm, LikeButton, PickSolo, DmRequestButton, DmRequestAnswer } from "@/components/ssum/Forms";
 export const dynamic = "force-dynamic";
 
 type Tab = "lounge" | "me" | "box";
@@ -133,6 +133,8 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     </>;
   }
   if (tab === "me") {
+    const [{ data: reqs }, quota] = await Promise.all([d.from("dm_requests").select("id,from_id,to_id,status").or(`from_id.eq.${s.id},to_id.eq.${s.id}`), dmQuota()]);
+    const reqState = (other: string): "none" | "pending" | "open" | "declined" | "incoming" => { if (mutualWith(other)) return "open"; const r = (reqs ?? []).find((x: any) => (x.from_id === s.id && x.to_id === other) || (x.from_id === other && x.to_id === s.id)); if (!r) return "none"; if (r.status === "accepted") return "open"; if (r.status === "declined") return r.from_id === s.id ? "declined" : "none"; return r.from_id === s.id ? "pending" : "incoming"; };
     const [{ data: mine }, { data: profs }, { data: intros }] = await Promise.all([
       d.from("dating_profiles").select("*").eq("user_id", s.id).maybeSingle(),
       (gf ? d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)").eq("gender", gf) : d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)")).eq("visible", true).neq("user_id", s.id).order("updated_at", { ascending: false }).limit(60),
@@ -160,7 +162,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         {(profs ?? []).filter((p: any) => !p.user.stealth).map((p: any) => (
           <Card key={p.user_id} p={p} see={admin || mutualWith(p.user_id)}
             head={<Name r={rankFor(p.user, leaders)} dept={p.user.dept} nickname={p.user.nickname} username={p.user.username} />}
-            foot={<><LikeButton kind="profile" target={p.user_id} liked={liked("profile", p.user_id)} />{admin && <PickSolo userId={p.user_id} />}</>} />
+            foot={<><LikeButton kind="profile" target={p.user_id} liked={liked("profile", p.user_id)} /><DmRequestButton to={p.user_id} left={quota.left} total={quota.total} state={reqState(p.user_id)} />{admin && <PickSolo userId={p.user_id} />}</>} />
         ))}
         {(intros ?? []).map((p: any) => (
           <Card key={"intro-" + p.id} p={p} see={admin || p.author_id === s.id}
@@ -172,6 +174,10 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     </>;
   }
   if (tab === "box") {
+    const [{ data: inReq }, { data: outReq }] = await Promise.all([
+      d.from("dm_requests").select("id,from_id,msg,hide_dept,status,created_at,user:users!dm_requests_from_id_fkey(id,nickname,dept)").eq("to_id", s.id).order("created_at", { ascending: false }).limit(30),
+      d.from("dm_requests").select("id,to_id,status,created_at,user:users!dm_requests_to_id_fkey(id,nickname,dept)").eq("from_id", s.id).order("created_at", { ascending: false }).limit(30),
+    ]);
     const [{ data: got }, { data: sent }, { data: likers }, { data: myIntros }, { data: threads }] = await Promise.all([
       d.from("confessions").select("id,text,status,created_at,from_id").eq("to_id", s.id).order("created_at", { ascending: false }).limit(30),
       d.from("confessions").select("id,text,status,created_at,to:users!confessions_to_id_fkey(nickname,dept)").eq("from_id", s.id).order("created_at", { ascending: false }).limit(30),
@@ -182,7 +188,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     const introIds = (myIntros ?? []).map(i => String(i.id));
     const { data: introLikers } = introIds.length ? await d.from("likes").select("from_id,target,user:users!likes_from_id_fkey(id,nickname,dept)").eq("kind", "intro").in("target", introIds) : { data: [] as any[] };
     const mutual = (likers ?? []).filter((l: any) => liked("profile", l.from_id));
-    const acceptedIds = [...(got ?? []).filter(c => c.status === "accepted").map(c => c.from_id)];
+    const acceptedIds = [...(got ?? []).filter(c => c.status === "accepted").map(c => c.from_id), ...(inReq ?? []).filter((r: any) => r.status === "accepted").map((r: any) => r.from_id), ...(outReq ?? []).filter((r: any) => r.status === "accepted").map((r: any) => r.to_id)];
     const seen = new Set<string>(); const lastBy: any[] = [];
     for (const m of threads ?? []) { const other = m.a === s.id ? m.b : m.a; if (!seen.has(other)) { seen.add(other); lastBy.push({ other, ...m }); } }
     const otherIds = Array.from(new Set([...lastBy.map(t => t.other), ...acceptedIds]));
@@ -190,7 +196,8 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     const nameOf = (id: string) => { const u = (others ?? []).find((x: any) => x.id === id); return u ? display(u.dept, u.nickname) : "회원"; };
 
     const newConnections = [...mutual.map((l: any) => l.from_id), ...acceptedIds, ...(introLikers ?? []).map((l: any) => l.from_id)].filter(id => !seen.has(id)).filter((v, i, a) => a.indexOf(v) === i);
-    const hasAnyActivity = lastBy.length > 0 || newConnections.length > 0 || (got?.length ?? 0) > 0 || (likers?.length ?? 0) > 0 || (sent?.length ?? 0) > 0;
+    const hasAnyActivity = lastBy.length > 0 || newConnections.length > 0 || (got?.length ?? 0) > 0 || (likers?.length ?? 0) > 0 || (sent?.length ?? 0) > 0 || (inReq?.length ?? 0) > 0 || (outReq?.length ?? 0) > 0;
+    const pendingIn = (inReq ?? []).filter((r: any) => r.status === "pending");
 
     body = <>
       {!hasAnyActivity && (
@@ -204,6 +211,13 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         </div>
       )}
 
+      {pendingIn.length > 0 && (
+        <section className="card ss-reqbox">
+          <h3>💌 1:1 대화 신청 {pendingIn.length}건</h3>
+          {pendingIn.map((r: any) => <div key={r.id} className="ss-req"><div><b>{r.hide_dept ? `[비공개]${r.user?.nickname ?? "회원"}` : r.user ? display(r.user.dept, r.user.nickname) : "회원"}</b><span className="time" style={{ marginLeft: 6 }}>{fmt(r.created_at)}</span>{r.msg && <div className="ss-req-msg">“{r.msg}”</div>}</div><DmRequestAnswer id={r.id} /></div>)}
+          <div className="muted" style={{ fontSize: 12 }}>수락하면 1:1 대화방이 열려요. 거절해도 상대에게 이유는 보이지 않아요.</div>
+        </section>
+      )}
       {(lastBy.length > 0 || newConnections.length > 0) && (
         <section className="card">
           <h3>💬 1:1 대화방</h3>
@@ -223,6 +237,12 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
 
       <details className="card ss-details"><summary><b>🤫 회원에게 몰래 고백 보내기</b> <span className="muted">— 닉네임으로 익명 전달, 상대가 수락하면 1:1 대화가 열려요</span></summary><ConfessForm /></details>
 
+      {outReq?.length ? (
+        <section className="card">
+          <h3>📨 내가 보낸 대화 신청</h3>
+          {outReq.map((r: any) => <div key={r.id} className="meta"><b>{r.user ? display(r.user.dept, r.user.nickname) : "?"}</b><span className="time">{fmt(r.created_at)}</span>{r.status === "pending" ? <span className="tag">수락 대기</span> : r.status === "accepted" ? <Link className="btn" style={{ padding: "4px 12px" }} href={`/ssum/dm/${r.to_id}`}>💬 대화방</Link> : <span className="tag">다음 기회에</span>}</div>)}
+        </section>
+      ) : null}
       {sent?.length ? (
         <section className="card">
           <h3>📤 내가 보낸 고백</h3>
