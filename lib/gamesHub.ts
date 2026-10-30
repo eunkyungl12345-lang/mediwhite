@@ -9,7 +9,7 @@ export const weekStart = (offsetWeeks = 0) => { const n = new Date(Date.now() + 
 const pts = (g: string, best: number) => g === "wordle" ? (best > 0 ? 10 + best * 10 : 5) : g === "iv" ? Math.round(best / 40) : 10;
 /** 부서 대항전: 데일리 게임 기록을 부서별로 합산 */
 export async function deptBattle(from: string, to?: string) {
-  let q = db().from("daily_plays").select("user_id,game,best,users(dept,username)").gte("day", from);
+  let q = db().from("daily_plays").select("user_id,game,best,users(dept,username)").gte("day", from).neq("game", "iv");
   if (to) q = q.lt("day", to);
   const { data } = await q.limit(5000);
   const by: Record<string, { pts: number; people: Set<string> }> = {};
@@ -34,7 +34,7 @@ export async function liveRooms() {
   return { omok: { rooms: oms.length, people: op ?? 0 }, draw: { rooms: drs.length, people: dp ?? 0 } };
 }
 export async function myMissions(uid: string) {
-  const { data } = await db().from("daily_plays").select("game,attempts,best,data").eq("user_id", uid).eq("day", kstDay()).in("game", ["wordle", "iv", "roulette", "quiz"]);
+  const { data } = await db().from("daily_plays").select("game,attempts,best,data").eq("user_id", uid).eq("day", kstDay()).in("game", ["wordle", "roulette", "quiz"]);
   const m = Object.fromEntries((data ?? []).map((r: any) => [r.game, r]));
-  return { wordle: !!m.wordle?.data?.done, iv: !!m.iv, roulette: !!m.roulette, quiz: !!m.quiz };
+  return { wordle: !!m.wordle?.data?.done, roulette: !!m.roulette, quiz: !!m.quiz };
 }
