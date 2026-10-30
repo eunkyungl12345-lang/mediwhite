@@ -1365,3 +1365,36 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .ap-over .big{font-size:24px;font-weight:900;color:#FF6B6B}
 .ap-shop{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .ap-pick{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px}
+/* 당직실 힐링 */
+.rs{display:grid;gap:10px}
+.rs-scene{position:relative;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(20,24,50,.25)}
+.rs-svg{display:block;width:100%;height:auto}
+.rs-top{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.rs-top span{background:rgba(10,12,30,.55);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;backdrop-filter:blur(6px)}
+.rs-toasts{position:absolute;top:40px;left:0;right:0;display:grid;gap:4px;justify-items:center;pointer-events:none}
+.rs-toast{background:rgba(255,255,255,.88);color:#2B2420;font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 14px;animation:rsin .4s both}
+@keyframes rsin{from{opacity:0;transform:translateY(-6px)}}
+.rs-breath{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);display:grid;justify-items:center;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5);pointer-events:none}
+.rs-breath b{font-size:20px}.rs-breath span{font-size:38px;font-weight:900}.rs-breath small{font-size:11px;opacity:.85}
+.rs-me{position:absolute;bottom:8px;right:8px;background:rgba(244,239,230,.92);color:#3B2A24;font-size:12px;border-radius:999px;padding:4px 12px;white-space:nowrap}
+.rs-acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px}
+.rs-acts button{border:0;background:none;font:inherit;font-size:13px;font-weight:700;color:var(--ink);display:grid;justify-items:center;gap:2px;padding:6px 0;border-radius:999px;cursor:pointer}
+.rs-acts button span{font-size:22px}.rs-acts button:active{background:var(--scrub-soft)}
+.rs-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rs-tools button{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 6px;font:inherit;color:var(--ink);display:grid;justify-items:center;gap:2px;cursor:pointer;text-align:center}
+.rs-tools button span{font-size:24px}.rs-tools button b{font-size:13px}.rs-tools button small{font-size:11px;color:var(--muted)}
+.rs-tools button.on{border-color:#7B5EA8;background:linear-gradient(135deg,#F1EDFF,#FAF8FF)}
+.rs-panel{display:grid;gap:10px}
+.rs-sh{display:flex;gap:10px;align-items:center}.rs-si{font-size:34px}.rs-sh>div{flex:1}.rs-sl{font-size:28px;font-weight:900;color:#7B5EA8}
+.rs-prog{height:8px;border-radius:6px;background:var(--line);overflow:hidden}.rs-prog i{display:block;height:100%;background:#7B5EA8;transition:width 1s linear}
+.rs-moods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rs-moods button{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 4px;font:inherit;font-size:12.5px;color:var(--ink);display:grid;justify-items:center;cursor:pointer}
+.rs-moods button span{font-size:26px}.rs-moods button.on{border-color:#7B5EA8;background:#F1EDFF}
+.rs-rx{display:grid;gap:8px;line-height:1.6}
+.rs-rxb{background:#FFF6E8;border-radius:10px;padding:8px 10px;font-size:13px}
+.rs-help{background:#EEF6FF;border-radius:10px;padding:10px;font-size:13px;line-height:1.7}
+.rs-sounds{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rs-sounds button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.rs-sounds button.on{background:#2B3245;color:#fff;border-color:#2B3245}
+.rs-xp{text-align:center;font-weight:800;color:#3FA34D}
+@media (prefers-color-scheme:dark){.rs-tools button.on,.rs-moods button.on{background:#251F42}.rs-rxb{background:#3A3020}.rs-help{background:#1B2A40}}

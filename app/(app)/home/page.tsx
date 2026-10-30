@@ -82,6 +82,7 @@ export default async function HomePage() {
         <Link href="/news" className="h-tile"><span className="h-tile-ico">📰</span><b>핫뉴스</b><small className={ndq ? (ndq.pct >= 0 ? "up" : "down") : ""}>{ndq ? `나스닥 ${pct(ndq)}` : "오늘 소식"}</small></Link>
         <Link href="/fortune" className="h-tile ft"><span className="h-tile-ico">🔮</span><b>오늘의 운세</b><small>{ft ? `${ft.score}점` : "생일 등록하기"}</small></Link>
         <Link href="/games?g=tycoon" className="h-tile"><span className="h-tile-ico">🏥</span><b>우리 병원</b><small>{tyPending > 0 ? `+${won(tyPending)} 쌓임` : tyS ? `초당 ${won(tyRate)}원` : "폐허의원부터 시작"}</small></Link>
+        <Link href="/rest" className="h-tile"><span className="h-tile-ico">🛋️</span><b>당직실</b><small>같이 쉬기·숨쉬기</small></Link>
         <Link href="/ssum" className="h-tile"><span className="h-tile-ico">💘</span><b>썸</b><small>고백·셀소·소개</small></Link>
         <Link href="/food" className="h-tile"><span className="h-tile-ico">🍚</span><b>병원 앞 맛집</b><small>혼밥·회식·배달</small></Link>
         <Link href="/games" className="h-tile"><span className="h-tile-ico">🎮</span><b>게임</b><small>{ksp ? `코스피 ${pct(ksp)}` : "오목·그림 맞히기"}</small></Link>

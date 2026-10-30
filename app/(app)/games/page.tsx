@@ -29,6 +29,7 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
     { id: "wordle", name: "오늘의 메디워들", icon: "🟩", sub: "하루 한 문제", color: "#7BC47F", badge: "DAILY", node: <Wordle /> },
     { id: "apoc", name: "병원묵시록", icon: "🧟", sub: "좀비 생존 디펜스", color: "#6B7B5E", badge: "NEW", node: <Apoc ranks={norm(apoc)} best={my.apoc ?? 0} /> },
     { id: "defense", name: "병동 사수", icon: "🦠", sub: "줄 지키기 디펜스", color: "#5FA777", badge: "HIT!", node: <Defense ranks={norm(defense)} /> },
+    { id: "rest", name: "당직실 힐링", icon: "🛋️", sub: "같이 쉬기·숨쉬기", color: "#7B5EA8", badge: "NEW", node: <div /> },
     { id: "omok", name: "온라인 오목", icon: "⚫", sub: "1:1 · 팀전 5:5", color: "#E6B97A", badge: "NEW", node: <div className="card"><h3>⚫⚪ 온라인 오목</h3><div className="muted">회원끼리 실시간 오목! 1:1부터 5:5 팀전(같은 팀끼리 번갈아 두기)까지. 내기 걸고 한 판 ☕ 혼자일 땐 🤖 컴퓨터와 연습</div><Link className="btn" href="/games/omok">오목 로비로 →</Link></div> },
     { id: "draw", name: "그림 맞히기", icon: "🎨", sub: "캐치마인드식", color: "#F8BBD0", badge: "NEW", node: <div /> },
     { id: "lightning", name: "번개 모드", icon: "⚡", sub: "5초 미니게임 연속", color: "#F4D35E", badge: "NEW", node: <Lightning ranks={norm(lightning)} best={my.lightning ?? 0} /> },
@@ -41,18 +42,18 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
     { id: "sword", name: "검 강화하기", icon: "⚔️", sub: "확률 강화", color: "#3D5A80", node: <Sword ranks={norm(sword)} best={my.sword ?? 0} /> },
     { id: "roulette", name: "커피 룰렛", icon: "☕", sub: "내기 정하기", color: "#B08968", node: <Roulette /> },
   ];
-  const cur = games.find(g => g.id === searchParams.g && g.id !== "omok" && g.id !== "draw") ?? games[0];
+  const cur = games.find(g => g.id === searchParams.g && g.id !== "omok" && g.id !== "draw" && g.id !== "rest") ?? games[0];
   const [battle, lastTop, live, mis] = await Promise.all([deptBattle(weekStart(0)), settleDeptWeek().catch(() => null), liveRooms().catch(() => null), myMissions(sess.id)]);
   const CATS: { key: string; name: string; ids: string[] }[] = [
     { key: "", name: "전체", ids: [] }, { key: "daily", name: "📅 데일리", ids: ["wordle", "roulette"] }, { key: "rank", name: "🔥 랭킹전", ids: ["apoc", "defense", "lightning", "runner", "dodge", "sword"] },
-    { key: "together", name: "👥 같이하기", ids: ["omok", "draw"] }, { key: "quiz", name: "🧠 퀴즈", ids: ["wordle", "quiz", "trivia", "econ"] }, { key: "heal", name: "🪴 방치·힐링", ids: ["tycoon", "plant", "roulette"] },
+    { key: "together", name: "👥 같이하기", ids: ["omok", "draw"] }, { key: "quiz", name: "🧠 퀴즈", ids: ["wordle", "quiz", "trivia", "econ"] }, { key: "heal", name: "🪴 방치·힐링", ids: ["rest", "tycoon", "plant", "roulette"] },
   ];
   const cat = CATS.find(c => c.key === (searchParams.c ?? "")) ?? CATS[0];
   const shown = cat.ids.length ? games.filter(g => cat.ids.includes(g.id)) : games;
   const kday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10), hotPool = ["apoc", "defense", "lightning", "runner", "dodge", "sword", "quiz", "trivia", "econ"];
   const hot = games.find(g => g.id === hotPool[(Number(kday.replace(/-/g, "")) * 7) % hotPool.length])!;
   const liveOf = (id: string) => id === "omok" && live ? live.omok : id === "draw" && live ? live.draw : null;
-  const href = (id: string) => id === "omok" ? "/games/omok" : id === "draw" ? "/games/draw" : `/games?${new URLSearchParams({ g: id, ...(cat.key ? { c: cat.key } : {}) })}`;
+  const href = (id: string) => id === "omok" ? "/games/omok" : id === "draw" ? "/games/draw" : id === "rest" ? "/rest" : `/games?${new URLSearchParams({ g: id, ...(cat.key ? { c: cat.key } : {}) })}`;
   const missions = [{ id: "wordle", name: "메디워들 풀기", done: mis.wordle, xp: "최대 300" }, { id: "roulette", name: "커피 룰렛 돌리기", done: mis.roulette, xp: "+30" }, { id: "quiz", name: "퀴즈 1판", done: mis.quiz, xp: "+30" }];
   const nDone = missions.filter(m => m.done).length, maxPts = Math.max(1, ...battle.map(b => b.pts));
   return (
