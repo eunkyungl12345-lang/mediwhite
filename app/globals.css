@@ -1407,3 +1407,20 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .ss-reqbox{border-color:#F48FB1}
 .ss-req{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
 .ss-req-msg{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* 번개 */
+.mt-intro{font-size:14px;line-height:1.6;background:linear-gradient(135deg,#FFF5D6,#FFE7B8);border:1px solid #F2D58A;border-radius:14px;padding:10px 12px}
+.mt-form{display:grid;gap:8px}
+.mt-kinds{display:flex;gap:6px;flex-wrap:wrap}
+.mt-lab{display:grid;gap:2px;font-size:12px;color:var(--muted);flex:1;min-width:0}.mt-lab input,.mt-lab select{width:100%}
+.mt-sec{font-weight:800;font-size:14px;padding:6px 2px 2px}
+.mt-row{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:8px;flex-wrap:wrap}
+.mt-row.mine{border-color:#F2A65A;background:#FFF9EE}
+.mt-ico{font-size:28px;width:40px;height:40px;display:grid;place-items:center;background:var(--bg);border-radius:12px;flex:none}
+.mt-body{flex:1;min-width:160px;display:grid;gap:2px}
+.mt-title{font-weight:800;font-size:15px;color:var(--ink);text-decoration:none}
+.mt-meta{font-size:12.5px}.mt-open{color:#2E7D32;font-weight:700}
+.mt-head{display:flex;gap:10px;align-items:center;margin-top:8px}
+.mt-note{background:var(--bg);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:14px}
+.mt-members{display:flex;gap:6px;flex-wrap:wrap}.mt-members .tag.host{background:#FFE9A8;color:#5A4520}
+@media (prefers-color-scheme:dark){.mt-intro{background:linear-gradient(135deg,#3A3018,#2E2614);border-color:#5A4A20}.mt-row.mine{background:#2E2614}}

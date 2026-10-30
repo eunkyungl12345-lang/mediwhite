@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { MeetForm, JoinButton } from "@/components/ssum/Meet";
+import { kindOf, whenLabel, MEET_AREAS } from "@/lib/meetup";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
@@ -9,8 +11,8 @@ import Name from "@/components/Name";
 import { ConfessForm, ProfileForm, IntroForm, LikeButton, PickSolo, DmRequestButton, DmRequestAnswer } from "@/components/ssum/Forms";
 export const dynamic = "force-dynamic";
 
-type Tab = "lounge" | "me" | "box";
-const TABS: [Tab, string][] = [["lounge", "💘 라운지"], ["me", "🙋 셀소"], ["box", "💬 매칭·채팅"]];
+type Tab = "lounge" | "me" | "meet" | "box";
+const TABS: [Tab, string][] = [["lounge", "💘 라운지"], ["me", "🙋 셀소"], ["meet", "⚡ 번개"], ["box", "💬 매칭·채팅"]];
 
 function Card({ p, head, foot, see }: { p: any; head: React.ReactNode; foot?: React.ReactNode; see?: boolean }) {
   const chips: { icon?: string; label: string; text: string }[] = [];
@@ -55,7 +57,7 @@ function Card({ p, head, foot, see }: { p: any; head: React.ReactNode; foot?: Re
   );
 }
 
-export default async function SsumPage({ searchParams }: { searchParams: { tab?: string; g?: string; sub?: string } }) {
+export default async function SsumPage({ searchParams }: { searchParams: { tab?: string; g?: string; sub?: string; area?: string } }) {
   const s = (await getSession())!; const d = db();
   const tab = (TABS.some(t => t[0] === searchParams.tab) ? searchParams.tab : (searchParams.tab === "intro" ? "me" : "lounge")) as Tab;
   const admin = s.role === "admin";
@@ -171,6 +173,35 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         ))}
         {!profs?.length && !intros?.length && <div className="muted" style={{ gridColumn: "1/-1", textAlign: "center", padding: "30px 0" }}>아직 공개된 카드가 없어요. 첫 카드를 올려보세요!</div>}
       </div>
+    </>;
+  }
+  if (tab === "meet") {
+    const area = searchParams.area && (MEET_AREAS as readonly string[]).includes(searchParams.area) ? searchParams.area : "";
+    const since = new Date(Date.now() - 3 * 3600000).toISOString();
+    let q = d.from("meetups").select("*,host:users!meetups_host_id_fkey(id,username,nickname,dept,xp)").neq("status", "canceled").gte("when_at", since).order("when_at").limit(60);
+    if (area) q = q.eq("area", area);
+    const [{ data: ms }, { data: myMem }, { data: myProf }] = await Promise.all([q, d.from("meetup_members").select("meetup_id").eq("user_id", s.id).eq("status", "joined"), d.from("dating_profiles").select("region").eq("user_id", s.id).maybeSingle()]);
+    const ids = (ms ?? []).map(m => m.id);
+    const { data: cnt } = ids.length ? await d.from("meetup_members").select("meetup_id").in("meetup_id", ids).eq("status", "joined") : { data: [] as any[] };
+    const n = (id: number) => (cnt ?? []).filter((c: any) => c.meetup_id === id).length;
+    const mine = new Set((myMem ?? []).map(x => x.meetup_id));
+    const today = (ms ?? []).filter(m => whenLabel(m.when_at).startsWith("오늘")), later = (ms ?? []).filter(m => !whenLabel(m.when_at).startsWith("오늘"));
+    const Row = ({ m }: { m: any }) => { const k = kindOf(m.kind), c = n(m.id), closed = Date.parse(m.when_at) < Date.now() - 3 * 3600000; return (
+      <div className={"mt-row" + (mine.has(m.id) ? " mine" : "")}>
+        <span className="mt-ico">{k.icon}</span>
+        <div className="mt-body"><Link href={`/ssum/meet/${m.id}`} className="mt-title">{m.title}</Link>
+          <div className="mt-meta"><b>{whenLabel(m.when_at)}</b> · {m.area}{m.place ? ` · ${m.place}` : ""}{m.gender ? ` · ${m.gender}성만` : ""}</div>
+          <div className="mt-meta muted">{m.host ? display(m.host.dept, m.host.nickname) : "회원"} 주최 · <span className={c >= m.cap ? "" : "mt-open"}>{c}/{m.cap}명{c < m.cap ? ` · ${m.cap - c}자리 남음` : ""}</span></div></div>
+        <JoinButton id={m.id} joined={mine.has(m.id)} host={m.host_id === s.id} full={c >= m.cap} closed={closed} />
+      </div>); };
+    body = <>
+      <div className="mt-intro"><b>⚡ 번개</b> — 오늘 오프인데 심심할 때, 교대 끝나고 한잔할 때. 지역·시간만 정하고 가볍게 모여요. <span className="muted">참여자끼리 모임 채팅방이 열려요.</span></div>
+      <details className="card ss-details"><summary><b>⚡ 번개 열기</b> <span className="muted">— 2주 안, 2~10명, 동시에 3개까지</span></summary><MeetForm defaultArea={myProf?.region?.includes("서울") ? "서울" : undefined} /></details>
+      <div className="topics scroll">{["", ...MEET_AREAS].map(a => <Link key={a} href={`/ssum?tab=meet${a ? `&area=${encodeURIComponent(a)}` : ""}`} className={"topic" + (area === a ? " on" : "")}>{a || "전체"}</Link>)}</div>
+      {today.length > 0 && <><div className="mt-sec">🔥 오늘</div>{today.map(m => <Row key={m.id} m={m} />)}</>}
+      {later.length > 0 && <><div className="mt-sec">📅 다가오는 번개</div>{later.map(m => <Row key={m.id} m={m} />)}</>}
+      {!ms?.length && <div className="ss-empty-box" style={{ padding: "30px 20px" }}><span style={{ fontSize: 36 }}>⚡</span><b>아직 열린 번개가 없어요</b><p className="muted" style={{ fontSize: 13, margin: "6px 0 0" }}>첫 번개를 열면 +30 XP! "오늘 오프 커피" 한 줄이면 충분해요.</p></div>}
+      <div className="muted" style={{ fontSize: 12 }}>⚠️ 처음 만나는 자리는 카페·식당 같은 공개 장소에서, 연락처는 충분히 대화한 뒤에. 불쾌한 일은 문의하기로 알려주세요.</div>
     </>;
   }
   if (tab === "box") {
