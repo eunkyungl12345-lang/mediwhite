@@ -49,7 +49,7 @@ export async function getNews() {
   const global = uniq([...all.global.filter(x => usRe.test(x.title)), ...pool.filter(x => usRe.test(x.title))]).sort((a, b) => b.at - a.at);
   return {
     global: global.length >= 4 ? global : uniq([...global, ...all.global]),
-    stock: all.stock, macro: all.macro, coin: uniq([...all.coin, ...pool.filter(x => coinRe.test(x.title))]).sort((a, b) => b.at - a.at), estate: all.estate, politics: all.politics, ent: all.ent, med: all.med, hira: [...hNotice, ...hPress],
+    stock: all.stock, macro: all.macro, coin: uniq([...all.coin, ...pool.filter(x => coinRe.test(x.title))]).sort((a, b) => b.at - a.at), estate: all.estate, politics: all.politics, ent: all.ent.filter(x => !all.politics.some(y => y.title === x.title) && !/국민의힘|민주당|대통령|국회|장관|의원|정당|특검|선거/.test(x.title)), med: all.med, hira: [...hNotice, ...hPress],
   } as Record<(typeof NEWS_TABS)[number]["key"], News[]>;
 }
 
