@@ -7,9 +7,9 @@ import HospitalRoom from "./HospitalRoom";
 import HomeRoom from "./HomeRoom";
 import { sfx, haptic, burst, pop } from "@/lib/juice";
 import {
-  STAFF, staffCost, staffRate, PROPS, ARTS, PERKS, CORPS, CITIES, PLANETS, REMODEL, WORKER_BRICKS, workerCost, VIP_UNLOCK, HELPER_UNLOCK, vipDrop,
+  STAFF, staffCost, staffRate, PROPS, ARTS, PERKS, CORPS, CITIES, PLANETS, REMODEL, WORKER_BRICKS, workerCost, HELPER_UNLOCK,
   helperTps, helperDur, helperCd, helperUp, PETS, PET_COST, REBIRTH_LV, rebirthGain, canRebirth, OFFLINE_CAP, OFFLINE_RATE, HOMES, SLOTS, YIELD,
-  clickOf, clickCost, comboOf, rateOf, assetsOf, valueOf, milestoneSum, remodelBuff, perkSum, staffMine, fmt, tycoonDept, fresh, HOSP_TIERS, migrateStaff, propBuyFee, propSellFee, artBuyFee, artSellFee, homeBuyFee, homeSellAgent, isCurrent, type Saved, type Slot, type Asset,
+  clickOf, clickCost, comboOf, rateOf, assetsOf, valueOf, milestoneSum, remodelBuff, perkSum, staffMine, fmt, tycoonDept, fresh, HOSP_TIERS, SPACE_TIER, migrateStaff, propBuyFee, propSellFee, artBuyFee, artSellFee, homeBuyFee, homeSellAgent, isCurrent, type Saved, type Slot, type Asset,
 } from "@/lib/tycoon";
 
 const SCENE: Record<string, string> = { wall: "🧱🧱🧱", alley: "🏚️🏪🛵", city: "🏢🏬🏢🏣", river: "🏙️🌉⛵", nightriver: "🌃🌉✨🎆", garden: "🌳⛲🌷🌳" };
@@ -32,7 +32,6 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const [loaded, setLoaded] = useState(false);
   const [welcome, setWelcome] = useState<{ sec: number; earn: number } | null>(null);
   const [season, setSeason] = useState(false);
-  const [vip, setVip] = useState(false);
   const [bagMsg, setBagMsg] = useState("");
   const [helping, setHelping] = useState(0); // 남은 초
   const [scene, setScene] = useState<"hosp" | "home">("hosp");
@@ -69,7 +68,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
     grab(); const id = setInterval(grab, 20000); return () => clearInterval(id);
   }, [loaded]); // eslint-disable-line
 
-  // 1초마다: 매출 · 벽돌 · VIP 손님 · 도우미
+  // 1초마다: 매출 · 벽돌 · 황금 왕진가방 · 도우미
   useEffect(() => {
     if (!loaded) return;
     const id = setInterval(() => {
@@ -77,7 +76,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
       setS(x => ({ ...x, cash: x.cash + r, total: x.total + r, patients: x.patients + r / 30000, bricks: x.props[0] ? x.bricks + x.workers * WORKER_BRICKS : x.bricks }));
       if (r > 0) dirty.current = true;
       if (dirty.current && Date.now() - lastSave.current > 15000) persist(true);
-      if (cur.vipOn && Math.random() < (cur.pet === "par" ? 1.2 : 1) / 90) setVip(true);
+      if (cur.staff[0] > 0 && Math.random() < (cur.pet === "par" ? 1.2 : 1) / 300) { setS(x => ({ ...x, bags: x.bags + 1 })); flash("🧳 황금 왕진가방이 도착했어요! (🐾 특별 탭)"); }
       setHelping(h => { if (h <= 0) return 0; const n = helperTps(cur.helperLv), g = clickOf(cur) * n; setS(x => ({ ...x, cash: x.cash + g, total: x.total + g, patients: x.patients + n })); const el = box.current; if (el) pop(el, 40 + Math.random() * (el.clientWidth - 80), 120 + Math.random() * 80, "+" + fmt(g), "good"); return h - 1; });
       setTick(t => t + 1);
     }, 1000);
@@ -86,7 +85,10 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
     return () => { clearInterval(id); document.removeEventListener("visibilitychange", onHide); window.removeEventListener("pagehide", onHide as any); };
   }, [loaded, mine]); // eslint-disable-line
 
-  const spend = (cost: number, f: (x: Saved) => Saved, msg: string, big = false) => {
+  /** 우주 단계부터 모든 물가는 '해' 단위 (병원 확장 제외) */
+  const sp = (c: number, raw = false) => raw || (ref.current.hosp ?? 0) < SPACE_TIER ? c : Math.max(1e20, c * 1e12);
+  const spend = (cost0: number, f: (x: Saved) => Saved, msg: string, big = false, raw = false) => {
+    const cost = sp(cost0, raw);
     if (ref.current.cash < cost) { flash(`💸 ${fmt(cost - ref.current.cash)}원이 부족해요`); haptic(20); return false; }
     setS(x => ({ ...f(x), cash: x.cash - cost })); flash(msg);
     if (big) { sfx.level(); haptic([20, 30, 40]); burst(box.current, (box.current?.clientWidth ?? 300) / 2, 80, "#F2B705", 26); } else { sfx.tap(); haptic(8); }
@@ -98,18 +100,12 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
     setS(x => ({ ...x, cash: x.cash + g, total: x.total + g, patients: x.patients + 1, bricks: x.bricks + bricks })); sfx.coin(); haptic(6); setTapN(n => n + 1);
     pop(box.current, e.clientX - br.left, e.clientY - br.top, "+" + fmt(g) + (c.m > 1 ? ` ×${c.m}` : ""), "good"); dirty.current = true;
   };
-  const claimVip = () => {
-    const cur = ref.current, reward = Math.max(click * 100, rate * 120), seen = cur.vipSeen + 1, lv = Math.floor(seen / 10), bag = Math.random() * 100 < vipDrop(lv);
-    setVip(false); sfx.level(); haptic([20, 20, 60]); burst(box.current, 160, 60, "#F2B705", 30);
-    setS(x => ({ ...x, cash: x.cash + reward, total: x.total + reward, vipSeen: seen, vipLv: lv, bags: x.bags + (bag ? 1 : 0) }));
-    flash(`💼 VIP 환자 진료! +${fmt(reward)}원${bag ? " · 🧳 황금 왕진가방 획득!" : ""}${lv > cur.vipLv ? ` · VIP 레벨 ${lv}` : ""}`); setTimeout(() => persist(true), 60);
-  };
   const openBag = () => {
     const cur = ref.current; if (!cur.bags) return; const r = Math.random() * 100, rare = 10 * (cur.pet === "gor" ? 1.2 : 1), pill = 40 * (cur.pet === "tur" ? 1.2 : 1);
     let msg = "";
     if (r < rare) { const q = Math.random(), k = q < .6 ? "1" : q < .9 ? "5" : "10"; setS(x => ({ ...x, bags: x.bags - 1, coupons: { ...x.coupons, [k]: (x.coupons[k] ?? 0) + 1 } })); msg = `🎟️ 레어! 직원 레벨 +${k} 쿠폰`; }
     else if (r < rare + pill) { const n = 1 + Math.floor(Math.random() * 3); setS(x => ({ ...x, bags: x.bags - 1, pills: x.pills + n })); msg = `💊 영양제 ${n}개`; }
-    else { const m = Math.max(click * 300, rate * 300); setS(x => ({ ...x, bags: x.bags - 1, cash: x.cash + m, total: x.total + m })); msg = `💰 ${fmt(m)}원`; }
+    else { const m = Math.max(click * 20, rate * 20); setS(x => ({ ...x, bags: x.bags - 1, cash: x.cash + m, total: x.total + m })); msg = `💰 ${fmt(m)}원`; }
     setBagMsg(msg); sfx.level(); setTimeout(() => persist(true), 60);
   };
 
@@ -131,7 +127,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const startHelper = () => { const cur = ref.current, cd = helperCd(cur.helperLv) * 1000; if (Date.now() - cur.helperAt < cd || helping > 0) return; setHelping(helperDur(cur.helperLv)); setS(x => ({ ...x, helperAt: Date.now() + helperDur(x.helperLv) * 1000 })); flash(`🤖 자동 진료 도우미 출동! ${helperDur(cur.helperLv)}초 동안 초당 ${helperTps(cur.helperLv)}회 진료`); };
   const rebirth = () => {
     if (!canRebirth(s)) return; const gain = rebirthGain(s.clickLv, s.hosp ?? 0);
-    if (!confirm(`병원을 매각하면 돈·직원·병원 규모(우주 포함)·부동산·미술품·복지·인수한 것들이 모두 초기화되고, 영구 보너스 +${gain}%p를 받아요. (영양제·펫·쿠폰·VIP·도우미·내 집은 유지)`)) return;
+    if (!confirm(`병원을 매각하면 돈·직원·병원 규모(우주 포함)·부동산·미술품·복지·인수한 것들이 모두 초기화되고, 영구 보너스 +${gain}%p를 받아요. (영양제·펫·쿠폰·도우미·내 집은 유지)`)) return;
     const k = ref.current; const n = fresh({ total: k.total, patients: k.patients, pills: k.pills, pets: k.pets, pet: k.pet, coupons: k.coupons, vipOn: k.vipOn, vipLv: k.vipLv, vipSeen: k.vipSeen, helperOn: k.helperOn, helperLv: k.helperLv, rebirths: k.rebirths + 1, rebirthBonus: k.rebirthBonus + gain, home: k.home, items: k.items });
     setS(n); ref.current = n; flash(`🌅 환생 완료! 영구 보너스 ${n.rebirthBonus}%`); sfx.record(); setTimeout(() => persist(true), 60);
   };
@@ -142,7 +138,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
     else spend(c, x => ({ ...x, home: i }), `🏠 ${h.area} ${h.name}(으)로 이사!`, true); };
   const buySlot = (sl: Slot) => { const t = s.items[sl.key] ?? 0, nx = sl.tiers[t]; if (nx) spend(nx.price, x => ({ ...x, items: { ...x.items, [sl.key]: t + 1 } }), `${nx.icon} ${nx.name} 들였어요`, t + 1 === sl.tiers.length); };
 
-  const Btn = ({ cost, onClick, label = "구매" }: { cost: number; onClick: () => void; label?: string }) => <button type="button" className={"btn" + (s.cash < cost ? " ghost" : "")} onClick={onClick}>{label}<br /><small>{fmt(cost)}</small></button>;
+  const Btn = ({ cost: c0, onClick, label = "구매", raw = false }: { cost: number; onClick: () => void; label?: string; raw?: boolean }) => { const cost = raw || (s.hosp ?? 0) < SPACE_TIER ? c0 : Math.max(1e20, c0 * 1e12); return <button type="button" className={"btn" + (s.cash < cost ? " ghost" : "")} onClick={onClick}>{label}<br /><small>{fmt(cost)}</small></button>; };
   const assets = assetsOf(s), ms = milestoneSum(s), lv30 = s.staff.some(l => l >= 30);
   const cdLeft = Math.max(0, Math.ceil((s.helperAt + helperCd(s.helperLv) * 1000 - Date.now()) / 1000));
   const nextRemodel = REMODEL[s.remodel];
@@ -157,6 +153,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           <div key={tapN} className={"ty-hud-cash" + (tapN ? " bump" : "")}>💰 {fmt(s.cash)}원</div>
           <div className="ty-hud-rates"><span style={{ color: combo.c }}>+{fmt(click * combo.m)}원/클릭{combo.m > 1 ? ` ×${combo.m}` : ""}</span><span>+{showRate(rate)}원/초</span></div>
         </div>
+        {(s.hosp ?? 0) >= SPACE_TIER && <div className="ty-space">🚀 우주 물가 적용 중 · 직원·집·차·건물·인수 모든 가격이 <b>해</b> 단위예요</div>}
         <div className="ty-rate" style={{ textAlign: "center" }}>총자산 {fmt(assets)}원{ms ? ` · 직원 보너스 +${fmt(ms)}%` : ""}{s.rebirthBonus ? ` · 환생 +${s.rebirthBonus}%` : ""}{s.pills ? ` · 💊${s.pills}` : ""}</div>
         <div className="ty-scene-tabs">
           <button type="button" className={scene === "hosp" ? "on" : ""} onClick={() => { setScene("hosp"); setTab("doc"); }}>🏥 우리 병원</button>
@@ -166,7 +163,6 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
         {scene === "hosp" && <div className="ty-combo"><span style={{ background: combo.c }} />👆 병원을 탭하면 진료 · 1초에 5번↑ ×1.2 · 8번↑ ×1.3 · 11번↑ ×1.4 · 14번↑ ×1.5{helping > 0 ? ` · 🤖 도우미 진료 중 ${helping}초` : ""}</div>}
         {scene === "hosp" && !s.staff[0] && s.cash >= 1e4 && <button type="button" className="ty-hint" onClick={() => setTab("staff")}>💡 진료만으로는 조금씩 벌려요. <b>👥 직원</b>을 고용하면 가만히 있어도 돈이 쌓여요 →</button>}
         {scene === "hosp" && s.staff[0] > 0 && rate < click && s.cash > clickCost(s.clickLv) * 50 && <button type="button" className="ty-hint" onClick={() => setTab("doc")}>💡 돈이 넉넉해요! <b>👨‍⚕️ 원장</b> 레벨을 올리면 한 번 탭할 때 버는 돈이 확 늘어요 →</button>}
-        {vip && <button type="button" className="ty-vip" onClick={claimVip}>💼 VIP 환자 도착! <small>탭하면 큰 보상 + 가끔 황금 왕진가방</small></button>}
         {talk !== null && <div className="ty-welcome" onClick={() => setTalk(null)}><div className="ty-welcome-card ty-talk">
           <div className="big">{STAFF[talk].icon} {STAFF[talk].name} 입사!</div>
           <div className="ty-say"><b>원장</b> “{STAFF[talk].ask}”</div>
@@ -192,7 +188,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           {(() => { const h = s.hosp ?? 0, nx = HOSP_TIERS[h + 1]; return <div className={"ty-row" + (nx ? " next" : " cur")}>
             <span className="def-ico" style={{ background: "var(--scrub-soft)" }}>🏥</span>
             <div style={{ flex: 1, minWidth: 0 }}><b>{HOSP_TIERS[h].name}</b> <span className="tag">{h + 1}/{HOSP_TIERS.length}</span><div className="muted" style={{ fontSize: 12 }}>{nx ? `다음: ${nx.name} (${nx.desc}) · 병원 확장할 때마다 전체 초당 매출 +30%` : "최고 규모 달성! 🎉"}</div></div>
-            {nx && <div className="ty-btns"><Btn cost={nx.price} onClick={() => spend(nx.price, x => ({ ...x, hosp: (x.hosp ?? 0) + 1 }), `🏥 ${nx.name}(으)로 확장!`, true)} label="확장" /></div>}
+            {nx && <div className="ty-btns"><Btn raw cost={nx.price} onClick={() => spend(nx.price, x => ({ ...x, hosp: (x.hosp ?? 0) + 1 }), `🏥 ${nx.name}(으)로 확장!${(s.hosp ?? 0) + 1 === SPACE_TIER ? " 🚀 이제부터 모든 물가는 해 단위!" : ""}`, true, true)} label="확장" /></div>}
           </div>; })()}
           <div className="ty-row next">
             <span className="def-ico" style={{ background: "var(--scrub-soft)" }}>👨‍⚕️</span>
@@ -259,11 +255,6 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           </div>; })}
 
         {tab === "special" && <>
-          <div className={"ty-row" + (s.vipOn ? " cur" : " next")}>
-            <span className="def-ico">💼</span>
-            <div style={{ flex: 1 }}><b>VIP 환자</b> {s.vipOn && <span className="tag">Lv{s.vipLv} · {s.vipSeen}명 진료</span>}<div className="muted" style={{ fontSize: 12 }}>가끔 찾아와요. 탭하면 큰 보상, {vipDrop(s.vipLv)}% 확률로 🧳 황금 왕진가방(영양제·돈·레벨업 쿠폰). 10명 진료할 때마다 레벨업(가방 확률 +1%)</div></div>
-            {!s.vipOn && <div className="ty-btns"><Btn cost={VIP_UNLOCK} onClick={() => spend(VIP_UNLOCK, x => ({ ...x, vipOn: true }), "💼 VIP 환자를 받기 시작했어요!", true)} label="오픈" /></div>}
-          </div>
           {s.bags > 0 && <div className="ty-row next"><span className="def-ico">🧳</span><div style={{ flex: 1 }}><b>황금 왕진가방 {s.bags}개</b><div className="muted" style={{ fontSize: 12 }}>{bagMsg || "열어보세요!"}</div></div><div className="ty-btns"><button type="button" className="btn" onClick={openBag}>열기</button></div></div>}
           <div className={"ty-row" + (s.helperOn ? " cur" : " next")}>
             <span className="def-ico">🤖</span>
@@ -277,7 +268,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
             return <div key={p.key} className={"ty-row" + (on ? " cur" : "")}><span className="def-ico" style={{ background: on ? "var(--scrub-soft)" : undefined }}>{p.icon}</span>
               <div style={{ flex: 1 }}><b>{p.name}</b> {on && <span className="tag">함께하는 중</span>}<div className="muted" style={{ fontSize: 12 }}>{p.desc}</div></div>
               <div className="ty-btns">{own ? !on && <button type="button" className="btn ghost" onClick={() => { setS(x => ({ ...x, pet: p.key })); setTimeout(() => persist(true), 60); }}>데려가기</button> : <button type="button" className={"btn" + (s.pills < PET_COST ? " ghost" : "")} disabled={s.pills < PET_COST} onClick={() => { setS(x => ({ ...x, pills: x.pills - PET_COST, pets: [...x.pets, p.key], pet: p.key })); flash(`${p.icon} ${p.name} 입양!`); setTimeout(() => persist(true), 60); }}>입양<br /><small>💊{PET_COST}</small></button>}</div></div>; })}
-          <div className="muted" style={{ fontSize: 12 }}>💊 영양제는 황금 왕진가방에서 나와요. 🎟️ 레벨업 쿠폰은 👥 직원 탭에서 쓸 수 있어요.</div>
+          <div className="muted" style={{ fontSize: 12 }}>💊 영양제는 황금 왕진가방(직원이 있으면 가끔 저절로 도착)에서 나와요. 🎟️ 레벨업 쿠폰은 👥 직원 탭에서 쓸 수 있어요.</div>
         </>}
 
         {tab === "home" && HOMES.map((h, i) => <div key={i} className={"ty-row" + (i === s.home ? " cur" : i < s.home ? " past" : "")}>

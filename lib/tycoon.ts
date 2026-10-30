@@ -99,7 +99,7 @@ export const PLANETS: Asset[] = [
 ].map(([name, price]) => ({ name: `${name} 우주병원`, icon: "🪐", price: price as number, grow: 0 }));
 
 /* ---------- 특별 손님 · 도우미 · 펫 · 환생 ---------- */
-export const VIP_UNLOCK = 1e8, HELPER_UNLOCK = 1e8;
+export const HELPER_UNLOCK = 1e8;
 export const vipDrop = (lv: number) => Math.min(100, 30 + lv); // 황금 왕진가방 드랍률 %
 export const helperTps = (lv: number) => 9 + lv, helperDur = (lv: number) => 9 + lv, helperCd = (lv: number) => Math.max(10, 310 - 10 * Math.max(1, lv));
 export const helperUp = (lv: number) => Math.max(1, Math.round((lv + 1) / 2)); // 💊 비용
@@ -196,10 +196,10 @@ export const HOSP_TIERS = [
   { name: "서울병원", price: 1e12, desc: "서울 도심 대형병원" },
   { name: "지방 대학병원", price: 1e13, desc: "의과대학 부속병원" },
   { name: "수도권 대학병원", price: 1e14, desc: "한강이 보이는 초대형 대학병원" },
-  { name: "🌕 달 기지 의원", price: 1e16, desc: "지구가 창밖에 뜨는 첫 우주 의원" },
-  { name: "🔴 화성 종합병원", price: 1e18, desc: "붉은 사막 위 돔 병원 · 화성 가즈아!" },
-  { name: "🪐 유로파 메디컬센터", price: 1e20, desc: "목성이 하늘을 가득 채우는 얼음 위성 병원" },
-  { name: "🛰️ 궤도정거장 대학병원", price: 1e22, desc: "무중력 수술실이 있는 우주정거장" },
+  { name: "🌕 달 기지 의원", price: 1e20, desc: "지구가 창밖에 뜨는 첫 우주 의원 · 여기부터 모든 물가가 해 단위!" },
+  { name: "🔴 화성 종합병원", price: 1e21, desc: "붉은 사막 위 돔 병원 · 화성 가즈아!" },
+  { name: "🪐 유로파 메디컬센터", price: 1e22, desc: "목성이 하늘을 가득 채우는 얼음 위성 병원" },
+  { name: "🛰️ 궤도정거장 대학병원", price: 1e23, desc: "무중력 수술실이 있는 우주정거장" },
   { name: "🌌 은하연합 중앙병원", price: 1e24, desc: "온 은하의 환자가 찾아오는 최종 병원" },
 ];
 /** 우주 단계 시작 인덱스 */

@@ -1259,3 +1259,4 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
   .xg-item.on{border-color:#8E7BE0}
 }
 .cats.nw-tabs{flex-wrap:wrap;overflow:visible;margin:0;padding-left:0;padding-right:0}
+.ty-space{text-align:center;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(90deg,#1B1F4A,#5B45B8);border-radius:10px;padding:6px 10px;margin:4px 0}
