@@ -16,7 +16,7 @@ export default function XrayGuide() {
           <div className="xg-gh">{p}<span>{list.filter(x => x.part === p).length}</span></div>
           {list.filter(x => x.part === p).map(x => { const on = open === x.name || !!k; return (
             <div key={x.name} className={"xg-item" + (on ? " on" : "")}>
-              <button type="button" className="xg-head" onClick={() => setOpen(open === x.name ? null : x.name)}>
+              <button type="button" className="xg-head v2" onClick={() => setOpen(open === x.name ? null : x.name)}>
                 <b>{x.name} <small>{x.en}</small></b><span className="xg-arr">{on ? "▲" : "▼"}</span>
                 <span className="xg-views">{x.views.map(v => <i key={v.v}>{v.v}</i>)}</span>
               </button>
