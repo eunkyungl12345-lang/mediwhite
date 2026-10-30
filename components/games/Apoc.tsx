@@ -13,7 +13,7 @@ const UNITS: Record<UKind, { name: string; icon: string; cost: number; hp: numbe
   wall: { name: "바리케이드", icon: "🧱", cost: 30, hp: 420, range: 0, dmg: 0, cd: 0, desc: "병상·휠체어로 길막", color: "#8C6A3D" },
   doctor: { name: "의사", icon: "🩺", cost: 90, hp: 140, range: 4.5, dmg: 42, cd: 1.4, desc: "멀리서 한 방이 큰 저격", color: "#5FA8E8" },
   xray: { name: "방사선사", icon: "☢️", cost: 110, hp: 130, range: 4, dmg: 34, cd: 1.5, desc: "X선 빔: 일직선 위 좀비 모두 관통", color: "#6E5BB8" },
-  ortho: { name: "물리치료사", icon: "💪", cost: 80, hp: 280, range: 1.3, dmg: 48, cd: 1.1, desc: "근접 강타로 주변 좀비 광역 타격", color: "#2E7D6B" },
+  ortho: { name: "정형외과", icon: "🔨", cost: 80, hp: 280, range: 1.3, dmg: 48, cd: 1.1, desc: "망치로 주변 좀비 광역 타격", color: "#2E7D6B" },
   ems: { name: "응급구조사", icon: "⚡", cost: 120, hp: 150, range: 3.5, dmg: 30, cd: 1.6, desc: "제세동 번개가 3마리 연쇄", color: "#F2A900" },
   anes: { name: "마취과", icon: "💨", cost: 100, hp: 150, range: 2, dmg: 6, cd: 0, desc: "마취 가스: 주변 좀비 50% 느리게", color: "#8C7AC9" },
   lab: { name: "임상병리사", icon: "🧪", cost: 110, hp: 130, range: 1.8, dmg: 0, cd: 0, desc: "치료제 분석: 주변 의료진·병원 치료 (초당 12)", color: "#7ED69B" },
