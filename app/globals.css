@@ -991,7 +991,7 @@ body:has(.dock.open) main{padding-bottom:calc(min(68vh,620px) + 90px)}
 .quiz-review{display:grid;gap:4px}
 
 /* 병원 키우기: 병원 내부 */
-.hr-wrap{overflow-x:auto;overflow-y:hidden;border-radius:14px;border:1px solid var(--line);background:#222;-webkit-overflow-scrolling:touch;cursor:pointer}
+.hr-wrap{overflow:hidden;border-radius:14px;border:1px solid var(--line);background:#222;-webkit-overflow-scrolling:touch;cursor:pointer}
 .hr-svg{display:block;height:auto}
 .hr-svg *{transform-box:fill-box}
 .hr-flicker{animation:hr-flicker 4s steps(1) infinite}

@@ -7,6 +7,8 @@ const FEEDS: Record<string, { url: string; source: string }[]> = {
   estate: [{ url: "https://www.hankyung.com/feed/realestate", source: "한국경제" }],
   it: [{ url: "https://www.hankyung.com/feed/it", source: "한국경제" }],
   coin: [{ url: "https://www.tokenpost.kr/rss", source: "토큰포스트" }, { url: "https://www.blockmedia.co.kr/feed", source: "블록미디어" }],
+  politics: [{ url: "https://www.yna.co.kr/rss/politics.xml", source: "연합뉴스" }, { url: "https://www.hankyung.com/feed/politics", source: "한국경제" }],
+  ent: [{ url: "https://www.yna.co.kr/rss/entertainment.xml", source: "연합뉴스" }, { url: "https://www.hankyung.com/feed/entertainment", source: "한국경제" }],
   med: [{ url: "https://www.docdocdoc.co.kr/rss/allArticle.xml", source: "청년의사" }, { url: "https://www.yna.co.kr/rss/health.xml", source: "연합뉴스" }],
 };
 const un = (s: string) => s.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<[^>]+>/g, "").trim();
@@ -36,7 +38,7 @@ async function hira(pgmid: string, label: string): Promise<News[]> {
 const uniq = (a: News[]) => { const seen = new Set<string>(); return a.filter(x => { const k = x.title.slice(0, 18); if (seen.has(k)) return false; seen.add(k); return true; }); };
 export const NEWS_TABS = [
   { key: "global", name: "🌙 간밤 미국증시" }, { key: "stock", name: "📈 주식" }, { key: "macro", name: "🏦 거시경제" },
-  { key: "coin", name: "🪙 코인" }, { key: "estate", name: "🏠 부동산" }, { key: "med", name: "🏥 의료·병원" }, { key: "hira", name: "📋 심평원" },
+  { key: "coin", name: "🪙 코인" }, { key: "estate", name: "🏠 부동산" }, { key: "politics", name: "🏛️ 정치" }, { key: "ent", name: "🎬 연예" }, { key: "med", name: "🏥 의료·병원" }, { key: "hira", name: "📋 심평원" },
 ] as const;
 export async function getNews() {
   const all = Object.fromEntries(await Promise.all(Object.entries(FEEDS).map(async ([k, fs]) => [k, uniq((await Promise.all(fs.map(f => feed(f.url, f.source)))).flat().sort((a, b) => b.at - a.at))]))) as Record<string, News[]>;
@@ -47,7 +49,7 @@ export async function getNews() {
   const global = uniq([...all.global.filter(x => usRe.test(x.title)), ...pool.filter(x => usRe.test(x.title))]).sort((a, b) => b.at - a.at);
   return {
     global: global.length >= 4 ? global : uniq([...global, ...all.global]),
-    stock: all.stock, macro: all.macro, coin: uniq([...all.coin, ...pool.filter(x => coinRe.test(x.title))]).sort((a, b) => b.at - a.at), estate: all.estate, med: all.med, hira: [...hNotice, ...hPress],
+    stock: all.stock, macro: all.macro, coin: uniq([...all.coin, ...pool.filter(x => coinRe.test(x.title))]).sort((a, b) => b.at - a.at), estate: all.estate, politics: all.politics, ent: all.ent, med: all.med, hira: [...hNotice, ...hPress],
   } as Record<(typeof NEWS_TABS)[number]["key"], News[]>;
 }
 

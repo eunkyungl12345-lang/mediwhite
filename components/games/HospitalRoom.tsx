@@ -60,13 +60,15 @@ const plant = (x: number, y: number, s = 1) => <g key={"p" + x} transform={`tran
 export default function HospitalRoom({ tier, staff, clickLv }: { tier: number; staff: number[]; clickLv: number }) {
   const t = Math.max(0, Math.min(8, tier)), P = PAL[t];
   const hired = staff.map((lv, i) => ({ lv, i })).filter(x => x.lv > 0);
-  const H = 300, FY = 205, W = Math.max(520, 250 + (hired.length + 1) * 92);
+  const H = 300, FY = 205, W = 520, CX = 260;
+  /** 직원 자리: 원장 양옆에서 시작해 대각선 뒤로 V자 (뒤로 갈수록 작게) */
+  const slot = (k: number) => { const row = Math.floor(k / 2), side = k % 2 ? 1 : -1; return { row, x: CX + side * (64 + row * 26), y: H - 12 - row * 13, s: 0.9 - row * 0.065 }; };
   const winW = t >= 6 ? 150 : t >= 4 ? 96 : 76, winH = t >= 6 ? 120 : 82, winY = t >= 6 ? 34 : 50;
   const nW = Math.max(P.wins, Math.floor(W / 260)), wins = Array.from({ length: nW }, (_, i) => 200 + i * ((W - 250) / nW));
   const nPat = [2, 3, 3, 4, 4, 5, 6, 7, 8][t];
   const name = ["메디화 트의원", "메디화이트 보건의원", "메디화이트의원", "메디화이트 의원", "메디화이트 강남의원", "메디화이트 병원", "메디화이트 서울병원", "메디화이트 대학교병원", "메디화이트 대학교병원 본원"][t];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="hr-svg" style={{ width: W * 1.15, maxWidth: "none" }} aria-label={HOSP_TIERS[t].name}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="hr-svg" style={{ width: "100%" }} aria-label={HOSP_TIERS[t].name}>
       <defs>
         <linearGradient id={"glass" + t} x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".35" /><stop offset=".5" stopColor="#fff" stopOpacity="0" /><stop offset="1" stopColor="#fff" stopOpacity=".18" /></linearGradient>
         <linearGradient id={"flr" + t} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={P.floor2} /><stop offset="1" stopColor={P.floor} /></linearGradient>
@@ -144,15 +146,15 @@ export default function HospitalRoom({ tier, staff, clickLv }: { tier: number; s
       {Array.from({ length: nPat }, (_, i) => <g key={i} className="hr-pat" style={{ animationDelay: `${i * (14 / nPat)}s`, ["--far" as any]: `${Math.min(W - 120, 150 + (i % 4) * 90)}px` }}>
         <g transform={`translate(0 ${FY + 18}) scale(.5)`}><Person o={PATIENTS[i % PATIENTS.length]} pose="walk" /></g></g>)}
       {/* 원장(나) + 직원 (한 직종당 한 명) */}
-      <g transform={`translate(${W > 600 ? 300 : 280} ${H - 10})`}>
+      {hired.map((h, k) => ({ ...h, ...slot(k) })).sort((a, b) => b.row - a.row).map(({ i, lv, x, y, s: sc }, n) => <g key={i} transform={`translate(${x} ${y}) scale(${sc})`}>
+        <g className="hr-idle" style={{ animationDelay: `${(n * .37) % 2}s` }}><Person o={STAFF_OUTFIT[i]} /></g>
+        <text x="0" y="9" fontSize="8.5" textAnchor="middle" fill={t === 0 ? "#E9E0C8" : "#2B2420"} fontFamily="sans-serif" fontWeight="700">{STAFF[i].name} Lv{lv}</text>
+      </g>)}
+      <g transform={`translate(${CX} ${H - 8})`}>
         <g className={t <= 1 ? "hr-beg" : undefined}><Person o={bossOutfit(t)} pose={t <= 1 ? "beg" : "wave"} /></g>
         <g transform="translate(-34 -150)"><rect x="0" y="0" width={t <= 1 ? 74 : 62} height="18" rx="9" fill="#fff" stroke="#2B2420" strokeWidth=".8" /><path d="M30 18 l5 6 l3 -6" fill="#fff" stroke="#2B2420" strokeWidth=".8" /><text x={t <= 1 ? 37 : 31} y="12.5" fontSize="8.5" textAnchor="middle" fill="#2B2420" fontFamily="sans-serif" fontWeight="700">{t <= 1 ? "한 푼만 줍쇼~" : "어서 오세요!"}</text></g>
         <text x="0" y="8" fontSize="8" textAnchor="middle" fill={t === 0 ? "#E9E0C8" : "#2B2420"} fontFamily="sans-serif" fontWeight="700">원장 Lv{clickLv}</text>
       </g>
-      {hired.map(({ i, lv }, k) => <g key={i} transform={`translate(${(W > 600 ? 300 : 280) + (k + 1) * 92} ${H - 10})`}>
-        <g className="hr-idle" style={{ animationDelay: `${(k * .37) % 2}s` }}><Person o={STAFF_OUTFIT[i]} /></g>
-        <text x="0" y="8" fontSize="7.5" textAnchor="middle" fill={t === 0 ? "#E9E0C8" : "#2B2420"} fontFamily="sans-serif" fontWeight="700">{STAFF[i].name} Lv{lv}</text>
-      </g>)}
-    </svg>
+</svg>
   );
 }
