@@ -108,7 +108,7 @@ export const PETS = [
   { key: "cat", name: "행운의 병원 고양이", icon: "🐈", desc: "부동산·미술품 값 오르는 속도 +20%" },
   { key: "ham", name: "똘똘한 햄스터", icon: "🐹", desc: "접속 안 한 동안 매출 +50%" },
   { key: "tur", name: "행운의 거북이", icon: "🐢", desc: "💊 영양제 나올 확률 +20%" },
-  { key: "par", name: "수다쟁이 앵무새", icon: "🦜", desc: "VIP 환자가 더 자주 와요 (+20%)" },
+  { key: "par", name: "수다쟁이 앵무새", icon: "🦜", desc: "황금 왕진가방이 더 자주 와요 (+20%)" },
   { key: "gor", name: "특별한 고릴라", icon: "🦍", desc: "레어템(레벨업 쿠폰) 확률 +20%" },
 ] as const;
 export type PetKey = typeof PETS[number]["key"];
