@@ -28,8 +28,8 @@ export type TopicKey = typeof TOPICS[number]["key"];
 /** 썸 탭 글 (메인 게시판엔 안 보임) */
 export const SSUM_CAT = "썸";
 export const SSUM_TOPICS = [
-  { key: "confess", name: "공개고백", icon: "💌", hint: "초성으로 마음을 전해요 (예: ㄱㅁㅈ 쌤, 늘 고마워요). 실명·병원명·병동·층은 X — 당사자가 원하면 바로 내려가요 💘" },
-  { key: "moment", name: "오늘 설렌 순간", icon: "💓", hint: "사람을 특정하지 않는 설렘 썰 (병원명·실명·직함 X)" },
+  { key: "confess", name: "공개고백", icon: "💌", hint: "초성으로 마음을 전해요 (예: ㄱㅁㅈ 쌤, 늘 고마워요). 실명·병원명(초성 포함)·병동·층은 절대 금지! 💘" },
+  { key: "moment", name: "오늘 설렌 순간", icon: "💓", hint: "사람을 특정하지 않는 설렘 썰 (병원명·실명·병동 X)" },
   { key: "advice", name: "썸 상담소", icon: "💭", hint: "\"이 정도면 저한테 관심 있는 걸까요?\"" },
 ] as const;
 export const topicOf = (k: string | null | undefined) => (TOPICS as readonly { key: string; name: string; icon: string; hint: string }[]).concat(SSUM_TOPICS).find(t => t.key === k) ?? TOPICS[0];

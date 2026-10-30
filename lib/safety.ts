@@ -24,5 +24,12 @@ export const REPORT_REASONS = [
 ] as const;
 
 /** 썸류센터 글: 병원명·병동·층·부서처럼 '어디의 누구'를 좁히는 위치 정보 감지 (초성과 합쳐지면 특정되기 쉬워서) */
-const PLACE = /([가-힣A-Za-z]{2,}(병원|의원|의료원|메디컬|센터))|(\d+\s?(병동|층))|([가-힣]{1,4}병동)|(응급실|수술실|중환자실|ICU|NICU|외래|병리과|영상의학과|재활의학과|내과|외과|정형외과|신경과|소아과|산부인과)\s?(에|의|에서)?\s?[ㄱ-ㅎ]{2,3}/;
-export function placeMention(text: string): string | null { const m = text.match(PLACE); return m ? m[0] : null; }
+const PLACE = /(([가-힣A-Za-zㄱ-ㅎ]{1,15}\s?(병원|의원|의료원|메디컬센터?|클리닉|한방병원|치과|요양병원))|(\d+\s?(병동|층|호|인실))|([가-힣ㄱ-ㅎ]{1,4}병동)|((응급실|수술실|중환자실|ICU|NICU|외래|병리과|영상의학과|재활의학과|내과|외과|정형외과|신경과|소아과|산부인과|원무과|약제과)\s?(에|의|에서)?\s?[ㄱ-ㅎ]{1,3}))/i;
+
+export function placeMention(text: string): string | null {
+  const m = text.match(PLACE);
+  if (!m) return null;
+  const val = m[0];
+  if (val.includes("썸류센터") || val.includes("메디화이트")) return null;
+  return val;
+}
