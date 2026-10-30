@@ -13,12 +13,42 @@ type Tab = "lounge" | "me" | "box";
 const TABS: [Tab, string][] = [["lounge", "💘 라운지"], ["me", "🙋 셀소"], ["box", "💬 매칭·채팅"]];
 
 function Card({ p, head, foot, see }: { p: any; head: React.ReactNode; foot?: React.ReactNode; see?: boolean }) {
-  const rows: [string, any][] = [["성별", p.gender ? (p.gender === "남" ? "🙋‍♂️ 남" : "🙋‍♀️ 여") : null], ["나이", p.age ? `${p.age}세` : null], ["지역", p.region], ["키", p.height ? `${p.height}cm` : null], ["성격", p.personality], ["취미", p.hobby], ["연애 스타일", p.style], ["원하는 상대", p.want]];
+  const chips: { icon?: string; label: string; text: string }[] = [];
+  if (p.age) chips.push({ label: "나이", text: `${p.age}세` });
+  if (p.gender) chips.push({ label: "성별", text: p.gender === "남" ? "🙋‍♂️ 남" : "🙋‍♀️ 여" });
+  if (p.region) chips.push({ icon: "📍", label: "지역", text: p.region });
+  if (p.height) chips.push({ label: "키", text: `${p.height}cm` });
+  if (p.personality) chips.push({ icon: "✨", label: "성격", text: p.personality });
+  if (p.hobby) chips.push({ icon: "🎯", label: "취미", text: p.hobby });
+  if (p.style) chips.push({ icon: "💕", label: "스타일", text: p.style });
+  if (p.want) chips.push({ icon: "🔍", label: "이상형", text: p.want });
+
   return (
     <div className="ss-card">
-      {p.photo && <div className="ss-pic">{see || p.photo_public ? <img src={p.photo} alt="" loading="lazy" /> : <><img src={p.photo_blur ?? ""} alt="" className="blur" /><span>💗 서로 관심이면 선명하게 보여요</span></>}</div>}
+      {p.photo && (
+        <div className="ss-pic">
+          {see || p.photo_public ? (
+            <img src={p.photo} alt="" loading="lazy" />
+          ) : (
+            <>
+              <img src={p.photo_blur ?? ""} alt="" className="blur" />
+              <span>💗 서로 관심이면 선명하게 보여요</span>
+            </>
+          )}
+        </div>
+      )}
       <div className="ss-card-head">{head}</div>
-      <dl>{rows.filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      {chips.length > 0 && (
+        <div className="ss-chips">
+          {chips.map((c, i) => (
+            <span key={i} className="ss-chip">
+              {c.icon && <span className="ss-chip-ico">{c.icon}</span>}
+              <b className="ss-chip-lbl">{c.label}</b>
+              <span className="ss-chip-val">{c.text}</span>
+            </span>
+          ))}
+        </div>
+      )}
       {p.intro && <p className="ss-intro">“{p.intro}”</p>}
       {foot && <div className="ss-card-foot">{foot}</div>}
     </div>
@@ -112,8 +142,18 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
       <div className="ss-photo-guide" style={{ background: "rgba(244, 143, 177, 0.08)", border: "1px dashed rgba(244, 143, 177, 0.35)", borderRadius: 12, padding: "10px 14px", fontSize: 12, lineHeight: 1.5, color: "var(--ink)", margin: "4px 0" }}>
         📸 <b>사진 올리기 꿀팁</b>: 얼굴 노출이 부담스럽다면 <b>가운 착샷, 사원증(이름 가림), 뒷모습, 취미·반려동물 사진</b>도 인기 만점이에요! 서로 호감이 맺어지기 전까진 흐리게(블러) 안전하게 보호돼요.
       </div>
-      <details className="card ss-details" open={!mine}><summary><b>{mine ? "✏️ 내 셀소 카드 수정" : "🙋 셀소 카드 만들기 (셀프소개팅)"}</b></summary><ProfileForm p={mine} /></details>
-      <details className="card ss-details"><summary><b>🤝 지인(친구·동료) 대신 소개하기</b> <span className="muted">— 소개할 분의 동의 필수</span></summary><IntroForm /></details>
+      <details className="card ss-details" open={false}>
+        <summary>
+          <b>{mine ? "✏️ 내 셀소 카드 수정하기" : "✨ 1분 만에 내 셀소 카드 만들기 ➕"}</b>
+        </summary>
+        <ProfileForm p={mine} />
+      </details>
+      <details className="card ss-details" open={false}>
+        <summary>
+          <b>🤝 지인(친구·동료) 대신 소개하기</b> <span className="muted">— 동의 필수</span>
+        </summary>
+        <IntroForm />
+      </details>
       {mine && <Card p={mine} see head={<><b>{display(s.dept, s.nickname)}</b><span className="muted" style={{ fontSize: 12 }}>내 카드</span><span className="tag">{mine.visible ? "공개 중" : "비공개"}</span></>} />}
       <GFilter t="me" />
       <div className="ss-cards">
@@ -124,7 +164,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         ))}
         {(intros ?? []).map((p: any) => (
           <Card key={"intro-" + p.id} p={p} see={admin || p.author_id === s.id}
-            head={<><span className="tag">{p.dept || "지인"}</span><span className="muted" style={{ fontSize: 12 }}>{p.author ? `${display(p.author.dept, p.author.nickname)}님의 지인` : ""}</span></>}
+            head={<><span className="tag" style={{ background: "rgba(244, 143, 177, 0.2)", color: "#D81B60", fontWeight: 700 }}>🤝 동료 추천</span><span className="tag">{p.dept || "지인"}</span><span className="muted" style={{ fontSize: 12 }}>{p.author ? `${display(p.author.dept, p.author.nickname)}님의 지인` : ""}</span></>}
             foot={<>{p.author_id !== s.id && <LikeButton kind="intro" target={String(p.id)} liked={liked("intro", String(p.id))} label="소개받고 싶어요" dm={p.author_id} />}{(admin || p.author_id === s.id) && <form action={deleteIntro.bind(null, p.id)}><button className="link">삭제</button></form>}</>} />
         ))}
         {!profs?.length && !intros?.length && <div className="muted" style={{ gridColumn: "1/-1", textAlign: "center", padding: "30px 0" }}>아직 공개된 카드가 없어요. 첫 카드를 올려보세요!</div>}
