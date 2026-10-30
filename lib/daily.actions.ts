@@ -39,7 +39,7 @@ export async function wordleGuess(raw: string): Promise<WordleState> {
     if (st.won && n <= 3 && !/^zz_/.test(s.username)) await gameEvent(`${who(s)}님이 오늘의 메디워들을 ${n}번 만에 맞혔어요! 🟩`);
   }
   await db().from("daily_plays").upsert({ user_id: s.id, game: "wordle", day, attempts: st.guesses.length, best: st.won ? 7 - st.guesses.length : 0, data: st, updated_at: new Date().toISOString() });
-  if (st.done) revalidatePath("/rank");
+  if (st.done) { await missionAll(s.id, day); revalidatePath("/rank"); }
   return wordleView(day, st);
 }
 
@@ -71,8 +71,24 @@ export async function ivSubmit(score: number): Promise<IvState & { error?: strin
   if ((cur?.attempts ?? 0) >= IV_TRIES) return { ...(await ivLoad()), error: "오늘 도전 3번을 다 썼어요. 자정에 다시 열려요!" };
   const best = Math.max(Number(cur?.best ?? 0), v);
   await db().from("daily_plays").upsert({ user_id: s.id, game: "iv", day, attempts: (cur?.attempts ?? 0) + 1, best, data: {}, updated_at: new Date().toISOString() });
-  const xp = await awardXp(s.id, 30, `iv_play:${day}`, "daily");
+  const xp = (await awardXp(s.id, 30, `iv_play:${day}`, "daily")) + await missionAll(s.id, day);
   const st = await ivLoad();
   if (st.myRank === 1 && v === best && st.total >= 3 && !/^zz_/.test(s.username)) await gameEvent(`🎯 ${who(s)}님이 원샷원킬 IV 오늘 1등! (${v.toLocaleString()}점)`);
   return { ...st, xp };
+}
+
+/* ---------- 오늘의 데일리 미션 ---------- */
+const MISSION_XP = 30, MISSION_ALL = 100;
+/** 룰렛·퀴즈처럼 기록이 따로 없는 게임의 '오늘 했음' 표시 + 미션 XP */
+export async function missionMark(game: "roulette" | "quiz") {
+  const s = await me(); const day = kstDay();
+  const { data: cur } = await db().from("daily_plays").select("attempts").eq("user_id", s.id).eq("game", game).eq("day", day).maybeSingle();
+  await db().from("daily_plays").upsert({ user_id: s.id, game, day, attempts: (cur?.attempts ?? 0) + 1, best: 1, data: {}, updated_at: new Date().toISOString() });
+  let xp = cur ? 0 : await awardXp(s.id, MISSION_XP, `mission:${game}:${day}`, "daily");
+  xp += await missionAll(s.id, day);
+  return xp;
+}
+async function missionAll(uid: string, day: string) {
+  const { data } = await db().from("daily_plays").select("game").eq("user_id", uid).eq("day", day).in("game", ["wordle", "iv", "roulette", "quiz"]);
+  return (data ?? []).length >= 4 ? await awardXp(uid, MISSION_ALL, `mission_all:${day}`, "daily") : 0;
 }

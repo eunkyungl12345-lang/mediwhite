@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { questOnce } from "@/lib/actions";
+import { missionMark } from "@/lib/daily.actions";
 
 export default function Roulette({ title = "커피 내기 룰렛", hint = "이름을 쉼표로 구분해서 넣고 돌리세요.", initial = "총괄, 간호, 원무과, 임상병리, 물리치료, 방사선", prefix = "☕ 오늘 커피는 " }: { title?: string; hint?: string; initial?: string; prefix?: string } = {}) {
   const cv = useRef<HTMLCanvasElement>(null);
@@ -25,7 +26,7 @@ export default function Roulette({ title = "커피 내기 룰렛", hint = "이�
     const f = (t: number) => { const k = Math.min(1, (t - t0) / dur); rot.current = start + dist * (1 - Math.pow(1 - k, 3)); draw();
       if (k < 1) return requestAnimationFrame(f); spinning.current = false;
       const seg = 2 * Math.PI / n.length, a = ((-Math.PI / 2 - rot.current) % (2 * Math.PI) + 4 * Math.PI) % (2 * Math.PI);
-      setRes(prefix + n[Math.floor(a / seg)] + "!"); questOnce("roulette_1").catch(() => {}); };
+      setRes(prefix + n[Math.floor(a / seg)] + "!"); questOnce("roulette_1").catch(() => {}); missionMark("roulette").catch(() => {}); };
     requestAnimationFrame(f);
   }
   return (

@@ -15,9 +15,10 @@ import Runner from "@/components/games/Runner";
 import Lightning from "@/components/games/Lightning";
 import Tycoon from "@/components/games/Tycoon";
 import Link from "next/link";
+import { deptBattle, settleDeptWeek, liveRooms, myMissions, weekStart } from "@/lib/gamesHub";
 export const dynamic = "force-dynamic";
 
-export default async function GamesPage({ searchParams }: { searchParams: { g?: string } }) {
+export default async function GamesPage({ searchParams }: { searchParams: { g?: string; c?: string } }) {
   const d = db(); const sess = (await getSession())!;
   const top = (game: string) => d.from("scores").select("value,mode,users(nickname,dept)").eq("game", game).order("value", { ascending: false }).limit(10);
   const [dodge, sword, defense, bowling, cpr, quiz, vein, runner, lightning, tycoon, trivia, econ, mine] = await Promise.all([...["dodge", "sword", "defense", "bowling", "cpr", "quiz", "vein", "runner", "lightning", "tycoon", "trivia", "econ"].map(top), d.from("scores").select("game,value").eq("user_id", sess.id)]);
@@ -41,10 +42,35 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
     { id: "roulette", name: "커피 룰렛", icon: "☕", sub: "내기 정하기", color: "#B08968", node: <Roulette /> },
   ];
   const cur = games.find(g => g.id === searchParams.g && g.id !== "omok" && g.id !== "draw") ?? games[0];
+  const [battle, lastTop, live, mis] = await Promise.all([deptBattle(weekStart(0)), settleDeptWeek().catch(() => null), liveRooms().catch(() => null), myMissions(sess.id)]);
+  const CATS: { key: string; name: string; ids: string[] }[] = [
+    { key: "", name: "전체", ids: [] }, { key: "daily", name: "📅 데일리", ids: ["wordle", "iv"] }, { key: "rank", name: "🔥 랭킹전", ids: ["iv", "defense", "lightning", "runner", "dodge", "sword"] },
+    { key: "together", name: "👥 같이하기", ids: ["omok", "draw"] }, { key: "quiz", name: "🧠 퀴즈", ids: ["wordle", "quiz", "trivia", "econ"] }, { key: "heal", name: "🪴 방치·힐링", ids: ["tycoon", "plant", "roulette"] },
+  ];
+  const cat = CATS.find(c => c.key === (searchParams.c ?? "")) ?? CATS[0];
+  const shown = cat.ids.length ? games.filter(g => cat.ids.includes(g.id)) : games;
+  const kday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10), hotPool = ["defense", "lightning", "runner", "dodge", "sword", "quiz", "trivia", "econ"];
+  const hot = games.find(g => g.id === hotPool[(Number(kday.replace(/-/g, "")) * 7) % hotPool.length])!;
+  const liveOf = (id: string) => id === "omok" && live ? live.omok : id === "draw" && live ? live.draw : null;
+  const href = (id: string) => id === "omok" ? "/games/omok" : id === "draw" ? "/games/draw" : `/games?${new URLSearchParams({ g: id, ...(cat.key ? { c: cat.key } : {}) })}`;
+  const missions = [{ id: "wordle", name: "메디워들 풀기", done: mis.wordle, xp: "최대 300" }, { id: "iv", name: "원샷원킬 1판", done: mis.iv, xp: "+30" }, { id: "roulette", name: "커피 룰렛 돌리기", done: mis.roulette, xp: "+30" }, { id: "quiz", name: "퀴즈 1판", done: mis.quiz, xp: "+30" }];
+  const nDone = missions.filter(m => m.done).length, maxPts = Math.max(1, ...battle.map(b => b.pts));
   return (
     <div className="games">
       <Hero img="/img/games.jpg" pos="center 42%" title="미니게임" sub="기록은 명예의 전당에, 퀘스트는 경험치로" />
-      <div className="gtiles">{games.map(g => <Link key={g.id} href={g.id === "omok" ? "/games/omok" : g.id === "draw" ? "/games/draw" : `/games?g=${g.id}`} scroll={false} className={"gtile" + (cur.id === g.id ? " on" : "")}><span className="gtile-ico">{g.icon}</span><span className="gtile-name">{g.name}</span>{g.badge && <span className="gtile-badge">{g.badge}</span>}</Link>)}</div>
+      <section className="gm-mission">
+        <div className="gm-mt"><b>📅 오늘의 데일리 미션</b><span>{nDone}/4 완료{nDone === 4 ? " · 🎉 올클리어 +100 XP" : " · 4개 다 하면 보너스 +100 XP"}</span></div>
+        <div className="gm-ml">{missions.map(m => <Link key={m.id} href={href(m.id === "quiz" ? "quiz" : m.id)} scroll={false} className={"gm-mi" + (m.done ? " done" : "")}><span>{m.done ? "✅" : "⬜"}</span><b>{m.name}</b><small>{m.xp} XP</small></Link>)}</div>
+      </section>
+      <section className="gm-battle">
+        <div className="gm-mt"><b>⚔️ 이번 주 부서 대항전</b><span>{lastTop ? `지난주 1위 [${lastTop}] · ` : ""}1위 부서 참가자 전원 다음 주 +200 XP</span></div>
+        {battle.length ? battle.slice(0, 6).map((b, i) => <div key={b.dept} className={"gm-br" + (b.dept === sess.dept ? " me" : "")}><span className="gm-bn">{["🥇", "🥈", "🥉"][i] ?? i + 1}</span><span className="gm-bd">{b.dept}</span><span className="gm-bb"><i style={{ width: `${Math.max(4, b.pts / maxPts * 100)}%` }} /></span><span className="gm-bp">{b.pts.toLocaleString()}점 · {b.people}명</span></div>)
+          : <div className="muted" style={{ fontSize: 13 }}>이번 주 아직 기록이 없어요. 우리 부서가 첫 점수를 따 보세요!</div>}
+        <div className="muted" style={{ fontSize: 11.5 }}>메디워들·원샷원킬·룰렛·퀴즈 기록이 부서 점수로 쌓여요 (매주 월요일 0시 리셋)</div>
+      </section>
+      <Link href={href(hot.id)} scroll={false} className="gm-hot"><span className="gm-hi">{hot.icon}</span><div><small>🔥 오늘의 핫 게임</small><b>{hot.name}</b><span>{hot.sub} · 오늘 한 판 어때요?</span></div><span className="gm-go">▶</span></Link>
+      <div className="cats gm-cats">{CATS.map(c => <Link key={c.key} href={`/games${c.key ? `?c=${c.key}` : ""}`} scroll={false} className="cats-btn" aria-pressed={cat.key === c.key}>{c.name}</Link>)}</div>
+      <div className="gtiles">{shown.map(g => { const lv = liveOf(g.id); return <Link key={g.id} href={href(g.id)} scroll={false} className={"gtile" + (cur.id === g.id ? " on" : "")}><span className="gtile-ico">{g.icon}</span><span className="gtile-name">{g.name}</span>{lv ? <span className={"gtile-live" + (lv.people ? " on" : "")}>{lv.people ? `🟢 ${lv.rooms}방 · ${lv.people}명` : "방 만들기"}</span> : null}{g.badge && <span className="gtile-badge">{g.badge}</span>}</Link>; })}</div>
       <section key={cur.id} id={cur.id} className="game-sec">{cur.node}</section>
     </div>
   );
