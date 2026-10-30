@@ -25,7 +25,7 @@ function Card({ p, head, foot, see }: { p: any; head: React.ReactNode; foot?: Re
   );
 }
 
-export default async function SsumPage({ searchParams }: { searchParams: { tab?: string; g?: string } }) {
+export default async function SsumPage({ searchParams }: { searchParams: { tab?: string; g?: string; sub?: string } }) {
   const s = (await getSession())!; const d = db();
   const tab = (TABS.some(t => t[0] === searchParams.tab) ? searchParams.tab : "lounge") as Tab;
   const admin = s.role === "admin";
@@ -40,8 +40,10 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
 
   let body: React.ReactNode = null;
   if (tab === "lounge") {
+    const sub = searchParams.sub || "all";
+    const subTopic = SSUM_TOPICS.find(t => t.key === sub);
     const [{ data: posts }] = await Promise.all([
-      d.from("posts").select("id,title,body,topic,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(40),
+      d.from("posts").select("id,title,body,topic,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(60),
     ]);
     const pids = (posts ?? []).map((p: any) => p.id);
     const [{ data: cc }, { data: rc }] = pids.length ? await Promise.all([d.from("comments").select("post_id").in("post_id", pids), d.from("reactions").select("target_id").eq("kind", "post").in("target_id", pids)]) : [{ data: [] as any[] }, { data: [] as any[] }];
@@ -49,13 +51,48 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     for (const c of cc ?? []) nC[c.post_id] = (nC[c.post_id] ?? 0) + 1;
     for (const r of rc ?? []) nR[r.target_id] = (nR[r.target_id] ?? 0) + 1;
     body = <>
-      <div className="muted" style={{ fontSize: 12 }}>💡 글을 누르면 열려요. 안에서 공감·댓글을 달 수 있고, 내 글은 <b>글 삭제</b>, 남의 글은 <b>🚩 신고</b>(즉시 가려짐)할 수 있어요.</div>
-      {SSUM_TOPICS.map(t => { const list = (posts ?? []).filter((p: any) => p.topic === t.key).slice(0, 8);
-        return <section key={t.key} className="card">
-          <div className="ss-head"><h3>{t.icon} {t.name}</h3><Link className="btn" style={{ padding: "6px 12px" }} href={`/board/new?cat=${encodeURIComponent("썸")}&topic=${t.key}`}>글쓰기</Link></div>
-          <div className="muted" style={{ fontSize: 12 }}>{t.hint}</div>
-          {list.length ? list.map((p: any) => <Link key={p.id} href={`/board/${p.id}`} className="ss-post"><div className="ss-post-t">{p.title}</div>{p.body && <div className="ss-post-b">{p.body}</div>}<div className="ss-post-m"><span>{p.author ? display(p.author.dept, p.author.nickname) : ""} · {fmt(p.created_at)}</span><span>💬 {nC[p.id] ?? 0} · 👍 {nR[p.id] ?? 0} ›</span></div></Link>) : <div className="h-empty">첫 글을 기다려요.</div>}
-        </section>; })}
+      <div className="ss-guide-banner" style={{ background: "linear-gradient(135deg, rgba(244, 143, 177, 0.12), rgba(255, 205, 210, 0.08))", border: "1px solid rgba(244, 143, 177, 0.3)", borderRadius: 14, padding: "12px 14px", display: "grid", gap: 6, fontSize: 13 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <span style={{ fontWeight: 700, color: "var(--ink)" }}>✨ 서로를 지켜주는 썸 라운지 에티켓</span>
+          <Link className="btn" style={{ padding: "5px 12px", fontSize: 13 }} href={`/board/new?cat=${encodeURIComponent("썸")}${subTopic ? `&topic=${subTopic.key}` : ""}`}>✏️ 썸 글쓰기</Link>
+        </div>
+        <div className="muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
+          • 초성으로 마음을 전해요 (예: <code>ㄱㅁㅈ 쌤</code>) 💘<br />
+          • 특정 방지를 위해 <b>병원명(초성 포함)·병동·층·부서</b>는 절대 쓸 수 없어요 🚫<br />
+          • 내 글은 <b>글 삭제</b>, 불쾌한 글은 <b>🚩 신고</b> 시 즉시 블라인드 처리돼요.
+        </div>
+      </div>
+      <div className="sorts" style={{ margin: "4px 0" }}>
+        {[["all", "전체 보기"], ...SSUM_TOPICS.map(t => [t.key, `${t.icon} ${t.name}`])].map(([k, n]) => (
+          <Link key={k} href={`/ssum?tab=lounge${k !== "all" ? `&sub=${k}` : ""}`} aria-current={sub === k ? "true" : undefined}>{n}</Link>
+        ))}
+      </div>
+      {subTopic ? (
+        <section className="card">
+          <div className="ss-head"><h3>{subTopic.icon} {subTopic.name}</h3><Link className="btn" style={{ padding: "6px 12px" }} href={`/board/new?cat=${encodeURIComponent("썸")}&topic=${subTopic.key}`}>글쓰기</Link></div>
+          <div className="muted" style={{ fontSize: 12 }}>{subTopic.hint}</div>
+          {(() => {
+            const list = (posts ?? []).filter((p: any) => p.topic === subTopic.key);
+            return list.length ? list.map((p: any) => (
+              <Link key={p.id} href={`/board/${p.id}`} className="ss-post">
+                <div className="ss-post-t">{p.title}</div>
+                {p.body && <div className="ss-post-b">{p.body}</div>}
+                <div className="ss-post-m">
+                  <span>{p.author ? display(p.author.dept, p.author.nickname) : ""} · {fmt(p.created_at)}</span>
+                  <span>💬 {nC[p.id] ?? 0} · 👍 {nR[p.id] ?? 0} ›</span>
+                </div>
+              </Link>
+            )) : <div className="h-empty">아직 등록된 글이 없어요. 첫 글을 남겨보세요!</div>;
+          })()}
+        </section>
+      ) : (
+        SSUM_TOPICS.map(t => { const list = (posts ?? []).filter((p: any) => p.topic === t.key).slice(0, 8);
+          return <section key={t.key} className="card">
+            <div className="ss-head"><h3>{t.icon} {t.name}</h3><Link className="btn" style={{ padding: "6px 12px" }} href={`/board/new?cat=${encodeURIComponent("썸")}&topic=${t.key}`}>글쓰기</Link></div>
+            <div className="muted" style={{ fontSize: 12 }}>{t.hint}</div>
+            {list.length ? list.map((p: any) => <Link key={p.id} href={`/board/${p.id}`} className="ss-post"><div className="ss-post-t">{p.title}</div>{p.body && <div className="ss-post-b">{p.body}</div>}<div className="ss-post-m"><span>{p.author ? display(p.author.dept, p.author.nickname) : ""} · {fmt(p.created_at)}</span><span>💬 {nC[p.id] ?? 0} · 👍 {nR[p.id] ?? 0} ›</span></div></Link>) : <div className="h-empty">첫 글을 기다려요.</div>}
+          </section>; })
+      )}
     </>;
   }
   if (tab === "me") {
@@ -124,7 +161,11 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
 
   return (
     <div className="games">
-      <div className="ss-hero"><div><b>💘 썸</b><span>병원 사람끼리, 조심스럽게 설레는 곳</span></div><span className="muted" style={{ fontSize: 11 }}>만 19세 이상 · 실명·연락처 금지</span></div>
+      <div className="ss-hero"><div><b>💘 썸</b><span>병원 사람끼리, 조심스럽게 설레는 곳</span></div><span className="muted" style={{ fontSize: 11 }}>만 19세 이상 · 실명·연락처·병원명 금지</span></div>
+      <div style={{ background: "rgba(244, 143, 177, 0.08)", border: "1px dashed rgba(244, 143, 177, 0.4)", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, margin: "6px 0 2px" }}>
+        <span>💡</span>
+        <span><b>셀소</b>에서 서로 관심(💗)을 누르면 <b>1:1 안심 익명 대화방</b>이 열려요!</span>
+      </div>
       {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
       <div className="cats" style={{ paddingBottom: 0 }}>{TABS.map(([k, n]) => <Link key={k} href={`/ssum?tab=${k}`} aria-current={tab === k ? "true" : undefined}>{n}</Link>)}</div>
       {body}
