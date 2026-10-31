@@ -6,7 +6,7 @@ import { getSession, type Session } from "./auth";
 import { pushToUsers } from "./push";
 import { personMention } from "./safety";
 import { awardXp } from "./xp";
-import { MEET_KINDS, MEET_AREAS } from "./meetup";
+import { MEET_KINDS, MEET_AREAS, needsBadge } from "./meetup";
 
 type R = { error?: string; ok?: string } | undefined;
 const clean = (v: FormDataEntryValue | null, max: number) => String(v ?? "").trim().slice(0, max);
@@ -19,6 +19,7 @@ export async function createMeetup(_: R, fd: FormData): Promise<R> {
   const cap = Math.max(2, Math.min(10, Number(fd.get("cap")) || 4)), when = new Date(String(fd.get("when") ?? ""));
   if (!title) return { error: "제목을 적어주세요" };
   if (!MEET_KINDS.some(k => k.key === kind)) return { error: "종류를 골라주세요" };
+  if (needsBadge(kind)) { const { data: me0 } = await s.from("users").select("blue_badge").eq("id", u.id).maybeSingle(); if (!me0?.blue_badge) return { error: "커피챗은 블루뱃지 회원만 열 수 있어요. 번개 탭의 🔵 블루뱃지 인증에서 신청해주세요" }; }
   if (!(MEET_AREAS as readonly string[]).includes(area)) return { error: "지역을 골라주세요" };
   if (isNaN(when.getTime())) return { error: "시간을 골라주세요" };
   if (when.getTime() < Date.now() - 3600000) return { error: "이미 지난 시간이에요" };

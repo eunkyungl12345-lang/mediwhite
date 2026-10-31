@@ -139,7 +139,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     const reqState = (other: string): "none" | "pending" | "open" | "declined" | "incoming" => { if (mutualWith(other)) return "open"; const r = (reqs ?? []).find((x: any) => (x.from_id === s.id && x.to_id === other) || (x.from_id === other && x.to_id === s.id)); if (!r) return "none"; if (r.status === "accepted") return "open"; if (r.status === "declined") return r.from_id === s.id ? "declined" : "none"; return r.from_id === s.id ? "pending" : "incoming"; };
     const [{ data: mine }, { data: profs }, { data: intros }] = await Promise.all([
       d.from("dating_profiles").select("*").eq("user_id", s.id).maybeSingle(),
-      (gf ? d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)").eq("gender", gf) : d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth)")).eq("visible", true).neq("user_id", s.id).order("updated_at", { ascending: false }).limit(60),
+      (gf ? d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth,blue_badge)").eq("gender", gf) : d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth,blue_badge)")).eq("visible", true).neq("user_id", s.id).order("updated_at", { ascending: false }).limit(60),
       (gf ? d.from("intros").select("*,author:users(id,username,nickname,dept,xp)").eq("gender", gf) : d.from("intros").select("*,author:users(id,username,nickname,dept,xp)")).order("created_at", { ascending: false }).limit(30),
     ]);
     body = <>
@@ -163,7 +163,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
       <div className="ss-cards">
         {(profs ?? []).filter((p: any) => !p.user.stealth).map((p: any) => (
           <Card key={p.user_id} p={p} see={admin || mutualWith(p.user_id)}
-            head={<Name r={rankFor(p.user, leaders)} dept={p.user.dept} nickname={p.user.nickname} username={p.user.username} />}
+            head={<Name r={rankFor(p.user, leaders)} dept={p.user.dept} nickname={p.user.nickname} username={p.user.username} badge={p.user.blue_badge} />}
             foot={<><LikeButton kind="profile" target={p.user_id} liked={liked("profile", p.user_id)} /><DmRequestButton to={p.user_id} left={quota.left} total={quota.total} state={reqState(p.user_id)} />{admin && <PickSolo userId={p.user_id} />}</>} />
         ))}
         {(intros ?? []).map((p: any) => (
@@ -178,9 +178,9 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
   if (tab === "meet") {
     const area = searchParams.area && (MEET_AREAS as readonly string[]).includes(searchParams.area) ? searchParams.area : "";
     const since = new Date(Date.now() - 3 * 3600000).toISOString();
-    let q = d.from("meetups").select("*,host:users!meetups_host_id_fkey(id,username,nickname,dept,xp)").neq("status", "canceled").gte("when_at", since).order("when_at").limit(60);
+    let q = d.from("meetups").select("*,host:users!meetups_host_id_fkey(id,username,nickname,dept,xp,blue_badge)").neq("status", "canceled").gte("when_at", since).order("when_at").limit(60);
     if (area) q = q.eq("area", area);
-    const [{ data: ms }, { data: myMem }, { data: myProf }] = await Promise.all([q, d.from("meetup_members").select("meetup_id,status").eq("user_id", s.id).in("status", ["joined", "pending"]), d.from("dating_profiles").select("region").eq("user_id", s.id).maybeSingle()]);
+    const [{ data: ms }, { data: myMem }, { data: myProf }, { data: meU }] = await Promise.all([q, d.from("meetup_members").select("meetup_id,status").eq("user_id", s.id).in("status", ["joined", "pending"]), d.from("dating_profiles").select("region").eq("user_id", s.id).maybeSingle(), d.from("users").select("blue_badge").eq("id", s.id).maybeSingle()]);
     const ids = (ms ?? []).map(m => m.id);
     const { data: cnt } = ids.length ? await d.from("meetup_members").select("meetup_id,status").in("meetup_id", ids).in("status", ["joined", "pending"]) : { data: [] as any[] };
     const n = (id: number) => (cnt ?? []).filter((c: any) => c.meetup_id === id && c.status === "joined").length, w = (id: number) => (cnt ?? []).filter((c: any) => c.meetup_id === id && c.status === "pending").length;
@@ -191,12 +191,13 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         <span className="mt-ico">{k.icon}</span>
         <div className="mt-body"><Link href={`/ssum/meet/${m.id}`} className="mt-title">{m.title}</Link>
           <div className="mt-meta"><b>{whenLabel(m.when_at)}</b> · {m.area}{m.place ? ` · ${m.place}` : ""}{m.gender ? ` · ${m.gender}성만` : ""}</div>
-          <div className="mt-meta muted">{m.host ? display(m.host.dept, m.host.nickname) : "회원"} 주최 · <span className={c >= m.cap ? "" : "mt-open"}>{c}/{m.cap}명{c < m.cap ? ` · ${m.cap - c}자리 남음` : ""}</span></div></div>
+          <div className="mt-meta muted">{m.host ? display(m.host.dept, m.host.nickname) : "회원"}{m.host?.blue_badge ? " 🔵" : ""} 주최 · <span className={c >= m.cap ? "" : "mt-open"}>{c}/{m.cap}명{c < m.cap ? ` · ${m.cap - c}자리 남음` : ""}</span></div></div>
         <JoinButton id={m.id} joined={mine.has(m.id)} pending={pend.has(m.id)} host={m.host_id === s.id} full={c >= m.cap} closed={closed} waiting={w(m.id)} />
       </div>); };
     body = <>
       <div className="mt-intro"><b>⚡ 번개</b> — 오늘 오프인데 심심할 때, 교대 끝나고 한잔할 때. 지역·시간만 정하고 가볍게 모여요. <span className="muted">참여 신청 → 모임장이 수락하면 모임 채팅방이 열려요.</span></div>
-      <details className="card ss-details"><summary><b>⚡ 번개 열기</b> <span className="muted">— 2주 안, 2~10명, 동시에 3개까지</span></summary><MeetForm defaultArea={myProf?.region?.includes("서울") ? "서울" : undefined} /></details>
+      <Link href="/badge" className={"bd-cta" + (meU?.blue_badge ? " on" : "")}>{meU?.blue_badge ? <><span>🔵</span><b>블루뱃지 회원</b><span className="muted">☕ 커피챗 번개를 열 수 있어요</span></> : <><span>🔵</span><b>블루뱃지 인증하고 커피챗 열기</b><span className="muted">운전면허증 + 면허·자격증 확인 → 이름 옆 🔵</span><span className="bd-arrow">›</span></>}</Link>
+      <details className="card ss-details"><summary><b>⚡ 번개 열기</b> <span className="muted">— 2주 안, 2~10명, 동시에 3개까지</span></summary><MeetForm defaultArea={myProf?.region?.includes("서울") ? "서울" : undefined} badge={!!meU?.blue_badge} /></details>
       <div className="topics scroll">{["", ...MEET_AREAS].map(a => <Link key={a} href={`/ssum?tab=meet${a ? `&area=${encodeURIComponent(a)}` : ""}`} className={"topic" + (area === a ? " on" : "")}>{a || "전체"}</Link>)}</div>
       {today.length > 0 && <><div className="mt-sec">🔥 오늘</div>{today.map(m => <Row key={m.id} m={m} />)}</>}
       {later.length > 0 && <><div className="mt-sec">📅 다가오는 번개</div>{later.map(m => <Row key={m.id} m={m} />)}</>}

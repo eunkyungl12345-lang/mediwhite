@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { RANKS, QUESTS, PRIVILEGES, REPEAT, signupBonus, can } from "@/lib/ranks";
@@ -19,7 +20,7 @@ export default async function RankPage() {
   const s = (await getSession())!;
   const d = db();
   const [{ data: me }, { data: done }, { data: top }, { count }, leaders, commanders, { count: invited }, daily] = await Promise.all([
-    d.from("users").select("id,username,nickname,dept,xp,join_order,bio,fortune_name,birth_date,birth_time").eq("id", s.id).single(),
+    d.from("users").select("id,username,nickname,dept,xp,join_order,bio,fortune_name,birth_date,birth_time,blue_badge").eq("id", s.id).single(),
     d.from("xp_log").select("key").eq("user_id", s.id).not("key", "is", null),
     d.from("users").select("id,username,nickname,dept,xp").eq("stealth", false).order("xp", { ascending: false }).limit(30),
     d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false),
@@ -33,7 +34,7 @@ export default async function RankPage() {
     <div className="games">
       <Hero img="/img/rank.jpg" title="내 계급" sub="참여할수록 진급" />
       <div className={`card t${r.tier}`}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><Name r={r} dept={me?.dept ?? s.dept} nickname={me?.nickname ?? s.nickname} username={s.username} size={22} /><RankBadge r={r} /><span className="muted">가입 {me?.join_order ?? "-"}번째</span></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><Name r={r} dept={me?.dept ?? s.dept} nickname={me?.nickname ?? s.nickname} username={s.username} size={22} badge={me?.blue_badge} /><RankBadge r={r} />{!me?.blue_badge && <Link href="/badge" className="tag" style={{ textDecoration: "none" }}>🔵 블루뱃지 인증</Link>}<span className="muted">가입 {me?.join_order ?? "-"}번째</span></div>
         <h3>{xp.toLocaleString()} XP</h3>
         <div className="xpbar"><i style={{ width: `${Math.round(r.progress * 100)}%` }} /></div>
         <div className="muted">{r.capped ? "참모총장 경험치는 채웠지만 파트 1위가 아니라 중장이에요. 1위를 넘으면 참모총장!" : r.next ? `${r.nextName}까지 ${(r.next - xp).toLocaleString()} XP` : "파트 참모총장이에요. 경례!"}</div>

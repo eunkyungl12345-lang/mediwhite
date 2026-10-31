@@ -10,6 +10,7 @@ import AdminResetPw from "@/components/AdminResetPw";
 import { bankInfo, deptPools, contactEmail } from "@/lib/support";
 import AdminContact from "@/components/AdminContact";
 import AdminBroadcast from "@/components/AdminBroadcast";
+import AdminBadges from "@/components/AdminBadges";
 import Stats from "@/components/Stats";
 import { setInquiryStatus } from "@/lib/actions";
 import { confirmContribution } from "@/lib/actions";
@@ -50,9 +51,15 @@ export default async function AdminPage() {
     db().from("users").select("id,username,nickname,dept,xp,role,stealth,seq,join_order,created_at").order("seq"), deptLeaders(), bankInfo(), deptPools(),
     db().from("contributions").select("id,dept,amount,points,depositor,created_at,users(nickname)").eq("status", "pending").order("created_at"),
   ]);
+  const { data: badgeReqs } = await db().from("badge_requests").select("id,user_id,id_path,lic_path,note,created_at,user:users(nickname,dept,username)").eq("status", "pending").order("created_at");
   return (
     <div className="games">
       <Stats series={series} totals={{ users: (signups ?? []).length, today: series[series.length - 1]?.visitors ?? 0, msg24h: msg24 ?? 0, posts: postsAll ?? 0, games24h: scores24 ?? 0 }} />
+      <div className="card" id="badges">
+        <h3>🔵 블루뱃지 심사 {badgeReqs?.length ? <span className="mt-wait">{badgeReqs.length}</span> : null}</h3>
+        <div className="muted">운전면허증 + 의료 면허·자격증 이름이 같은지 확인. 승인/거절하면 사진은 즉시 삭제돼요.</div>
+        <AdminBadges reqs={(badgeReqs ?? []) as any} />
+      </div>
       <div className="card">
         <h3>전체 폰 알림 보내기</h3>
         <div className="muted">알림을 켠 회원 모두에게 푸시. 이벤트·공지용 (하루 1~2번만 — 많으면 다 꺼버려요).</div>
