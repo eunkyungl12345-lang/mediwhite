@@ -28,6 +28,7 @@ export default function NewPostForm({ defaultCat, defaultTab, defaultTopic = "fr
         <div className="muted" style={{ fontSize: 12 }}>{(cat === "썸" ? SSUM_TOPICS : TOPICS as readonly { key: string; hint: string }[]).find(t => t.key === topic)?.hint ?? (cat === "썸" ? "주제를 골라주세요" : "")}</div>
         <input type="hidden" name="topic" value={topic} />
       </div>
+      {cat === "썸" && <div className="an-banner">🕶️ 썸 글은 <b>완전 익명</b>으로 올라가요. 닉네임·직종이 안 보이고 댓글도 익명이에요. 실명·병원명(초성 포함)은 안 돼요.</div>}
       <input name="title" maxLength={80} placeholder="제목" required defaultValue={defaultTitle} onChange={e => setTitle(e.target.value)} />
       <textarea name="body" maxLength={4000} placeholder={cat === "썸" ? "초성으로 마음을 전해요 (병원명·병동·실명은 적을 수 없어요)" : "실명·환자 정보 없이, 솔직하게."} required defaultValue={defaultBody} onChange={e => setTxt(e.target.value)} />
       {plm && (

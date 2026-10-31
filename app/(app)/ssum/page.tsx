@@ -93,13 +93,13 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
       </div>
 
       <div className="muted" style={{ fontSize: 11, padding: "0 2px" }}>
-        {currentTopicObj ? currentTopicObj.hint : "🔒 병원명(초성 포함)·실명은 특정 방지를 위해 쓸 수 없어요. 내 글은 삭제, 신고 글은 즉시 가려져요."}
+        {currentTopicObj ? currentTopicObj.hint : "🕶️ 라운지 글·댓글은 닉네임·직종 없이 익명으로 보여요. 병원명(초성 포함)·실명은 쓸 수 없고, 신고 글은 즉시 가려져요."}
       </div>
 
       {filtered.length ? (
         <div className="ss-feed-list">
           {filtered.map((p: any) => (
-            <Link key={p.id} href={`/board/${p.id}`} className="ss-feed-card">
+            <Link key={p.id} href={`/anon/${p.id}`} className="ss-feed-card">
               <div className="ss-feed-top">
                 <span className={`ss-topic-chip ${p.topic}`}>
                   {topicOf(p.topic).icon} {topicOf(p.topic).name}
@@ -109,9 +109,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
               <h4 className="ss-feed-title">{p.title}</h4>
               {p.body && <p className="ss-feed-body">{p.body}</p>}
               <div className="ss-feed-foot">
-                <span className="ss-feed-author">
-                  {p.author ? display(p.author.dept, p.author.nickname) : "회원"}
-                </span>
+                <span className="ss-feed-author">🕶️ 익명{p.author?.id === s.id ? " (나)" : ""}</span>
                 <div className="ss-feed-stats">
                   <span>💬 {nC[p.id] ?? 0}</span>
                   <span>👍 {nR[p.id] ?? 0}</span>
@@ -292,7 +290,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
             <b>💘 썸</b>
             <span className="ss-hero-badge">만 19세 이상 익명</span>
           </div>
-          <p className="ss-hero-desc">병원 사람끼리 전하는 설렘 ∙ 셀소 하트(💗)로 1:1 대화 연결</p>
+          <p className="ss-hero-desc">라운지는 완전 익명 ∙ 셀소 하트(💗)·대화 신청으로 1:1 연결</p>
         </div>
       </div>
       {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
