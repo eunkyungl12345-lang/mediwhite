@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Bell from "@/components/Bell";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { logout } from "@/lib/actions";
@@ -34,6 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     memo("officials", 5 * 60_000, async () => d.from("users").select("id,username").in("username", Object.keys(OFFICIAL))),
     memo("chat_rooms", 60_000, async () => { const { data } = await d.from("settings").select("value").eq("key", "chat_rooms").maybeSingle(); return data?.value === "on"; }),
   ]);
+  const { count: unread } = await d.from("notis").select("id", { count: "exact", head: true }).eq("user_id", s.id).eq("read", false);
   const official = Object.fromEntries((offs ?? []).map(o => [o.id, OFFICIAL[o.username]]));
   // 참모총장 후보일 때만 파트 1위 확인 (추가 조회 1번)
   const rank = me && me.xp >= RANKS[GENERAL][1] ? rankFor(me, await deptLeaders()) : rankOf(me?.xp ?? 0);
@@ -41,7 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="app">
       <header>
         <div className="brand"><h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트웹</Link></h1></div>
-        <TourButton /><div className="me"><Name r={rank} dept={s.dept} nickname={s.nickname} username={s.username} />{s.role === "admin" && <span className="tag">관리자</span>}<form action={logout}><button>나가기</button></form></div>
+        <TourButton /><Bell initial={unread ?? 0} /><div className="me"><Name r={rank} dept={s.dept} nickname={s.nickname} username={s.username} />{s.role === "admin" && <span className="tag">관리자</span>}<form action={logout}><button>나가기</button></form></div>
       </header>
       <Tabs admin={s.role === "admin"} />
       <Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense>

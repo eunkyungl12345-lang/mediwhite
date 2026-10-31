@@ -19,12 +19,20 @@ async function sendTo(subs: { endpoint: string; p256dh: string; auth: string }[]
     .catch((e: any) => { if (e?.statusCode === 404 || e?.statusCode === 410) dead.push(s.endpoint); })));
   if (dead.length) await db().from("push_subs").delete().in("endpoint", dead);
 }
+/** 앱 내 알림센터(🔔)에 쌓기 — 푸시를 안 켠 사람도 볼 수 있게 */
+async function inbox(ids: string[], payload: Payload) {
+  if (!ids.length) return;
+  const rows = ids.map(user_id => ({ user_id, title: payload.title.slice(0, 80), body: (payload.body ?? "").slice(0, 200), url: payload.url ?? null, tag: payload.tag ?? null }));
+  for (let i = 0; i < rows.length; i += 500) await db().from("notis").insert(rows.slice(i, i + 500));
+}
 export async function pushToUsers(userIds: string[], payload: Payload) {
   const ids = Array.from(new Set(userIds.filter(Boolean))); if (!ids.length) return;
-  const { data } = await db().from("push_subs").select("endpoint,p256dh,auth").in("user_id", ids);
+  const [{ data }] = await Promise.all([db().from("push_subs").select("endpoint,p256dh,auth").in("user_id", ids), inbox(ids, payload)]);
   await sendTo(data ?? [], payload);
 }
 export async function pushToAll(payload: Payload, exceptUserId?: string) {
   let q = db().from("push_subs").select("endpoint,p256dh,auth"); if (exceptUserId) q = q.neq("user_id", exceptUserId);
-  const { data } = await q; await sendTo(data ?? [], payload);
+  let uq = db().from("users").select("id"); if (exceptUserId) uq = uq.neq("id", exceptUserId);
+  const [{ data }, { data: us }] = await Promise.all([q, uq]);
+  await Promise.all([sendTo(data ?? [], payload), inbox((us ?? []).map(u => u.id), payload)]);
 }
