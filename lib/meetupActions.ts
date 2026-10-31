@@ -32,19 +32,33 @@ export async function createMeetup(_: R, fd: FormData): Promise<R> {
   await awardXp(u.id, 30, `meetup_host:${data.id}`, "quest");
   revalidatePath("/ssum"); return { ok: "번개를 열었어요! ⚡" };
 }
-export async function joinMeetup(id: number) {
-  const u = await me(); const s = db();
+export async function joinMeetup(id: number, msg = "") {
+  const u = await me(); const s = db(); const note = msg.trim().slice(0, 100);
   const [{ data: m }, { data: mem }, { data: ug }] = await Promise.all([s.from("meetups").select("id,host_id,cap,gender,status,when_at,title").eq("id", id).maybeSingle(), s.from("meetup_members").select("user_id,status").eq("meetup_id", id), s.from("dating_profiles").select("gender").eq("user_id", u.id).maybeSingle()]);
-  if (!m || m.status !== "open" || Date.parse(m.when_at) < Date.now()) return { error: "마감된 번개예요" };
+  if (!m || m.status === "canceled" || Date.parse(m.when_at) < Date.now()) return { error: "마감된 번개예요" };
   const joined = (mem ?? []).filter(x => x.status === "joined");
   if (joined.some(x => x.user_id === u.id)) return { error: "이미 참여 중이에요" };
+  if ((mem ?? []).some(x => x.user_id === u.id && x.status === "pending")) return { error: "이미 신청했어요. 모임장 수락을 기다려주세요" };
+  if ((mem ?? []).some(x => x.user_id === u.id && x.status === "declined")) return { error: "이 번개는 신청할 수 없어요" };
   if (m.gender && ug?.gender && ug.gender !== m.gender) return { error: `${m.gender}성만 모집하는 번개예요` };
   if (m.gender && !ug?.gender) return { error: `${m.gender}성 한정 번개예요. 셀소 카드에 성별을 등록하면 참여할 수 있어요` };
   if (joined.length >= m.cap) return { error: "정원이 찼어요" };
-  await s.from("meetup_members").upsert({ meetup_id: id, user_id: u.id, status: "joined", joined_at: new Date().toISOString() });
-  pushToUsers([m.host_id], { title: "⚡ 번개에 새 멤버!", body: `${u.nickname}님이 "${m.title}"에 참여했어요`, url: `/ssum/meet/${id}`, tag: "meet" }).catch(() => {});
-  if (joined.length + 1 >= m.cap) await s.from("meetups").update({ status: "full" }).eq("id", id);
-  revalidatePath("/ssum"); revalidatePath(`/ssum/meet/${id}`); return { ok: "참여했어요! 모임 채팅방에서 인사해요" };
+  if (CONTACT.test(note)) return { error: "연락처는 적을 수 없어요" };
+  await s.from("meetup_members").upsert({ meetup_id: id, user_id: u.id, status: "pending", msg: note, joined_at: new Date().toISOString() });
+  pushToUsers([m.host_id], { title: "⚡ 번개 참여 신청", body: `${u.nickname}님이 "${m.title}"에 참여를 신청했어요. 수락해 주세요`, url: `/ssum/meet/${id}`, tag: "meet" }).catch(() => {});
+  revalidatePath("/ssum"); revalidatePath(`/ssum/meet/${id}`); return { ok: "신청했어요! 모임장이 수락하면 모임 채팅방이 열려요" };
+}
+export async function answerJoin(id: number, userId: string, accept: boolean) {
+  const u = await me(); const s = db();
+  const { data: m } = await s.from("meetups").select("host_id,cap,status,title").eq("id", id).maybeSingle();
+  if (!m || m.host_id !== u.id) return { error: "모임장만 할 수 있어요" };
+  const { data: mem } = await s.from("meetup_members").select("user_id,status").eq("meetup_id", id);
+  const joined = (mem ?? []).filter(x => x.status === "joined").length;
+  if (accept && joined >= m.cap) return { error: "정원이 찼어요" };
+  await s.from("meetup_members").update({ status: accept ? "joined" : "declined", joined_at: new Date().toISOString() }).eq("meetup_id", id).eq("user_id", userId).eq("status", "pending");
+  if (accept && joined + 1 >= m.cap) await s.from("meetups").update({ status: "full" }).eq("id", id);
+  pushToUsers([userId], accept ? { title: "⚡ 번개 참여 수락!", body: `"${m.title}" 모임장이 수락했어요. 모임 채팅방에서 인사해요`, url: `/ssum/meet/${id}`, tag: "meet" } : { title: "⚡ 번개 신청 결과", body: `"${m.title}" 참여가 어렵게 됐어요. 다른 번개도 둘러보세요`, url: "/ssum?tab=meet", tag: "meet" }).catch(() => {});
+  revalidatePath("/ssum"); revalidatePath(`/ssum/meet/${id}`); return { ok: accept ? "수락했어요" : "거절했어요" };
 }
 export async function leaveMeetup(id: number) {
   const u = await me(); const s = db();

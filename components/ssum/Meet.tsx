@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
-import { createMeetup, joinMeetup, leaveMeetup, sendMeetMsg } from "@/lib/meetupActions";
+import { createMeetup, joinMeetup, leaveMeetup, sendMeetMsg, answerJoin } from "@/lib/meetupActions";
 import { MEET_KINDS, MEET_AREAS } from "@/lib/meetup";
 
 const localMin = (addMin: number) => { const d = new Date(Date.now() + addMin * 60000 + 9 * 3600000); if (d.getUTCMinutes() > 0) d.setUTCHours(d.getUTCHours() + 1); d.setUTCMinutes(0, 0, 0); return d.toISOString().slice(0, 16); };
@@ -29,13 +29,24 @@ export function MeetForm({ defaultArea }: { defaultArea?: string }) {
     </form>
   );
 }
-export function JoinButton({ id, joined, host, full, closed }: { id: number; joined: boolean; host: boolean; full: boolean; closed: boolean }) {
-  const [p, start] = useTransition(), [msg, setMsg] = useState(""); const r = useRouter();
+export function JoinButton({ id, joined, pending, host, full, closed, waiting }: { id: number; joined: boolean; pending?: boolean; host: boolean; full: boolean; closed: boolean; waiting?: number }) {
+  const [p, start] = useTransition(), [msg, setMsg] = useState(""), [open, setOpen] = useState(false), [note, setNote] = useState(""), [sent, setSent] = useState(false); const r = useRouter();
   if (closed) return <span className="tag">마감</span>;
-  if (host) return <span className="row" style={{ gap: 6 }}><a className="btn" href={`/ssum/meet/${id}`}>💬 모임방</a><button type="button" className="link" disabled={p} onClick={() => { if (confirm("번개를 취소할까요? 참여자에게 알림이 가요")) start(async () => { await leaveMeetup(id); r.refresh(); }); }}>취소</button></span>;
+  if (host) return <span className="row" style={{ gap: 6 }}><a className="btn" href={`/ssum/meet/${id}`}>💬 모임방{waiting ? <span className="mt-wait">신청 {waiting}</span> : null}</a><button type="button" className="link" disabled={p} onClick={() => { if (confirm("번개를 취소할까요? 참여자에게 알림이 가요")) start(async () => { await leaveMeetup(id); r.refresh(); }); }}>취소</button></span>;
   if (joined) return <span className="row" style={{ gap: 6 }}><a className="btn" href={`/ssum/meet/${id}`}>💬 모임방</a><button type="button" className="link" disabled={p} onClick={() => start(async () => { await leaveMeetup(id); r.refresh(); })}>빠지기</button></span>;
+  if (pending || sent) return <span className="row" style={{ gap: 6, alignItems: "center" }}><span className="tag">⏳ 수락 대기 중</span><button type="button" className="link" disabled={p} onClick={() => start(async () => { await leaveMeetup(id); r.refresh(); })}>신청 취소</button></span>;
   if (full) return <span className="tag">정원 마감</span>;
-  return <span className="row" style={{ gap: 6, alignItems: "center" }}><button type="button" className="btn" disabled={p} onClick={() => start(async () => { const x = await joinMeetup(id); setMsg(x.error ?? ""); if (x.ok) r.push(`/ssum/meet/${id}`); else r.refresh(); })}>🙋 참여하기</button>{msg && <small className="error">{msg}</small>}</span>;
+  if (!open) return <button type="button" className="btn" onClick={() => setOpen(true)}>🙋 참여 신청</button>;
+  return <form className="mt-apply" onSubmit={e => { e.preventDefault(); start(async () => { const x = await joinMeetup(id, note); setMsg(x.error ?? x.ok ?? ""); if (x.ok) { setOpen(false); setSent(true); } r.refresh(); }); }}>
+    <input value={note} onChange={e => setNote(e.target.value)} maxLength={100} placeholder="모임장에게 한마디 (선택) — 예: 야간 끝나고 갈게요!" autoComplete="off" />
+    <span className="row" style={{ gap: 6 }}><button className="btn" disabled={p}>신청 보내기</button><button type="button" className="link" onClick={() => setOpen(false)}>닫기</button></span>
+    {msg && <small className={msg.includes("신청했") ? "muted" : "error"}>{msg}</small>}
+  </form>;
+}
+export function PendingRow({ id, userId, name, msg }: { id: number; userId: string; name: string; msg?: string | null }) {
+  const [p, start] = useTransition(), [err, setErr] = useState(""); const r = useRouter();
+  return <div className="mt-pend"><div><b>{name}</b>{msg ? <div className="muted" style={{ fontSize: 13 }}>“{msg}”</div> : null}{err && <small className="error">{err}</small>}</div>
+    <span className="row" style={{ gap: 6 }}><button type="button" className="btn" disabled={p} onClick={() => start(async () => { const x = await answerJoin(id, userId, true); setErr(x.error ?? ""); r.refresh(); })}>✅ 수락</button><button type="button" className="btn ghost" disabled={p} onClick={() => start(async () => { await answerJoin(id, userId, false); r.refresh(); })}>거절</button></span></div>;
 }
 export function MeetChat({ id }: { id: number }) {
   const [t, setT] = useState(""), [p, start] = useTransition(); const r = useRouter();

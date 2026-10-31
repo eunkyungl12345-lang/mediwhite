@@ -180,11 +180,11 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     const since = new Date(Date.now() - 3 * 3600000).toISOString();
     let q = d.from("meetups").select("*,host:users!meetups_host_id_fkey(id,username,nickname,dept,xp)").neq("status", "canceled").gte("when_at", since).order("when_at").limit(60);
     if (area) q = q.eq("area", area);
-    const [{ data: ms }, { data: myMem }, { data: myProf }] = await Promise.all([q, d.from("meetup_members").select("meetup_id").eq("user_id", s.id).eq("status", "joined"), d.from("dating_profiles").select("region").eq("user_id", s.id).maybeSingle()]);
+    const [{ data: ms }, { data: myMem }, { data: myProf }] = await Promise.all([q, d.from("meetup_members").select("meetup_id,status").eq("user_id", s.id).in("status", ["joined", "pending"]), d.from("dating_profiles").select("region").eq("user_id", s.id).maybeSingle()]);
     const ids = (ms ?? []).map(m => m.id);
-    const { data: cnt } = ids.length ? await d.from("meetup_members").select("meetup_id").in("meetup_id", ids).eq("status", "joined") : { data: [] as any[] };
-    const n = (id: number) => (cnt ?? []).filter((c: any) => c.meetup_id === id).length;
-    const mine = new Set((myMem ?? []).map(x => x.meetup_id));
+    const { data: cnt } = ids.length ? await d.from("meetup_members").select("meetup_id,status").in("meetup_id", ids).in("status", ["joined", "pending"]) : { data: [] as any[] };
+    const n = (id: number) => (cnt ?? []).filter((c: any) => c.meetup_id === id && c.status === "joined").length, w = (id: number) => (cnt ?? []).filter((c: any) => c.meetup_id === id && c.status === "pending").length;
+    const mine = new Set((myMem ?? []).filter(x => x.status === "joined").map(x => x.meetup_id)), pend = new Set((myMem ?? []).filter(x => x.status === "pending").map(x => x.meetup_id));
     const today = (ms ?? []).filter(m => whenLabel(m.when_at).startsWith("오늘")), later = (ms ?? []).filter(m => !whenLabel(m.when_at).startsWith("오늘"));
     const Row = ({ m }: { m: any }) => { const k = kindOf(m.kind), c = n(m.id), closed = Date.parse(m.when_at) < Date.now() - 3 * 3600000; return (
       <div className={"mt-row" + (mine.has(m.id) ? " mine" : "")}>
@@ -192,10 +192,10 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         <div className="mt-body"><Link href={`/ssum/meet/${m.id}`} className="mt-title">{m.title}</Link>
           <div className="mt-meta"><b>{whenLabel(m.when_at)}</b> · {m.area}{m.place ? ` · ${m.place}` : ""}{m.gender ? ` · ${m.gender}성만` : ""}</div>
           <div className="mt-meta muted">{m.host ? display(m.host.dept, m.host.nickname) : "회원"} 주최 · <span className={c >= m.cap ? "" : "mt-open"}>{c}/{m.cap}명{c < m.cap ? ` · ${m.cap - c}자리 남음` : ""}</span></div></div>
-        <JoinButton id={m.id} joined={mine.has(m.id)} host={m.host_id === s.id} full={c >= m.cap} closed={closed} />
+        <JoinButton id={m.id} joined={mine.has(m.id)} pending={pend.has(m.id)} host={m.host_id === s.id} full={c >= m.cap} closed={closed} waiting={w(m.id)} />
       </div>); };
     body = <>
-      <div className="mt-intro"><b>⚡ 번개</b> — 오늘 오프인데 심심할 때, 교대 끝나고 한잔할 때. 지역·시간만 정하고 가볍게 모여요. <span className="muted">참여자끼리 모임 채팅방이 열려요.</span></div>
+      <div className="mt-intro"><b>⚡ 번개</b> — 오늘 오프인데 심심할 때, 교대 끝나고 한잔할 때. 지역·시간만 정하고 가볍게 모여요. <span className="muted">참여 신청 → 모임장이 수락하면 모임 채팅방이 열려요.</span></div>
       <details className="card ss-details"><summary><b>⚡ 번개 열기</b> <span className="muted">— 2주 안, 2~10명, 동시에 3개까지</span></summary><MeetForm defaultArea={myProf?.region?.includes("서울") ? "서울" : undefined} /></details>
       <div className="topics scroll">{["", ...MEET_AREAS].map(a => <Link key={a} href={`/ssum?tab=meet${a ? `&area=${encodeURIComponent(a)}` : ""}`} className={"topic" + (area === a ? " on" : "")}>{a || "전체"}</Link>)}</div>
       {today.length > 0 && <><div className="mt-sec">🔥 오늘</div>{today.map(m => <Row key={m.id} m={m} />)}</>}

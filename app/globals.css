@@ -1422,6 +1422,9 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .mt-meta{font-size:12.5px}.mt-open{color:#2E7D32;font-weight:700}
 .mt-head{display:flex;gap:10px;align-items:center;margin-top:8px}
 .mt-note{background:var(--bg);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:14px}
+.mt-apply{display:grid;gap:6px;flex:1;min-width:200px}.mt-apply input{width:100%}
+.mt-wait{margin-left:6px;background:#E53935;color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800}
+.mt-pend{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 .mt-members{display:flex;gap:6px;flex-wrap:wrap}.mt-members .tag.host{background:#FFE9A8;color:#5A4520}
 @media (prefers-color-scheme:dark){.mt-intro{background:linear-gradient(135deg,#3A3018,#2E2614);border-color:#5A4A20}.mt-row.mine{background:#2E2614}}
 
