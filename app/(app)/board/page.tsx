@@ -9,6 +9,7 @@ import { deptLeaders, rankFor, deptCommanders } from "@/lib/ranksvc";
 import Name from "@/components/Name";
 import BoardTabs from "@/components/BoardTabs";
 import { CafeHeader, NoticeFold, CafeBottom, QuerySelect, type NavItem } from "@/components/CafeNav";
+import BoardSearch from "@/components/BoardSearch";
 
 export const dynamic = "force-dynamic";
 const SEL = "id,category,title,body,pinned,boosted,created_at,board_id,topic,hidden,views,author:users(id,username,nickname,dept,xp,blue_badge)";
@@ -84,6 +85,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
       <div className="cf-info">
         <span>{kw ? <>‘{kw}’ 검색 <b>{posts.length}</b> · <Link href={qs({ q: "" })}>해제</Link></> : fresh ? <>24시간 새글 <b>{posts.length}</b> · <Link href={qs({})}>전체 보기</Link></> : <>새글 <b className="cf-red">{nNew}</b>/{posts.length.toLocaleString()}</>}</span>
         <QuerySelect label="말머리" value={topic} options={[["", "말머리 전체"], ...TOPICS.map(t => [t.key, `${t.icon} ${t.name}`] as [string, string])]} hrefs={Object.fromEntries([["", qs({ topic: "" })], ...TOPICS.map(t => [t.key, qs({ topic: t.key })])])} />
+        <BoardSearch cat={cat} q={kw} />
         <QuerySelect label="정렬" value={sort} options={[["rank", "계급순"], ["new", "최신순"], ["best", "인기순"]]} hrefs={{ rank: qs({ sort: "" }), new: qs({ sort: "new" }), best: qs({ sort: "best" }) }} />
       </div>
       <NoticeFold count={notices.length}>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Bell from "@/components/Bell";
+import BottomNav from "@/components/BottomNav";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { logout } from "@/lib/actions";
@@ -43,12 +44,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="app">
       <header>
         <div className="brand"><h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트웹</Link></h1></div>
-        <TourButton /><Bell initial={unread ?? 0} /><div className="me"><Name r={rank} dept={s.dept} nickname={s.nickname} username={s.username} />{s.role === "admin" && <span className="tag">관리자</span>}<form action={logout}><button>나가기</button></form></div>
+        <TourButton /><Bell initial={unread ?? 0} /><div className="me"><Link href="/rank" className="me-rank" title="내 계급"><Name r={rank} dept={s.dept} nickname={s.nickname} /></Link>{s.role === "admin" && <Link href="/admin" className="tag" style={{ textDecoration: "none" }}>관리자</Link>}<form action={logout}><button>나가기</button></form></div>
       </header>
       <Tabs admin={s.role === "admin"} />
       <Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense>
       {pub && <PushSetup vapidPublic={pub} />}
       <main>{children}</main>
+      <BottomNav />
       <PromoToast />
       <Onboarding show={!!me && !me.onboarded} />
       <ChatDock me={s} initial={(msgs ?? []).reverse()} myRank={String(rank.index)} official={official} online={<Presence user={s} stealth={!!me?.stealth} />} roomsOn={roomsOn} />

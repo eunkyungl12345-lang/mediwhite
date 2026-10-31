@@ -1,6 +1,5 @@
 import Link from "next/link";
 import BlueBadge from "@/components/BlueBadge";
-import { CafeBottom } from "@/components/CafeNav";
 import HomeFeed from "@/components/HomeFeed";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
@@ -63,33 +62,21 @@ export default async function HomePage() {
   const Row = ({ p }: { p: any }) => <Link href={`/board/${p.id}`} className="h-row"><span className="h-topic">{topicOf(p.topic).icon}</span><span className="h-title">{p.title}</span><span className="h-meta">{p.author ? `[${p.author.dept}]` : ""}{p.author?.blue_badge ? <BlueBadge size={11} className="bb" /> : null} · 💬{p.nc} 👍{p.nr}</span></Link>;
 
   const pct = (x?: { pct: number }) => x ? `${x.pct > 0 ? "▲" : x.pct < 0 ? "▼" : ""}${Math.abs(x.pct).toFixed(1)}%` : "";
+  const noticesF = posts.filter(p => p.category === "공지" || p.pinned).slice(0, 8).map(feedRow);
   return (
-    <div className="home">
-      <div className="h-greet"><b>{hourGreet()},</b> {me?.nickname ?? s.nickname}님<span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 방문 {online.toLocaleString()}</span></div>
-
-
-      {heads.length > 0 && <section className="h-card">
-        <div className="h-head"><h3>오늘의 핫뉴스</h3><Link href="/news" className="h-link">더보기</Link></div>
-        {heads.map((h, i) => <a key={i} href={h.link} target="_blank" rel="noopener noreferrer" className="h-row"><span className="h-topic">{["🌙", "🌙", "📈", "🏦", "🏥"][i]}</span><span className="h-title">{h.title}</span><span className="h-meta">{h.source}</span></a>)}
-      </section>}
-
-      <HomeFeed latest={latestF} hot={hotF} mine={mineF} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
-
-      <nav className="h-tiles" aria-label="바로가기">
-        <Link href="/news" className="h-tile"><span className="h-tile-ico">📰</span><b>핫뉴스</b><small className={ndq ? (ndq.pct >= 0 ? "up" : "down") : ""}>{ndq ? `나스닥 ${pct(ndq)}` : "오늘 소식"}</small></Link>
-        <Link href="/fortune" className="h-tile ft"><span className="h-tile-ico">🔮</span><b>오늘의 운세</b><small>{ft ? `${ft.score}점` : "생일 등록하기"}</small></Link>
-        <Link href="/games?g=tycoon" className="h-tile"><span className="h-tile-ico">🏥</span><b>우리 병원</b><small>{tyPending > 0 ? `+${won(tyPending)} 쌓임` : tyS ? `초당 ${won(tyRate)}원` : "폐허의원부터 시작"}</small></Link>
-        <Link href="/anon" className="h-tile"><span className="h-tile-ico">🕶️</span><b>익명 게시판</b><small>아무도 모르게</small></Link>
-        <Link href="/rest" className="h-tile"><span className="h-tile-ico">🛋️</span><b>당직실</b><small>같이 쉬기·숨쉬기</small></Link>
-        <Link href="/ssum" className="h-tile"><span className="h-tile-ico">💘</span><b>썸</b><small>고백·셀소·소개</small></Link>
-        <Link href="/jobs" className="h-tile"><span className="h-tile-ico">💼</span><b>채용·병원리뷰</b><small>복지·워라밸 별점</small></Link>
-        <Link href="/food" className="h-tile"><span className="h-tile-ico">🍚</span><b>병원 앞 맛집</b><small>혼밥·회식·배달</small></Link>
-        <Link href="/games" className="h-tile"><span className="h-tile-ico">🎮</span><b>게임</b><small>{ksp ? `코스피 ${pct(ksp)}` : "오목·그림 맞히기"}</small></Link>
+    <div className="home v2">
+      <div className="h-greet"><b>{hourGreet()},</b> {me?.nickname ?? s.nickname}님<span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 {online.toLocaleString()}명</span></div>
+      <nav className="hstrip" aria-label="오늘">
+        <Link href="/games?g=wordle" className={"hs-pill" + (wd?.data?.done ? " done" : "")}><span>🟩</span>{wd?.data?.done ? "메디워들 완료" : "메디워들"}</Link>
+        <Link href="/games?g=tycoon" className="hs-pill"><span>🏥</span>{tyPending > 0 ? `우리 병원 +${won(tyPending)}` : "우리 병원"}</Link>
+        {heads[0] && <a href={heads[0].link} target="_blank" rel="noopener noreferrer" className="hs-pill news"><span>📰</span><em>{heads[0].title}</em></a>}
+        <Link href="/rest" className="hs-pill"><span>🛋️</span>당직실</Link>
+        <Link href="/anon" className="hs-pill"><span>🕶️</span>익명</Link>
+        <Link href="/jobs" className="hs-pill"><span>💼</span>채용·병원리뷰</Link>
+        <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
       </nav>
-      <div className="h-daily">
-        <Link href="/games?g=wordle" className={"h-dly" + (wd?.data?.done ? " done" : "")}><span>🟩</span><div><b>오늘의 메디워들</b><small>{wd?.data?.done ? (wd.data.won ? `✅ ${wd.attempts}번 만에 정답` : "❌ 내일 다시") : "하루 한 문제 · 최대 300 XP"}</small></div></Link>
-      </div>
 
+      <HomeFeed latest={latestF} hot={hotF} mine={mineF} notices={noticesF} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
 
       <section className={`h-card h-rank t${r.tier}`}>
         <div className="h-rank-top">
@@ -106,7 +93,6 @@ export default async function HomePage() {
         </div>
         <div className="h-dq-foot">{daily.all ? <span>🎉 오늘 퀘스트 올클리어!</span> : <span>오늘 퀘스트 {doneN}/3 · 다 하면 +{DAILY_BONUS} XP</span>}</div>
       </section>
-      <CafeBottom writeHref="/board/new" newHref="/board?new=1" cat="전체" q="" newCount={newPosts ?? 0} />
     </div>
   );
 }
