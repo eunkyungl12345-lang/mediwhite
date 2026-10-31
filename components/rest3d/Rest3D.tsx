@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import type { RestPerson, RestPos } from "@/lib/rest.actions";
 import { restSay, restBurn } from "@/lib/rest.actions";
+import { Ambience } from "./ambience";
 
 /* ========================================================================
    🛋️ 당직실 3D — 병원 옥상 야경 / 병원 앞 포장마차
@@ -180,6 +181,8 @@ function buildPocha(scene: THREE.Scene) {
 export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, onXp, actPulse }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [scene, setScene] = useState<Scene>(() => { try { return (localStorage.getItem("mw-rest-scene") as Scene) || "roof"; } catch { return "roof"; } });
+  const [snd, setSnd] = useState<"off" | "on" | "wait">("wait"), [vol, setVol] = useState(() => { try { return Number(localStorage.getItem("mw-rest-vol") ?? .7); } catch { return .7; } });
+  const amb = useRef<Ambience | null>(null);
   const [mode, setMode] = useState<"normal" | "zen">("normal"), [say, setSay] = useState(""), [burn, setBurn] = useState<string | null>(null), [busy, setBusy] = useState(false), [sitting, setSitting] = useState(false);
   const st = useRef<{ renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
   const peopleRef = useRef(people), breathRef = useRef(breathK), sceneRef = useRef(scene), modeRef = useRef(mode);
@@ -270,6 +273,13 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     a.tx = free.s.x; a.tz = free.s.z; a.pose = "sit"; S.seat = free.i; setSitting(true); emitMove("sit"); };
   const sendSay = async () => { const t = say.trim(); if (!t || busy) return; setBusy(true); const r = await restSay(t); setBusy(false); if (r?.error) { onToast(r.error); return; } const a = st.current.me; if (a) setBubble(a, t); setSay(""); setTimeout(() => { if (a && a.bubbleText === t) setBubble(a, null); }, 10000); };
   const doBurn = async () => { const S = st.current; const a = S.me; const txt = (burn ?? "").trim(); if (!a || !S.sc || !txt) return; const sp = textSprite("📝", { bg: "rgba(0,0,0,0)", size: 40, pad: 2 }); sp.position.set(a.g.position.x, 1.6, a.g.position.z); S.sc.add(sp); S.paper = { sp, t: 0, from: sp.position.clone() }; setBurn(null); navigator.vibrate?.(20); const xp = await restBurn(txt.length).catch(() => 0); onXp(xp ? `🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요 (+${xp} XP)` : "🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요"); };
+  const soundOn = async () => { try { if (!amb.current) amb.current = new Ambience(); await amb.current.start(sceneRef.current); amb.current.setVolume(vol); setSnd("on"); try { localStorage.setItem("mw-rest-snd", "1"); } catch {} } catch { setSnd("off"); } };
+  const soundOff = () => { amb.current?.stop(); amb.current?.setVolume(0); setSnd("off"); try { localStorage.setItem("mw-rest-snd", "0"); } catch {} };
+  useEffect(() => { if (snd === "on") amb.current?.start(scene).then(() => amb.current?.setVolume(vol)); }, [scene]); // eslint-disable-line
+  useEffect(() => { amb.current?.setVolume(snd === "on" ? vol : 0); try { localStorage.setItem("mw-rest-vol", String(vol)); } catch {} }, [vol]); // eslint-disable-line
+  useEffect(() => () => { amb.current?.dispose(); }, []);
+  // 첫 터치에 자동으로 소리 켜기 (브라우저 정책상 제스처 필요) — 전에 껐던 사람은 안 켬
+  useEffect(() => { const el = box.current; if (!el) return; const first = () => { let pref = "1"; try { pref = localStorage.getItem("mw-rest-snd") ?? "1"; } catch {} if (pref !== "0") soundOn(); else setSnd("off"); }; el.addEventListener("pointerdown", first, { once: true }); return () => el.removeEventListener("pointerdown", first); }, []); // eslint-disable-line
   const here = people.filter(p => p.scene === scene).length;
 
   return (
@@ -277,10 +287,11 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       <div ref={box} className="r3-canvas" />
       <div className="r3-top">
         <div className="r3-tabs"><button type="button" aria-pressed={scene === "roof"} onClick={() => setScene("roof")}>🌃 병원 옥상</button><button type="button" aria-pressed={scene === "pocha"} onClick={() => setScene("pocha")}>🍢 병원 앞 포차</button></div>
-        <span className="r3-count">👥 {here}명</span>
+        <span className="r3-right"><button type="button" className={"r3-snd" + (snd === "on" ? " on" : "")} onClick={() => snd === "on" ? soundOff() : soundOn()} aria-label="소리">{snd === "on" ? "🔊" : "🔇"}</button><span className="r3-count">👥 {here}명</span></span>
       </div>
       {mode === "zen" ? <button type="button" className="r3-zen-exit" onClick={() => setMode("normal")}>불멍 끝내기</button> : <>
-        <div className="r3-hint">바닥을 탭하면 걸어가요 · 좌우로 끌면 둘러보기</div>
+        <div className="r3-hint">{snd === "wait" ? "🔊 화면을 한 번 탭하면 소리가 켜져요" : "바닥을 탭하면 걸어가요 · 좌우로 끌면 둘러보기"}</div>
+        {snd === "on" && <input type="range" className="r3-vol" min={0} max={1} step={.05} value={vol} onChange={e => setVol(Number(e.target.value))} aria-label="볼륨" />}
         <div className="r3-acts">
           <button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
           <button type="button" onClick={() => setBurn(b => b === null ? "" : null)}><span>🔥</span>걱정 태우기</button>

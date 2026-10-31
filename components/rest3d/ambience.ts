@@ -1,0 +1,66 @@
+/** 당직실 3D 배경음 — 파일 없이 WebAudio로 합성 (도시 소음·불·귀뚜라미·포차 웅성거림 + 잔잔한 패드 음악) */
+export type AmbScene = "roof" | "pocha";
+
+function noiseBuffer(ctx: AudioContext, sec = 4, brown = true) {
+  const len = ctx.sampleRate * sec, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0); let last = 0;
+  for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; if (brown) { last = (last + .02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w; }
+  return buf;
+}
+
+export class Ambience {
+  ctx: AudioContext; master: GainNode; music: GainNode; sfx: GainNode; timers: any[] = []; nodes: AudioNode[] = []; scene: AmbScene = "roof"; running = false; padStep = 0; padTimer: any = null;
+  constructor() { this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)(); this.master = this.ctx.createGain(); this.master.gain.value = 0; this.master.connect(this.ctx.destination); this.music = this.ctx.createGain(); this.music.gain.value = .55; this.music.connect(this.master); this.sfx = this.ctx.createGain(); this.sfx.gain.value = 1; this.sfx.connect(this.master); }
+  setVolume(v: number) { this.master.gain.setTargetAtTime(Math.max(0, Math.min(1, v)), this.ctx.currentTime, .3); }
+  async start(scene: AmbScene) { await this.ctx.resume(); this.stopLayers(); this.scene = scene; this.running = true; if (scene === "roof") this.roof(); else this.pocha(); this.pad(); }
+  stop() { this.stopLayers(); this.running = false; }
+  dispose() { this.stop(); try { this.ctx.close(); } catch {} }
+  private stopLayers() { for (const t of this.timers) clearTimeout(t); this.timers = []; if (this.padTimer) clearInterval(this.padTimer); this.padTimer = null; for (const n of this.nodes) { try { (n as any).stop?.(); } catch {} try { n.disconnect(); } catch {} } this.nodes = []; }
+  private loop(buf: AudioBuffer, filter: BiquadFilterType, freq: number, gain: number, q = 1) {
+    const src = this.ctx.createBufferSource(); src.buffer = buf; src.loop = true; const f = this.ctx.createBiquadFilter(); f.type = filter; f.frequency.value = freq; f.Q.value = q; const g = this.ctx.createGain(); g.gain.value = gain;
+    src.connect(f); f.connect(g); g.connect(this.sfx); src.start(); this.nodes.push(src, f, g); return { src, f, g };
+  }
+  private every(minMs: number, maxMs: number, fn: () => void) { const tick = () => { if (!this.running) return; fn(); this.timers.push(setTimeout(tick, minMs + Math.random() * (maxMs - minMs))); }; this.timers.push(setTimeout(tick, Math.random() * maxMs)); }
+  private burst(filter: BiquadFilterType, freq: number, dur: number, gain: number, pan = 0) {
+    const src = this.ctx.createBufferSource(); src.buffer = noiseBuffer(this.ctx, Math.max(.1, dur), false); const f = this.ctx.createBiquadFilter(); f.type = filter; f.frequency.value = freq; const g = this.ctx.createGain(); const t = this.ctx.currentTime; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    const p = this.ctx.createStereoPanner(); p.pan.value = pan; src.connect(f); f.connect(g); g.connect(p); p.connect(this.sfx); src.start(); src.stop(t + dur + .05);
+  }
+  /* 옥상: 바람/도시 소음 + 드럼통 불 + 귀뚜라미 + 가끔 멀리 사이렌·차 소리 */
+  private roof() {
+    const brown = noiseBuffer(this.ctx, 5, true);
+    const wind = this.loop(brown, "lowpass", 420, .22); // 바람·도시
+    const lfo = this.ctx.createOscillator(); lfo.frequency.value = .07; const lg = this.ctx.createGain(); lg.gain.value = .1; lfo.connect(lg); lg.connect(wind.g.gain); lfo.start(); this.nodes.push(lfo, lg);
+    this.loop(brown, "bandpass", 1200, .07, .6); // 불 '솨아'
+    this.every(90, 420, () => this.burst("bandpass", 1800 + Math.random() * 1500, .05 + Math.random() * .08, .18 + Math.random() * .2, (Math.random() - .5) * .4)); // 탁탁
+    // 귀뚜라미
+    this.every(900, 2600, () => { const n = 3 + Math.floor(Math.random() * 4), pan = (Math.random() - .5) * 1.4; for (let i = 0; i < n; i++) this.timers.push(setTimeout(() => this.chirp(4200 + Math.random() * 600, pan), i * 110)); });
+    // 멀리 구급차 사이렌(아주 작게) · 차 지나가기
+    this.every(25000, 70000, () => this.siren());
+    this.every(12000, 30000, () => this.car());
+  }
+  /* 포차: 솥 끓는 소리·지글 + 웅성웅성 + 잔 부딪히는 소리 + 도로 */
+  private pocha() {
+    const brown = noiseBuffer(this.ctx, 5, true), white = noiseBuffer(this.ctx, 4, false);
+    this.loop(brown, "lowpass", 300, .16); // 도로·밤공기
+    const siz = this.loop(white, "highpass", 5200, .035); const l2 = this.ctx.createOscillator(); l2.frequency.value = .9; const l2g = this.ctx.createGain(); l2g.gain.value = .02; l2.connect(l2g); l2g.connect(siz.g.gain); l2.start(); this.nodes.push(l2, l2g); // 지글
+    this.loop(brown, "bandpass", 180, .12, .8); // 끓는 솥 (저음 부글)
+    this.every(400, 1500, () => this.burst("bandpass", 250 + Math.random() * 200, .12, .12)); // 보글
+    const mur = this.loop(brown, "bandpass", 700, .09, .5); const ml = this.ctx.createOscillator(); ml.frequency.value = .23; const mg = this.ctx.createGain(); mg.gain.value = .05; ml.connect(mg); mg.connect(mur.g.gain); ml.start(); this.nodes.push(ml, mg); // 웅성웅성
+    this.every(6000, 18000, () => this.clink());
+    this.every(15000, 40000, () => this.car());
+  }
+  private chirp(freq: number, pan: number) { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = freq; const g = this.ctx.createGain(); const t = this.ctx.currentTime; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.025, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .07); const p = this.ctx.createStereoPanner(); p.pan.value = pan; o.connect(g); g.connect(p); p.connect(this.sfx); o.start(); o.stop(t + .1); }
+  private clink() { for (let i = 0; i < 2; i++) { const o = this.ctx.createOscillator(); o.type = "triangle"; o.frequency.value = 2400 + Math.random() * 900; const g = this.ctx.createGain(); const t = this.ctx.currentTime + i * .09; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.06, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + .5); o.connect(g); g.connect(this.sfx); o.start(t); o.stop(t + .6); } }
+  private siren() { const o = this.ctx.createOscillator(); o.type = "sine"; const g = this.ctx.createGain(); const t = this.ctx.currentTime, dur = 7; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.012, t + dur * .4); g.gain.linearRampToValueAtTime(0, t + dur); for (let i = 0; i < dur * 2; i++) o.frequency.setValueAtTime(i % 2 ? 660 : 880, t + i * .5); const f = this.ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900; const p = this.ctx.createStereoPanner(); p.pan.setValueAtTime(-1, t); p.pan.linearRampToValueAtTime(1, t + dur); o.connect(f); f.connect(g); g.connect(p); p.connect(this.sfx); o.start(t); o.stop(t + dur + .1); }
+  private car() { const src = this.ctx.createBufferSource(); src.buffer = noiseBuffer(this.ctx, 4, true); const f = this.ctx.createBiquadFilter(); f.type = "lowpass"; const t = this.ctx.currentTime, dur = 3.5; f.frequency.setValueAtTime(200, t); f.frequency.linearRampToValueAtTime(900, t + dur / 2); f.frequency.linearRampToValueAtTime(200, t + dur); const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.08, t + dur / 2); g.gain.linearRampToValueAtTime(0, t + dur); const p = this.ctx.createStereoPanner(); p.pan.setValueAtTime(1, t); p.pan.linearRampToValueAtTime(-1, t + dur); src.connect(f); f.connect(g); g.connect(p); p.connect(this.sfx); src.start(t); src.stop(t + dur + .1); }
+  /* 잔잔한 패드: 느린 코드 진행 + 딜레이 리버브 느낌 */
+  private pad() {
+    const chords = this.scene === "roof" ? [[220, 261.6, 329.6, 392], [174.6, 220, 261.6, 349.2], [196, 246.9, 293.7, 392], [164.8, 196, 246.9, 329.6]] : [[196, 246.9, 293.7, 349.2], [146.8, 174.6, 220, 293.7], [174.6, 220, 261.6, 329.6], [130.8, 164.8, 196, 261.6]];
+    const delay = this.ctx.createDelay(1.5); delay.delayTime.value = .42; const fb = this.ctx.createGain(); fb.gain.value = .45; const dl = this.ctx.createBiquadFilter(); dl.type = "lowpass"; dl.frequency.value = 1600; delay.connect(fb); fb.connect(dl); dl.connect(delay); const wet = this.ctx.createGain(); wet.gain.value = .5; delay.connect(wet); wet.connect(this.music); this.nodes.push(delay, fb, dl, wet);
+    const play = () => { if (!this.running) return; const ch = chords[this.padStep % chords.length]; this.padStep++; const t = this.ctx.currentTime, dur = 9;
+      ch.forEach((f, i) => { for (const det of [-4, 4]) { const o = this.ctx.createOscillator(); o.type = i === 0 ? "sine" : "triangle"; o.frequency.value = f; o.detune.value = det; const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(i === 0 ? .035 : .018, t + 3); g.gain.setValueAtTime(i === 0 ? .035 : .018, t + dur - 3.5); g.gain.linearRampToValueAtTime(0, t + dur); const lp = this.ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 900; o.connect(lp); lp.connect(g); g.connect(this.music); g.connect(delay); o.start(t); o.stop(t + dur + .1); } });
+      // 가끔 높은 음 하나 (별빛/풍경 느낌)
+      if (Math.random() < .6) { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = ch[Math.floor(Math.random() * ch.length)] * 4; const g = this.ctx.createGain(); const t2 = t + 2 + Math.random() * 4; g.gain.setValueAtTime(0, t2); g.gain.linearRampToValueAtTime(.02, t2 + .05); g.gain.exponentialRampToValueAtTime(.0001, t2 + 2.5); o.connect(g); g.connect(delay); g.connect(this.music); o.start(t2); o.stop(t2 + 2.6); }
+    };
+    play(); this.padTimer = setInterval(play, 8000);
+  }
+}
