@@ -15,7 +15,7 @@ export default function HomeFeed({ latest, hot, mine, notices, news, dept, moreM
         <div className="hf-title"><span className="hf-ico">{p.icon}</span><span>{p.title}</span>{p.fresh && <span className="n-badge">N</span>}</div>
         <div className="hf-meta"><span>{p.dept ? `[${p.dept}]` : ""}{p.nick ?? "탈퇴"}{p.badge && <BlueBadge size={11} className="bb" />}</span><span>{p.time}</span><span>조회 {p.views}</span>{p.nc > 0 && <span>💬 {p.nc}</span>}{p.nr > 0 && <span>👍 {p.nr}</span>}<span className="hf-cat">{p.cat}</span></div>
       </Link>) : <div className="h-empty">아직 글이 없어요. <Link href="/board/new">첫 글 쓰기 →</Link></div>}
-      <Link href={cur[4]} className="hf-more">{t === "news" ? "정치·연예·의료 뉴스 더보기 →" : `${cur[2]} 글 더보기 →`}</Link>
+      <Link href={cur[4]} className="hf-more">{t === "news" ? "정치·연예·스포츠·의료 뉴스 더보기 →" : `${cur[2]} 글 더보기 →`}</Link>
     </section>
   </>;
 }
