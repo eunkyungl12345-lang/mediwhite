@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BlueBadge from "@/components/BlueBadge";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { RANKS, QUESTS, PRIVILEGES, REPEAT, signupBonus, can } from "@/lib/ranks";
@@ -34,7 +35,7 @@ export default async function RankPage() {
     <div className="games">
       <Hero img="/img/rank.jpg" title="내 계급" sub="참여할수록 진급" />
       <div className={`card t${r.tier}`}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><Name r={r} dept={me?.dept ?? s.dept} nickname={me?.nickname ?? s.nickname} username={s.username} size={22} badge={me?.blue_badge} /><RankBadge r={r} />{!me?.blue_badge && <Link href="/badge" className="tag" style={{ textDecoration: "none" }}>🔵 블루뱃지 인증</Link>}<span className="muted">가입 {me?.join_order ?? "-"}번째</span></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}><Name r={r} dept={me?.dept ?? s.dept} nickname={me?.nickname ?? s.nickname} username={s.username} size={22} badge={me?.blue_badge} /><RankBadge r={r} />{!me?.blue_badge && <Link href="/badge" className="tag bb-tag"><BlueBadge size={14} /> 골드뱃지 인증</Link>}<span className="muted">가입 {me?.join_order ?? "-"}번째</span></div>
         <h3>{xp.toLocaleString()} XP</h3>
         <div className="xpbar"><i style={{ width: `${Math.round(r.progress * 100)}%` }} /></div>
         <div className="muted">{r.capped ? "참모총장 경험치는 채웠지만 파트 1위가 아니라 중장이에요. 1위를 넘으면 참모총장!" : r.next ? `${r.nextName}까지 ${(r.next - xp).toLocaleString()} XP` : "파트 참모총장이에요. 경례!"}</div>

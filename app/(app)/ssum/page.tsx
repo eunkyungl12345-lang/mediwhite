@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BlueBadge from "@/components/BlueBadge";
 import { MeetForm, JoinButton } from "@/components/ssum/Meet";
 import { kindOf, whenLabel, MEET_AREAS } from "@/lib/meetup";
 import { db } from "@/lib/supabase";
@@ -188,15 +189,15 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     const today = (ms ?? []).filter(m => whenLabel(m.when_at).startsWith("오늘")), later = (ms ?? []).filter(m => !whenLabel(m.when_at).startsWith("오늘"));
     const Row = ({ m }: { m: any }) => { const k = kindOf(m.kind), c = n(m.id), closed = Date.parse(m.when_at) < Date.now() - 3 * 3600000; return (
       <div className={"mt-row" + (mine.has(m.id) ? " mine" : "")}>
-        <span className="mt-ico">{k.icon}</span>
+        <span className={"mt-ico" + (m.kind === "coffeechat" ? " cc" : "")}>{m.kind === "coffeechat" ? <BlueBadge size={30} /> : k.icon}</span>
         <div className="mt-body"><Link href={`/ssum/meet/${m.id}`} className="mt-title">{m.title}</Link>
           <div className="mt-meta"><b>{whenLabel(m.when_at)}</b> · {m.area}{m.place ? ` · ${m.place}` : ""}{m.gender ? ` · ${m.gender}성만` : ""}</div>
-          <div className="mt-meta muted">{m.host ? display(m.host.dept, m.host.nickname) : "회원"}{m.host?.blue_badge ? " 🔵" : ""} 주최 · <span className={c >= m.cap ? "" : "mt-open"}>{c}/{m.cap}명{c < m.cap ? ` · ${m.cap - c}자리 남음` : ""}</span></div></div>
+          <div className="mt-meta muted">{m.host ? display(m.host.dept, m.host.nickname) : "회원"}{m.host?.blue_badge ? <BlueBadge size={13} className="bb" /> : null} 주최 · <span className={c >= m.cap ? "" : "mt-open"}>{c}/{m.cap}명{c < m.cap ? ` · ${m.cap - c}자리 남음` : ""}</span></div></div>
         <JoinButton id={m.id} joined={mine.has(m.id)} pending={pend.has(m.id)} host={m.host_id === s.id} full={c >= m.cap} closed={closed} waiting={w(m.id)} />
       </div>); };
     body = <>
       <div className="mt-intro"><b>⚡ 번개</b> — 오늘 오프인데 심심할 때, 교대 끝나고 한잔할 때. 지역·시간만 정하고 가볍게 모여요. <span className="muted">참여 신청 → 모임장이 수락하면 모임 채팅방이 열려요.</span></div>
-      <Link href="/badge" className={"bd-cta" + (meU?.blue_badge ? " on" : "")}>{meU?.blue_badge ? <><span>🔵</span><b>블루뱃지 회원</b><span className="muted">☕ 커피챗 번개를 열 수 있어요</span></> : <><span>🔵</span><b>블루뱃지 인증하고 커피챗 열기</b><span className="muted">운전면허증 + 면허·자격증 확인 → 이름 옆 🔵</span><span className="bd-arrow">›</span></>}</Link>
+      <Link href="/badge" className={"bd-cta" + (meU?.blue_badge ? " on" : "")}>{meU?.blue_badge ? <><BlueBadge size={26} /><b>골드뱃지 회원</b><span className="muted">☕ 커피챗 번개를 열 수 있어요</span></> : <><BlueBadge size={26} /><b>골드뱃지 인증하고 커피챗 열기</b><span className="muted">운전면허증 + 면허·자격증 확인 → 이름 옆 <BlueBadge size={12} className="bb" /></span><span className="bd-arrow">›</span></>}</Link>
       <details className="card ss-details"><summary><b>⚡ 번개 열기</b> <span className="muted">— 2주 안, 2~10명, 동시에 3개까지</span></summary><MeetForm defaultArea={myProf?.region?.includes("서울") ? "서울" : undefined} badge={!!meU?.blue_badge} /></details>
       <div className="topics scroll">{["", ...MEET_AREAS].map(a => <Link key={a} href={`/ssum?tab=meet${a ? `&area=${encodeURIComponent(a)}` : ""}`} className={"topic" + (area === a ? " on" : "")}>{a || "전체"}</Link>)}</div>
       {today.length > 0 && <><div className="mt-sec">🔥 오늘</div>{today.map(m => <Row key={m.id} m={m} />)}</>}

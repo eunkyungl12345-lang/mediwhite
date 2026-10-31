@@ -4,6 +4,7 @@ import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createMeetup, joinMeetup, leaveMeetup, sendMeetMsg, answerJoin } from "@/lib/meetupActions";
 import { MEET_KINDS, MEET_AREAS, needsBadge } from "@/lib/meetup";
+import BlueBadge from "@/components/BlueBadge";
 
 const localMin = (addMin: number) => { const d = new Date(Date.now() + addMin * 60000 + 9 * 3600000); if (d.getUTCMinutes() > 0) d.setUTCHours(d.getUTCHours() + 1); d.setUTCMinutes(0, 0, 0); return d.toISOString().slice(0, 16); };
 export function MeetForm({ defaultArea, badge }: { defaultArea?: string; badge?: boolean }) {
@@ -12,8 +13,8 @@ export function MeetForm({ defaultArea, badge }: { defaultArea?: string; badge?:
   return (
     <form ref={ref} action={action} className="form mt-form">
       <input type="hidden" name="kind" value={kind} />
-      <div className="mt-kinds">{MEET_KINDS.map(k => { const lock = needsBadge(k.key) && !badge; return <button key={k.key} type="button" className={"topic" + (kind === k.key ? " on" : "") + (lock ? " lock" : "")} title={lock ? "블루뱃지 회원만" : undefined} onClick={() => { if (lock) { setKind(k.key); return; } setKind(k.key); }}><span>{lock ? "🔒" : k.icon}</span>{k.name}</button>; })}</div>
-      {kind === "coffeechat" && (badge ? <div className="mt-tip">🔵 <b>커피챗</b> — 직무 고민·이직·커리어 수다. 블루뱃지 회원이 여는 믿을 수 있는 자리예요.</div> : <div className="mt-tip warn">🔒 커피챗은 <b>블루뱃지</b>(운전면허증+면허·자격증 인증) 회원만 열 수 있어요. <a className="link" href="/badge">🔵 지금 인증하기 →</a></div>)}
+      <div className="mt-kinds">{MEET_KINDS.map(k => { const lock = needsBadge(k.key) && !badge; return <button key={k.key} type="button" className={"topic" + (kind === k.key ? " on" : "") + (lock ? " lock" : "")} title={lock ? "골드뱃지 회원만" : undefined} onClick={() => { if (lock) { setKind(k.key); return; } setKind(k.key); }}><span>{lock ? "🔒" : k.key === "coffeechat" ? <BlueBadge size={15} /> : k.icon}</span>{k.name}</button>; })}</div>
+      {kind === "coffeechat" && (badge ? <div className="mt-tip"><BlueBadge size={14} className="bb" /> <b>커피챗</b> — 직무 고민·이직·커리어 수다. 골드뱃지 회원이 여는 믿을 수 있는 자리예요.</div> : <div className="mt-tip warn">🔒 커피챗은 <b>골드뱃지</b>(운전면허증+면허·자격증 인증) 회원만 열 수 있어요. <a className="link" href="/badge">지금 인증하기 →</a></div>)}
       <input name="title" maxLength={40} placeholder="제목 — 예: 오늘 오프, 동탄에서 커피 한잔 하실 분" required />
       <div className="row" style={{ gap: 6 }}>
         <select name="area" defaultValue={defaultArea && (MEET_AREAS as readonly string[]).includes(defaultArea) ? defaultArea : "경기 남부"} required>{MEET_AREAS.map(a => <option key={a} value={a}>{a}</option>)}</select>

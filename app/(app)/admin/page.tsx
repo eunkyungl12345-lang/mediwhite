@@ -56,7 +56,7 @@ export default async function AdminPage() {
     <div className="games">
       <Stats series={series} totals={{ users: (signups ?? []).length, today: series[series.length - 1]?.visitors ?? 0, msg24h: msg24 ?? 0, posts: postsAll ?? 0, games24h: scores24 ?? 0 }} />
       <div className="card" id="badges">
-        <h3>🔵 블루뱃지 심사 {badgeReqs?.length ? <span className="mt-wait">{badgeReqs.length}</span> : null}</h3>
+        <h3>🥇 골드뱃지 심사 {badgeReqs?.length ? <span className="mt-wait">{badgeReqs.length}</span> : null}</h3>
         <div className="muted">운전면허증 + 의료 면허·자격증 이름이 같은지 확인. 승인/거절하면 사진은 즉시 삭제돼요.</div>
         <AdminBadges reqs={(badgeReqs ?? []) as any} />
       </div>
