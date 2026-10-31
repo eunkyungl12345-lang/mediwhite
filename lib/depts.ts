@@ -9,7 +9,9 @@ export const DEPT_GROUPS: [string, readonly string[]][] = [
   ["그 외", ["취준생", "대학생", "타직장인", "업체"]],
 ];
 /** 직종 표시 이름(데이터 키는 유지, 화면 라벨만) */
-export const DEPT_LABEL: Record<string, string> = { 방사선: "방사선사", 물리치료: "물리치료사", 임상병리: "임상병리사", 응급구조: "응급구조사", 총괄: "병원총괄", 원무: "원무과", 업체: "업체(노무·세무·마케팅·소모품·청소·단말기·인테리어·약품·제약·의료기기)" };
+export const DEPT_LABEL: Record<string, string> = { 방사선: "방사선사", 물리치료: "물리치료사", 임상병리: "임상병리사", 응급구조: "응급구조사", 총괄: "병원총괄", 원무: "원무과" };
+/** 업체 회원의 분야 (가입 시 선택) */
+export const VENDOR_FIELDS = ["노무", "세무", "마케팅", "소모품", "청소", "단말기", "인테리어", "약품", "제약회사", "의료기기", "프로그램"] as const;
 export const deptLabel = (d: string) => DEPT_LABEL[d] ?? d;
 export type Dept = (typeof DEPTS)[number];
 export const NOTICE_CAT = "공지";

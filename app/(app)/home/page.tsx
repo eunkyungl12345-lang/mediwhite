@@ -46,7 +46,7 @@ export default async function HomePage() {
   const mine = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 5);
   const { count: memberN } = await d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false);
   const feedRow = (p: any) => ({ id: p.id, title: p.title, icon: topicOf(p.topic).icon, dept: p.author?.dept, nick: p.author?.nickname, badge: !!p.author?.blue_badge, cat: p.category === "공지" ? "공지" : `${p.category} 라운지`, time: fmt(p.created_at), views: p.views ?? 0, nc: p.nc, nr: p.nr, fresh: now - Date.parse(p.created_at) < 86400000 });
-  const latestF = posts.filter(p => !p.pinned && p.id !== q?.id).slice(0, 8).map(feedRow), hotF = hot.map(feedRow), mineF = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 8).map(feedRow);
+  const latestF = posts.filter(p => !p.pinned && p.id !== q?.id).slice(0, 10).map(feedRow), recentF = posts.filter(p => !p.pinned && p.id !== q?.id && now - Date.parse(p.created_at) < 2 * 86400000).slice(0, 10).map(feedRow), hotF = hot.map(feedRow), mineF = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 8).map(feedRow);
   const kday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
   const { data: dps } = await d.from("daily_plays").select("game,attempts,best,data").eq("user_id", s.id).eq("day", kday);
   const wd = (dps ?? []).find((r: any) => r.game === "wordle") as any;
@@ -77,7 +77,7 @@ export default async function HomePage() {
         <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
       </nav>
 
-      <HomeFeed latest={latestF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} newsTabs={NEWS_TABS.map(t => ({ key: t.key, name: t.name }))} quotes={quotes} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
+      <HomeFeed latest={latestF} recent={recentF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} newsTabs={NEWS_TABS.map(t => ({ key: t.key, name: t.name }))} quotes={quotes} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
 
       <Link href="/rank" className={`h-rank2 t${r.tier}`}>
         <Insignia index={r.index} size={26} />

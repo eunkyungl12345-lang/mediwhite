@@ -1555,3 +1555,4 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .hn-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}.hn-tabs::-webkit-scrollbar{display:none}.hn-tabs button{flex:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 11px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}.hn-tabs button[aria-pressed="true"]{background:var(--scrub);border-color:var(--scrub);color:#fff}
 .hn-list{display:grid}.hn-list .nw-item:last-child{border-bottom:0}
 .hn .hf-more{margin:0 -16px}
+.agree{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5}.agree input{width:18px;height:18px;flex:none;margin:2px 0 0;padding:0}.agree span{flex:1;min-width:0}

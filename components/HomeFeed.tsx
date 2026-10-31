@@ -6,9 +6,9 @@ import HomeNews from "./HomeNews";
 type P = { id: string; title: string; icon: string; dept?: string; nick?: string; badge?: boolean; cat: string; time: string; views: number; nc: number; nr: number; fresh: boolean };
 /** 홈 피드: 상단 칩(최신·인기·우리 직종·공지)으로 바로 게시판 보기 */
 type N = { title: string; link: string; source: string; at: number };
-export default function HomeFeed({ latest, hot, mine, notices, news, newsTabs, quotes, dept, moreMine }: { latest: P[]; hot: P[]; mine: P[]; notices: P[]; news: Record<string, N[]>; newsTabs: { key: string; name: string }[]; quotes: any[]; dept: string; moreMine: string }) {
-  const tabs: [string, string, string, P[], string][] = [["new", "🕒", "최신", latest, "/board?sort=new"], ["hot", "🔥", "인기", hot, "/board?sort=best"], ["mine", "🏷️", dept, mine, moreMine], ["notice", "📢", "공지", notices, "/board?cat=%EA%B3%B5%EC%A7%80"], ["news", "📰", "뉴스", [], "/news"]];
-  const [t, setT] = useState("new"); const cur = tabs.find(x => x[0] === t)!;
+export default function HomeFeed({ latest, recent, hot, mine, notices, news, newsTabs, quotes, dept, moreMine }: { latest: P[]; recent: P[]; hot: P[]; mine: P[]; notices: P[]; news: Record<string, N[]>; newsTabs: { key: string; name: string }[]; quotes: any[]; dept: string; moreMine: string }) {
+  const tabs: [string, string, string, P[], string][] = [["all", "✨", "전체글", latest, "/board"], ["hot", "🔥", "인기", hot, "/board?sort=best"], ["new", "🕒", "최신", recent, "/board?sort=new"], ["mine", "🏷️", dept, mine, moreMine], ["notice", "📢", "공지", notices, "/board?cat=%EA%B3%B5%EC%A7%80"], ["news", "📰", "뉴스", [], "/news"]];
+  const [t, setT] = useState("all"); const cur = tabs.find(x => x[0] === t)!;
   return <>
     <div className="hchips" role="tablist">{tabs.map(([k, ic, n]) => <button key={k} role="tab" aria-selected={t === k} onClick={() => setT(k)}><span>{ic}</span>{n}</button>)}</div>
     <section className="hf">
