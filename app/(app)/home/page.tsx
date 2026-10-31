@@ -52,6 +52,7 @@ export default async function HomePage() {
   const wd = (dps ?? []).find((r: any) => r.game === "wordle") as any;
   const [news, quotes] = await Promise.all([memo("tb-news", 30 * 60_000, getNews).catch(() => null), memo("tb-quotes", 10 * 60_000, getQuotes).catch(() => [])]);
   const heads = news ? [...news.global.slice(0, 2), ...news.stock.slice(0, 1), ...news.macro.slice(0, 1), ...news.med.slice(0, 1)] : [];
+  const newsF = news ? [...news.med.slice(0, 2).map(h => ({ ...h, icon: "🏥" })), ...news.global.slice(0, 2).map(h => ({ ...h, icon: "🌏" })), ...news.stock.slice(0, 1).map(h => ({ ...h, icon: "📈" })), ...news.macro.slice(0, 1).map(h => ({ ...h, icon: "🏦" })), ...((news as any).politics ?? []).slice(0, 1).map((h: any) => ({ ...h, icon: "🏛️" })), ...((news as any).ent ?? []).slice(0, 1).map((h: any) => ({ ...h, icon: "🎬" }))].map(h => ({ title: h.title, link: h.link, source: h.source, icon: h.icon })) : [];
   const ndq = quotes.find(x => x.name === "나스닥"), ksp = quotes.find(x => x.name === "코스피");
   const ft = (me as any)?.birth_date ? fortune((me as any).birth_date, (me as any).birth_time, (me as any).fortune_name, new Date()) : null;
   const doneN = daily.quests.filter(x => x.done).length;
@@ -76,23 +77,13 @@ export default async function HomePage() {
         <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
       </nav>
 
-      <HomeFeed latest={latestF} hot={hotF} mine={mineF} notices={noticesF} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
+      <HomeFeed latest={latestF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
 
-      <section className={`h-card h-rank t${r.tier}`}>
-        <div className="h-rank-top">
-          <Insignia index={r.index} size={30} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="h-rank-name"><b>{r.name}</b> · {(xp).toLocaleString()} XP</div>
-            <div className="xpbar"><i style={{ width: `${Math.round(r.progress * 100)}%` }} /></div>
-            <div className="h-xp">{r.next ? `${r.nextName}까지 ${(r.next - xp).toLocaleString()} XP` : "최고 계급"} · 🔥 {daily.streak}일 연속 출석</div>
-          </div>
-          <Link href="/rank" className="h-link">내 계급 →</Link>
-        </div>
-        <div className="h-dq">
-          {daily.quests.map(qq => <Link key={qq.key} href={qq.key === "chat" ? "/board" : qq.key === "game" ? "/games" : "/board/new"} className={"h-dq-item" + (qq.done ? " done" : "")}><span className="h-dq-chk">{qq.done ? "✓" : qq.icon}</span><span>{qq.title}</span><small>{qq.n}/{qq.target}</small></Link>)}
-        </div>
-        <div className="h-dq-foot">{daily.all ? <span>🎉 오늘 퀘스트 올클리어!</span> : <span>오늘 퀘스트 {doneN}/3 · 다 하면 +{DAILY_BONUS} XP</span>}</div>
-      </section>
+      <Link href="/rank" className={`h-rank2 t${r.tier}`}>
+        <Insignia index={r.index} size={26} />
+        <div className="h-rank2-mid"><div className="h-rank2-name"><b>{r.name}</b><span className="muted">{xp.toLocaleString()} XP{r.next ? ` · ${r.nextName}까지 ${(r.next - xp).toLocaleString()}` : " · 최고 계급"}</span></div><div className="xpbar"><i style={{ width: `${Math.round(r.progress * 100)}%` }} /></div></div>
+        <div className="h-rank2-right"><span className={"h-q" + (daily.all ? " done" : "")}>{daily.all ? "🎉 퀘스트 완료" : `퀘스트 ${doneN}/3`}</span><small>🔥 {daily.streak}일</small></div>
+      </Link>
     </div>
   );
 }
