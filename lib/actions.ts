@@ -11,7 +11,7 @@ import { bump } from "./daily";
 import { validRoom } from "./chatRooms";
 import { personMention, placeMention, REPORT_REASONS } from "./safety";
 import { awardXp, repeatXp } from "./xp";
-import { signupBonus, can, RANKS, rankOf } from "./ranks";
+import { signupBonus, can, RANKS, rankOf, PERK } from "./ranks";
 import { myRank, isDeptLeader } from "./ranksvc";
 import { POINT_PER_WON, AMOUNTS } from "./support";
 import { pushToUsers, pushToAll } from "./push";
@@ -133,6 +133,7 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   const topic = category === SSUM_CAT ? (SSUM_TOPICS.some(t => t.key === topicRaw) ? topicRaw : "moment") : category === ANON_CAT ? (ANON_TOPICS.some(t => t.key === topicRaw) ? topicRaw : "free") : (TOPICS.some(t => t.key === topicRaw) ? topicRaw : "free");
   if (!(CATS as readonly string[]).includes(category) && category !== SSUM_CAT && category !== ANON_CAT) return { error: "칸을 선택해주세요" };
   if (category === NOTICE_CAT && u.role !== "admin" && !can(await myRank(u.id), "준장")) return { error: "공지 칸은 준장 이상만 쓸 수 있어요" };
+  if (category === ANON_CAT && u.role !== "admin" && !can(await myRank(u.id), PERK.anonMin)) return { error: `익명 게시판 글쓰기는 ${PERK.anonMin} 이상부터예요. 댓글은 누구나 달 수 있어요` };
   if (!title || !body) return { error: "제목과 내용을 적어주세요" };
   const pm = personMention(title + " " + body);
   const plm = category === SSUM_CAT ? placeMention(title + " " + body) : null;

@@ -1556,3 +1556,11 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .hn-list{display:grid}.hn-list .nw-item:last-child{border-bottom:0}
 .hn .hf-more{margin:0 -16px}
 .agree{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5}.agree input{width:18px;height:18px;flex:none;margin:2px 0 0;padding:0}.agree span{flex:1;min-width:0}
+
+/* 진급 신고식 */
+.pm{display:grid;gap:6px}.pm-head{font-size:13px;font-weight:800;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.pm-head small{font-weight:500}
+.pm-strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 4px}.pm-strip::-webkit-scrollbar{display:none}
+.pm-card{flex:none;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:14px;border:1px solid #F0CF7A;background:linear-gradient(135deg,#FFF9E6,#FFF1C9);min-width:200px}.pm-card.me{border-color:var(--scrub);background:var(--scrub-soft)}
+.pm-body{display:grid;line-height:1.25;font-size:12.5px;min-width:0}.pm-body b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.pm-btn{margin-left:auto;border:0;border-radius:999px;background:var(--scrub);color:#fff;font:inherit;font-size:12px;font-weight:800;padding:6px 10px;cursor:pointer;white-space:nowrap}.pm-btn.done{background:var(--bg);color:var(--muted)}.pm-n{margin-left:auto;font-size:12px;font-weight:800}
+@media (prefers-color-scheme:dark){.pm-card{background:linear-gradient(135deg,#3A3018,#2E2614);border-color:#5A4A20}}

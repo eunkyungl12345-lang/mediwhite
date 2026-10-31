@@ -2,6 +2,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "./supabase";
+import { myRank } from "./ranksvc";
+import { PERK } from "./ranks";
 import { getSession, type Session } from "./auth";
 import { pushToUsers } from "./push";
 import { personMention } from "./safety";
@@ -79,10 +81,14 @@ export async function toggleLike(kind: "profile" | "intro", target: string) {
   const u = await me(); const s = db();
   const { data: cur } = await s.from("likes").select("from_id").eq("from_id", u.id).eq("kind", kind).eq("target", target).maybeSingle();
   if (cur) { await s.from("likes").delete().eq("from_id", u.id).eq("kind", kind).eq("target", target); revalidatePath("/ssum"); return { liked: false, mutual: false }; }
+  if (kind === "profile") {
+    if (target === u.id) return { liked: false, mutual: false };
+    const rk = await myRank(u.id), lim = u.role === "admin" ? Infinity : PERK.hearts(rk);
+    if (lim !== Infinity) { const { count } = await s.from("likes").select("from_id", { count: "exact", head: true }).eq("from_id", u.id).eq("kind", "profile").gte("created_at", new Date(Date.now() - 86400000).toISOString()); if ((count ?? 0) >= lim) return { liked: false, mutual: false, error: `💗 하트는 하루 ${lim}개까지예요 (${rk.name}). 소령부터 5개, 준장부터 무제한!` }; }
+  }
   await s.from("likes").insert({ from_id: u.id, kind, target });
   let mutual = false;
   if (kind === "profile") {
-    if (target === u.id) return { liked: false, mutual: false };
     const { data: back } = await s.from("likes").select("from_id").eq("from_id", target).eq("kind", "profile").eq("target", u.id).maybeSingle();
     mutual = !!back;
     pushToUsers([target], mutual ? { title: "💘 서로 관심!", body: "1:1 대화가 열렸어요", url: `/ssum/dm/${u.id}`, tag: "like" } : { title: "💗 누군가 내 카드에 관심을 보였어요", body: "썸 탭 → 내 썸함", url: "/ssum?tab=box", tag: "like" }).catch(() => {});

@@ -34,11 +34,18 @@ export const PRIVILEGES: { minRank: string; title: string; desc: string }[] = [
   { minRank: "일병", title: "글 우선 노출", desc: "계급이 높을수록 내 글이 목록 위쪽에 와요 (모든 계급 공통)" },
   { minRank: "하사", title: "글 빛남 1단계", desc: "내 글이 은은하게 강조돼요" },
   { minRank: "소위", title: "글 빛남 2단계", desc: "내 글에 색 테두리가 붙어요" },
-  { minRank: "소령", title: "밀어올리기", desc: "내 글 1개를 공지 바로 아래 고정" },
-  { minRank: "준장", title: "공지 작성", desc: "모든 칸 위에 보이는 '공지' 칸에 글 + ★ 배지" },
+  { minRank: "대위", title: "익명 게시판 글쓰기", desc: "🕶️ 익명 게시판에 글을 쓸 수 있어요 (댓글·읽기는 누구나)" },
+  { minRank: "소령", title: "밀어올리기 · 번개 2개 · 하트 5개", desc: "내 글 1개를 공지 바로 아래 고정 · ⚡ 번개 2개 동시 개설 · 💗 셀소 하트 하루 5개 (기본 3개)" },
+  { minRank: "준장", title: "공지 작성 · 하트 무제한 · 번개 3개", desc: "모든 칸 위에 보이는 '공지' 칸에 글 + ★ 배지 · 💗 셀소 하트 무제한 · ⚡ 번개 3개 동시 개설" },
   { minRank: "참모총장", title: "파트 참모총장", desc: "파트별 단 한 명(경험치 1위). 금빛 글, ★★★★. 1위가 아니면 중장까지" },
 ];
 export const can = (r: Rank, minRank: string) => r.index >= IDX[minRank];
+/** 계급별 혜택 수치 */
+export const PERK = {
+  anonMin: "대위" as const,                                                         // 익명 게시판 글쓰기
+  meetups: (r: Rank) => (can(r, "준장") ? 3 : can(r, "소령") ? 2 : 1),             // 동시 개설 가능한 번개 수
+  hearts: (r: Rank) => (can(r, "준장") ? Infinity : can(r, "소령") ? 5 : 3),        // 하루 셀소 하트(💗) 수
+};
 
 export const QUESTS: { key: string; title: string; xp: number }[] = [
   { key: "first_chat", title: "첫 채팅 보내기", xp: 50 },

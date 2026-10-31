@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { RANKS } from "@/lib/ranks";
 import BlueBadge from "@/components/BlueBadge";
 import HomeFeed from "@/components/HomeFeed";
+import PromoStrip from "@/components/PromoStrip";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
@@ -63,6 +65,11 @@ export default async function HomePage() {
   const Row = ({ p }: { p: any }) => <Link href={`/board/${p.id}`} className="h-row"><span className="h-topic">{topicOf(p.topic).icon}</span><span className="h-title">{p.title}</span><span className="h-meta">{p.author ? `[${p.author.dept}]` : ""}{p.author?.blue_badge ? <BlueBadge size={11} className="bb" /> : null} · 💬{p.nc} 👍{p.nr}</span></Link>;
 
   const pct = (x?: { pct: number }) => x ? `${x.pct > 0 ? "▲" : x.pct < 0 ? "▼" : ""}${Math.abs(x.pct).toFixed(1)}%` : "";
+  const { data: promoEv } = await d.from("events").select("id,user_id,text,created_at").eq("kind", "promotion").gte("created_at", week).not("user_id", "is", null).order("created_at", { ascending: false }).limit(8);
+  const pids = (promoEv ?? []).map(e => e.id);
+  const { data: chs } = pids.length ? await d.from("cheers").select("event_id,user_id").in("event_id", pids) : { data: [] as any[] };
+  const agoK = (t: string) => { const m = Math.max(1, Math.round((now - Date.parse(t)) / 60000)); return m < 60 ? `${m}분 전` : m < 1440 ? `${Math.round(m / 60)}시간 전` : `${Math.round(m / 1440)}일 전`; };
+  const promoItems = (promoEv ?? []).filter(e => !/강등/.test(e.text)).map(e => { const [, idx, dept, nick] = e.text.split("|"); const i = Number(idx); return { id: e.id, dept: dept ?? "", nick: nick ?? "", rank: RANKS[i]?.[0] ?? "", index: i, n: (chs ?? []).filter((c: any) => c.event_id === e.id).length, mine: (chs ?? []).some((c: any) => c.event_id === e.id && c.user_id === s.id), me: e.user_id === s.id, ago: agoK(e.created_at) }; }).filter(x => x.dept && x.nick);
   const noticesF = posts.filter(p => p.category === "공지" || p.pinned).slice(0, 8).map(feedRow);
   return (
     <div className="home v2">
@@ -76,6 +83,8 @@ export default async function HomePage() {
         <Link href="/jobs" className="hs-pill"><span>💼</span>채용·병원리뷰</Link>
         <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
       </nav>
+
+      <PromoStrip items={promoItems} />
 
       <HomeFeed latest={latestF} recent={recentF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} newsTabs={NEWS_TABS.map(t => ({ key: t.key, name: t.name }))} quotes={quotes} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
 

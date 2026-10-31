@@ -7,6 +7,8 @@ import { pushToUsers } from "./push";
 import { personMention } from "./safety";
 import { awardXp } from "./xp";
 import { MEET_KINDS, MEET_AREAS, needsBadge } from "./meetup";
+import { myRank } from "./ranksvc";
+import { PERK, can } from "./ranks";
 
 type R = { error?: string; ok?: string } | undefined;
 const clean = (v: FormDataEntryValue | null, max: number) => String(v ?? "").trim().slice(0, max);
@@ -25,8 +27,9 @@ export async function createMeetup(_: R, fd: FormData): Promise<R> {
   if (when.getTime() < Date.now() - 3600000) return { error: "이미 지난 시간이에요" };
   if (when.getTime() > Date.now() + 14 * 86400000) return { error: "번개는 2주 안으로만 잡을 수 있어요" };
   for (const t of [title, place, note]) { if (CONTACT.test(t)) return { error: "연락처·오픈채팅 링크는 적을 수 없어요. 모임 채팅방에서 정하세요" }; const pm = personMention(t); if (pm) return { error: `특정인·병원을 알 수 있는 표현("${pm}")은 뺄게요` }; }
-  const { count } = await s.from("meetups").select("id", { count: "exact", head: true }).eq("host_id", u.id).eq("status", "open").gte("when_at", new Date().toISOString());
-  if ((count ?? 0) >= 3) return { error: "진행 중인 번개는 3개까지만 열 수 있어요" };
+  const [{ count }, rk] = await Promise.all([s.from("meetups").select("id", { count: "exact", head: true }).eq("host_id", u.id).neq("status", "canceled").gte("when_at", new Date().toISOString()), myRank(u.id)]);
+  const lim = u.role === "admin" ? 5 : PERK.meetups(rk);
+  if ((count ?? 0) >= lim) return { error: lim === 1 ? "진행 중인 번개가 이미 있어요. 소령부터 2개, 준장부터 3개까지 동시에 열 수 있어요" : `진행 중인 번개는 ${lim}개까지만 열 수 있어요` };
   const { data, error } = await s.from("meetups").insert({ host_id: u.id, title, kind, area, place, when_at: when.toISOString(), cap, gender: ["남", "여"].includes(gender) ? gender : "", note }).select("id").single();
   if (error || !data) return { error: "잠시 후 다시 시도해주세요" };
   await s.from("meetup_members").insert({ meetup_id: data.id, user_id: u.id, status: "joined" });
