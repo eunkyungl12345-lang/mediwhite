@@ -70,7 +70,7 @@ export function CafeBottom({ writeHref, newHref, cat, q, newCount = 0 }: { write
         <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><i>⬆️</i><span>맨 위</span></button>
         <button type="button" onClick={() => setS(!s)} aria-pressed={s}><i>🔍</i><span>검색</span></button>
         <Link href={writeHref} className="cf-write" aria-label="글쓰기"><b>✏️</b><span>글쓰기</span></Link>
-        <Link href={newHref}><i>🆕</i><span>새 글</span>{newCount > 0 && <em className="cf-n">{newCount > 99 ? "99+" : newCount}</em>}</Link>
+        <Link href={newHref}><i>🆕</i><span>새 글</span>{newCount > 0 && <em className="cf-nn">{newCount > 99 ? "99+" : newCount}</em>}</Link>
         <Link href="/games"><i>🎮</i><span>게임</span></Link>
       </div>
     </div>

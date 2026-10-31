@@ -7,7 +7,6 @@ import { TOPICS, topicOf } from "@/lib/depts";
 import { fmt } from "@/lib/format";
 import { deptLeaders, rankFor, deptCommanders } from "@/lib/ranksvc";
 import Name from "@/components/Name";
-import BoardTabs from "@/components/BoardTabs";
 import { CafeHeader, NoticeFold, CafeBottom, QuerySelect, type NavItem } from "@/components/CafeNav";
 import BoardSearch from "@/components/BoardSearch";
 
@@ -29,12 +28,11 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   if (s.role !== "admin") q = q.eq("hidden", false);
   if (topic) q = q.eq("topic", topic);
   if (cat !== "전체") q = q.eq("category", cat);
-  if (isDept) q = tab ? q.eq("board_id", tab) : q.is("board_id", null);
   if (kw) q = q.or(`title.ilike.%${kw}%,body.ilike.%${kw}%`);
   if (fresh) q = q.gte("created_at", new Date(Date.now() - DAY).toISOString());
   const nq = d.from("posts").select(SEL).eq("pinned", true).eq("hidden", false).in("category", cat === "전체" || cat === NOTICE_CAT ? [NOTICE_CAT] : [NOTICE_CAT, cat]).order("created_at", { ascending: false }).limit(5);
-  const [{ data: raw }, { data: nraw }, leaders, commanders, { data: boards }] = await Promise.all([
-    q, kw || fresh ? Promise.resolve({ data: [] as any[] }) : nq, deptLeaders(), deptCommanders(), isDept ? d.from("boards").select("id,name,dept").eq("dept", cat).order("created_at") : Promise.resolve({ data: [] as any[] }),
+  const [{ data: raw }, { data: nraw }, leaders, commanders] = await Promise.all([
+    q, kw || fresh ? Promise.resolve({ data: [] as any[] }) : nq, deptLeaders(), deptCommanders(),
   ]);
   const noticeIds = new Set((nraw ?? []).map((p: any) => p.id));
   const all = [...(nraw ?? []), ...(raw ?? []).filter((p: any) => !noticeIds.has(p.id))];
@@ -81,7 +79,6 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
     <div className="cafe">
       <CafeHeader title={title} here={here} items={items} me={<><b>{s.nickname}</b><span className="muted"> · {s.dept}</span></>} />
       {guidesForDept(cat).map(g => <Link key={g.href} href={g.href} className="xg-promo"><span>{g.icon}</span><div><b>{g.title}</b><small>{g.blurb}</small></div><span>›</span></Link>)}
-      {isDept && <BoardTabs dept={cat} boards={boards ?? []} current={tab} canManage={!!canManage} leaderName={leader ? `[${leader.dept}]${leader.nickname}` : null} />}
       <div className="cf-info">
         <span>{kw ? <>‘{kw}’ 검색 <b>{posts.length}</b> · <Link href={qs({ q: "" })}>해제</Link></> : fresh ? <>24시간 새글 <b>{posts.length}</b> · <Link href={qs({})}>전체 보기</Link></> : <>새글 <b className="cf-red">{nNew}</b>/{posts.length.toLocaleString()}</>}</span>
         <QuerySelect label="말머리" value={topic} options={[["", "말머리 전체"], ...TOPICS.map(t => [t.key, `${t.icon} ${t.name}`] as [string, string])]} hrefs={Object.fromEntries([["", qs({ topic: "" })], ...TOPICS.map(t => [t.key, qs({ topic: t.key })])])} />

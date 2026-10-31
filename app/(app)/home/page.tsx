@@ -21,7 +21,7 @@ export default async function HomePage() {
   const s = (await getSession())!;
   const d = db();
   const now = Date.now(), day = new Date(now - 86400000).toISOString(), week = new Date(now - 7 * 86400000).toISOString(), today = new Date(now + 9 * 3600000).toISOString().slice(0, 10);
-  const isMyDept = (HOSPITAL_DEPTS as readonly string[]).includes(s.dept) || s.dept === "취준생" || s.dept === "대학생";
+  const isMyDept = (HOSPITAL_DEPTS as readonly string[]).includes(s.dept) || ["취준생", "대학생", "타직장인", "업체"].includes(s.dept);
   const [{ data: me }, leaders, daily, { data: recent }, { count: newPosts }, { count: chats }, { data: visits }, { count: promos }, { data: ty }, { data: question }] = await Promise.all([
     d.from("users").select("id,username,nickname,dept,xp,birth_date,birth_time,fortune_name").eq("id", s.id).single(),
     deptLeaders(),

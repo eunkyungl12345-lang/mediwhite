@@ -2,7 +2,7 @@
 import { useFormState } from "react-dom";
 import { adminCreateUser, adminSetRank, type FormState } from "@/lib/actions";
 import { RANKS } from "@/lib/ranks";
-import { DEPTS } from "@/lib/depts";
+import { DEPTS, deptLabel } from "@/lib/depts";
 
 export default function AdminForms({ userId, currentRank, compact }: { userId?: string; currentRank?: number; compact?: boolean }) {
   const [cs, createAction] = useFormState<FormState, FormData>(adminCreateUser, undefined);
@@ -20,7 +20,7 @@ export default function AdminForms({ userId, currentRank, compact }: { userId?: 
     <form action={createAction} className="form">
       <div className="row"><input name="username" placeholder="아이디 (영문 소문자)" required /><input name="password" type="password" placeholder="비밀번호" required /></div>
       <div className="row">
-        <select name="dept" defaultValue="" required><option value="" disabled>직종</option>{DEPTS.map(d => <option key={d} value={d}>{d}</option>)}</select>
+        <select name="dept" defaultValue="" required><option value="" disabled>직종</option>{DEPTS.map(d => <option key={d} value={d}>{deptLabel(d)}</option>)}</select>
         <input name="nickname" placeholder="닉네임" maxLength={12} required />
       </div>
       <div className="row">

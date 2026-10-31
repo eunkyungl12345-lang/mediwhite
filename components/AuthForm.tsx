@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { login, signup, findUsername, type FormState } from "@/lib/actions";
-import { DEPTS, display } from "@/lib/depts";
+import { DEPTS, DEPT_GROUPS, deptLabel, display } from "@/lib/depts";
 
 function Submit({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "잠시만요…" : label}</button>; }
 
@@ -30,7 +30,7 @@ export default function AuthForm({ refCode }: { refCode?: string }) {
       ) : mode === "find" ? (
         <form action={findAction} className="form">
           <div className="muted">가입할 때 쓴 닉네임과 직종을 입력하면 아이디 일부를 알려드려요.</div>
-          <select name="dept" defaultValue="" required><option value="" disabled>직종</option>{DEPTS.map(d => <option key={d} value={d}>{d}</option>)}</select>
+          <select name="dept" defaultValue="" required><option value="" disabled>직종</option>{DEPT_GROUPS.map(([g, ds]) => <optgroup key={g} label={g}>{ds.map(d => <option key={d} value={d}>{deptLabel(d)}</option>)}</optgroup>)}</select>
           <input name="nickname" placeholder="닉네임" maxLength={12} required />
           {fs?.error && <div className="error">{fs.error}</div>}
           {fs?.ok && <div className="muted" style={{ color: "var(--scrub)" }}>{fs.ok}</div>}
@@ -44,7 +44,7 @@ export default function AuthForm({ refCode }: { refCode?: string }) {
           <input name="password" type="password" placeholder="비밀번호 (4자 이상)" autoComplete="new-password" required />
           <select name="dept" value={dept} onChange={e => setDept(e.target.value)} required>
             <option value="" disabled>직종 선택 (가입 후 변경 불가)</option>
-            {DEPTS.map(d => <option key={d} value={d}>{d}</option>)}
+            {DEPTS.map(d => <option key={d} value={d}>{deptLabel(d)}</option>)}
           </select>
           <input name="nickname" value={nick} onChange={e => setNick(e.target.value)} placeholder="닉네임 (최대 12자, 나중에 변경 가능)" maxLength={12} required />
           <div className="muted">표시 이름: <b>{display(dept || "직종", nick || "닉네임")}</b> — 앞의 [직종]은 한 번 고르면 바꿀 수 없어요 (탈퇴 후 재가입만 가능).</div>

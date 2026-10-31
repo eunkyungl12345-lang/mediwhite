@@ -1509,7 +1509,7 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .cf-bar.v2 .cf-write{justify-self:center;align-self:center;transform:translateY(-14px);width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--scrub),#1F5E3C);color:#fff;box-shadow:0 8px 20px rgba(31,94,60,.35),0 0 0 5px var(--surface);padding:0;gap:0;place-content:center}
 .cf-bar.v2 .cf-write b{font-size:22px;line-height:1}.cf-bar.v2 .cf-write span{font-size:9.5px;color:#E6F4EF;margin-top:1px}
 .cf-bar.v2 .cf-write:active{transform:translateY(-12px) scale(.95)}
-.cf-n{position:absolute;top:3px;left:calc(50% + 6px);min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#E53935;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;font-style:normal}
+.cf-nn{position:absolute;top:3px;left:calc(50% + 6px);min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#E53935;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;font-style:normal}
 
 /* 홈 피드 */
 .hf{padding:0!important;overflow:hidden}

@@ -183,20 +183,6 @@ export async function deleteComment(id: number, postId: string) {
   await q; revalidatePath(`/board/${postId}`);
 }
 /** 파트 리더(또는 관리자): 파트 게시판에 탭 신설 */
-export async function createBoard(_: FormState, fd: FormData): Promise<FormState> {
-  const u = await requireUser();
-  const dept = clean(fd.get("dept"), 30), name = clean(fd.get("name"), 20);
-  if (!(DEPTS as readonly string[]).includes(dept) || !name) return { error: "탭 이름을 적어주세요" };
-  if (u.role !== "admin" && !(await isDeptLeader(u.id, dept))) return { error: "파트 리더만 탭을 만들 수 있어요" };
-  const { error } = await db().from("boards").insert({ dept, name, created_by: u.id });
-  if (error) return { error: "이미 있는 탭 이름이에요" };
-  revalidatePath("/board"); return { ok: `'${name}' 탭을 만들었어요` };
-}
-export async function deleteBoard(id: string, dept: string) {
-  const u = await requireUser();
-  if (u.role !== "admin" && !(await isDeptLeader(u.id, dept))) return;
-  await db().from("boards").delete().eq("id", id); revalidatePath("/board");
-}
 
 /* ---------- 게임 ---------- */
 export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" | "cpr" | "quiz" | "vein" | "runner" | "lightning" | "tycoon" | "trivia" | "econ" | "apoc", value: number, mode?: string) {
