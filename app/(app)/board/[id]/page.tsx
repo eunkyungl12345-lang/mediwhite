@@ -23,7 +23,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     d.from("users").select("id,dept,xp").eq("id", s.id).maybeSingle(),
   ]);
   if (!p) notFound();
-  if (p.category === "익명" || p.category === "썸") redirect(`/anon/${p.id}`);
+  if (p.category === "익명") redirect(`/anon/${p.id}`);
   const { data: comments } = await d.from("comments").select("id,author_id,dept,text,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("post_id", p.id).order("created_at").limit(300);
   const cids = (comments ?? []).map(c => String(c.id));
   const [{ data: rxp }, { data: rxc }] = await Promise.all([d.from("reactions").select("kind,target_id,emoji,user_id").eq("kind", "post").eq("target_id", p.id), cids.length ? d.from("reactions").select("kind,target_id,emoji,user_id").eq("kind", "comment").in("target_id", cids) : Promise.resolve({ data: [] as any[] })]);

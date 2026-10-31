@@ -141,11 +141,10 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   if (pm && fd.get("confirm_anon") !== "on") return { error: `"${pm}" — 특정 개인을 가리키는 표현 같아요. 실명·식별 정보가 없다면 아래 확인에 체크하고 다시 올려주세요.` };
   const s = db();
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }
-  const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: category === ANON_CAT || category === SSUM_CAT ? null : u.dept, title, body, board_id: boardId, topic }).select("id").single();
+  const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: category === ANON_CAT ? null : u.dept, title, body, board_id: boardId, topic }).select("id").single();
   if (error || !data) return { error: "올리지 못했어요" };
   await Promise.all([awardXp(u.id, 100, "first_post"), repeatXp(u.id, "post"), bump(u.id, "write")]);
   if (category === ANON_CAT) { revalidatePath("/anon"); redirect(`/anon/${data.id}`); }
-  if (category === SSUM_CAT) { revalidatePath("/ssum"); redirect(`/anon/${data.id}`); }
   revalidatePath("/board"); redirect(`/board/${data.id}`);
 }
 export async function addComment(postId: string, text: string) {
@@ -153,11 +152,11 @@ export async function addComment(postId: string, text: string) {
   const t = text.trim().slice(0, 500); if (!t) return;
   const s = db();
   const { data: post0 } = await s.from("posts").select("author_id,title,category").eq("id", postId).maybeSingle();
-  const anon = post0?.category === ANON_CAT || post0?.category === SSUM_CAT;
+  const anon = post0?.category === ANON_CAT;
   if (anon) { const pm = personMention(t); if (pm) return; }
   await s.from("comments").insert({ post_id: postId, author_id: u.id, dept: anon ? null : u.dept, text: t });
   const [{ data: post }] = await Promise.all([Promise.resolve({ data: post0 }), awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment"), bump(u.id, "write")]);
-  if (post?.author_id && post.author_id !== u.id) pushToUsers([post.author_id], anon ? { title: post.category === SSUM_CAT ? "💘 내 썸 글에 익명 댓글" : "🕶️ 익명 글에 댓글", body: t.slice(0, 60), url: `/anon/${postId}`, tag: `c-${postId}` } : { title: "내 글에 댓글", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: `/board/${postId}`, tag: `c-${postId}` }).catch(() => {});
+  if (post?.author_id && post.author_id !== u.id) pushToUsers([post.author_id], anon ? { title: "🕶️ 익명 글에 댓글", body: t.slice(0, 60), url: `/anon/${postId}`, tag: `c-${postId}` } : { title: "내 글에 댓글", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: `/board/${postId}`, tag: `c-${postId}` }).catch(() => {});
   revalidatePath(anon ? `/anon/${postId}` : `/board/${postId}`);
 }
 export async function togglePin(postId: string, pinned: boolean) {
