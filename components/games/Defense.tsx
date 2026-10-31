@@ -73,8 +73,14 @@ function drawWarp(x: CanvasRenderingContext2D, im: CanvasImageSource, cx: number
   for (let i = 0; i < N; i++) { const h = 1 - (i + .5) / N; x.drawImage(im, 0, i * bh, iw, bh + .6, cx - GS / 2 + dxAt(h), footY - GS * stretch + i * dh, GS, dh + .8); }
 }
 /** 몬스터별 걸음새: 평균 속도는 1 근처로 유지하면서 리듬만 다르게 */
-function gait(kind: number, t: number, seed: number) {
+function gait(kind: number, t: number, seed: number, v = 0) {
   const p = t + seed;
+  if (kind === 0 || kind === 4) {
+    // 일반 몹도 개체마다 걸음새가 다름: 터벅 / 멈칫→대시 / 비틀비틀 / 종종걸음
+    if (v === 1) { const ph = (p * .55) % 1; return ph < .3 ? .05 : ph < .55 ? 2.4 : 1; }
+    if (v === 2) return .6 + .7 * Math.abs(Math.sin(p * 1.3)) + .25 * Math.sin(p * 7);
+    if (v === 3) return 1.35 + .15 * Math.sin(p * 9);
+  }
   switch (kind) {
     case 1: return .25 + 1.6 * Math.max(0, Math.sin(p * 2.2)) ** 2;           // 끈질긴 균: 멈칫멈칫 기어가기
     case 2: { const ph = (p * .9) % 1; return ph > .72 ? 2.8 : .45; }          // 돌연변이: 웅크렸다 확 뛰기
@@ -86,8 +92,13 @@ function gait(kind: number, t: number, seed: number) {
   }
 }
 /** 몬스터 연출: 위로 뜸(lift) · 좌우 흔들림(sway) · 기울기(tilt) · 포효(roar) */
-function pose(kind: number, t: number, seed: number, CH: number) {
+function pose(kind: number, t: number, seed: number, CH: number, v = 0) {
   const p = t + seed;
+  if (kind === 0 || kind === 4) {
+    if (v === 1) { const ph = (p * .55) % 1; return { lift: ph >= .3 && ph < .55 ? Math.sin((ph - .3) / .25 * Math.PI) * CH * .18 : 0, sway: ph < .3 ? Math.sin(p * 18) * CH * .02 : 0, tilt: ph < .3 ? .1 : ph < .55 ? -.25 : 0, roar: 0 }; }
+    if (v === 2) return { lift: 0, sway: Math.sin(p * 1.3) * CH * .12, tilt: Math.sin(p * 1.3) * .28, roar: 0 };
+    if (v === 3) return { lift: Math.abs(Math.sin(p * 9)) * CH * .06, sway: 0, tilt: -.08, roar: 0 };
+  }
   if (kind === 6) return { lift: CH * .28 + Math.sin(p * 3) * CH * .12 + (Math.sin(p * .7) > .93 ? -CH * .2 : 0), sway: 0, tilt: Math.sin(p * 3) * .12, roar: 0 };
   if (kind === 2) { const ph = (p * .9) % 1; return { lift: ph > .72 ? Math.sin((ph - .72) / .28 * Math.PI) * CH * .42 : 0, sway: 0, tilt: ph > .72 ? -.22 : ph > .6 ? .12 : 0, roar: 0 }; }
   if (kind === 4) return { lift: 0, sway: Math.sin(p * 5) * CH * .05, tilt: Math.sin(p * 5) * .1, roar: 0 };
@@ -227,7 +238,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         const hitK = (z.hit ?? 0) * 3, stomp = z.eating ? 0 : Math.abs(Math.sin(wp)) * GS * (big ? .035 : .025);
         const dxAt = (h: number) => (z.eating ? -h * h * GS * .26 * strike + h * h * GS * .07 * wind : h ** 1.5 * Math.sin(wp) * GS * .045 + (h < .3 ? (.3 - h) / .3 * Math.sin(wp * 2) * GS * .03 : 0)) + h * GS * .08 * hitK;
         const stretch = (z.eating ? 1 - strike * .07 + wind * .05 : 1 + Math.sin(wp * 2) * .025) * (z.kind === 6 ? 1 + Math.sin(s.t * 40) * .03 : 1);
-        const ps = z.eating ? { lift: z.kind === 6 ? CH * .15 : 0, sway: 0, tilt: 0, roar: 0 } : pose(z.kind, s.t, sd, CH);
+        const ps = z.eating ? { lift: z.kind === 6 ? CH * .15 : 0, sway: 0, tilt: 0, roar: 0 } : pose(z.kind, s.t, sd, CH, (z as any).v ?? 0);
         if (ps.roar > .2) { x.save(); x.globalAlpha = ps.roar * .35; const rg2 = x.createRadialGradient(z.x, cy, 0, z.x, cy, GS * .8); rg2.addColorStop(0, "#FF2A1A"); rg2.addColorStop(1, "rgba(255,0,0,0)"); x.fillStyle = rg2; x.beginPath(); x.arc(z.x, cy, GS * .8, 0, 7); x.fill(); x.restore(); if (ps.roar > .9 && Math.random() < .05) pop(box.current, z.x, z.r * CH, "크아앙!!", "bad"); }
         if (ps.lift > 0) { x.save(); x.globalAlpha = .1; x.fillStyle = "#000"; x.beginPath(); x.ellipse(z.x, z.r * CH + CH - 4, R * .6, 2.4, 0, 0, 7); x.fill(); x.restore(); }
         if (gim) { x.save(); x.translate(z.x + ps.sway, foot); x.rotate(ps.tilt); x.scale(1 + ps.roar * .08, 1 + ps.roar * .12); x.translate(-(z.x + ps.sway), -foot); x.translate(ps.sway, -ps.lift);
@@ -263,7 +274,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
     const spawn = (kind: number, r = randRow(), x0 = s.W + 10, hpScale = 1) => {
       const st = s.stage!, w = s.wave, m = st.mult * (st.mod === "tough" ? 1.5 : 1) * (1 + w * .06), sp = st.spd * (st.mod === "rush" ? 1.3 : 1) * (1 + w * .03);
       const base = [60, 150, 340, 1800, 120, 260, 50, 3500][kind] * m * hpScale * (s.assist ? .65 : 1) * (1 - .15 * s.help), speed = [15, 11, 9, 7, 13, 9, 28, 6][kind] * sp * (1 + Math.random() * .2), dmg = [10, 16, 30, 80, 12, 20, 8, 100][kind];
-      s.germs.push({ r, x: x0, hp: base, max: base, speed, dmg, kind, eating: false, slow: 0, poison: 0, cd: 6, seed: Math.random() * 10 });
+      s.germs.push({ r, x: x0, hp: base, max: base, speed, dmg, kind, eating: false, slow: 0, poison: 0, cd: 6, seed: Math.random() * 10, v: Math.floor(Math.random() * 4) } as any);
     };
     const spawnGerm = () => { const st = s.stage!, w = s.wave; const pool = st.pool.filter(k => k === 0 || Math.random() < Math.min(.6, .2 + w * .05 + st.id * .01)); spawn(pool[Math.floor(Math.random() * pool.length)]); };
     const finish = (win: boolean) => {
@@ -342,7 +353,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       for (const z of s.germs) { if (z.poison > 0) { z.poison -= dt; z.hp -= 12 * dt; } const sp = z.speed * (z.slow > 0 ? .5 : 1); z.slow = Math.max(0, z.slow - dt);
         if (z.kind === 7) { z.cd -= dt; if (z.cd <= 0) { z.cd = 6; spawn(0, z.r, z.x + 10, .6); pop(box.current, z.x, z.r * CH + CH * .2, "소환!", "bad"); } }
         const target = s.units.find(u => !(u.kind === "punk" && (u.fuse ?? 1) <= 0) && u.r === z.r && Math.abs(u.c * CW + CW / 2 - z.x) < CW * .45 && u.c * CW + CW / 2 <= z.x + 2);
-        if (target) { z.eating = true; target.hp -= z.dmg * dt; } else { z.eating = false; z.x -= sp * gait(z.kind, s.t, z.seed ?? 0) * dt; }
+        if (target) { z.eating = true; target.hp -= z.dmg * dt; } else { z.eating = false; z.x -= sp * gait(z.kind, s.t, z.seed ?? 0, (z as any).v ?? 0) * dt; }
         if (z.x < CW * .25 && s.carts[z.r]) { // 응급 카트: 그 줄을 한 번 싹 쓸어줌
           s.carts[z.r] = false; s.cartFx.push({ r: z.r, x: 0 }); sfx.boom(); haptic([40, 30, 40]); shake(box.current, "m"); pop(box.current, s.W / 2, z.r * CH + CH / 2, "🛒 응급 카트 출동!", "bad big");
           for (const o of s.germs) if (o.r === z.r && o.kind !== 3 && o.kind !== 7) o.hp = 0; else if (o.r === z.r) { o.hp -= o.max * .5; o.x = Math.max(o.x, CW * 3); }

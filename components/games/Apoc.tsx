@@ -6,7 +6,7 @@ import { sfx, haptic, pop, shake, burst } from "@/lib/juice";
 import Board, { type Row } from "./Board";
 
 /** 병원묵시록 DAY 0 — 병원을 지키는 생존 타워디펜스. 낮엔 배치·수색, 밤엔 좀비 웨이브 */
-const COLS = 11, ROWS = 7, HC = 5, HR = 3; // 병원 위치(가운데)
+const COLS = 6, ROWS = 9, HR = ROWS - 1, HC = Math.floor(COLS / 2); // 세로 레인: 좀비는 위에서 아래로, 병원은 맨 아랫줄 전체
 type UKind = "nurse" | "doctor" | "xray" | "ortho" | "ems" | "anes" | "lab" | "wall";
 const UNITS: Record<UKind, { name: string; icon: string; cost: number; hp: number; range: number; dmg: number; cd: number; desc: string; color: string }> = {
   nurse: { name: "간호사", icon: "💉", cost: 50, hp: 120, range: 3, dmg: 14, cd: .7, desc: "주사기 연사 · 싸고 무난", color: "#F48FB1" },
@@ -21,16 +21,16 @@ const UNITS: Record<UKind, { name: string; icon: string; cost: number; hp: numbe
 const ORDER = Object.keys(UNITS) as UKind[];
 const ART: Record<UKind, string> = { nurse: "nurse", wall: "wall", doctor: "doctor", xray: "xray", ortho: "ortho", ems: "ems", anes: "anes", lab: "lab" };
 const ZT = [
-  { name: "좀비", hp: 60, spd: .45, dps: 10, rew: 3, size: .58, body: "#7E9C7A", cloth: "#C9D6E3" },
-  { name: "러너", hp: 40, spd: .95, dps: 8, rew: 4, size: .52, body: "#8FA88A", cloth: "#E8A0A0" },
-  { name: "뚱보", hp: 280, spd: .3, dps: 30, rew: 12, size: .78, body: "#6C8A63", cloth: "#B8C9A0" },
-  { name: "비명꾼", hp: 80, spd: .5, dps: 10, rew: 8, size: .58, body: "#9A8FB0", cloth: "#F2F2F2" },
-  { name: "보스", hp: 1600, spd: .24, dps: 60, rew: 80, size: 1.05, body: "#5A6E4E", cloth: "#7A2E2E" },
+  { name: "좀비", hp: 60, spd: .45, dps: 10, rew: 3, size: 1, body: "#7E9C7A", cloth: "#C9D6E3" },
+  { name: "러너", hp: 40, spd: .95, dps: 8, rew: 4, size: .95, body: "#8FA88A", cloth: "#E8A0A0" },
+  { name: "뚱보", hp: 280, spd: .3, dps: 30, rew: 12, size: 1.15, body: "#6C8A63", cloth: "#B8C9A0" },
+  { name: "비명꾼", hp: 80, spd: .5, dps: 10, rew: 8, size: 1, body: "#9A8FB0", cloth: "#F2F2F2" },
+  { name: "보스", hp: 1600, spd: .24, dps: 60, rew: 80, size: 1.5, body: "#5A6E4E", cloth: "#7A2E2E" },
 ];
 const lvM = (lv: number) => Math.pow(1.35, lv - 1);
 const upCost = (k: UKind, lv: number) => Math.round(UNITS[k].cost * (lv === 1 ? .8 : 1.4));
 type U = { k: UKind; c: number; r: number; hp: number; max: number; lv: number; cd: number; atk: number; face: number };
-type Z = { t: number; x: number; y: number; hp: number; max: number; spd: number; dps: number; slow: number; hit: number; seed: number; eating: boolean; face: number };
+type Z = { lane: number; t: number; x: number; y: number; hp: number; max: number; spd: number; dps: number; slow: number; hit: number; seed: number; eating: boolean; face: number };
 type Fx = { kind: "line" | "ring" | "bolt" | "txt" | "die"; x: number; y: number; x2?: number; y2?: number; t: number; c?: string; pts?: [number, number][]; txt?: string; zt?: number; s?: number };
 
 export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
@@ -45,16 +45,16 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
     const d = Math.min(2, devicePixelRatio || 1); s.W = w; s.CS = w / COLS; s.H = s.CS * ROWS; c.width = s.W * d; c.height = s.H * d; c.style.height = s.H + "px"; c.getContext("2d")!.setTransform(d, 0, 0, d, 0, 0);
     s.bg = buildBg(s.W, s.H, s.CS); s.dark = document.createElement("canvas"); s.dark.width = s.W; s.dark.height = s.H;
   };
-  const hx = () => (HC + .5) * g.current.CS, hy = () => (HR + .5) * g.current.CS;
+  const hx = () => g.current.W / 2, hy = () => (HR + .5) * g.current.CS, laneX = (c: number) => (c + .5) * g.current.CS;
   const spawnZ = () => {
-    const s = g.current, d = s.day, CS = s.CS; const sides = d === 1 ? [0] : d === 2 ? [0, 1] : d <= 4 ? [0, 1, 2] : [0, 1, 2, 3];
-    const side = sides[Math.floor(Math.random() * sides.length)];
-    const x = side === 0 ? s.W + CS * .5 : side === 1 ? -CS * .5 : Math.random() * s.W, y = side === 2 ? -CS * .5 : side === 3 ? s.H + CS * .5 : Math.random() * s.H;
+    const s = g.current, d = s.day, CS = s.CS;
+    const lanes = d === 1 ? [HC - 1, HC] : d === 2 ? [HC - 2, HC - 1, HC, HC + 1] : Array.from({ length: COLS }, (_, i) => i);
+    const lane = lanes[Math.floor(Math.random() * lanes.length)];
     const r = Math.random(); let t = 0;
     if (d >= 2 && r < .25) t = 1; if (d >= 3 && r > .85) t = 2; if (d >= 4 && r > .75 && r <= .85) t = 3;
     if (s.toSpawn === 1 && d % 5 === 0) t = 4;
     const T = ZT[t], m = 1 + (d - 1) * .2;
-    s.zs.push({ t, x, y, hp: T.hp * m, max: T.hp * m, spd: T.spd * CS * (1 + Math.random() * .15), dps: T.dps * (1 + (d - 1) * .08), slow: 0, hit: 0, seed: Math.random() * 10, eating: false, face: x > hx() ? -1 : 1 });
+    s.zs.push({ t, x: laneX(lane), y: -CS * (.6 + Math.random() * .4), hp: T.hp * m, max: T.hp * m, spd: T.spd * CS * (1 + Math.random() * .15), dps: T.dps * (1 + (d - 1) * .08), slow: 0, hit: 0, seed: Math.random() * 10, eating: false, face: lane < HC ? 1 : -1, lane } as Z);
     if (t === 4) { pop(box.current, s.W / 2, s.H * .3, "☠️ 보스 좀비 출현!", "bad big"); shake(box.current, "m"); sfx.boom(); }
   };
   const startNight = () => {
@@ -104,21 +104,22 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
       const boost = scream.some(q => q !== z && Math.hypot(q.x - z.x, q.y - z.y) < CS * 2) ? 1.3 : 1;
       const sp = z.spd * (z.slow > 0 ? .5 : 1) * boost * (z.t === 1 ? .7 + Math.abs(Math.sin(s.t * 5 + z.seed)) * .6 : z.t === 2 ? .7 + Math.abs(Math.sin(s.t * 2 + z.seed)) * .5 : .8 + Math.abs(Math.sin(s.t * 3 + z.seed)) * .4);
       const R = ZT[z.t].size * CS * .6;
-      const blk = s.units.find(u => Math.hypot((u.c + .5) * CS - z.x, (u.r + .5) * CS - z.y) < CS * .45 + R * .5);
-      const dH = Math.hypot(HX - z.x, HY - z.y);
+      // 같은 레인 바로 아래 칸의 의료진/바리케이드에 막힘
+      const blk = s.units.filter(u => u.c === z.lane).map(u => ({ u, dy: (u.r + .5) * CS - z.y })).filter(o => o.dy > -CS * .2 && o.dy < CS * .5 + R * .35).sort((a, b) => a.dy - b.dy)[0]?.u;
+      const gate = HR * CS - R * .3; // 병원(맨 아랫줄) 앞
       if (blk) { z.eating = true; blk.hp -= z.dps * dt; }
-      else if (dH < CS * .8 + R * .4) { z.eating = true; s.hp -= z.dps * dt; if (Math.random() < dt * 2) shake(box.current, "s"); }
-      else { z.eating = false; const ang = Math.atan2(HY - z.y, HX - z.x) + Math.sin(s.t * 1.3 + z.seed) * .25; z.x += Math.cos(ang) * sp * dt; z.y += Math.sin(ang) * sp * dt; z.face = Math.cos(ang) >= 0 ? 1 : -1; }
+      else if (z.y >= gate) { z.eating = true; z.y = gate; s.hp -= z.dps * dt; if (Math.random() < dt * 2) shake(box.current, "s"); }
+      else { z.eating = false; z.y += sp * dt; z.x = laneX(z.lane) + Math.sin(s.t * 2 + z.seed) * CS * .07; }
     }
     // 의료진 공격·치료
     for (const u of s.units) {
       const U = UNITS[u.k], m = lvM(u.lv), ux = (u.c + .5) * CS, uy = (u.r + .5) * CS; u.atk = Math.max(0, u.atk - dt * 3);
       if (u.k === "wall") continue;
-      if (u.k === "lab") { const heal = 12 * m * dt; for (const v of s.units) if (v !== u && Math.hypot(v.c - u.c, v.r - u.r) <= U.range && v.hp < v.max) v.hp = Math.min(v.max, v.hp + heal); if (Math.hypot(u.c - HC, u.r - HR) <= U.range + .5) s.hp = Math.min(s.maxHp, s.hp + heal); continue; }
+      if (u.k === "lab") { const heal = 12 * m * dt; for (const v of s.units) if (v !== u && Math.hypot(v.c - u.c, v.r - u.r) <= U.range && v.hp < v.max) v.hp = Math.min(v.max, v.hp + heal); if (HR - u.r <= U.range + .5) s.hp = Math.min(s.maxHp, s.hp + heal); continue; }
       const inR = s.zs.filter(z => Math.hypot(z.x - ux, z.y - uy) <= U.range * CS + ZT[z.t].size * CS * .3);
       if (u.k === "anes") { for (const z of inR) { z.slow = .3; z.hp -= U.dmg * m * dt; } if (inR.length && Math.random() < dt * 3) s.fx.push({ kind: "ring", x: ux, y: uy, t: 1, c: "#C9A2FF", s: U.range * CS }); continue; }
       u.cd -= dt; if (u.cd > 0 || !inR.length) continue;
-      const tgt = inR.sort((a, b) => Math.hypot(a.x - HX, a.y - HY) - Math.hypot(b.x - HX, b.y - HY))[0];
+      const tgt = inR.sort((a, b) => b.y - a.y)[0];
       u.cd = U.cd; u.atk = 1; u.face = tgt.x >= ux ? 1 : -1;
       if (u.k === "ortho") { for (const z of inR) { z.hp -= U.dmg * m; z.hit = 1; } s.fx.push({ kind: "ring", x: ux, y: uy, t: 1, c: "#FFD36E", s: U.range * CS }); sfx.boom(); }
       else if (u.k === "ems") { const chain: Z[] = [tgt]; while (chain.length < 3) { const last = chain[chain.length - 1]; const nx = s.zs.filter(z => !chain.includes(z)).sort((a, b) => Math.hypot(a.x - last.x, a.y - last.y) - Math.hypot(b.x - last.x, b.y - last.y))[0]; if (!nx || Math.hypot(nx.x - last.x, nx.y - last.y) > CS * 2) break; chain.push(nx); } for (const z of chain) { z.hp -= U.dmg * m; z.hit = 1; } s.fx.push({ kind: "bolt", x: ux, y: uy, t: 1, pts: [[ux, uy], ...chain.map(z => [z.x, z.y] as [number, number])] }); }
@@ -138,9 +139,9 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
     const s = g.current, c = cv.current; if (!c || !s.bg || s.W < 2) return; const x = c.getContext("2d")!, CS = s.CS, HX = hx(), HY = hy();
     x.drawImage(s.bg, 0, 0, s.W, s.H);
     // 병원 건물
-    drawHospital(x, HX, HY, CS, s.hp / s.maxHp, s.phase === "night", s.t);
+    drawBase(x, s.W, CS, s.hp / s.maxHp, s.phase === "night", s.t);
     // 배치 가능 칸 (낮)
-    if (s.phase === "day") { x.save(); x.strokeStyle = "rgba(255,255,255,.25)"; x.setLineDash([3, 4]); for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < COLS; cc++) { if (Math.abs(cc - HC) <= 0 && Math.abs(r - HR) <= 0) continue; if (s.units.some(u => u.c === cc && u.r === r)) continue; x.strokeRect(cc * CS + 3, r * CS + 3, CS - 6, CS - 6); } x.restore(); }
+    if (s.phase === "day") { x.save(); x.strokeStyle = "rgba(255,255,255,.25)"; x.setLineDash([3, 4]); for (let r = 0; r < ROWS; r++) for (let cc = 0; cc < COLS; cc++) { if (r === HR) continue; if (s.units.some(u => u.c === cc && u.r === r)) continue; x.strokeRect(cc * CS + 3, r * CS + 3, CS - 6, CS - 6); } x.restore(); }
     // 그리기 순서: y 기준
     const items: { y: number; f: () => void }[] = [];
     for (const u of s.units) items.push({ y: (u.r + 1) * CS, f: () => drawUnit(x, u, CS, s.t, pick === u) });
@@ -160,7 +161,7 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
       const d = s.dark.getContext("2d")!; d.globalCompositeOperation = "source-over"; d.clearRect(0, 0, s.W, s.H); d.fillStyle = `rgba(4,8,22,${Math.min(.6, s.nightT * .5)})`; d.fillRect(0, 0, s.W, s.H);
       d.globalCompositeOperation = "destination-out";
       const hole = (cx: number, cy: number, r: number) => { const gg = d.createRadialGradient(cx, cy, 0, cx, cy, r); gg.addColorStop(0, "rgba(0,0,0,1)"); gg.addColorStop(.6, "rgba(0,0,0,.7)"); gg.addColorStop(1, "rgba(0,0,0,0)"); d.fillStyle = gg; d.beginPath(); d.arc(cx, cy, r, 0, 7); d.fill(); };
-      hole(HX, HY, CS * 2.2 * (.95 + Math.sin(s.t * 9) * .02));
+      hole(HX, HY + CS * .2, CS * 3.2 * (.95 + Math.sin(s.t * 9) * .02));
       for (const u of s.units) if (u.k !== "wall") hole((u.c + .5) * CS, (u.r + .5) * CS, CS * 1.4);
       for (const f of s.fx) if (f.kind === "bolt" || f.kind === "ring") hole(f.x, f.y, CS * 1.6 * f.t);
       x.drawImage(s.dark, 0, 0, s.W, s.H);
@@ -172,11 +173,11 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
   useEffect(() => { const on = () => { size(); }; addEventListener("resize", on); return () => { removeEventListener("resize", on); cancelAnimationFrame(g.current.raf); }; }, []);
   const tap = (e: React.PointerEvent) => {
     const s = g.current; if (s.phase === "over") return; const r = (e.currentTarget as HTMLElement).getBoundingClientRect(), cc = Math.floor((e.clientX - r.left) / s.CS), rr = Math.floor((e.clientY - r.top) / s.CS);
-    if (cc < 0 || rr < 0 || cc >= COLS || rr >= ROWS || (cc === HC && rr === HR)) return;
+    if (cc < 0 || rr < 0 || cc >= COLS || rr >= HR) return;
     const ex = s.units.find(u => u.c === cc && u.r === rr); if (ex) { setPick(ex); return; }
     setPick(null); const U = UNITS[sel];
     if (s.sup < U.cost) { pop(box.current, e.clientX - r.left, e.clientY - r.top, `보급품 ${U.cost - s.sup} 부족`, "bad"); haptic(20); return; }
-    s.sup -= U.cost; s.units.push({ k: sel, c: cc, r: rr, hp: U.hp, max: U.hp, lv: 1, cd: 0, atk: 0, face: cc < HC ? -1 : 1 }); sfx.tap(); haptic(8); burst(box.current, (cc + .5) * s.CS, (rr + .5) * s.CS, U.color, 8); sync();
+    s.sup -= U.cost; s.units.push({ k: sel, c: cc, r: rr, hp: U.hp, max: U.hp, lv: 1, cd: 0, atk: 0, face: cc < HC ? 1 : -1 }); sfx.tap(); haptic(8); burst(box.current, (cc + .5) * s.CS, (rr + .5) * s.CS, U.color, 8); sync();
   };
   const upgrade = () => { const s = g.current, u = pick; if (!u || u.lv >= 3) return; const c = upCost(u.k, u.lv); if (s.sup < c) { setMsg(`보급품 ${c - s.sup} 부족`); return; } s.sup -= c; const m0 = lvM(u.lv); u.lv++; const m1 = lvM(u.lv); u.max = Math.round(UNITS[u.k].hp * m1); u.hp = Math.min(u.max, u.hp * m1 / m0 + 30); sfx.level(); setPick({ ...u }); setPick(u); sync(); };
   const sell = () => { const s = g.current, u = pick; if (!u) return; s.units = s.units.filter(v => v !== u); s.sup += Math.floor(UNITS[u.k].cost * .5 * u.lv); setPick(null); sync(); };
@@ -225,33 +226,44 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
 function buildBg(W: number, H: number, CS: number) {
   const d = Math.min(2, devicePixelRatio || 1), cv = document.createElement("canvas"); cv.width = W * d; cv.height = H * d; const x = cv.getContext("2d")!; x.scale(d, d);
   const rnd = (i: number) => { const v = Math.sin(i * 91.7) * 43758.5; return v - Math.floor(v); };
-  x.fillStyle = "#5E6B5A"; x.fillRect(0, 0, W, H);
-  for (let i = 0; i < 260; i++) { x.fillStyle = `rgba(${rnd(i) > .5 ? "90,120,70" : "70,90,60"},.5)`; x.fillRect(rnd(i * 3) * W, rnd(i * 7) * H, 2, 3); }
-  // 병원 앞 주차장 (가운데 가로·세로 도로)
-  x.fillStyle = "#4A4F57"; x.fillRect(CS * 1.5, CS * 2, W - CS * 3, CS * 3); x.fillRect(CS * 4, CS * .5, CS * 3, H - CS);
-  x.strokeStyle = "rgba(255,255,255,.35)"; x.lineWidth = 2; x.setLineDash([CS * .3, CS * .25]); x.beginPath(); x.moveTo(CS * 1.5, CS * 3.5); x.lineTo(W - CS * 1.5, CS * 3.5); x.moveTo(CS * 5.5, CS * .5); x.lineTo(CS * 5.5, H - CS * .5); x.stroke(); x.setLineDash([]);
-  for (let k = 0; k < 6; k++) { x.strokeStyle = "rgba(255,255,255,.25)"; x.beginPath(); x.moveTo(CS * (2 + k * .5), CS * 2); x.lineTo(CS * (2 + k * .5), CS * 2.6); x.stroke(); x.beginPath(); x.moveTo(W - CS * (2 + k * .5), CS * 4.4); x.lineTo(W - CS * (2 + k * .5), CS * 5); x.stroke(); }
-  // 버려진 차·구급차·핏자국·잔해
-  const car = (cx: number, cy: number, col: string, amb = false) => { x.save(); x.translate(cx, cy); x.rotate(rnd(cx) - .5); x.fillStyle = "rgba(0,0,0,.25)"; x.fillRect(-CS * .42, -CS * .2, CS * .9, CS * .48); x.fillStyle = col; x.fillRect(-CS * .45, -CS * .25, CS * .9, CS * .45); x.fillStyle = "#2B3245"; x.fillRect(-CS * .2, -CS * .2, CS * .35, CS * .35); if (amb) { x.fillStyle = "#E2574C"; x.fillRect(CS * .2, -CS * .05, CS * .16, CS * .05); x.fillRect(CS * .255, -CS * .11, CS * .05, CS * .17); } x.restore(); };
-  car(CS * 2.2, CS * 1.2, "#B8C2CC"); car(W - CS * 2, CS * 5.9, "#8E3B3B"); car(CS * 8.6, CS * 1.1, "#FFFFFF", true); car(CS * 1.6, CS * 6, "#C9A227");
-  for (let i = 0; i < 9; i++) { const px = rnd(i * 11 + 1) * W, py = rnd(i * 13 + 2) * H; x.fillStyle = "rgba(120,10,10,.45)"; x.beginPath(); x.ellipse(px, py, CS * (.08 + rnd(i) * .12), CS * .05, rnd(i * 5), 0, 7); x.fill(); }
-  for (let i = 0; i < 7; i++) { x.fillStyle = "#7A6E5E"; x.beginPath(); const px = rnd(i * 17 + 4) * W, py = rnd(i * 19 + 5) * H; x.moveTo(px, py); x.lineTo(px + 6, py - 4); x.lineTo(px + 10, py + 3); x.closePath(); x.fill(); }
-  // 철조망 울타리 테두리
-  x.strokeStyle = "rgba(200,200,200,.35)"; x.lineWidth = 1; x.setLineDash([2, 3]); x.strokeRect(CS * .15, CS * .15, W - CS * .3, H - CS * .3); x.setLineDash([]);
-  const vg = x.createRadialGradient(W / 2, H / 2, H * .3, W / 2, H / 2, W * .7); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.35)"); x.fillStyle = vg; x.fillRect(0, 0, W, H);
+  // 병원 앞 큰길: 위(어둠·좀비 출현) → 아래(병원)
+  x.fillStyle = "#4A4F57"; x.fillRect(0, 0, W, H);
+  const g1 = x.createLinearGradient(0, 0, 0, H); g1.addColorStop(0, "rgba(0,0,0,.55)"); g1.addColorStop(.35, "rgba(0,0,0,.1)"); g1.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g1; x.fillRect(0, 0, W, H);
+  for (let i = 0; i < 300; i++) { x.fillStyle = `rgba(${rnd(i) > .5 ? "70,75,85" : "40,44,52"},.6)`; x.fillRect(rnd(i * 3) * W, rnd(i * 7) * H, 2, 2); }
+  // 레인 구분선(차선)
+  x.strokeStyle = "rgba(255,255,255,.22)"; x.lineWidth = 2; x.setLineDash([CS * .35, CS * .3]);
+  for (let c = 1; c < COLS; c++) { x.beginPath(); x.moveTo(c * CS, 0); x.lineTo(c * CS, H - CS); x.stroke(); }
+  x.setLineDash([]);
+  // 횡단보도 (병원 바로 앞)
+  for (let c = 0; c < COLS * 2; c++) { x.fillStyle = "rgba(255,255,255,.35)"; x.fillRect(c * CS * .5 + CS * .08, (HR - 1) * CS + CS * .62, CS * .3, CS * .3); }
+  // 인도 (양옆 얇게)
+  x.fillStyle = "#6B6F76"; x.fillRect(0, 0, 4, H - CS); x.fillRect(W - 4, 0, 4, H - CS);
+  // 버려진 차·핏자국·잔해
+  const car = (cx: number, cy: number, col: string, amb = false) => { x.save(); x.translate(cx, cy); x.rotate(rnd(cx) * .4 - .2); x.fillStyle = "rgba(0,0,0,.25)"; x.fillRect(-CS * .22, -CS * .36, CS * .44, CS * .78); x.fillStyle = col; x.fillRect(-CS * .2, -CS * .4, CS * .4, CS * .78); x.fillStyle = "rgba(120,160,200,.6)"; x.fillRect(-CS * .16, -CS * .3, CS * .32, CS * .14); x.fillRect(-CS * .16, CS * .12, CS * .32, CS * .12); if (amb) { x.fillStyle = "#E2574C"; x.fillRect(-CS * .05, -CS * .1, CS * .1, CS * .22); x.fillRect(-CS * .11, -CS * .04, CS * .22, CS * .1); } x.restore(); };
+  car(CS * .8, CS * 1.4, "#B8C2CC"); car(W - CS * .9, CS * 2.6, "#8E3B3B"); car(CS * 2.4, CS * .7, "#FFFFFF", true);
+  for (let i = 0; i < 10; i++) { const px = rnd(i * 11 + 1) * W, py = rnd(i * 13 + 2) * (H - CS); x.fillStyle = "rgba(120,10,10,.45)"; x.beginPath(); x.ellipse(px, py, CS * (.08 + rnd(i) * .12), CS * .05, rnd(i * 5) * 3, 0, 7); x.fill(); }
+  for (let i = 0; i < 8; i++) { x.fillStyle = "#7A6E5E"; x.beginPath(); const px = rnd(i * 17 + 4) * W, py = rnd(i * 19 + 5) * (H - CS); x.moveTo(px, py); x.lineTo(px + 6, py - 4); x.lineTo(px + 10, py + 3); x.fill(); }
+  const vg = x.createRadialGradient(W / 2, H * .7, H * .3, W / 2, H * .5, W * .9); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.35)"); x.fillStyle = vg; x.fillRect(0, 0, W, H);
   return cv;
 }
-function drawHospital(x: CanvasRenderingContext2D, cx: number, cy: number, CS: number, hp: number, night: boolean, t: number) {
-  x.save(); x.translate(cx, cy);
-  x.fillStyle = "rgba(0,0,0,.3)"; x.fillRect(-CS * .62, -CS * .45, CS * 1.3, CS * 1);
-  x.fillStyle = "#E9EEF4"; x.fillRect(-CS * .65, -CS * .55, CS * 1.3, CS * 1); x.fillStyle = "#C9D3DE"; x.fillRect(-CS * .65, CS * .3, CS * 1.3, CS * .15);
-  for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) { x.fillStyle = night ? (Math.sin(t * 2 + i + j * 3) > -.5 ? "#FFE9A0" : "#3B4250") : "#9FD3F5"; x.fillRect(-CS * .55 + i * CS * .3, -CS * .45 + j * CS * .32, CS * .18, CS * .2); }
-  x.fillStyle = "#E2574C"; x.fillRect(-CS * .07, -CS * .78, CS * .14, CS * .3); x.fillRect(-CS * .17, -CS * .68, CS * .34, CS * .1);
-  x.fillStyle = "#5A4632"; x.fillRect(-CS * .12, CS * .1, CS * .24, CS * .35);
-  if (hp < .6) { x.fillStyle = "rgba(40,30,20,.6)"; x.beginPath(); x.moveTo(-CS * .6, -CS * .2); x.lineTo(-CS * .3, CS * .1); x.lineTo(-CS * .5, CS * .3); x.fill(); }
-  if (hp < .35) { for (let k = 0; k < 3; k++) { x.fillStyle = `rgba(255,${120 + k * 40},40,${.5 + Math.sin(t * 10 + k) * .2})`; x.beginPath(); x.ellipse(CS * (.3 - k * .2), -CS * .55 - Math.abs(Math.sin(t * 6 + k)) * CS * .1, CS * .07, CS * .15, 0, 0, 7); x.fill(); } }
+/** 병원 — 맨 아랫줄 전체: 모래주머니 바리케이드 + 건물 정면 */
+function drawBase(x: CanvasRenderingContext2D, W: number, CS: number, hp: number, night: boolean, t: number) {
+  const y0 = HR * CS; x.save();
+  // 건물 정면
+  x.fillStyle = "#E9EEF4"; x.fillRect(0, y0 + CS * .22, W, CS * .78); x.fillStyle = "#C9D3DE"; x.fillRect(0, y0 + CS * .22, W, CS * .08);
+  const n = Math.max(4, Math.floor(W / (CS * .6)));
+  for (let i = 0; i < n; i++) { const wx = (i + .5) * (W / n); x.fillStyle = night ? (Math.sin(t * 2 + i * 1.7) > -.4 ? "#FFE9A0" : "#3B4250") : "#9FD3F5"; x.fillRect(wx - CS * .12, y0 + CS * .4, CS * .24, CS * .22); }
+  // 응급실 입구 + 십자
+  x.fillStyle = "#5A4632"; x.fillRect(W / 2 - CS * .25, y0 + CS * .6, CS * .5, CS * .4);
+  x.fillStyle = "#E2574C"; x.fillRect(W / 2 - CS * .06, y0 + CS * .02, CS * .12, CS * .22); x.fillRect(W / 2 - CS * .15, y0 + CS * .07, CS * .3, CS * .12);
+  x.font = `800 ${Math.floor(CS * .17)}px system-ui`; x.fillStyle = "#E2574C"; x.textAlign = "center"; x.fillText("EMERGENCY", W / 2, y0 + CS * .36 + CS * .22 * 0 + CS * .16 - CS * .2);
+  // 모래주머니 바리케이드 (윗선)
+  for (let i = 0; i < Math.ceil(W / (CS * .3)); i++) { x.fillStyle = i % 2 ? "#B59A6A" : "#A48858"; x.beginPath(); x.ellipse(i * CS * .3 + CS * .15, y0 + CS * .14, CS * .16, CS * .09, 0, 0, 7); x.fill(); }
+  if (hp < .6) { x.fillStyle = "rgba(40,30,20,.55)"; x.beginPath(); x.moveTo(W * .2, y0 + CS * .3); x.lineTo(W * .26, y0 + CS * .6); x.lineTo(W * .17, y0 + CS * .8); x.fill(); }
+  if (hp < .35) { for (let k = 0; k < 4; k++) { x.fillStyle = `rgba(255,${120 + k * 30},40,${.5 + Math.sin(t * 10 + k) * .2})`; x.beginPath(); x.ellipse(W * (.15 + k * .23), y0 + CS * .2 - Math.abs(Math.sin(t * 6 + k)) * CS * .15, CS * .1, CS * .18, 0, 0, 7); x.fill(); } }
   x.restore();
-  x.fillStyle = "rgba(0,0,0,.4)"; x.fillRect(cx - CS * .6, cy + CS * .55, CS * 1.2, 5); x.fillStyle = hp > .5 ? "#3FA34D" : hp > .25 ? "#E6B341" : "#E2574C"; x.fillRect(cx - CS * .6, cy + CS * .55, CS * 1.2 * Math.max(0, hp), 5);
+  // 체력바
+  x.fillStyle = "rgba(0,0,0,.45)"; x.fillRect(CS * .3, y0 + CS * .9, W - CS * .6, 5); x.fillStyle = hp > .5 ? "#3FA34D" : hp > .25 ? "#E6B341" : "#E2574C"; x.fillRect(CS * .3, y0 + CS * .9, (W - CS * .6) * Math.max(0, hp), 5);
 }
 function drawUnit(x: CanvasRenderingContext2D, u: U, CS: number, t: number, picked: boolean) {
   const cx = (u.c + .5) * CS, cy = (u.r + .5) * CS, S = CS * 1.15, im = art(ART[u.k], HERO_SVG[ART[u.k]]);
