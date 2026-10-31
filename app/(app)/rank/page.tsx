@@ -23,7 +23,7 @@ export default async function RankPage() {
   const [{ data: me }, { data: done }, { data: top }, { count }, leaders, commanders, { count: invited }, daily] = await Promise.all([
     d.from("users").select("id,username,nickname,dept,xp,join_order,bio,fortune_name,birth_date,birth_time,blue_badge").eq("id", s.id).single(),
     d.from("xp_log").select("key").eq("user_id", s.id).not("key", "is", null),
-    d.from("users").select("id,username,nickname,dept,xp").eq("stealth", false).order("xp", { ascending: false }).limit(30),
+    d.from("users").select("id,username,nickname,dept,xp,blue_badge").eq("stealth", false).order("xp", { ascending: false }).limit(30),
     d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false),
     deptLeaders(), deptCommanders(),
     d.from("users").select("id", { count: "exact", head: true }).eq("referred_by", s.username),
@@ -85,7 +85,7 @@ export default async function RankPage() {
 
       <div className="card board">
         <h3>계급표</h3>
-        <ol>{(top ?? []).map((u, i) => { const rr = rankFor(u, leaders); return <li key={u.id}><span className="rank">{i + 1}</span><span><Name r={rr} dept={u.dept} nickname={u.nickname} username={u.username} /></span><span className="ms">{u.xp.toLocaleString()}</span></li>; })}</ol>
+        <ol>{(top ?? []).map((u, i) => { const rr = rankFor(u, leaders); return <li key={u.id}><span className="rank">{i + 1}</span><span><Name r={rr} dept={u.dept} nickname={u.nickname} username={u.username} badge={(u as any).blue_badge} /></span><span className="ms">{u.xp.toLocaleString()}</span></li>; })}</ol>
       </div>
       <DeleteAccount />
     </div>

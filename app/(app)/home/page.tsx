@@ -1,4 +1,6 @@
 import Link from "next/link";
+import BlueBadge from "@/components/BlueBadge";
+import { CafeBottom } from "@/components/CafeNav";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
@@ -24,7 +26,7 @@ export default async function HomePage() {
     d.from("users").select("id,username,nickname,dept,xp,birth_date,birth_time,fortune_name").eq("id", s.id).single(),
     deptLeaders(),
     dailyStatus(s.id),
-    d.from("posts").select("id,title,topic,category,created_at,pinned,author_id,author:users(id,username,nickname,dept,xp)").eq("hidden", false).neq("category", "썸").neq("category", "익명").gte("created_at", week).order("created_at", { ascending: false }).limit(150),
+    d.from("posts").select("id,title,topic,category,created_at,pinned,author_id,author:users(id,username,nickname,dept,xp,blue_badge)").eq("hidden", false).neq("category", "썸").neq("category", "익명").gte("created_at", week).order("created_at", { ascending: false }).limit(150),
     d.from("posts").select("id", { count: "exact", head: true }).gte("created_at", day),
     d.from("messages").select("id", { count: "exact", head: true }).gte("created_at", day),
     d.from("visits").select("user_id").eq("day", today),
@@ -54,7 +56,7 @@ export default async function HomePage() {
   const tyS = isCurrent(ty?.state) ? ty!.state as any : undefined;
   const tyRate = tyS ? rateOf(tyS, tycoonDept(s.dept)) : 0, tyDaily = tyS ? dailyOf(tyS, tycoonDept(s.dept)) : 0;
   const tyPending = tyS && tyRate ? Math.floor(tyRate * Math.min(OFFLINE_CAP, Math.max(0, (now - tyS.lastSeen) / 1000)) * OFFLINE_RATE) : 0;
-  const Row = ({ p }: { p: any }) => <Link href={`/board/${p.id}`} className="h-row"><span className="h-topic">{topicOf(p.topic).icon}</span><span className="h-title">{p.title}</span><span className="h-meta">{p.author ? `[${p.author.dept}]` : ""} · 💬{p.nc} 👍{p.nr}</span></Link>;
+  const Row = ({ p }: { p: any }) => <Link href={`/board/${p.id}`} className="h-row"><span className="h-topic">{topicOf(p.topic).icon}</span><span className="h-title">{p.title}</span><span className="h-meta">{p.author ? `[${p.author.dept}]` : ""}{p.author?.blue_badge ? <BlueBadge size={11} className="bb" /> : null} · 💬{p.nc} 👍{p.nr}</span></Link>;
 
   const pct = (x?: { pct: number }) => x ? `${x.pct > 0 ? "▲" : x.pct < 0 ? "▼" : ""}${Math.abs(x.pct).toFixed(1)}%` : "";
   return (
@@ -109,6 +111,7 @@ export default async function HomePage() {
         </div>
         <div className="h-dq-foot">{daily.all ? <span>🎉 오늘 퀘스트 올클리어!</span> : <span>오늘 퀘스트 {doneN}/3 · 다 하면 +{DAILY_BONUS} XP</span>}</div>
       </section>
+      <CafeBottom writeHref="/board/new" newHref="/board?new=1" cat="전체" q="" />
     </div>
   );
 }

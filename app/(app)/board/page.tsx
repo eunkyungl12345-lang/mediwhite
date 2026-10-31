@@ -11,7 +11,7 @@ import BoardTabs from "@/components/BoardTabs";
 import { CafeHeader, NoticeFold, CafeBottom, QuerySelect, type NavItem } from "@/components/CafeNav";
 
 export const dynamic = "force-dynamic";
-const SEL = "id,category,title,body,pinned,boosted,created_at,board_id,topic,hidden,views,author:users(id,username,nickname,dept,xp)";
+const SEL = "id,category,title,body,pinned,boosted,created_at,board_id,topic,hidden,views,author:users(id,username,nickname,dept,xp,blue_badge)";
 const DAY = 86400000;
 
 export default async function BoardPage({ searchParams }: { searchParams: { cat?: string; tab?: string; topic?: string; sort?: string; q?: string; new?: string } }) {
@@ -74,7 +74,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const title = cat === NOTICE_CAT ? "📢 공지사항" : cat !== "전체" ? `${cat} 라운지` : topic ? `${topicOf(topic).icon} ${topicOf(topic).name}` : "✨ 전체글";
   const qs = (o: Record<string, string>) => { const p = new URLSearchParams(Object.entries({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(sort !== "rank" ? { sort } : {}), ...o }).filter(([, v]) => v)); return `/board${p.toString() ? "?" + p : ""}`; };
   const writeHref = `/board/new?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}) })}`;
-  const meta = (p: any) => <>{p.author ? <Name r={p.r} dept={p.author.dept} nickname={p.author.nickname} /> : <span>탈퇴한 회원</span>}<span>· {fmt(p.created_at)}</span></>;
+  const meta = (p: any) => <>{p.author ? <Name r={p.r} dept={p.author.dept} nickname={p.author.nickname} badge={p.author.blue_badge} /> : <span>탈퇴한 회원</span>}<span>· {fmt(p.created_at)}</span></>;
 
   return (
     <div className="cafe">

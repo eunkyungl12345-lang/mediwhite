@@ -69,13 +69,13 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
   const { data: likedMe } = await d.from("likes").select("from_id").eq("kind", "profile").eq("target", s.id);
   const mutualWith = (uid: string) => liked("profile", uid) && (likedMe ?? []).some(l => l.from_id === uid);
   let solo: any = null;
-  try { const v = soloRow?.value ? JSON.parse(soloRow.value) : null; if (v?.userId) { const [{ data: sp }, { data: su }] = await Promise.all([d.from("dating_profiles").select("*").eq("user_id", v.userId).eq("visible", true).maybeSingle(), d.from("users").select("id,username,nickname,dept,xp").eq("id", v.userId).maybeSingle()]); if (sp && su) solo = { ...sp, user: su, comment: v.comment, day: v.day }; } } catch {}
+  try { const v = soloRow?.value ? JSON.parse(soloRow.value) : null; if (v?.userId) { const [{ data: sp }, { data: su }] = await Promise.all([d.from("dating_profiles").select("*").eq("user_id", v.userId).eq("visible", true).maybeSingle(), d.from("users").select("id,username,nickname,dept,xp,blue_badge").eq("id", v.userId).maybeSingle()]); if (sp && su) solo = { ...sp, user: su, comment: v.comment, day: v.day }; } } catch {}
 
   let body: React.ReactNode = null;
   if (tab === "lounge") {
     const sub = searchParams.sub || "all";
     const [{ data: posts }] = await Promise.all([
-      d.from("posts").select("id,title,body,topic,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(60),
+      d.from("posts").select("id,title,body,topic,created_at,hidden,author:users(id,username,nickname,dept,xp,blue_badge)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(60),
     ]);
     const pids = (posts ?? []).map((p: any) => p.id);
     const [{ data: cc }, { data: rc }] = pids.length ? await Promise.all([d.from("comments").select("post_id").in("post_id", pids), d.from("reactions").select("target_id").eq("kind", "post").in("target_id", pids)]) : [{ data: [] as any[] }, { data: [] as any[] }];
@@ -141,7 +141,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     const [{ data: mine }, { data: profs }, { data: intros }] = await Promise.all([
       d.from("dating_profiles").select("*").eq("user_id", s.id).maybeSingle(),
       (gf ? d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth,blue_badge)").eq("gender", gf) : d.from("dating_profiles").select("*,user:users!inner(id,username,nickname,dept,xp,stealth,blue_badge)")).eq("visible", true).neq("user_id", s.id).order("updated_at", { ascending: false }).limit(60),
-      (gf ? d.from("intros").select("*,author:users(id,username,nickname,dept,xp)").eq("gender", gf) : d.from("intros").select("*,author:users(id,username,nickname,dept,xp)")).order("created_at", { ascending: false }).limit(30),
+      (gf ? d.from("intros").select("*,author:users(id,username,nickname,dept,xp,blue_badge)").eq("gender", gf) : d.from("intros").select("*,author:users(id,username,nickname,dept,xp,blue_badge)")).order("created_at", { ascending: false }).limit(30),
     ]);
     body = <>
       <div className="ss-photo-guide" style={{ background: "rgba(244, 143, 177, 0.08)", border: "1px dashed rgba(244, 143, 177, 0.35)", borderRadius: 12, padding: "10px 14px", fontSize: 12, lineHeight: 1.5, color: "var(--ink)", margin: "4px 0" }}>
@@ -297,7 +297,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
           <p className="ss-hero-desc">병원 사람끼리 전하는 설렘 ∙ 셀소 하트(💗)로 1:1 대화 연결</p>
         </div>
       </div>
-      {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
+      {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} badge={solo.user.blue_badge} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
       <div className="cats" style={{ paddingBottom: 0 }}>{TABS.map(([k, n]) => <Link key={k} href={`/ssum?tab=${k}`} aria-current={tab === k ? "true" : undefined}>{n}</Link>)}</div>
       {body}
     </div>

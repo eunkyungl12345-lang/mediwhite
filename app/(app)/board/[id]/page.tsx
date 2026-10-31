@@ -19,12 +19,12 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const s = (await getSession())!;
   const d = db();
   const [{ data: p }, leaders, { data: me }] = await Promise.all([
-    d.from("posts").select("*,author:users(id,username,nickname,dept,xp),board:boards(name)").eq("id", params.id).maybeSingle(), deptLeaders(),
+    d.from("posts").select("*,author:users(id,username,nickname,dept,xp,blue_badge),board:boards(name)").eq("id", params.id).maybeSingle(), deptLeaders(),
     d.from("users").select("id,dept,xp").eq("id", s.id).maybeSingle(),
   ]);
   if (!p) notFound();
   if (p.category === "익명") redirect(`/anon/${p.id}`);
-  const { data: comments } = await d.from("comments").select("id,author_id,dept,text,created_at,hidden,author:users(id,username,nickname,dept,xp)").eq("post_id", p.id).order("created_at").limit(300);
+  const { data: comments } = await d.from("comments").select("id,author_id,dept,text,created_at,hidden,author:users(id,username,nickname,dept,xp,blue_badge)").eq("post_id", p.id).order("created_at").limit(300);
   const cids = (comments ?? []).map(c => String(c.id));
   const [{ data: rxp }, { data: rxc }] = await Promise.all([d.from("reactions").select("kind,target_id,emoji,user_id").eq("kind", "post").eq("target_id", p.id), cids.length ? d.from("reactions").select("kind,target_id,emoji,user_id").eq("kind", "comment").in("target_id", cids) : Promise.resolve({ data: [] as any[] })]);
   const rx = [...(rxp ?? []), ...(rxc ?? [])];
@@ -40,7 +40,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
       <Link className="link" href={p.category === "썸" ? "/ssum" : `/board?cat=${encodeURIComponent(p.category)}${p.board_id ? `&tab=${p.board_id}` : ""}`}>← {p.category}{(p as any).board?.name ? ` › ${(p as any).board.name}` : ""}</Link>
       <div className="meta" style={{ marginTop: 10 }}>
         {p.pinned && <span className="pin">📌 공지</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{!p.pinned && <span className="tag">{p.category}</span>}<Link href={`/board?topic=${(p as any).topic ?? "free"}`} className="topic-tag">{topicOf((p as any).topic).icon} {topicOf((p as any).topic).name}</Link>
-        {a ? <Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(p.created_at)}</span><span className="time">· 조회 {((p as any).views ?? 0) + (counted ? 1 : 0)}</span>
+        {a ? <Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} badge={a.blue_badge} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(p.created_at)}</span><span className="time">· 조회 {((p as any).views ?? 0) + (counted ? 1 : 0)}</span>
         {admin && <form action={togglePin.bind(null, p.id, !p.pinned)}><button className="link">{p.pinned ? "고정 해제" : "상단 고정"}</button></form>}
         {mine && can(myR, "소령") && <form action={boostPost.bind(null, p.id, !p.boosted)}><button className="link">{p.boosted ? "밀어올리기 해제" : "밀어올리기"}</button></form>}
         {(admin || mine) && <form action={deletePost.bind(null, p.id)}><button className="link">글 삭제</button></form>}
@@ -55,7 +55,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         {!comments?.length && <div className="muted">첫 댓글을 남겨보세요.</div>}
         {comments?.map((c: any) => { const cr = rankFor(c.author, leaders); return (
           <div key={c.id} className={`comment t${cr.tier}`}>
-            <div className="meta">{c.author ? <Name r={cr} dept={c.author.dept} nickname={c.author.nickname} username={c.author.username} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(c.created_at)}</span>
+            <div className="meta">{c.author ? <Name r={cr} dept={c.author.dept} nickname={c.author.nickname} username={c.author.username} badge={c.author.blue_badge} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(c.created_at)}</span>
               {(admin || c.author_id === s.id) && <form action={deleteComment.bind(null, c.id, p.id)}><button className="link">삭제</button></form>}
             </div>
             {c.hidden && !admin && c.author_id !== s.id ? <div className="muted">🚩 신고로 임시 블라인드된 댓글이에요.</div> : <div>{c.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff", marginRight: 6 }}>블라인드</span>}{c.text}</div>}
