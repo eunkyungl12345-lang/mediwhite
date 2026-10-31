@@ -59,18 +59,19 @@ export function NoticeFold({ children, count }: { children: React.ReactNode; cou
 }
 
 /** 하단 바: 맨 위 · 검색 · 글쓰기 · 새글보기 */
-export function CafeBottom({ writeHref, newHref, cat, q }: { writeHref: string; newHref: string; cat: string; q: string }) {
+export function CafeBottom({ writeHref, newHref, cat, q, newCount = 0 }: { writeHref: string; newHref: string; cat: string; q: string; newCount?: number }) {
   const [s, setS] = useState(!!q), [v, setV] = useState(q), r = useRouter();
   return (
     <div className="cf-bottom">
       {s && <form className="cf-search" onSubmit={e => { e.preventDefault(); r.push(`/board?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(v.trim() ? { q: v.trim() } : {}) })}`); }}>
         <input autoFocus value={v} onChange={e => setV(e.target.value)} placeholder="제목·내용 검색" enterKeyHint="search" /><button className="btn">검색</button>
       </form>}
-      <div className="cf-bar">
-        <button type="button" aria-label="맨 위로" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>⌃</button>
-        <button type="button" onClick={() => setS(!s)}>검색하기</button>
-        <Link href={writeHref}>글쓰기</Link>
-        <Link href={newHref}>새글보기</Link>
+      <div className="cf-bar v2">
+        <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><i>⬆️</i><span>맨 위</span></button>
+        <button type="button" onClick={() => setS(!s)} aria-pressed={s}><i>🔍</i><span>검색</span></button>
+        <Link href={writeHref} className="cf-write" aria-label="글쓰기"><b>✏️</b><span>글쓰기</span></Link>
+        <Link href={newHref}><i>🆕</i><span>새 글</span>{newCount > 0 && <em className="cf-n">{newCount > 99 ? "99+" : newCount}</em>}</Link>
+        <Link href="/games"><i>🎮</i><span>게임</span></Link>
       </div>
     </div>
   );

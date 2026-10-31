@@ -101,7 +101,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
           </Link>
         ))}
       </div>
-      <CafeBottom writeHref={writeHref} newHref={qs({ new: "1", sort: "" })} cat={cat} q={kw} />
+      <CafeBottom writeHref={writeHref} newHref={qs({ new: "1", sort: "" })} cat={cat} q={kw} newCount={(raw ?? []).filter((p: any) => !p.hidden && Date.now() - Date.parse(p.created_at) < DAY).length} />
     </div>
   );
 }

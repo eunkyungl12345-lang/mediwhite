@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BlueBadge from "@/components/BlueBadge";
 import { CafeBottom } from "@/components/CafeNav";
+import HomeFeed from "@/components/HomeFeed";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
@@ -26,7 +27,7 @@ export default async function HomePage() {
     d.from("users").select("id,username,nickname,dept,xp,birth_date,birth_time,fortune_name").eq("id", s.id).single(),
     deptLeaders(),
     dailyStatus(s.id),
-    d.from("posts").select("id,title,topic,category,created_at,pinned,author_id,author:users(id,username,nickname,dept,xp,blue_badge)").eq("hidden", false).neq("category", "썸").neq("category", "익명").gte("created_at", week).order("created_at", { ascending: false }).limit(150),
+    d.from("posts").select("id,title,topic,category,created_at,pinned,views,author_id,author:users(id,username,nickname,dept,xp,blue_badge)").eq("hidden", false).neq("category", "썸").neq("category", "익명").gte("created_at", week).order("created_at", { ascending: false }).limit(150),
     d.from("posts").select("id", { count: "exact", head: true }).gte("created_at", day),
     d.from("messages").select("id", { count: "exact", head: true }).gte("created_at", day),
     d.from("visits").select("user_id").eq("day", today),
@@ -44,6 +45,9 @@ export default async function HomePage() {
   const q = question?.[0] as any;
   const hot = [...posts].filter(p => !p.pinned && p.id !== q?.id).sort((a, b) => b.score - a.score || +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 5);
   const mine = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 5);
+  const { count: memberN } = await d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false);
+  const feedRow = (p: any) => ({ id: p.id, title: p.title, icon: topicOf(p.topic).icon, dept: p.author?.dept, nick: p.author?.nickname, badge: !!p.author?.blue_badge, cat: p.category === "공지" ? "공지" : `${p.category} 라운지`, time: fmt(p.created_at), views: p.views ?? 0, nc: p.nc, nr: p.nr, fresh: now - Date.parse(p.created_at) < 86400000 });
+  const latestF = posts.filter(p => !p.pinned && p.id !== q?.id).slice(0, 8).map(feedRow), hotF = hot.map(feedRow), mineF = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 8).map(feedRow);
   const kday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
   const { data: dps } = await d.from("daily_plays").select("game,attempts,best,data").eq("user_id", s.id).eq("day", kday);
   const wd = (dps ?? []).find((r: any) => r.game === "wordle") as any;
@@ -61,7 +65,7 @@ export default async function HomePage() {
   const pct = (x?: { pct: number }) => x ? `${x.pct > 0 ? "▲" : x.pct < 0 ? "▼" : ""}${Math.abs(x.pct).toFixed(1)}%` : "";
   return (
     <div className="home">
-      <div className="h-greet"><b>{hourGreet()},</b> {me?.nickname ?? s.nickname}님{online >= 10 && <span className="h-online">오늘 {online}명 방문</span>}</div>
+      <div className="h-greet"><b>{hourGreet()},</b> {me?.nickname ?? s.nickname}님<span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 방문 {online.toLocaleString()}</span></div>
 
 
       {heads.length > 0 && <section className="h-card">
@@ -69,16 +73,7 @@ export default async function HomePage() {
         {heads.map((h, i) => <a key={i} href={h.link} target="_blank" rel="noopener noreferrer" className="h-row"><span className="h-topic">{["🌙", "🌙", "📈", "🏦", "🏥"][i]}</span><span className="h-title">{h.title}</span><span className="h-meta">{h.source}</span></a>)}
       </section>}
 
-      <div className="h-grid">
-        <section className="h-card">
-          <div className="h-head"><h3>지금 핫한 글</h3><Link href="/board?sort=best" className="h-link">더보기</Link></div>
-          {hot.length ? hot.map(p => <Row key={p.id} p={p} />) : <div className="h-empty">이번 주 첫 글을 남겨보세요. <Link href="/board/new">글쓰기 →</Link></div>}
-        </section>
-        <section className="h-card">
-          <div className="h-head"><h3>{s.dept} 새 글</h3>{isMyDept && <Link href={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} className="h-link">더보기</Link>}</div>
-          {mine.length ? mine.map(p => <Row key={p.id} p={p} />) : <div className="h-empty">우리 직종 라운지가 조용해요. <Link href={`/board/new?cat=${encodeURIComponent(s.dept)}`}>첫 글 쓰기 →</Link></div>}
-        </section>
-      </div>
+      <HomeFeed latest={latestF} hot={hotF} mine={mineF} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
 
       <nav className="h-tiles" aria-label="바로가기">
         <Link href="/news" className="h-tile"><span className="h-tile-ico">📰</span><b>핫뉴스</b><small className={ndq ? (ndq.pct >= 0 ? "up" : "down") : ""}>{ndq ? `나스닥 ${pct(ndq)}` : "오늘 소식"}</small></Link>
@@ -111,7 +106,7 @@ export default async function HomePage() {
         </div>
         <div className="h-dq-foot">{daily.all ? <span>🎉 오늘 퀘스트 올클리어!</span> : <span>오늘 퀘스트 {doneN}/3 · 다 하면 +{DAILY_BONUS} XP</span>}</div>
       </section>
-      <CafeBottom writeHref="/board/new" newHref="/board?new=1" cat="전체" q="" />
+      <CafeBottom writeHref="/board/new" newHref="/board?new=1" cat="전체" q="" newCount={newPosts ?? 0} />
     </div>
   );
 }
