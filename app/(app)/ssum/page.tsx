@@ -290,7 +290,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         <div className="ss-hero-main">
           <div className="ss-hero-title">
             <b>💘 썸</b>
-            <span className="ss-hero-badge">만 19세 이상 익명</span>
+            <span className="ss-hero-badge">만 19세 이상</span>
           </div>
           <p className="ss-hero-desc">병원 사람끼리 전하는 설렘 ∙ 셀소 하트(💗)로 1:1 대화 연결</p>
         </div>
