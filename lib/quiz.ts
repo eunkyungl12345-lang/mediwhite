@@ -1,5 +1,5 @@
 /** 의학용어·약어 퀴즈. [문제, 정답, 오답1, 오답2, 오답3, 파트] — 내용은 현직자 검수 권장 */
-export const QUIZ: [string, string, string, string, string, string][] = [
+const QUIZ1: [string, string, string, string, string, string][] = [
   ["NPO의 뜻은?", "금식", "경구 투여", "침상 안정", "활력징후 측정", "간호"],
   ["PRN 처방이란?", "필요시 투여", "매일 아침 투여", "취침 전 투여", "식후 즉시 투여", "간호"],
   ["BID는 하루 몇 회 투여?", "2회", "1회", "3회", "4회", "간호"],
@@ -101,3 +101,6 @@ export const QUIZ: [string, string, string, string, string, string][] = [
   ["수액 세트 20gtt에서 1mL는 몇 방울?", "20방울", "10방울", "60방울", "15방울", "간호"],
   ["1L를 8시간에 주입하면 시간당?", "125mL", "100mL", "150mL", "80mL", "간호"],
 ];
+
+import { MED2 } from "./quizBank/med2";
+export const QUIZ: [string, string, string, string, string, string][] = [...QUIZ1, ...MED2];
