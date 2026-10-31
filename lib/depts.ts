@@ -21,7 +21,7 @@ export const TOPICS = [
   { key: "pay", name: "급여·연봉", icon: "💰", hint: "급여·연봉·수당 이야기" },
   { key: "study", name: "공부·시험", icon: "📚", hint: "자격·시험·실무 공부" },
   { key: "info", name: "정보·꿀팁", icon: "💡", hint: "꿀팁·뉴스·제도 정보" },
-  { key: "job", name: "이직·채용", icon: "💼", hint: "채용 정보, 이직 경험담" },
+  { key: "job", name: "이직·채용", icon: "💼", hint: "이직 경험담·조언 (공식 채용공고는 💼 채용 탭에!)" },
   { key: "qna", name: "질문", icon: "❓", hint: "궁금한 거 뭐든 물어보기" },
 ] as const;
 export type TopicKey = typeof TOPICS[number]["key"];

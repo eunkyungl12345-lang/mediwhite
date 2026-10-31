@@ -85,6 +85,7 @@ export default async function HomePage() {
         <Link href="/anon" className="h-tile"><span className="h-tile-ico">🕶️</span><b>익명 게시판</b><small>아무도 모르게</small></Link>
         <Link href="/rest" className="h-tile"><span className="h-tile-ico">🛋️</span><b>당직실</b><small>같이 쉬기·숨쉬기</small></Link>
         <Link href="/ssum" className="h-tile"><span className="h-tile-ico">💘</span><b>썸</b><small>고백·셀소·소개</small></Link>
+        <Link href="/jobs" className="h-tile"><span className="h-tile-ico">💼</span><b>채용·병원리뷰</b><small>복지·워라밸 별점</small></Link>
         <Link href="/food" className="h-tile"><span className="h-tile-ico">🍚</span><b>병원 앞 맛집</b><small>혼밥·회식·배달</small></Link>
         <Link href="/games" className="h-tile"><span className="h-tile-ico">🎮</span><b>게임</b><small>{ksp ? `코스피 ${pct(ksp)}` : "오목·그림 맞히기"}</small></Link>
       </nav>

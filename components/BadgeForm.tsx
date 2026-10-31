@@ -2,12 +2,14 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { useState } from "react";
 import { requestBadge } from "@/lib/badge.actions";
+import { shrinkImage } from "@/lib/shrink";
 import BlueBadge from "./BlueBadge";
 
 function Pick({ name, label, hint }: { name: string; label: string; hint: string }) {
-  const [src, setSrc] = useState("");
+  const [src, setSrc] = useState(""), [busy, setBusy] = useState(false);
   return <label className="bd-pick">
-    <input type="file" name={name} accept="image/*" required onChange={e => { const f = e.target.files?.[0]; setSrc(f ? URL.createObjectURL(f) : ""); }} />
+    <input type="file" name={name} accept="image/*" required onChange={async e => { const inp = e.target, f = inp.files?.[0]; if (!f) { setSrc(""); return; } setBusy(true); const small = await shrinkImage(f); try { const dt = new DataTransfer(); dt.items.add(small); inp.files = dt.files; } catch {} setSrc(URL.createObjectURL(small)); setBusy(false); }} />
+    {busy && <small className="muted">사진 줄이는 중…</small>}
     {src ? <img src={src} alt="" /> : <span className="bd-ph">📷</span>}
     <b>{label}</b><small className="muted">{hint}</small>
   </label>;
@@ -22,7 +24,7 @@ export default function BadgeForm() {
     </div>
     <input name="note" maxLength={100} placeholder="운영팀에 한마디 (선택) — 예: 자격증 이름이 개명 전 이름이에요" />
     <label className="row" style={{ gap: 6, fontSize: 13, alignItems: "flex-start" }}><input type="checkbox" name="agree" required style={{ marginTop: 3 }} /><span>사진은 <b>골드뱃지 심사에만</b> 쓰이고, 승인·거절 즉시 삭제돼요. 운영팀 외에는 아무도 볼 수 없어요. 동의합니다.</span></label>
-    {st?.error && <div className="error">{st.error}</div>}{st?.ok && <div className="muted" style={{ fontWeight: 700 }}>{st.ok}</div>}
+    {st?.error && <div className="error">{st.error}</div>}{!st?.error && !st?.ok && <noscript><div className="error">자바스크립트가 꺼져 있으면 업로드가 안 돼요</div></noscript>}{st?.ok && <div className="muted" style={{ fontWeight: 700 }}>{st.ok}</div>}
     <Submit />
   </form>;
 }

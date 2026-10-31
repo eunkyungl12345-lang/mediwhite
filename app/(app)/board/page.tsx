@@ -61,6 +61,8 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
     { href: "/board", name: "전체글", icon: "✨", group: "게시판" },
     { href: `/board?cat=${enc(NOTICE_CAT)}`, name: "공지사항", icon: "📢", group: "게시판" },
     { href: "/anon", name: "익명 게시판", icon: "🕶️", group: "게시판" },
+    { href: "/jobs", name: "채용공고", icon: "💼", group: "게시판" },
+    { href: "/hospitals", name: "병원 리뷰", icon: "🏥", group: "게시판" },
     ...[s.dept, ...DEPTS.filter(x => x !== s.dept)].filter(x => (DEPTS as readonly string[]).includes(x)).map(x => ({ href: `/board?cat=${enc(x)}`, name: `${x} 라운지`, icon: x === s.dept ? "🏷️" : "🏥", group: "직종 라운지" })),
     ...TOPICS.map(t => ({ href: `/board?topic=${t.key}`, name: t.name, icon: t.icon, group: "주제별" })),
     { href: "/guide/xray", name: "방사선 촬영법", icon: "📖", group: "실무 가이드" },

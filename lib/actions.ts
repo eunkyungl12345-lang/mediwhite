@@ -450,28 +450,30 @@ export async function toggleReaction(kind: "post" | "comment", targetId: string,
 }
 
 /* ---------- 신고·임시조치 (정보통신망법 44조의2) ---------- */
-export async function reportContent(kind: "post" | "comment", targetId: string, reason: string, detail: string) {
+const REPORT_TABLE: Record<string, string> = { post: "posts", comment: "comments", job: "jobs", review: "hospital_reviews" };
+const REPORT_LABEL: Record<string, string> = { post: "글", comment: "댓글", job: "채용공고", review: "병원 리뷰" };
+export async function reportContent(kind: "post" | "comment" | "job" | "review", targetId: string, reason: string, detail: string) {
   const u = await requireUser();
   if (!REPORT_REASONS.some(r => r[0] === reason)) return { error: "사유를 골라주세요" };
-  const s = db(), table = kind === "post" ? "posts" : "comments";
-  const { data: t } = await s.from(table).select("id,author_id,hidden").eq("id", targetId).maybeSingle();
+  const s = db(), table = REPORT_TABLE[kind] ?? "posts", ownerCol = kind === "review" ? "user_id" : "author_id";
+  const { data: t } = await s.from(table).select(`id,${ownerCol},hidden`).eq("id", targetId).maybeSingle() as any;
   if (!t) return { error: "대상이 없어요" };
-  if (t.author_id === u.id) return { error: "내 글은 신고할 수 없어요(삭제하세요)" };
+  if (t[ownerCol] === u.id) return { error: "내 글은 신고할 수 없어요(삭제하세요)" };
   const { data: dup } = await s.from("reports").select("id").eq("kind", kind).eq("target_id", targetId).eq("reporter_id", u.id).eq("status", "open").maybeSingle();
   if (dup) return { error: "이미 신고했어요. 운영팀이 확인 중이에요" };
   await s.from("reports").insert({ kind, target_id: targetId, reporter_id: u.id, reason, detail: clean(detail, 500) || null });
   // 임시조치: 신고 즉시 블라인드(최대 30일), 운영팀 판단 후 복구/삭제
   if (!t.hidden) await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", targetId);
   const { data: admins } = await s.from("users").select("id").eq("role", "admin");
-  if (admins?.length) pushToUsers(admins.map(a => a.id), { title: "🚨 신고 접수", body: `${kind === "post" ? "글" : "댓글"} 신고 · ${REPORT_REASONS.find(r => r[0] === reason)?.[1]}`, url: "/admin", tag: "report" }).catch(() => {});
-  revalidatePath("/board"); if (kind === "post") revalidatePath(`/board/${targetId}`);
+  if (admins?.length) pushToUsers(admins.map(a => a.id), { title: "🚨 신고 접수", body: `${REPORT_LABEL[kind] ?? "글"} 신고 · ${REPORT_REASONS.find(r => r[0] === reason)?.[1]}`, url: "/admin", tag: "report" }).catch(() => {});
+  revalidatePath("/board"); if (kind === "post") revalidatePath(`/board/${targetId}`); if (kind === "job") revalidatePath(`/jobs/${targetId}`); if (kind === "review") revalidatePath("/hospitals");
   return { ok: true };
 }
 export async function resolveReport(id: number, action: "restore" | "delete") {
   await requireAdmin();
   const s = db();
   const { data: r } = await s.from("reports").select("kind,target_id").eq("id", id).maybeSingle(); if (!r) return;
-  const table = r.kind === "post" ? "posts" : "comments";
+  const table = REPORT_TABLE[r.kind] ?? "comments";
   if (action === "delete") await s.from(table).delete().eq("id", r.target_id);
   else await s.from(table).update({ hidden: false, hidden_at: null }).eq("id", r.target_id);
   await s.from("reports").update({ status: action === "delete" ? "deleted" : "restored", resolved_at: new Date().toISOString() }).eq("kind", r.kind).eq("target_id", r.target_id).eq("status", "open");

@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { reportContent } from "@/lib/actions";
 import { REPORT_REASONS } from "@/lib/safety";
 
-export default function ReportButton({ kind, id }: { kind: "post" | "comment"; id: string }) {
+export default function ReportButton({ kind, id }: { kind: "post" | "comment" | "job" | "review"; id: string }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<string>("defame");
   const [detail, setDetail] = useState("");
@@ -17,7 +17,7 @@ export default function ReportButton({ kind, id }: { kind: "post" | "comment"; i
       {open && createPortal(
         <div className="ob" onClick={() => setOpen(false)}>
           <div className="ob-card" style={{ textAlign: "left", gap: 8 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 17 }}>🚩 {kind === "post" ? "글" : "댓글"} 신고</h3>
+            <h3 style={{ fontSize: 17 }}>🚩 {({ post: "글", comment: "댓글", job: "채용공고", review: "리뷰" } as Record<string, string>)[kind]} 신고</h3>
             <div className="muted" style={{ fontSize: 12 }}>신고하면 즉시 가려지고(임시조치), 운영팀이 확인 후 복구하거나 삭제해요. 허위 신고가 반복되면 신고 기능이 제한돼요.</div>
             <div className="rp-list">{REPORT_REASONS.map(([k, n]) => <label key={k} className={"rp" + (reason === k ? " on" : "")}><input type="radio" name="reason" checked={reason === k} onChange={() => setReason(k)} /><span>{n}</span></label>)}</div>
             <textarea value={detail} onChange={e => setDetail(e.target.value)} maxLength={500} placeholder="(선택) 어떤 부분이 문제인지" style={{ minHeight: 60 }} />
