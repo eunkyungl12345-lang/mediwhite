@@ -24,7 +24,7 @@ export default async function HomePage() {
     d.from("users").select("id,username,nickname,dept,xp,birth_date,birth_time,fortune_name").eq("id", s.id).single(),
     deptLeaders(),
     dailyStatus(s.id),
-    d.from("posts").select("id,title,topic,category,created_at,pinned,author_id,author:users(id,username,nickname,dept,xp)").eq("hidden", false).neq("category", "썸").gte("created_at", week).order("created_at", { ascending: false }).limit(150),
+    d.from("posts").select("id,title,topic,category,created_at,pinned,author_id,author:users(id,username,nickname,dept,xp)").eq("hidden", false).neq("category", "썸").neq("category", "익명").gte("created_at", week).order("created_at", { ascending: false }).limit(150),
     d.from("posts").select("id", { count: "exact", head: true }).gte("created_at", day),
     d.from("messages").select("id", { count: "exact", head: true }).gte("created_at", day),
     d.from("visits").select("user_id").eq("day", today),
@@ -82,6 +82,7 @@ export default async function HomePage() {
         <Link href="/news" className="h-tile"><span className="h-tile-ico">📰</span><b>핫뉴스</b><small className={ndq ? (ndq.pct >= 0 ? "up" : "down") : ""}>{ndq ? `나스닥 ${pct(ndq)}` : "오늘 소식"}</small></Link>
         <Link href="/fortune" className="h-tile ft"><span className="h-tile-ico">🔮</span><b>오늘의 운세</b><small>{ft ? `${ft.score}점` : "생일 등록하기"}</small></Link>
         <Link href="/games?g=tycoon" className="h-tile"><span className="h-tile-ico">🏥</span><b>우리 병원</b><small>{tyPending > 0 ? `+${won(tyPending)} 쌓임` : tyS ? `초당 ${won(tyRate)}원` : "폐허의원부터 시작"}</small></Link>
+        <Link href="/anon" className="h-tile"><span className="h-tile-ico">🕶️</span><b>익명 게시판</b><small>아무도 모르게</small></Link>
         <Link href="/rest" className="h-tile"><span className="h-tile-ico">🛋️</span><b>당직실</b><small>같이 쉬기·숨쉬기</small></Link>
         <Link href="/ssum" className="h-tile"><span className="h-tile-ico">💘</span><b>썸</b><small>고백·셀소·소개</small></Link>
         <Link href="/food" className="h-tile"><span className="h-tile-ico">🍚</span><b>병원 앞 맛집</b><small>혼밥·회식·배달</small></Link>

@@ -1424,3 +1424,13 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .mt-note{background:var(--bg);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:14px}
 .mt-members{display:flex;gap:6px;flex-wrap:wrap}.mt-members .tag.host{background:#FFE9A8;color:#5A4520}
 @media (prefers-color-scheme:dark){.mt-intro{background:linear-gradient(135deg,#3A3018,#2E2614);border-color:#5A4A20}.mt-row.mine{background:#2E2614}}
+
+/* 익명 게시판 */
+.an-head h2{margin:0 0 4px}
+.an-who{font-weight:800;color:#2B2420;background:#E9E4DA;border-radius:6px;padding:1px 7px;font-size:12px}
+.an-post.dim{opacity:.6}
+.an-banner{background:#2B2420;color:#F4EFE6;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5}
+.an-form{display:grid;gap:8px}
+.an-c .meta b{font-size:13px}
+.topic.anon{background:#2B2420;color:#F4EFE6;border-color:#2B2420}
+@media (prefers-color-scheme:dark){.an-who{background:#3A342E;color:#F4EFE6}.topic.anon{background:#E9E4DA;color:#2B2420;border-color:#E9E4DA}}

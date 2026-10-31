@@ -27,6 +27,11 @@ export const TOPICS = [
 export type TopicKey = typeof TOPICS[number]["key"];
 /** 썸 탭 글 (메인 게시판엔 안 보임) */
 export const SSUM_CAT = "썸";
+/** 완전 익명 게시판: 글·댓글에 닉네임·직종·계급이 전혀 안 보여요 */
+export const ANON_CAT = "익명";
+export const ANON_TOPICS = [
+  { key: "free", name: "아무말", icon: "🕶️" }, { key: "vent", name: "속풀이", icon: "😤" }, { key: "worry", name: "고민", icon: "🌧️" }, { key: "secret", name: "비밀", icon: "🤫" }, { key: "pay", name: "급여·이직", icon: "💰" }, { key: "boss", name: "상사·동료", icon: "🙄" }, { key: "qna", name: "질문", icon: "❓" },
+] as const;
 export const SSUM_TOPICS = [
   { key: "confess", name: "공개고백", icon: "💌", hint: "초성으로 마음을 전해요 (예: ㄱㅁㅈ 쌤, 늘 고마워요). 실명·병원명(초성 포함)·병동·층은 절대 금지! 💘" },
   { key: "moment", name: "오늘 설렌 순간", icon: "💓", hint: "사람을 특정하지 않는 설렘 썰 (병원명·실명·병동 X)" },

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { db } from "./supabase";
 import { createSession, getSession, clearSession, type Session } from "./auth";
-import { DEPTS, CATS, NOTICE_CAT, EMOJIS, TOPICS, SSUM_CAT, SSUM_TOPICS } from "./depts";
+import { DEPTS, CATS, NOTICE_CAT, EMOJIS, TOPICS, SSUM_CAT, SSUM_TOPICS, ANON_CAT, ANON_TOPICS } from "./depts";
 import { bump } from "./daily";
 import { validRoom } from "./chatRooms";
 import { personMention, placeMention, REPORT_REASONS } from "./safety";
@@ -129,30 +129,35 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   const category = clean(fd.get("category"), 30), title = clean(fd.get("title"), 80), body = clean(fd.get("body"), 4000);
   const boardId = clean(fd.get("board_id"), 40) || null;
   const topicRaw = clean(fd.get("topic"), 20);
-  const topic = category === SSUM_CAT ? (SSUM_TOPICS.some(t => t.key === topicRaw) ? topicRaw : "moment") : (TOPICS.some(t => t.key === topicRaw) ? topicRaw : "free");
-  if (!(CATS as readonly string[]).includes(category) && category !== SSUM_CAT) return { error: "칸을 선택해주세요" };
+  const topic = category === SSUM_CAT ? (SSUM_TOPICS.some(t => t.key === topicRaw) ? topicRaw : "moment") : category === ANON_CAT ? (ANON_TOPICS.some(t => t.key === topicRaw) ? topicRaw : "free") : (TOPICS.some(t => t.key === topicRaw) ? topicRaw : "free");
+  if (!(CATS as readonly string[]).includes(category) && category !== SSUM_CAT && category !== ANON_CAT) return { error: "칸을 선택해주세요" };
   if (category === NOTICE_CAT && u.role !== "admin" && !can(await myRank(u.id), "준장")) return { error: "공지 칸은 준장 이상만 쓸 수 있어요" };
   if (!title || !body) return { error: "제목과 내용을 적어주세요" };
   const pm = personMention(title + " " + body);
   const plm = category === SSUM_CAT ? placeMention(title + " " + body) : null;
   if (plm) return { error: `"${plm}" — 초성은 괜찮지만, 병원명(초성 포함)·병동·층·부서는 쓸 수 없어요. 누군지 특정될 수 있으니 빼고 올려주세요 💘` };
   if (pm && category === SSUM_CAT) return { error: `"${pm}" — 썸 글엔 실명을 쓸 수 없어요. 초성(예: ㄱㅁㅈ 쌤)으로 바꿔서 써주세요 💘` };
+  if (category === ANON_CAT) { const plm2 = placeMention(title + " " + body); if (plm2) return { error: `"${plm2}" — 익명 게시판이라도 병원명·병동·층은 쓸 수 없어요. 누군지 특정될 수 있어요.` }; if (pm) return { error: `"${pm}" — 익명 게시판엔 실명을 쓸 수 없어요. 익명은 서로 지켜줘야 유지돼요 🕶️` }; }
   if (pm && fd.get("confirm_anon") !== "on") return { error: `"${pm}" — 특정 개인을 가리키는 표현 같아요. 실명·식별 정보가 없다면 아래 확인에 체크하고 다시 올려주세요.` };
   const s = db();
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }
-  const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: u.dept, title, body, board_id: boardId, topic }).select("id").single();
+  const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: category === ANON_CAT ? null : u.dept, title, body, board_id: boardId, topic }).select("id").single();
   if (error || !data) return { error: "올리지 못했어요" };
   await Promise.all([awardXp(u.id, 100, "first_post"), repeatXp(u.id, "post"), bump(u.id, "write")]);
+  if (category === ANON_CAT) { revalidatePath("/anon"); redirect(`/anon/${data.id}`); }
   revalidatePath("/board"); redirect(`/board/${data.id}`);
 }
 export async function addComment(postId: string, text: string) {
   const u = await requireUser();
   const t = text.trim().slice(0, 500); if (!t) return;
   const s = db();
-  await s.from("comments").insert({ post_id: postId, author_id: u.id, dept: u.dept, text: t });
-  const [{ data: post }] = await Promise.all([s.from("posts").select("author_id,title").eq("id", postId).maybeSingle(), awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment"), bump(u.id, "write")]);
-  if (post?.author_id && post.author_id !== u.id) pushToUsers([post.author_id], { title: "내 글에 댓글", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: `/board/${postId}`, tag: `c-${postId}` }).catch(() => {});
-  revalidatePath(`/board/${postId}`);
+  const { data: post0 } = await s.from("posts").select("author_id,title,category").eq("id", postId).maybeSingle();
+  const anon = post0?.category === ANON_CAT;
+  if (anon) { const pm = personMention(t); if (pm) return; }
+  await s.from("comments").insert({ post_id: postId, author_id: u.id, dept: anon ? null : u.dept, text: t });
+  const [{ data: post }] = await Promise.all([Promise.resolve({ data: post0 }), awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment"), bump(u.id, "write")]);
+  if (post?.author_id && post.author_id !== u.id) pushToUsers([post.author_id], anon ? { title: "🕶️ 익명 글에 댓글", body: t.slice(0, 60), url: `/anon/${postId}`, tag: `c-${postId}` } : { title: "내 글에 댓글", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: `/board/${postId}`, tag: `c-${postId}` }).catch(() => {});
+  revalidatePath(anon ? `/anon/${postId}` : `/board/${postId}`);
 }
 export async function togglePin(postId: string, pinned: boolean) {
   const u = await requireUser(); if (u.role !== "admin") return;

@@ -24,7 +24,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const kw = (searchParams.q ?? "").trim().slice(0, 40).replace(/[%,()]/g, " ");
   const tab = isDept ? (searchParams.tab || "") : "";
   const d = db();
-  let q = d.from("posts").select(SEL).limit(300).neq("category", "썸");
+  let q = d.from("posts").select(SEL).limit(300).neq("category", "썸").neq("category", "익명");
   if (s.role !== "admin") q = q.eq("hidden", false);
   if (topic) q = q.eq("topic", topic);
   if (cat !== "전체") q = q.eq("category", cat);
@@ -60,6 +60,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const items: NavItem[] = [
     { href: "/board", name: "전체글", icon: "✨", group: "게시판" },
     { href: `/board?cat=${enc(NOTICE_CAT)}`, name: "공지사항", icon: "📢", group: "게시판" },
+    { href: "/anon", name: "익명 게시판", icon: "🕶️", group: "게시판" },
     ...[s.dept, ...DEPTS.filter(x => x !== s.dept)].filter(x => (DEPTS as readonly string[]).includes(x)).map(x => ({ href: `/board?cat=${enc(x)}`, name: `${x} 라운지`, icon: x === s.dept ? "🏷️" : "🏥", group: "직종 라운지" })),
     ...TOPICS.map(t => ({ href: `/board?topic=${t.key}`, name: t.name, icon: t.icon, group: "주제별" })),
     { href: "/guide/xray", name: "방사선 촬영법", icon: "📖", group: "실무 가이드" },
