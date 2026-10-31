@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { restBeat, restLeave, restDone, type RestView } from "@/lib/rest.actions";
+import dynamic from "next/dynamic";
+import { restBeat, restLeave, restDone, type RestView, type RestPos } from "@/lib/rest.actions";
+const Rest3D = dynamic(() => import("./rest3d/Rest3D"), { ssr: false, loading: () => <div className="r3-loading">🌃 당직실 불 켜는 중…</div> });
 
 /* ---------- 자연 소리 (파일 없이 WebAudio로 생성) ---------- */
 type Snd = "rain" | "fire" | "wave" | "white" | null;
@@ -46,16 +48,18 @@ export default function RestRoom() {
   const [tool, setTool] = useState<"breath" | "stretch" | "mood" | null>(null), [snd, setSnd] = useState<Snd>(null);
   const [bStart, setBStart] = useState(0), [sIdx, setSIdx] = useState(-1), [sLeft, setSLeft] = useState(0), [mood, setMood] = useState<number | null>(null), [xpMsg, setXpMsg] = useState("");
   const seen = useRef<Record<string, number>>({}), audio = useRef<{ ctx: AudioContext; stop: () => void } | null>(null), breathing = useRef(false);
+  const pos = useRef<RestPos | null>(null), [pulse, setPulse] = useState<{ k: number; a: string } | null>(null), [gl, setGl] = useState<boolean | null>(null);
+  useEffect(() => { try { const c = document.createElement("canvas"); setGl(!!(c.getContext("webgl2") || c.getContext("webgl"))); } catch { setGl(false); } }, []);
 
   const beat = async (act?: "cheers" | "pat" | "bow") => {
-    try { const r = await restBeat(act ?? null, breathing.current); setV(r);
+    try { const r = await restBeat(act ?? null, breathing.current, pos.current); setV(r);
       for (const p of r.people) if (p.act && p.actAge < 18 && !p.me) { const key = p.nick + p.act + Math.floor(p.actAge / 18); if (!seen.current[p.nick + p.act] || Date.now() - seen.current[p.nick + p.act] > 17000) { seen.current[p.nick + p.act] = Date.now(); const msg = `${ACT[p.act].e} ${p.nick}님이 ${ACT[p.act].t}`; setToast(t => [...t.slice(-2), msg]); setTimeout(() => setToast(t => t.filter(x => x !== msg)), 5000); void key; } }
     } catch {}
   };
-  useEffect(() => { beat(); const id = setInterval(() => beat(), 12000); const t = setInterval(() => setNow(Date.now()), 100); const bye = () => { restLeave().catch(() => {}); }; addEventListener("pagehide", bye);
+  useEffect(() => { beat(); const id = setInterval(() => beat(), 4000); const t = setInterval(() => setNow(Date.now()), 100); const bye = () => { restLeave().catch(() => {}); }; addEventListener("pagehide", bye);
     return () => { clearInterval(id); clearInterval(t); removeEventListener("pagehide", bye); bye(); audio.current?.stop(); audio.current?.ctx.close(); }; }, []); // eslint-disable-line
 
-  const act = (a: "cheers" | "pat" | "bow") => { navigator.vibrate?.(15); const msg = `${ACT[a].e} 내가 ${ACT[a].t.replace("했어요", "했어요")}`; setToast(t => [...t.slice(-2), msg]); setTimeout(() => setToast(t => t.filter(x => x !== msg)), 3500); seen.current["me" + a] = Date.now(); beat(a); };
+  const act = (a: "cheers" | "pat" | "bow") => { navigator.vibrate?.(15); setPulse({ k: Date.now(), a: ACT[a].e }); const msg = `${ACT[a].e} 내가 ${ACT[a].t.replace("했어요", "했어요")}`; setToast(t => [...t.slice(-2), msg]); setTimeout(() => setToast(t => t.filter(x => x !== msg)), 3500); seen.current["me" + a] = Date.now(); beat(a); };
   const sound = (k: Snd) => { audio.current?.stop(); if (!k || k === snd) { setSnd(null); return; } const ctx = audio.current?.ctx ?? new AudioContext(); ctx.resume(); audio.current = { ctx, stop: makeSound(ctx, k) }; setSnd(k); };
   const done = async (k: "breath" | "stretch" | "mood") => { const xp = await restDone(k).catch(() => 0); setXpMsg(xp ? `🌿 오늘의 쉼 완료 +${xp} XP` : "🌿 오늘의 쉼 완료"); setTimeout(() => setXpMsg(""), 4000); };
   const startBreath = () => { setTool("breath"); setBStart(Date.now()); breathing.current = true; beat(); };
@@ -67,6 +71,10 @@ export default function RestRoom() {
   const seatXY = (i: number) => { const row = Math.floor(i / 6), col = i % 6; return { x: 60 + col * 72 + (row % 2) * 30, y: 196 + row * 26, s: .62 + row * .1 }; };
   return (
     <div className="rs">
+      {gl ? <Rest3D people={people} me={v?.me ?? "나"} myDept={people.find(p => p.me)?.dept ?? ""} breathK={tool === "breath" ? ph.k : 0} actPulse={pulse} onMove={p => { pos.current = p; beat(); }} onToast={m => { setToast(t => [...t.slice(-2), m]); setTimeout(() => setToast(t => t.slice(1)), 3500); }} onXp={m => { setXpMsg(m); setTimeout(() => setXpMsg(""), 4000); }} /> : null}
+      {gl ? <div className="rs-toasts r3-toasts">{toast.map(t => <div key={t} className="rs-toast">{t}</div>)}</div> : null}
+      {gl && tool === "breath" && <div className="rs-breath r3-breath"><b>{ph.name}</b><span>{Math.ceil(ph.left)}</span><small>{bStart ? `${Math.max(0, 60 - Math.floor((now - bStart) / 1000))}초 남음` : "1분 동안 같이 숨 쉬어요"}</small></div>}
+      {gl === false && (
       <div className="rs-scene">
         <svg viewBox="0 0 480 300" className="rs-svg" aria-label="당직실">
           <defs>
@@ -110,7 +118,7 @@ export default function RestRoom() {
         {tool === "breath" && <div className="rs-breath"><b>{ph.name}</b><span>{Math.ceil(ph.left)}</span><small>{bStart ? `${Math.max(0, 60 - Math.floor((now - bStart) / 1000))}초 남음` : "1분 완료! 계속 해도 좋아요"}</small></div>}
         {v && <div className="rs-me">나는 오늘 <b>{v.me}</b></div>}
       </div>
-
+      )}
       <div className="rs-acts">
         <button type="button" onClick={() => act("cheers")}><span>☕</span>건배</button>
         <button type="button" onClick={() => act("pat")}><span>🤝</span>토닥토닥</button>
