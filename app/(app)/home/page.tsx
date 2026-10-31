@@ -10,7 +10,7 @@ import { rateOf, dailyOf, fmt as won, tycoonDept, OFFLINE_CAP, OFFLINE_RATE, STA
 import { fmt } from "@/lib/format";
 import Name from "@/components/Name";
 import Insignia from "@/components/Insignia";
-import { getNews, getQuotes } from "@/lib/news";
+import { NEWS_TABS, getNews, getQuotes } from "@/lib/news";
 import { fortune } from "@/lib/fortune";
 import { memo } from "@/lib/memo";
 export const dynamic = "force-dynamic";
@@ -52,7 +52,7 @@ export default async function HomePage() {
   const wd = (dps ?? []).find((r: any) => r.game === "wordle") as any;
   const [news, quotes] = await Promise.all([memo("tb-news", 30 * 60_000, getNews).catch(() => null), memo("tb-quotes", 10 * 60_000, getQuotes).catch(() => [])]);
   const heads = news ? [...news.global.slice(0, 2), ...news.stock.slice(0, 1), ...news.macro.slice(0, 1), ...news.med.slice(0, 1)] : [];
-  const newsF = news ? [...news.med.slice(0, 2).map(h => ({ ...h, icon: "🏥" })), ...news.global.slice(0, 2).map(h => ({ ...h, icon: "🌏" })), ...news.stock.slice(0, 1).map(h => ({ ...h, icon: "📈" })), ...news.macro.slice(0, 1).map(h => ({ ...h, icon: "🏦" })), ...((news as any).politics ?? []).slice(0, 1).map((h: any) => ({ ...h, icon: "🏛️" })), ...((news as any).ent ?? []).slice(0, 1).map((h: any) => ({ ...h, icon: "🎬" })), ...((news as any).sports ?? []).slice(0, 1).map((h: any) => ({ ...h, icon: "⚽" }))].map(h => ({ title: h.title, link: h.link, source: h.source, icon: h.icon })) : [];
+  const newsF: Record<string, any[]> = news ? Object.fromEntries(Object.entries(news).map(([k, v]) => [k, (v as any[]).slice(0, 8).map(h => ({ title: h.title, link: h.link, source: h.source, at: h.at }))])) : {};
   const ndq = quotes.find(x => x.name === "나스닥"), ksp = quotes.find(x => x.name === "코스피");
   const ft = (me as any)?.birth_date ? fortune((me as any).birth_date, (me as any).birth_time, (me as any).fortune_name, new Date()) : null;
   const doneN = daily.quests.filter(x => x.done).length;
@@ -77,7 +77,7 @@ export default async function HomePage() {
         <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
       </nav>
 
-      <HomeFeed latest={latestF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
+      <HomeFeed latest={latestF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} newsTabs={NEWS_TABS.map(t => ({ key: t.key, name: t.name }))} quotes={quotes} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
 
       <Link href="/rank" className={`h-rank2 t${r.tier}`}>
         <Insignia index={r.index} size={26} />
