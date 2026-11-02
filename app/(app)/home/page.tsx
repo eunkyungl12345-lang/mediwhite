@@ -9,7 +9,7 @@ import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { topicOf, HOSPITAL_DEPTS } from "@/lib/depts";
 import { dailyStatus, DAILY_BONUS } from "@/lib/daily";
 import { rateOf, dailyOf, fmt as won, tycoonDept, OFFLINE_CAP, OFFLINE_RATE, STAFF, HOMES, assetsOf, isCurrent } from "@/lib/tycoon";
-import { fmt } from "@/lib/format";
+import { fmt, ago } from "@/lib/format";
 import Name from "@/components/Name";
 import Insignia from "@/components/Insignia";
 import { NEWS_TABS, getNews, getQuotes } from "@/lib/news";
@@ -47,7 +47,7 @@ export default async function HomePage() {
   const hot = [...posts].filter(p => !p.pinned && p.id !== q?.id).sort((a, b) => b.score - a.score || +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 5);
   const mine = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 5);
   const { count: memberN } = await d.from("users").select("id", { count: "exact", head: true }).eq("stealth", false);
-  const feedRow = (p: any) => ({ id: p.id, title: p.title, icon: topicOf(p.topic).icon, dept: p.author?.dept, nick: p.author?.nickname, badge: !!p.author?.blue_badge, cat: p.category === "공지" ? "공지" : `${p.category} 라운지`, time: fmt(p.created_at), views: p.views ?? 0, nc: p.nc, nr: p.nr, fresh: now - Date.parse(p.created_at) < 86400000 });
+  const feedRow = (p: any) => ({ id: p.id, title: p.title, icon: topicOf(p.topic).icon, dept: p.author?.dept, nick: p.author?.nickname, badge: !!p.author?.blue_badge, cat: p.category === "공지" ? "공지" : `${p.category} 라운지`, time: ago(p.created_at), views: p.views ?? 0, nc: p.nc, nr: p.nr, fresh: now - Date.parse(p.created_at) < 86400000 });
   const latestF = posts.filter(p => !p.pinned && p.id !== q?.id).slice(0, 10).map(feedRow), recentF = posts.filter(p => !p.pinned && p.id !== q?.id && now - Date.parse(p.created_at) < 2 * 86400000).slice(0, 10).map(feedRow), hotF = hot.map(feedRow), mineF = posts.filter(p => p.category === s.dept && !p.pinned && p.id !== q?.id).slice(0, 8).map(feedRow);
   const kday = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
   const { data: dps } = await d.from("daily_plays").select("game,attempts,best,data").eq("user_id", s.id).eq("day", kday);

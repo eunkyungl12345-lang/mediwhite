@@ -4,9 +4,11 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { CATS, NOTICE_CAT, DEPTS } from "@/lib/depts";
 import { TOPICS, topicOf } from "@/lib/depts";
-import { fmt } from "@/lib/format";
+import { fmt, ago } from "@/lib/format";
 import { deptLeaders, rankFor, deptCommanders } from "@/lib/ranksvc";
 import Name from "@/components/Name";
+import Avatar from "@/components/Avatar";
+import BlueBadge from "@/components/BlueBadge";
 import { CafeHeader, NoticeFold, CafeBottom, QuerySelect, type NavItem } from "@/components/CafeNav";
 import BoardSearch from "@/components/BoardSearch";
 import { liveCounts } from "@/lib/live";
@@ -93,11 +95,12 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
       <div className="posts">
         {!posts.length && <div className="empty">{kw ? "검색 결과가 없어요." : fresh ? "최근 24시간 새글이 없어요." : cat === "전체" ? "아직 글이 없어요. 첫 글을 올려보세요." : `${cat} 칸에 아직 글이 없어요.`}</div>}
         {posts.map((p: any) => (
-          <Link key={p.id} href={`/board/${p.id}`} className={`post cf-post t${p.r.tier}${p.pinned ? " pinned" : ""}`}>
-            <div className="post-top">{isHot(p) && <span className="cf-hot">HOT</span>}{p.pinned ? <span className="pin">📌 공지</span> : <span className="topic-tag">{topicOf(p.topic).icon} {topicOf(p.topic).name}</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{cat === "전체" && !p.pinned && p.category !== NOTICE_CAT && <span className="bd-cat">{p.category}</span>}{p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드</span>}{Date.now() - new Date(p.created_at).getTime() < DAY && <span className="cf-n">N</span>}</div>
+          <Link key={p.id} href={`/board/${p.id}`} className={`post cf-post v3 t${p.r.tier}${p.pinned ? " pinned" : ""}`}>
+            <div className="frow-who"><Avatar name={p.author?.nickname} size={34} /><div><b>{p.author ? <>{p.author.nickname}{p.author.blue_badge && <BlueBadge size={13} className="bb" />}</> : "탈퇴한 회원"}</b><small>{p.author?.dept ? `${p.author.dept} · ` : ""}{ago(p.created_at)}{cat === "전체" && !p.pinned && p.category !== NOTICE_CAT && p.category !== p.author?.dept ? ` · ${p.category}` : ""}{p.topic && p.topic !== "free" ? ` · ${topicOf(p.topic).name}` : ""}</small></div>
+              <span className="frow-tags">{isHot(p) && <span className="cf-hot">HOT</span>}{p.pinned && <span className="pin">📌 공지</span>}{p.boosted && !p.pinned && <span className="pin">⬆</span>}{p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드</span>}{Date.now() - new Date(p.created_at).getTime() < DAY && <span className="cf-n">N</span>}</span></div>
             <h3>{p.title}{(live[p.id] ?? 0) >= 2 && <span className="live-eye sm"><i /> {live[p.id]}명 보는 중</span>}</h3>
             {p.body && <p>{p.body}</p>}
-            <div className="post-meta">{meta(p)}<span className="cf-cnt"><span>♡ {p.nr}</span><span>💬 {p.nc}</span><span>👁 {p.views ?? 0}</span></span></div>
+            <div className="frow-meta"><span>조회 {p.views ?? 0}</span><span className="frow-cnt"><em>♡ {p.nr}</em><em>💬 {p.nc}</em></span></div>
           </Link>
         ))}
       </div>
