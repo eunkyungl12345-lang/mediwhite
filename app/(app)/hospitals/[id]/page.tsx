@@ -5,6 +5,7 @@ import { fmt } from "@/lib/format";
 import { RATING_KEYS, avg, overall, stars } from "@/lib/jobs";
 import ReviewForm from "@/components/jobs/ReviewForm";
 import ReportButton from "@/components/ReportButton";
+import LiveViewers from "@/components/LiveViewers";
 import { ReviewDelete } from "@/components/jobs/Buttons";
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   return (
     <div className="detail hs-detail">
       <Link className="link" href="/hospitals">← 병원 리뷰</Link>
-      <h2 style={{ margin: "8px 0 2px" }}>{h.name}</h2><div className="muted" style={{ fontSize: 13 }}>📍 {h.region} · {h.kind}</div>
+      <h2 style={{ margin: "8px 0 2px" }}>{h.name}</h2><div className="muted" style={{ fontSize: 13 }}>📍 {h.region} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></div>
       <div className="hs-summary">
         <div className="hs-big"><b>{rs.length ? overall(rs).toFixed(1) : "-"}</b><span className="hs-stars">{stars(overall(rs))}</span><small className="muted">리뷰 {rs.length}개 · ✅ 인증 {vN} · 재직 {cur} / 퇴사 {rs.length - cur}</small></div>
         <div className="hs-bars big">{RATING_KEYS.map(k => <span key={k.key} className="hs-bar"><i>{k.icon} {k.name}</i><em style={{ width: `${avg(rs, k.key) / 5 * 100}%` }} /><small>{avg(rs, k.key).toFixed(1)}</small></span>)}</div>

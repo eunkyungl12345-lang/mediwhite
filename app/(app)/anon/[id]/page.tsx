@@ -6,6 +6,7 @@ import { fmt } from "@/lib/format";
 import { deletePost, deleteComment } from "@/lib/actions";
 import { ANON_CAT, ANON_TOPICS } from "@/lib/depts";
 import CommentForm from "@/components/CommentForm";
+import LiveViewers from "@/components/LiveViewers";
 import CommentThread, { type CItem } from "@/components/CommentThread";
 import { rankOf } from "@/lib/ranks";
 import Reactions from "@/components/Reactions";
@@ -41,6 +42,7 @@ export default async function AnonPostPage({ params }: { params: { id: string } 
         {p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드 중</span>}
       </div>
       <h2>{p.title}</h2>
+      <LiveViewers kind="post" id={p.id} />
       <div className="body"><Linkify text={p.body} /></div>
       <Reactions kind="post" id={p.id} {...agg("post", p.id)} />
       <div className="comments-head"><b>댓글 {comments?.length ?? 0}</b><span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>댓글도 익명이에요 · 같은 사람은 같은 번호</span></div>

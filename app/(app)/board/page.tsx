@@ -9,6 +9,7 @@ import { deptLeaders, rankFor, deptCommanders } from "@/lib/ranksvc";
 import Name from "@/components/Name";
 import { CafeHeader, NoticeFold, CafeBottom, QuerySelect, type NavItem } from "@/components/CafeNav";
 import BoardSearch from "@/components/BoardSearch";
+import { liveCounts } from "@/lib/live";
 
 export const dynamic = "force-dynamic";
 const SEL = "id,category,title,body,pinned,boosted,created_at,board_id,topic,hidden,views,author:users(id,username,nickname,dept,xp,blue_badge)";
@@ -73,6 +74,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const title = cat === NOTICE_CAT ? "📢 공지사항" : cat !== "전체" ? `${cat} 라운지` : topic ? `${topicOf(topic).icon} ${topicOf(topic).name}` : "✨ 전체글";
   const qs = (o: Record<string, string>) => { const p = new URLSearchParams(Object.entries({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(sort !== "rank" ? { sort } : {}), ...o }).filter(([, v]) => v)); return `/board${p.toString() ? "?" + p : ""}`; };
   const writeHref = `/board/new?${new URLSearchParams({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}) })}`;
+  const live = await liveCounts("post", posts.map((p: any) => p.id));
   const meta = (p: any) => <>{p.author ? <Name r={p.r} dept={p.author.dept} nickname={p.author.nickname} badge={p.author.blue_badge} /> : <span>탈퇴한 회원</span>}<span>· {fmt(p.created_at)}</span></>;
 
   return (
@@ -93,7 +95,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
         {posts.map((p: any) => (
           <Link key={p.id} href={`/board/${p.id}`} className={`post cf-post t${p.r.tier}${p.pinned ? " pinned" : ""}`}>
             <div className="post-top">{isHot(p) && <span className="cf-hot">HOT</span>}{p.pinned ? <span className="pin">📌 공지</span> : <span className="topic-tag">{topicOf(p.topic).icon} {topicOf(p.topic).name}</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{cat === "전체" && !p.pinned && p.category !== NOTICE_CAT && <span className="bd-cat">{p.category}</span>}{p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드</span>}{Date.now() - new Date(p.created_at).getTime() < DAY && <span className="cf-n">N</span>}</div>
-            <h3>{p.title}</h3>
+            <h3>{p.title}{(live[p.id] ?? 0) >= 2 && <span className="live-eye sm"><i /> {live[p.id]}명 보는 중</span>}</h3>
             {p.body && <p>{p.body}</p>}
             <div className="post-meta">{meta(p)}<span className="cf-cnt"><span>♡ {p.nr}</span><span>💬 {p.nc}</span><span>👁 {p.views ?? 0}</span></span></div>
           </Link>

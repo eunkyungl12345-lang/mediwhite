@@ -5,6 +5,7 @@ import { fmt } from "@/lib/format";
 import { dday, overall } from "@/lib/jobs";
 import { memoOnce } from "@/lib/memo";
 import ReportButton from "@/components/ReportButton";
+import LiveViewers from "@/components/LiveViewers";
 import { JobOwnerButtons } from "@/components/jobs/Buttons";
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       <Link className="link" href="/jobs">← 채용</Link>
       <div className="jb-top" style={{ marginTop: 8 }}><span className="tag jb-dept">{j.dept}</span><span className="tag">{j.emp_type}</span><span className={"jb-dd" + (j.closed || dd === "마감" ? " end" : "")}>{j.closed ? "마감" : dd}</span></div>
       <h2 style={{ margin: "6px 0" }}>{j.hospital}</h2>
-      <div className="meta"><span>{j.author ? `[${j.author.dept}]${j.author.nickname}` : "회원"}</span><span className="time">{fmt(j.created_at)}</span><span>👁 {j.views}</span></div>
+      <div className="meta"><span>{j.author ? `[${j.author.dept}]${j.author.nickname}` : "회원"}</span><span className="time">{fmt(j.created_at)}</span><span>👁 {j.views}</span><LiveViewers kind="job" id={String(id)} /></div>
       {hosp ? <Link href={`/hospitals/${hosp.id}`} className="jb-revlink">🏥 이 병원 리뷰 {revs?.length ? <>{revs.length}개 · 평균 <b>★ {overall(revs ?? [])}</b></> : "아직 없음 — 첫 리뷰 남기기"} →</Link> : <Link href={`/hospitals/new?name=${encodeURIComponent(j.hospital)}`} className="jb-revlink">🏥 이 병원 리뷰가 아직 없어요 — 다녀본 분이 첫 리뷰 남기기 →</Link>}
       <table className="jb-table"><tbody>{rows.filter(r => r[1]).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v}</td></tr>)}</tbody></table>
       <div className="body" style={{ whiteSpace: "pre-wrap" }}>{j.body}</div>

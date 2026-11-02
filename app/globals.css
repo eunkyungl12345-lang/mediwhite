@@ -1638,3 +1638,8 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .cf-nrow b{font-size:15px;font-weight:700}
 /* iOS: 입력창 포커스 시 자동 확대 방지(16px 미만이면 줌됨) */
 @media (max-width:719px){input,select,textarea{font-size:16px}.composer input{font-size:16px}}
+
+/* 👀 지금 보는 중 */
+.live-eye{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#C62828;background:#FFEBEE;border-radius:999px;padding:2px 8px;white-space:nowrap;vertical-align:middle}.live-eye i{width:6px;height:6px;border-radius:50%;background:#E53935;animation:livepulse 1.2s ease-in-out infinite}.live-eye.sm{font-size:11px;margin-left:6px;padding:1px 7px}
+@keyframes livepulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+@media (prefers-color-scheme:dark){.live-eye{background:#3D1F1F;color:#FF8A80}}
