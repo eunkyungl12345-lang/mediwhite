@@ -10,7 +10,7 @@ import { Ambience } from "./ambience";
    - 로우폴리 three.js, 바닥 탭 → 이동, 앉기, 한마디 말풍선, 걱정 태우기, 불멍 모드
    - 위치·포즈는 RestRoom이 restBeat로 서버에 보내고, 다른 사람 위치는 people로 받아요
    ======================================================================== */
-export type Scene = "roof" | "pocha";
+export type Scene = "roof" | "pocha" | "zen";
 type Seat = { x: number; z: number; ry: number };
 type Props = { people: RestPerson[]; me: string; myDept: string; breathK: number; onMove: (p: RestPos) => void; onToast: (m: string) => void; onXp: (m: string) => void; actPulse: { k: number; a: string } | null };
 
@@ -18,8 +18,9 @@ const DCOL: Record<string, number> = { 간호사: 0xf48fb1, 간호조무사: 0xf
 const SEATS: Record<Scene, Seat[]> = {
   roof: [{ x: -3.2, z: 1.6, ry: Math.PI / 2 }, { x: -3.2, z: 0.4, ry: Math.PI / 2 }, { x: 3.2, z: 1.6, ry: -Math.PI / 2 }, { x: 3.2, z: 0.4, ry: -Math.PI / 2 }, { x: -1.2, z: 3.4, ry: Math.PI }, { x: 1.2, z: 3.4, ry: Math.PI }, { x: -5.5, z: -3, ry: 0.6 }, { x: 5.5, z: -3, ry: -0.6 }],
   pocha: [{ x: -3, z: 1.2, ry: Math.PI / 2 }, { x: -1.4, z: 1.2, ry: -Math.PI / 2 }, { x: -3, z: 3, ry: Math.PI / 2 }, { x: -1.4, z: 3, ry: -Math.PI / 2 }, { x: 1.4, z: 1.2, ry: Math.PI / 2 }, { x: 3, z: 1.2, ry: -Math.PI / 2 }, { x: 1.4, z: 3, ry: Math.PI / 2 }, { x: 3, z: 3, ry: -Math.PI / 2 }, { x: -2.2, z: -0.4, ry: 0 }, { x: 2.2, z: -0.4, ry: 0 }],
+  zen: [{ x: -2.2, z: 1.6, ry: 0.6 }, { x: 0, z: 2.4, ry: 0 }, { x: 2.2, z: 1.6, ry: -0.6 }, { x: -3.2, z: -0.6, ry: 1.3 }, { x: 3.2, z: -0.6, ry: -1.3 }, { x: -2.2, z: -2.6, ry: 2.4 }, { x: 0, z: -3.2, ry: Math.PI }, { x: 2.2, z: -2.6, ry: -2.4 }],
 };
-const FIRE: Record<Scene, THREE.Vector3> = { roof: new THREE.Vector3(0, 0, 0), pocha: new THREE.Vector3(0, 0.9, -2.4) };
+const FIRE: Record<Scene, THREE.Vector3> = { roof: new THREE.Vector3(0, 0, 0), pocha: new THREE.Vector3(0, 0.9, -2.4), zen: new THREE.Vector3(0, 0.3, 0) };
 
 /* ---------- 텍스트 스프라이트 (이름표·말풍선) ---------- */
 function textSprite(text: string, opt: { bg?: string; fg?: string; size?: number; pad?: number } = {}) {
@@ -130,6 +131,44 @@ function buildRoof(scene: THREE.Scene) {
   for (const [x, z] of [[-7, 6.8], [-6.2, 7], [7, -7]]) { const pot = new THREE.Mesh(new THREE.CylinderGeometry(.22, .18, .3, 10), M(0xb86b3b)); pot.position.set(x, .15, z); scene.add(pot); const leaf = new THREE.Mesh(new THREE.SphereGeometry(.3, 8, 8), M(0x3f8a4a)); leaf.position.set(x, .5, z); scene.add(leaf); }
   return { fire, camBase: new THREE.Vector3(0, 0, 0) };
 }
+
+/* ---------- 씬: 명상·요가실 (따뜻한 나무 바닥 · 창호지 창 · 싱잉볼 · 촛불 · 식물) ---------- */
+function buildZen(scene: THREE.Scene) {
+  scene.background = new THREE.Color(0xf3e9dc); scene.fog = new THREE.Fog(0xf3e9dc, 18, 40);
+  scene.add(new THREE.HemisphereLight(0xfff4e0, 0xcdb79a, 1.15));
+  const sun = new THREE.DirectionalLight(0xfff0d2, .9); sun.position.set(-6, 9, 4); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.camera.left = -10; sun.shadow.camera.right = 10; sun.shadow.camera.top = 10; sun.shadow.camera.bottom = -10; scene.add(sun);
+  // 바닥(원목) + 널빤지 선
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), M(0xc9a37a, .9)); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; floor.name = "ground"; scene.add(floor);
+  for (let i = -6; i <= 6; i++) scene.add(box(.02, .005, 14, M(0xb08a62), i * 1.1, .003, 0));
+  // 벽 + 창호지 창 (은은한 빛)
+  const wallM = M(0xf6efe4, 1); for (const [x, z, w, d] of [[0, -7, 14.4, .3], [-7, 0, .3, 14.4], [7, 0, .3, 14.4]] as number[][]) scene.add(box(w, 3.2, d, wallM, x, 1.6, z));
+  const paperM = new THREE.MeshStandardMaterial({ color: 0xfff8ea, emissive: 0xffe9c4, emissiveIntensity: .55, roughness: 1 });
+  for (const x of [-4.2, -1.4, 1.4, 4.2]) { scene.add(box(2.2, 1.9, .06, paperM, x, 1.6, -6.82)); for (const dx of [-.55, 0, .55]) scene.add(box(.04, 1.9, .08, M(0x6b4a2e), x + dx, 1.6, -6.8)); for (const dy of [-.5, 0, .5]) scene.add(box(2.2, .04, .08, M(0x6b4a2e), x, 1.6 + dy, -6.8)); }
+  for (const z of [-3, 1]) { scene.add(box(.06, 1.9, 2.2, paperM, -6.82, 1.6, z)); scene.add(box(.06, 1.9, 2.2, paperM, 6.82, 1.6, z)); }
+  const glow = new THREE.PointLight(0xffe2b0, 1.1, 16); glow.position.set(0, 2.6, -5.5); scene.add(glow);
+  // 요가 매트(좌석)
+  const matCols = [0x9fd3c7, 0xf2b8c6, 0xc9b8f0, 0xf7d59c, 0xa8d8a0, 0xf2a7a0, 0xbfd8f2, 0xe8d3a2];
+  SEATS.zen.forEach((st, i) => { const mt = box(.9, .03, 1.9, M(matCols[i % matCols.length], .95), st.x, .015, st.z); mt.rotation.y = st.ry; mt.receiveShadow = true; scene.add(mt); });
+  // 싱잉볼 (중앙 방석 위)
+  const cushion = new THREE.Mesh(new THREE.CylinderGeometry(.75, .8, .18, 24), M(0x8b3a3a, .95)); cushion.position.y = .09; cushion.castShadow = true; scene.add(cushion);
+  const bowlM = new THREE.MeshStandardMaterial({ color: 0xc8963e, roughness: .35, metalness: .75, emissive: 0x5a3a00, emissiveIntensity: .15 });
+  const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.5, .32, .4, 28, 1, true), bowlM); bowl.position.y = .38; bowl.castShadow = true; bowl.name = "bowl"; scene.add(bowl);
+  const bowlIn = new THREE.Mesh(new THREE.CylinderGeometry(.48, .3, .38, 28, 1, true), new THREE.MeshStandardMaterial({ color: 0xe0b464, roughness: .3, metalness: .6, side: THREE.BackSide })); bowlIn.position.y = .39; scene.add(bowlIn);
+  const bottom = new THREE.Mesh(new THREE.CircleGeometry(.32, 24), bowlM); bottom.rotation.x = -Math.PI / 2; bottom.position.y = .19; scene.add(bottom);
+  const mallet = box(.06, .06, .7, M(0x6b4a2e), .7, .22, .3); mallet.rotation.y = .5; scene.add(mallet); const mhead = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 10), M(0xd9c7a8)); mhead.position.set(.98, .22, .45); scene.add(mhead);
+  // 울림 링 (싱잉볼 칠 때 퍼짐)
+  const ringM = new THREE.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0, side: THREE.DoubleSide }); const ring = new THREE.Mesh(new THREE.RingGeometry(.5, .56, 48), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = .25; ring.name = "bowlring"; scene.add(ring);
+  // 촛불(3개) + 향 연기 + 식물 + 족자
+  const flames: ReturnType<typeof makeFire>[] = [];
+  for (const [x, z] of [[-5.6, -5.6], [5.6, -5.6], [0, -6.1]]) { scene.add(new THREE.Mesh(new THREE.CylinderGeometry(.1, .1, .35, 10), M(0xfff1d6, .9)).translateX(x).translateY(.18).translateZ(z)); const f = makeFire(new THREE.Vector3(x, .3, z), .22); (f.pts.material as THREE.PointsMaterial).size = .18; f.light.intensity = .9; f.light.distance = 6; scene.add(f.pts, f.light); flames.push(f); }
+  const incense = makeFire(new THREE.Vector3(2.6, .6, -5.4), .5); (incense.pts.material as THREE.PointsMaterial).color.set(0xffffff); (incense.pts.material as THREE.PointsMaterial).opacity = .22; (incense.pts.material as THREE.PointsMaterial).size = .25; incense.light.intensity = 0; scene.add(incense.pts); flames.push(incense);
+  scene.add(box(.5, .5, .5, M(0x6b4a2e), 2.6, .25, -5.4));
+  const plant = (x: number, z: number, h: number) => { const pot = new THREE.Mesh(new THREE.CylinderGeometry(.3, .24, .4, 12), M(0xd9cbb4)); pot.position.set(x, .2, z); pot.castShadow = true; scene.add(pot); for (let k = 0; k < 7; k++) { const leaf = new THREE.Mesh(new THREE.SphereGeometry(.28, 8, 8), M(0x5f9e6e, 1)); leaf.scale.set(1, 1.6, .5); leaf.position.set(x + Math.cos(k * .9) * .25, .5 + h * (.3 + (k % 3) * .25), z + Math.sin(k * .9) * .25); leaf.rotation.set(Math.cos(k) * .5, k, Math.sin(k) * .4); leaf.castShadow = true; scene.add(leaf); } };
+  plant(-6, 5.5, 1.4); plant(6, 5.5, 1.2); plant(-6, -5.8, 1); 
+  const scroll = textSprite("숨 · 쉼", { bg: "rgba(255,250,240,.98)", fg: "#4a3b2a", size: 40 }); scroll.position.set(0, 2.3, -6.7); scroll.scale.multiplyScalar(1.2); scene.add(scroll);
+  const combined = { pts: flames[0].pts, light: flames[0].light, update: (dt: number) => { for (const f of flames) f.update(dt); const r = scene.getObjectByName("bowlring") as THREE.Mesh | undefined; if (r) { const t = (r.userData.t ?? 0) as number; if (t > 0) { const k = 1 - t; r.scale.setScalar(1 + k * 9); (r.material as THREE.MeshBasicMaterial).opacity = t * .6; r.userData.t = Math.max(0, t - dt / 5); } } } };
+  return { fire: combined, camBase: new THREE.Vector3(0, 0, 0) };
+}
 /* ---------- 씬: 병원 앞 포장마차 ---------- */
 function buildPocha(scene: THREE.Scene) {
   scene.background = new THREE.Color(0x0d1020); scene.fog = new THREE.Fog(0x0d1020, 30, 90);
@@ -201,8 +240,8 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     }
     // 씬 구성
     const sc = new THREE.Scene(); S.sc = sc; S.others.forEach(a => setBubble(a, null)); S.others.clear(); S.emo = []; S.paper = undefined; S.seat = -1; setSitting(false);
-    const built = scene === "roof" ? buildRoof(sc) : buildPocha(sc); S.fire = built.fire; S.camBase = built.camBase; S.ground = sc.getObjectByName("ground")!;
-    const meAv = makeAvatar(me, myDept, true); const spawn = scene === "roof" ? { x: 0, z: 5.5 } : { x: 0, z: 5 }; meAv.g.position.set(spawn.x, 0, spawn.z); meAv.tx = spawn.x; meAv.tz = spawn.z; meAv.ry = Math.PI; meAv.g.rotation.y = Math.PI; sc.add(meAv.g); S.me = meAv;
+    const built = scene === "roof" ? buildRoof(sc) : scene === "pocha" ? buildPocha(sc) : buildZen(sc); S.fire = built.fire; S.camBase = built.camBase; S.ground = sc.getObjectByName("ground")!;
+    const meAv = makeAvatar(me, myDept, true); const spawn = scene === "roof" ? { x: 0, z: 5.5 } : scene === "pocha" ? { x: 0, z: 5 } : { x: 0, z: 4.6 }; meAv.g.position.set(spawn.x, 0, spawn.z); meAv.tx = spawn.x; meAv.tz = spawn.z; meAv.ry = Math.PI; meAv.g.rotation.y = Math.PI; sc.add(meAv.g); S.me = meAv;
     try { localStorage.setItem("mw-rest-scene", scene); } catch {}
     onMove({ scene, x: spawn.x, z: spawn.z, pose: "stand" });
 
@@ -274,6 +313,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const sendSay = async () => { const t = say.trim(); if (!t || busy) return; setBusy(true); const r = await restSay(t); setBusy(false); if (r?.error) { onToast(r.error); return; } const a = st.current.me; if (a) setBubble(a, t); setSay(""); setTimeout(() => { if (a && a.bubbleText === t) setBubble(a, null); }, 10000); };
   const doBurn = async () => { const S = st.current; const a = S.me; const txt = (burn ?? "").trim(); if (!a || !S.sc || !txt) return; const sp = textSprite("📝", { bg: "rgba(0,0,0,0)", size: 40, pad: 2 }); sp.position.set(a.g.position.x, 1.6, a.g.position.z); S.sc.add(sp); S.paper = { sp, t: 0, from: sp.position.clone() }; setBurn(null); navigator.vibrate?.(20); const xp = await restBurn(txt.length).catch(() => 0); onXp(xp ? `🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요 (+${xp} XP)` : "🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요"); };
   const soundOn = async () => { try { if (!amb.current) amb.current = new Ambience(); await amb.current.start(sceneRef.current); amb.current.setVolume(vol); setSnd("on"); try { localStorage.setItem("mw-rest-snd", "1"); } catch {} } catch { setSnd("off"); } };
+  const strikeBowl = () => { const S = st.current; const r = S.sc?.getObjectByName("bowlring") as THREE.Mesh | undefined; if (r) r.userData.t = 1; if (snd !== "on") soundOn().then(() => amb.current?.bowl()); else amb.current?.bowl(); try { navigator.vibrate?.(15); } catch {} };
   const soundOff = () => { amb.current?.stop(); amb.current?.setVolume(0); setSnd("off"); try { localStorage.setItem("mw-rest-snd", "0"); } catch {} };
   useEffect(() => { if (snd === "on") amb.current?.start(scene).then(() => amb.current?.setVolume(vol)); }, [scene]); // eslint-disable-line
   useEffect(() => { amb.current?.setVolume(snd === "on" ? vol : 0); try { localStorage.setItem("mw-rest-vol", String(vol)); } catch {} }, [vol]); // eslint-disable-line
@@ -286,16 +326,16 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     <div className={"r3" + (mode === "zen" ? " zen" : "")}>
       <div ref={box} className="r3-canvas" />
       <div className="r3-top">
-        <div className="r3-tabs"><button type="button" aria-pressed={scene === "roof"} onClick={() => setScene("roof")}>🌃 병원 옥상</button><button type="button" aria-pressed={scene === "pocha"} onClick={() => setScene("pocha")}>🍢 병원 앞 포차</button></div>
+        <div className="r3-tabs"><button type="button" aria-pressed={scene === "roof"} onClick={() => setScene("roof")}>🌃 옥상</button><button type="button" aria-pressed={scene === "pocha"} onClick={() => setScene("pocha")}>🍢 포차</button><button type="button" aria-pressed={scene === "zen"} onClick={() => setScene("zen")}>🧘 명상실</button></div>
         <span className="r3-right"><button type="button" className={"r3-snd" + (snd === "on" ? " on" : "")} onClick={() => snd === "on" ? soundOff() : soundOn()} aria-label="소리">{snd === "on" ? "🔊" : "🔇"}</button><span className="r3-count">👥 {here}명</span></span>
       </div>
-      {mode === "zen" ? <button type="button" className="r3-zen-exit" onClick={() => setMode("normal")}>불멍 끝내기</button> : <>
+      {mode === "zen" ? <><button type="button" className="r3-zen-exit" onClick={() => setMode("normal")}>{scene === "zen" ? "명상 끝내기" : "불멍 끝내기"}</button>{scene === "zen" && <div className="r3-breath" aria-hidden><div className="r3-breath-c" /><div className="r3-breath-t"><span>들이쉬기 4</span><span>멈추기 7</span><span>내쉬기 8</span></div></div>}</> : <>
         <div className="r3-hint">{snd === "wait" ? "🔊 화면을 한 번 탭하면 소리가 켜져요" : "바닥을 탭하면 걸어가요 · 좌우로 끌면 둘러보기"}</div>
         {snd === "on" && <input type="range" className="r3-vol" min={0} max={1} step={.05} value={vol} onChange={e => setVol(Number(e.target.value))} aria-label="볼륨" />}
         <div className="r3-acts">
           <button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
           <button type="button" onClick={() => setBurn(b => b === null ? "" : null)}><span>🔥</span>걱정 태우기</button>
-          <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불멍 모드</button>
+          {scene === "zen" ? <><button type="button" onClick={strikeBowl}><span>🔔</span>싱잉볼</button><button type="button" onClick={() => setMode("zen")}><span>🧘</span>명상 모드</button></> : <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불멍 모드</button>}
         </div>
         <form className="r3-say" onSubmit={e => { e.preventDefault(); sendSay(); }}><input value={say} onChange={e => setSay(e.target.value)} maxLength={60} placeholder="한마디 (10초 말풍선 · 익명)" /><button className="btn" disabled={busy || !say.trim()}>말하기</button></form>
         {burn !== null && <div className="r3-burn"><b>🔥 오늘 태워버릴 걱정 한 장</b><textarea value={burn} onChange={e => setBurn(e.target.value)} maxLength={120} rows={2} placeholder="여기 적은 건 어디에도 저장되지 않아요. 불에 넣고 잊어버려요." autoFocus /><div className="row" style={{ gap: 6, justifyContent: "flex-end" }}><button type="button" className="link" onClick={() => setBurn(null)}>닫기</button><button type="button" className="btn" disabled={!burn.trim()} onClick={doBurn}>불에 넣기</button></div></div>}
