@@ -149,14 +149,17 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   if (category === ANON_CAT) { revalidatePath("/anon"); redirect(`/anon/${data.id}`); }
   revalidatePath("/board"); redirect(`/board/${data.id}`);
 }
-export async function addComment(postId: string, text: string) {
+export async function addComment(postId: string, text: string, parentId?: number | null) {
   const u = await requireUser();
   const t = text.trim().slice(0, 500); if (!t) return;
   const s = db();
   const { data: post0 } = await s.from("posts").select("author_id,title,category").eq("id", postId).maybeSingle();
   const anon = post0?.category === ANON_CAT;
   if (anon) { const pm = personMention(t); if (pm) return; }
-  await s.from("comments").insert({ post_id: postId, author_id: u.id, dept: anon ? null : u.dept, text: t });
+  let parent: { id: number; author_id: string } | null = null;
+  if (parentId) { const { data: pc } = await s.from("comments").select("id,author_id,parent_id").eq("id", parentId).eq("post_id", postId).maybeSingle(); if (pc) parent = { id: pc.parent_id ?? pc.id, author_id: pc.author_id }; }
+  await s.from("comments").insert({ post_id: postId, author_id: u.id, dept: anon ? null : u.dept, text: t, parent_id: parent?.id ?? null });
+  if (parent && parent.author_id !== u.id && parent.author_id !== post0?.author_id) pushToUsers([parent.author_id], { title: anon ? "🕶️ 내 댓글에 답글" : "💬 내 댓글에 답글", body: (anon ? "" : `[${u.dept}]${u.nickname}: `) + t.slice(0, 60), url: anon ? `/anon/${postId}` : `/board/${postId}`, tag: `r-${postId}` }).catch(() => {});
   const [{ data: post }] = await Promise.all([Promise.resolve({ data: post0 }), awardXp(u.id, 50, "first_comment"), repeatXp(u.id, "comment"), bump(u.id, "write")]);
   if (post?.author_id && post.author_id !== u.id) pushToUsers([post.author_id], anon ? { title: "🕶️ 익명 글에 댓글", body: t.slice(0, 60), url: `/anon/${postId}`, tag: `c-${postId}` } : { title: "내 글에 댓글", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: `/board/${postId}`, tag: `c-${postId}` }).catch(() => {});
   revalidatePath(anon ? `/anon/${postId}` : `/board/${postId}`);
