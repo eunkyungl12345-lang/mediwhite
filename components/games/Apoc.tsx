@@ -4,6 +4,7 @@ import { saveScore } from "@/lib/actions";
 import { HERO_SVG, art, artSrc } from "./defArt";
 import { sfx, haptic, pop, shake } from "@/lib/juice";
 import Board, { type Row } from "./Board";
+import HowTo from "./HowTo";
 
 /** 🧟 병원묵시록 DAY 0 — 학원묵시록식 세로 방어전.
  *  의료진 5명이 아래 바리케이드 앞에 서서 자동 공격, 좀비 떼는 위에서 몰려와요.
@@ -202,7 +203,7 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
     // 투사체
     for (const p of s.shots) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; const hit = s.zs.find(z => Math.hypot(z.x - p.x, z.y - p.y - CS * .3) < ZT[z.t].size * CS * .4); if (hit) { if (p.splash) { for (const z of s.zs) if (Math.hypot(z.x - hit.x, z.y - hit.y) < p.splash) dmgZ(z, p.dmg, p.c); s.fx.push({ kind: "ring", x: hit.x, y: hit.y, t: 0, max: .3, r: p.splash, c: p.c }); } else dmgZ(hit, p.dmg, p.c); p.life = 0; } } s.shots = s.shots.filter(p => p.life > 0 && p.y > -CS);
     // 죽음·경험치
-    for (const z of s.zs) if (z.hp <= 0) { s.killed++; s.killsAll++; if (z.t === 4) s.bossKills++; s.xp += ZT[z.t].xp; s.fx.push({ kind: "die", x: z.x, y: z.y, t: 0, max: .6, a: z.t }); s.fx.push({ kind: "blood", x: z.x, y: z.y + CS * .3, t: 0, max: 6, r: ZT[z.t].size * CS * .4 }); if (z.t === 4) { pop(box.current, z.x, z.y, "💀 보스 처치!", "good big"); sfx.record(); } }
+    for (const z of s.zs) if (z.hp <= 0) { s.killed++; s.killsAll++; if (z.t === 4) s.bossKills++; s.xp += ZT[z.t].xp; s.fx.push({ kind: "die", x: z.x, y: z.y, t: 0, max: .6, a: z.t }); s.fx.push({ kind: "blood", x: z.x, y: z.y + CS * .3, t: 0, max: 6, r: ZT[z.t].size * CS * .4 }); if (z.t === 4) { pop(box.current, z.x, z.y, "💀 보스 처치!", "good big"); sfx.record(); s.flash = .6; shake(box.current, "l"); haptic([40, 60, 40]); s.paused = true; setTimeout(() => { if (!s.manual && !choice) { s.paused = false; s.last = performance.now(); } }, 200); } }
     s.zs = s.zs.filter(z => z.hp > 0);
     for (const f of s.fx) f.t += dt; s.fx = s.fx.filter(f => f.t < f.max);
     if (s.xp >= s.xpNeed && !s.paused) levelUp();
@@ -266,6 +267,7 @@ export default function Apoc({ ranks, best }: { ranks: Row[]; best: number }) {
     <div className="games">
       {!started ? <div className="ap-start">
         <div className="ap-title">병원묵시록<small>DAY 0</small></div>
+        <HowTo id="apoc" steps={[{ icon: "🤖", title: "싸움은 자동", desc: "의료진 5명이 알아서 때려요" }, { icon: "⬆️", title: "레벨업 → 스킬 고르기", desc: "3개 중 1개, 왼쪽 버튼에 쌓여요" }, { icon: "👆", title: "스킬 버튼 탭!", desc: "쿨타임 돌면 바로바로 눌러요" }]} />
         <div className="muted" style={{ fontSize: 13, lineHeight: 1.6 }}>감염 첫날 밤, 병원 정문 앞 최후 방어선.<br />의료진 5명(의사·방사선사·물리치료사·간호사·임상병리사)이 자동으로 싸워요.<br />좀비를 잡아 레벨이 오르면 <b>스킬 3개 중 1개</b>를 배우고, 왼쪽 버튼을 탭해 시전하세요. 5웨이브마다 보스!</div>
         <div className="ap-roster">{ORDER.map(k => <div key={k} className="ap-ro"><span className="def-ico art" style={{ background: HEROES[k].color }}><img src={artSrc(HEROES[k].art, HERO_SVG[HEROES[k].art])} alt="" /></span><b>{HEROES[k].name}</b><small>{HEROES[k].role}</small></div>)}</div>
         <div className="run-btns" style={{ justifyContent: "center" }}><button type="button" className="btn" onClick={newGame}>🧟 방어 시작</button><button type="button" className="btn ghost" onClick={() => setLab(v => !v)}>🧪 연구소 (💉 {meta.vac})</button></div>

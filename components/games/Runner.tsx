@@ -5,6 +5,10 @@ import Board, { type Row } from "./Board";
 import { sfx, haptic, shake, burst, pop, recordWatcher } from "@/lib/juice";
 import { BestLine, RecordFlash } from "./Juice";
 import { ZONES, ZONE_LEN, zoneAt, OBS, drawBg, drawNurse, drawOb, drawItem, drawHearts, type ObKind } from "./runnerArt";
+import HowTo from "./HowTo";
+import { todayGoal, goalDone, markGoal } from "@/lib/goals";
+const GOALS = [300, 600, 900, 1200, 1800, 2400, 3000, 4000];
+const goalName = (g: number) => g >= 1800 ? `옥상까지 (${g}m)` : g >= 1200 ? `수술실까지 (${g}m)` : g >= 600 ? `응급실까지 (${g}m)` : `${g}m 달리기`;
 
 /** 복도 질주 v2 — 4구역(병동→응급실→수술실→옥상), 하트 3개, 영구 코인 상점, 런 미션, 일시정지 */
 type Ob = { x: number; w: number; h: number; kind: ObKind; air?: boolean; it?: "coffee" | "pill" | "star" | "heart"; dead?: boolean };
@@ -34,9 +38,10 @@ export default function Runner({ ranks, best = 0 }: { ranks: Row[]; best?: numbe
   const [rec, setRec] = useState(false); const watch = useRef(recordWatcher(best)); const [combo, setCombo] = useState(0);
   const box = useRef<HTMLDivElement>(null), cv = useRef<HTMLCanvasElement>(null);
   const [state, setState] = useState<"idle" | "run" | "pause" | "done">("idle"); const [dist, setDist] = useState(0); const [coinsRun, setCoinsRun] = useState(0);
+  const [goal, setGoal] = useState(0); const [gDone, setGDone] = useState(false);
   const [meta, setMeta] = useState<Meta>(META0); const [shop, setShop] = useState(false); const [missions, setMissions] = useState<Mission[]>([]); const [stat, setStat] = useState<RunStat>({ dist: 0, coffee: 0, pills: 0, combo: 0, noHit: 0, jumps: 0, stars: 0 }); const [done, setDone] = useState<{ zone: string; got: string[]; coins: number } | null>(null);
-  const g = useRef({ W: 0, H: 0, y: 0, vy: 0, jumps: 0, speed: 0, dist: 0, obs: [] as Ob[], nextX: 0, raf: 0, last: 0, run: false, paused: false, t: 0, hitT: 0, inv: 0, ground: 0, hp: 3, sh: 0, boost: 0, coins: 0, cc: 0, zone: -1, noHitFrom: 0, flash: 0, banner: "", bannerT: 0, st: { dist: 0, coffee: 0, pills: 0, combo: 0, noHit: 0, jumps: 0, stars: 0 } as RunStat, meta: META0, ms: [] as Mission[], msDone: new Set<string>() });
-  useEffect(() => { const m = loadMeta(); setMeta(m); g.current.meta = m; setMissions(pick3()); }, []);
+  const g = useRef({ W: 0, H: 0, y: 0, vy: 0, jumps: 0, speed: 0, dist: 0, obs: [] as Ob[], nextX: 0, raf: 0, last: 0, run: false, paused: false, t: 0, hitT: 0, inv: 0, ground: 0, hp: 3, sh: 0, boost: 0, coins: 0, cc: 0, zone: -1, noHitFrom: 0, flash: 0, banner: "", bannerT: 0, st: { dist: 0, coffee: 0, pills: 0, combo: 0, noHit: 0, jumps: 0, stars: 0 } as RunStat, meta: META0, ms: [] as Mission[], msDone: new Set<string>(), pulse: 0 });
+  useEffect(() => { const m = loadMeta(); setMeta(m); g.current.meta = m; setMissions(pick3()); const gl = todayGoal("runner", GOALS, Math.max(best, m.far)); setGoal(gl); (g.current as any).goal = gl; setGDone(goalDone("runner")); (g.current as any).gDone = goalDone("runner"); }, []);
   useEffect(() => { g.current.ms = missions; }, [missions]);
   useEffect(() => {
     const st = box.current!, c = cv.current!, x = c.getContext("2d")!, s = g.current;
@@ -47,12 +52,12 @@ export default function Runner({ ranks, best = 0 }: { ranks: Row[]; best?: numbe
       for (const o of s.obs) { if (o.dead) continue; x.save(); if (o.it) { x.translate(o.x + o.w / 2, s.ground - U() * 1.6); drawItem(x, o.it, o.w / 2, s.t + o.x * .01); } else { x.translate(o.x + o.w / 2, o.air ? s.ground - U() * 1.35 : s.ground); drawOb(x, o.kind, o.w, o.h, s.t + o.x * .01); } x.restore(); }
       // 플레이어
       const blink = s.inv > 0 && Math.floor(s.t * 14) % 2 === 0;
-      if (!blink) { x.save(); x.translate(PX(), s.ground - s.y); if (s.boost > 0) { x.fillStyle = "rgba(244,211,94,.35)"; for (let i = 1; i <= 4; i++) { x.beginPath(); x.ellipse(-i * U() * .35, -U() * 1.0, U() * .5, U() * .9, 0, 0, 7); x.fill(); } } drawNurse(x, U(), s.t, s.hitT > 0 ? "hit" : s.y > 0 ? "jump" : s.run ? "run" : "idle", s.sh > 0 || s.boost > 0); x.restore(); }
+      if (!blink) { x.save(); x.translate(PX(), s.ground - s.y); if (s.boost > 0) { x.fillStyle = "rgba(244,211,94,.35)"; for (let i = 1; i <= 4; i++) { x.beginPath(); x.ellipse(-i * U() * .35, -U() * 1.0, U() * .5, U() * .9, 0, 0, 7); x.fill(); } } if (s.pulse > 0) x.scale(1 + s.pulse * .22, 1 + s.pulse * .22); drawNurse(x, U(), s.t, s.hitT > 0 ? "hit" : s.y > 0 ? "jump" : s.run ? "run" : "idle", s.sh > 0 || s.boost > 0); x.restore(); }
       // HUD
       drawHearts(x, 16, 18, s.hp, 3, s.sh);
       x.fillStyle = z.sky ? "#FFF" : "#18231F"; x.font = `800 ${Math.floor(s.H * .085)}px system-ui`; x.textAlign = "right"; x.textBaseline = "top"; x.fillText(`${Math.floor(s.dist)}m`, s.W - 14, 10);
       x.font = `600 ${Math.floor(s.H * .05)}px system-ui`; x.fillStyle = z.sky ? "#F4D35E" : "#7A5B12"; x.fillText(`🪙 ${s.coins}`, s.W - 14, 14 + s.H * .095);
-      x.textAlign = "left"; x.fillStyle = z.sky ? "rgba(255,255,255,.75)" : "rgba(24,35,31,.6)"; x.fillText(z.name, 16, 34);
+      x.textAlign = "left"; x.fillStyle = z.sky ? "rgba(255,255,255,.75)" : "rgba(24,35,31,.6)"; x.fillText(z.name + ((g.current as any).goal && !(g.current as any).gDone ? ` · 🎯 ${(g.current as any).goal}m` : ""), 16, 34);
       if (s.cc >= 5) { x.textAlign = "center"; x.fillStyle = "#E2574C"; x.font = `900 ${Math.floor(s.H * .07)}px system-ui`; x.fillText(`${s.cc} COMBO`, s.W / 2, 12); }
       if (s.bannerT > 0) { x.globalAlpha = Math.min(1, s.bannerT); x.fillStyle = "rgba(24,35,31,.8)"; x.fillRect(0, s.H * .36, s.W, s.H * .18); x.fillStyle = "#fff"; x.textAlign = "center"; x.textBaseline = "middle"; x.font = `800 ${Math.floor(s.H * .085)}px system-ui`; x.fillText(s.banner, s.W / 2, s.H * .45); x.globalAlpha = 1; }
       if (s.flash > 0) { x.fillStyle = `rgba(226,87,76,${s.flash * .5})`; x.fillRect(0, 0, s.W, s.H); }
@@ -82,9 +87,10 @@ export default function Runner({ ranks, best = 0 }: { ranks: Row[]; best?: numbe
           if (d < u * 1.6 * mag && d > u * .5) { o.x -= dx * dt * 6 * (mag - .5); }
           if (d < u * .95) { o.dead = true; s.cc++; const cc = s.cc; s.st.combo = Math.max(s.st.combo, cc); const mult = 1 + Math.min(3, Math.floor(cc / 5)) * .5;
             if (o.it === "coffee") { s.st.coffee++; s.coins += 1 + s.meta.up.coffee; s.dist += 8 * mult; } else if (o.it === "pill") { s.st.pills++; s.coins += 3; s.dist += 30 * mult; } else if (o.it === "star") { s.st.stars++; s.coins += 15; s.dist += 100; s.inv = Math.max(s.inv, 1); } else { s.hp = Math.min(3, s.hp + 1); }
-            setCombo(cc); sfx.coin(); haptic(8); burst(st, o.x + o.w / 2, oy, o.it === "pill" ? "#9B7EDE" : o.it === "star" ? "#F4D35E" : o.it === "heart" ? "#F07A70" : "#B08968", 8); pop(st, o.x + o.w / 2, oy - 10, o.it === "heart" ? "+❤️" : o.it === "star" ? "+100m ⭐" : `+${Math.round((o.it === "pill" ? 30 : 8) * mult)}m`, "good"); if (cc % 5 === 0) sfx.combo(cc); } }
+            s.pulse = 1; setCombo(cc); sfx.coin(); haptic(8); burst(st, o.x + o.w / 2, oy, o.it === "pill" ? "#9B7EDE" : o.it === "star" ? "#F4D35E" : o.it === "heart" ? "#F07A70" : "#B08968", 8); pop(st, o.x + o.w / 2, oy - 10, o.it === "heart" ? "+❤️" : o.it === "star" ? "+100m ⭐" : `+${Math.round((o.it === "pill" ? 30 : 8) * mult)}m`, "good"); if (cc % 5 === 0) sfx.combo(cc); } }
         else { const oy = o.air ? s.ground - u * 1.35 - o.h / 2 : s.ground - o.h / 2; const dx = Math.abs(o.x + o.w / 2 - px), dy = Math.abs(oy - py); if (dx < (o.w / 2 + u * .3) && dy < (o.h / 2 + u * .75)) { if (s.boost > 0) { o.dead = true; burst(st, o.x + o.w / 2, oy, "#F4D35E", 10); sfx.hit(); } else hurt(); } } }
       s.obs = s.obs.filter(o => o.x > -200 && !o.dead);
+      if (s.pulse > 0) s.pulse -= dt * 5; const GG = (g.current as any); if (GG.goal && !GG.gDone && s.dist >= GG.goal) { GG.gDone = true; markGoal("runner"); setGDone(true); s.banner = `🎯 오늘의 목표 달성!`; s.bannerT = 2.5; sfx.record(); haptic([30, 50, 30]); s.paused = true; setTimeout(() => { s.paused = false; s.last = performance.now(); s.raf = requestAnimationFrame(tick); }, 220); }
       if (s.hitT > 0) s.hitT -= dt; if (s.inv > 0) s.inv -= dt; if (s.flash > 0) s.flash -= dt * 2; if (s.bannerT > 0) s.bannerT -= dt;
       if (!s.run) return; checkMissions(); setDist(Math.floor(s.dist)); watch.current(s.dist, () => { setRec(true); sfx.record(); setTimeout(() => setRec(false), 1400); }); draw(); s.raf = requestAnimationFrame(tick); };
     (st as any).__start = () => { setRec(false); setDone(null); watch.current = recordWatcher(best); const ms = pick3(); setMissions(ms); s.ms = ms; s.msDone = new Set(); s.st = { dist: 0, coffee: 0, pills: 0, combo: 0, noHit: 0, jumps: 0, stars: 0 }; s.cc = 0; setCombo(0); sfx.level();
@@ -103,6 +109,8 @@ export default function Runner({ ranks, best = 0 }: { ranks: Row[]; best?: numbe
   return (
     <div className="card run2">
       <div><h3>복도 질주</h3><div className="muted">탭=점프(공중에서 한 번 더 = 2단). 병동 → 응급실 → 수술실 → 옥상, 600m마다 구역이 바뀌고 장애물이 달라져요. 떨어지는 차트·비둘기는 <b>안 뛰어야</b> 피해요. 하트 3개, 🪙 코인으로 영구 업그레이드.</div></div>
+      <HowTo id="runner" steps={[{ icon: "👆", title: "탭 = 점프", desc: "공중에서 한 번 더 누르면 2단 점프" }, { icon: "🛒", title: "바닥 장애물은 뛰어넘기", desc: "카트·휠체어·들것" }, { icon: "🐦", title: "날아오는 건 안 뛰기", desc: "차트·비둘기는 가만히 있으면 지나가요" }]} />
+      {goal > 0 && <div className={"goal" + (gDone ? " done" : "")}>🎯 오늘의 목표: <b>{goalName(goal)}</b>{gDone ? <small>✅ 달성!</small> : <small>최고 {Math.max(best, meta.far)}m</small>}</div>}
       <div className="def-bar"><span className="def-sun">🏃‍♀️ {dist}m{combo >= 5 && <span className="tag" style={{ marginLeft: 6 }}>{combo} COMBO</span>}</span><span className="muted">🪙 {meta.coins}{state === "run" && coinsRun ? ` (+${coinsRun})` : ""}</span><BestLine best={best} cur={dist} unit="m" /></div>
       <div className="def-stage" ref={box} style={{ touchAction: "manipulation" }}><canvas ref={cv} />{rec && <RecordFlash />}
         {(state === "run" || state === "pause") && <button type="button" className="run-pause" aria-label="일시정지" onClick={e => { e.stopPropagation(); (box.current as any).__pause(state === "run"); }}>{state === "run" ? "❚❚" : "▶"}</button>}

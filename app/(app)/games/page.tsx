@@ -60,16 +60,17 @@ export default async function GamesPage({ searchParams }: { searchParams: { g?: 
     <div className="games">
       <Hero img="/img/games.jpg" pos="center 42%" title="미니게임" sub="기록은 명예의 전당에, 퀘스트는 경험치로" />
       <section className="gm-mission">
-        <div className="gm-mt"><b>📅 오늘의 데일리 미션</b><span>{nDone}/3 완료{nDone === 3 ? " · 🎉 올클리어 +100 XP" : " · 3개 다 하면 보너스 +100 XP"}</span></div>
+        <div className="gm-mt"><b>✅ 오늘 할 일 딱 3개</b><span>{nDone}/3 완료{nDone === 3 ? " · 🎉 올클리어 +100 XP" : " · 3개 다 하면 보너스 +100 XP"}</span></div>
         <div className="gm-ml">{missions.map(m => <Link key={m.id} href={href(m.id === "quiz" ? "quiz" : m.id)} scroll={false} className={"gm-mi" + (m.done ? " done" : "")}><span>{m.done ? "✅" : "⬜"}</span><b>{m.name}</b><small>{m.xp} XP</small></Link>)}</div>
       </section>
+      <details className="gm-more"><summary>⚔️ 부서 대항전 · 🔥 오늘의 핫 게임</summary>
       <section className="gm-battle">
         <div className="gm-mt"><b>⚔️ 이번 주 부서 대항전</b><span>{lastTop ? `지난주 1위 [${lastTop}] · ` : ""}1위 부서 참가자 전원 다음 주 +200 XP</span></div>
         {battle.length ? battle.slice(0, 6).map((b, i) => <div key={b.dept} className={"gm-br" + (b.dept === sess.dept ? " me" : "")}><span className="gm-bn">{["🥇", "🥈", "🥉"][i] ?? i + 1}</span><span className="gm-bd">{b.dept}</span><span className="gm-bb"><i style={{ width: `${Math.max(4, b.pts / maxPts * 100)}%` }} /></span><span className="gm-bp">{b.pts.toLocaleString()}점 · {b.people}명</span></div>)
           : <div className="muted" style={{ fontSize: 13 }}>이번 주 아직 기록이 없어요. 우리 부서가 첫 점수를 따 보세요!</div>}
         <div className="muted" style={{ fontSize: 11.5 }}>메디워들·룰렛·퀴즈 기록이 부서 점수로 쌓여요 (매주 월요일 0시 리셋)</div>
       </section>
-      <Link href={href(hot.id)} scroll={false} className="gm-hot"><span className="gm-hi">{hot.icon}</span><div><small>🔥 오늘의 핫 게임</small><b>{hot.name}</b><span>{hot.sub} · 오늘 한 판 어때요?</span></div><span className="gm-go">▶</span></Link>
+      <Link href={href(hot.id)} scroll={false} className="gm-hot"><span className="gm-hi">{hot.icon}</span><div><small>🔥 오늘의 핫 게임</small><b>{hot.name}</b><span>{hot.sub} · 오늘 한 판 어때요?</span></div><span className="gm-go">▶</span></Link></details>
       <div className="cats gm-cats">{CATS.map(c => <Link key={c.key} href={`/games${c.key ? `?c=${c.key}` : ""}`} scroll={false} className="cats-btn" aria-pressed={cat.key === c.key}>{c.name}</Link>)}</div>
       <div className="gtiles">{shown.map(g => { const lv = liveOf(g.id); return <Link key={g.id} href={href(g.id)} scroll={false} className={"gtile" + (cur.id === g.id ? " on" : "")}><span className="gtile-ico">{g.icon}</span><span className="gtile-name">{g.name}</span>{lv ? <span className={"gtile-live" + (lv.people ? " on" : "")}>{lv.people ? `🟢 ${lv.rooms}방 · ${lv.people}명` : "방 만들기"}</span> : null}{g.badge && <span className="gtile-badge">{g.badge}</span>}</Link>; })}</div>
       <section key={cur.id} id={cur.id} className="game-sec">{cur.node}</section>

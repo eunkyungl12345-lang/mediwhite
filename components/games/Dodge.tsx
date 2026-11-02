@@ -4,6 +4,9 @@ import { saveScore } from "@/lib/actions";
 import Board, { type Row } from "./Board";
 import { sfx, haptic, shake, burst, pop, recordWatcher } from "@/lib/juice";
 import { BestLine, RecordFlash } from "./Juice";
+import HowTo from "./HowTo";
+import { todayGoal, goalDone, markGoal } from "@/lib/goals";
+const GOALS = [10, 20, 30, 45, 60, 90];
 
 /** 총알 피하기 v2 — 페이즈(조준→링→레이저→보스→혼돈), 대시(탭), 그레이즈 집중 게이지, 파워업(⏱🛡💣), 일시정지 */
 type B = { x: number; y: number; vx: number; vy: number; r: number; k: "aim" | "ring" | "spin" | "home" | "boss"; life?: number; gz?: boolean };
@@ -16,6 +19,8 @@ const COL: Record<B["k"], string> = { aim: "#F07A70", ring: "#F2A541", spin: "#C
 export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number }) {
   const [rec, setRec] = useState(false); const watch = useRef(recordWatcher(best)); const [sec, setSec] = useState(0);
   const stage = useRef<HTMLDivElement>(null), cv = useRef<HTMLCanvasElement>(null);
+  const [easy, setEasy] = useState(false); const [goal, setGoal] = useState(0); const [gDone, setGDone] = useState(false);
+  useEffect(() => { try { setEasy(localStorage.getItem("mw-dodge-easy") === "1"); } catch {} const gl = todayGoal("dodge", GOALS, best); setGoal(gl); (g.current as any).goal = gl; (g.current as any).gDone = goalDone("dodge"); setGDone(goalDone("dodge")); }, []); // eslint-disable-line
   const [state, setState] = useState<"idle" | "run" | "pause" | "done">("idle"); const [res, setRes] = useState<{ sec: number; graze: number; phase: string; dash: number } | null>(null);
   const g = useRef({ W: 0, H: 0, pl: { x: 0, y: 0, r: 8 }, bul: [] as B[], las: [] as L[], pw: [] as P[], t0: 0, tl: 0, el: 0, acc: 0, ringT: 0, lasT: 0, pwT: 0, bossT: 0, bossA: 0, keys: {} as Record<string, boolean>, drag: null as null | { x: number; y: number; t: number; moved: number }, raf: 0, run: false, paused: false, pausedAt: 0, slow: 0, shield: 0, dash: 0, dashCd: 0, dashDir: { x: 0, y: -1 }, inv: 0, graze: 0, focus: 0, focusOn: 0, dashes: 0, flash: 0, phase: -1, banner: "", bannerT: 0, trail: [] as { x: number; y: number }[], shakeT: 0 });
 
@@ -63,7 +68,7 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
     const powerup = () => { const m = M(); const ks: P["k"][] = ["slow", "shield", "bomb"]; const fromL = Math.random() < .5; s.pw.push({ x: fromL ? -20 : s.W + 20, y: m * .15 + Math.random() * (s.H - m * .3), vx: (fromL ? 1 : -1) * m * .12, vy: 0, k: ks[Math.floor(Math.random() * 3)], t: 0 }); };
     const hit = () => { if (s.inv > 0 || s.dash > 0) return; if (s.shield > 0) { s.shield = 0; s.inv = 1; sfx.hit(); haptic(20); pop(st, s.pl.x, s.pl.y - 24, "방패!", "good"); burst(st, s.pl.x, s.pl.y, "#fff", 12); return; } end(); };
     const end = () => { s.run = false; lock(false); cancelAnimationFrame(s.raf); s.flash = 1; draw(); sfx.boom(); haptic([50, 40, 50]); shake(st, "l"); burst(st, s.pl.x, s.pl.y, "#F07A70", 24); const sec = Math.round(s.el * 100) / 100;
-      setRes({ sec, graze: s.graze, phase: PHASES[phaseAt(s.el)][1], dash: s.dashes }); setState("done"); saveScore("dodge", sec).catch(() => {}); };
+      setRes({ sec, graze: s.graze, phase: PHASES[phaseAt(s.el)][1], dash: s.dashes }); setState("done"); if (!(g.current as any).easy) saveScore("dodge", sec).catch(() => {}); };
     const tick = (t: number) => { if (s.paused) return; const raw = Math.min(.05, (t - s.tl) / 1000); s.tl = t; const ts = s.slow > 0 || s.focusOn > 0 ? .4 : 1, dt = raw * ts; s.el += raw; const el = s.el, m = M(), pl = s.pl;
       const ph = phaseAt(el); if (ph !== s.phase) { s.phase = ph; if (ph > 0) { s.banner = PHASES[ph][1]; s.bannerT = 1.6; sfx.level(); haptic(15); pop(st, s.W / 2, s.H * .3, `${PHASES[ph][0]}초 돌파!`, "good big"); } if (ph === 3) { s.bossT = 15; s.bossA = 0; } }
       // 이동
@@ -73,7 +78,7 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
       pl.x = Math.max(pl.r, Math.min(s.W - pl.r, pl.x)); pl.y = Math.max(pl.r, Math.min(s.H - pl.r, pl.y));
       s.trail.push({ x: pl.x, y: pl.y }); if (s.trail.length > 10) s.trail.shift();
       // 스폰
-      if (el > .5) { const rate = ph === 0 ? 2.2 + el * .3 : ph === 1 ? 1.5 : ph === 2 ? 1.2 : ph === 3 ? 1.8 : ph === 4 ? 3 + (el - 45) * .1 : 4.5 + (el - 60) * .08; s.acc += dt * rate; while (s.acc > 1) { aimed(ph >= 4 ? 1.15 : 1); s.acc--; } }
+      if (el > .5) { const rate = ((g.current as any).easy ? .72 : 1) * (ph === 0 ? 2.2 + el * .3 : ph === 1 ? 1.5 : ph === 2 ? 1.2 : ph === 3 ? 1.8 : ph === 4 ? 3 + (el - 45) * .1 : 4.5 + (el - 60) * .08); s.acc += dt * rate; while (s.acc > 1) { aimed(ph >= 4 ? 1.15 : 1); s.acc--; } }
       if (ph === 1 || ph >= 4) { s.ringT -= dt; if (s.ringT <= 0) { s.ringT = ph === 1 ? 2 : 2.6; ring(Math.random() * s.W, Math.random() * s.H, ph >= 4 ? 16 : 12, m * .22); } }
       if (ph === 2 || ph >= 4) { s.lasT -= dt; if (s.lasT <= 0) { s.lasT = ph === 2 ? 1.6 : 3; laser(); } }
       if (ph >= 4) { s.pwT -= 0; if (Math.random() < dt * .5) homing(); }
@@ -92,9 +97,10 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
         if (p.k === "slow") { s.slow = 3; pop(st, p.x, p.y - 20, "슬로우 3초", "good"); } else if (p.k === "shield") { s.shield = 1; pop(st, p.x, p.y - 20, "방패", "good"); } else { for (const b of s.bul) burst(st, b.x, b.y, COL[b.k], 2); s.bul = []; s.las = []; shake(st, "m"); sfx.boom(); pop(st, p.x, p.y - 20, "전부 삭제!", "good big"); } } }
       s.pw = s.pw.filter(p => !(p as any).dead && p.x > -40 && p.x < s.W + 40);
       if (s.slow > 0) s.slow -= raw; if (s.focusOn > 0) { s.focusOn -= raw; if (s.focusOn <= 0) s.focus = 0; } if (s.inv > 0) s.inv -= raw; if (s.dashCd > 0) s.dashCd -= raw; if (s.flash > 0) s.flash -= raw * 2; if (s.bannerT > 0) s.bannerT -= raw;
+      const GG = (g.current as any); if (GG.goal && !GG.gDone && el >= GG.goal) { GG.gDone = true; markGoal("dodge"); setGDone(true); s.banner = "🎯 오늘의 목표 달성!"; s.bannerT = 2; sfx.record(); haptic([30, 50, 30]); }
       if (Math.floor(el * 8) !== Math.floor((el - raw) * 8)) setSec(el); watch.current(el, () => { setRec(true); sfx.record(); setTimeout(() => setRec(false), 1400); });
       draw(); s.raf = requestAnimationFrame(tick); };
-    const dash = () => { if (!s.run || s.paused || s.dashCd > 0) return; s.dash = .18; s.dashCd = 1.6; s.dashes++; sfx.whoosh(); haptic(8); burst(st, s.pl.x, s.pl.y, "#6FBFA9", 8); };
+    const dash = () => { if (!s.run || s.paused || s.dashCd > 0) return; s.dash = .18; s.dashCd = (g.current as any).easy ? 1.0 : 1.6; s.dashes++; sfx.whoosh(); haptic(8); burst(st, s.pl.x, s.pl.y, "#6FBFA9", 8); };
     const lock = (v: boolean) => { try { document.body.style.overflow = v ? "hidden" : ""; document.body.style.touchAction = v ? "none" : ""; (document.body.style as any).overscrollBehavior = v ? "none" : ""; } catch {} };
     (st as any).__start = () => { setRec(false); setRes(null); lock(true); try { st.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {} watch.current = recordWatcher(best); sfx.level(); size(); const m = M(); s.pl = { x: s.W / 2, y: s.H / 2, r: Math.max(6, m * .022) }; s.bul = []; s.las = []; s.pw = []; s.trail = []; s.acc = 0; s.ringT = 2; s.lasT = 1; s.pwT = 5; s.bossT = 0; s.el = 0; s.slow = 0; s.shield = 0; s.dash = 0; s.dashCd = 0; s.inv = 0; s.graze = 0; s.focus = 0; s.focusOn = 0; s.dashes = 0; s.flash = 0; s.phase = -1; s.bannerT = 0; s.tl = performance.now(); s.run = true; s.paused = false; setState("run"); s.raf = requestAnimationFrame(tick); };
     (st as any).__god = () => { s.inv = 1e9; };
@@ -115,6 +121,8 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
   return (
     <div className="card dodge2">
       <div><h3>총알 피하기</h3><div className="muted">손가락으로 끌어서(또는 방향키/WASD) 피하고, <b>가볍게 톡 치면 대시</b>(무적 0.2초, 쿨 1.6초). 총알을 아슬아슬하게 스치면 집중 게이지가 차고 가득 차면 슬로우 발동. 10초마다 페이즈가 바뀌고 30초엔 보스 등장. ⏱ 슬로우 · 🛡 방패 · 💣 전체 삭제 파워업을 주워요.</div></div>
+      <HowTo id="dodge" steps={[{ icon: "👆", title: "끌어서 피하기", desc: "손가락 따라 움직여요 (방향키·WASD도 OK)" }, { icon: "⚡", title: "톡 치면 대시", desc: "0.2초 무적으로 뚫고 지나가요" }, { icon: "✨", title: "아슬아슬 스치기", desc: "집중 게이지가 차면 세상이 느려져요" }]} />
+      {goal > 0 && <div className={"goal" + (gDone ? " done" : "")}>🎯 오늘의 목표: <b>{goal}초 버티기</b>{gDone ? <small>✅ 달성!</small> : <small>최고 {best.toFixed ? best.toFixed(1) : best}초</small>}</div>}
       <div className="bar" style={{ paddingBottom: 6 }}><span className="muted" style={{ fontSize: 12 }}>{state === "run" || state === "pause" ? `PHASE ${phaseAt(sec) + 1} · ${PHASES[phaseAt(sec)][1]}` : "10 · 20 · 30초 달성 시 XP"}</span><BestLine best={Number(best.toFixed ? best.toFixed(2) : best)} cur={Number(sec.toFixed(2))} unit="초" /></div>
       <div className="stage" ref={stage}>
         <canvas ref={cv} />
@@ -123,7 +131,8 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
         {(state === "idle" || state === "done") && <div className="overlay run-ov" onPointerDown={e => e.stopPropagation()}>
           {res ? <><span className="big">{res.sec.toFixed(2)}초</span><span className="run-sub">{res.phase} 페이즈에서 피격 · 그레이즈 {res.graze} · 대시 {res.dash}회</span><span className="run-sub">{res.sec >= 45 ? "혼돈을 뚫은 생존자 🏆" : res.sec >= 30 ? "수간호사와 맞섰어요!" : res.sec >= 20 ? "레이저까지 버텼어요" : res.sec >= 10 ? "링 폭발 돌파" : "다시 한 번!"}</span></>
             : <><span className="big">총알 피하기</span><span className="run-sub">끌어서 이동 · 톡 치면 대시 · 스치면 집중 게이지</span><div className="run-ms"><span>⏱ 슬로우 3초 · 🛡 방패 1회 · 💣 전체 삭제</span><span>10초 링 폭발 → 20초 레이저 → 30초 보스 → 45초 혼돈</span></div></>}
-          <div className="run-btns"><button type="button" className="btn" onClick={() => (stage.current as any).__start()}>{res ? "다시 하기" : "시작"}</button></div>
+          <label className="mode-tg" style={{ color: "#fff" }}><input type="checkbox" checked={easy} onChange={e => { setEasy(e.target.checked); try { localStorage.setItem("mw-dodge-easy", e.target.checked ? "1" : "0"); } catch {} }} />😌 이지 모드 (총알 30%↓ · 대시 빠름 · 랭킹 제외)</label>
+          <div className="run-btns"><button type="button" className="btn" onClick={() => { (g.current as any).easy = easy; (stage.current as any).__start(); }}>{res ? "다시 하기" : "시작"}</button></div>
         </div>}
         <span className="hud">{sec.toFixed(2)}초</span>{rec && <RecordFlash />}
       </div>

@@ -1720,3 +1720,18 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 @keyframes breath478{0%{transform:scale(.55)}21%{transform:scale(1)}58%{transform:scale(1)}100%{transform:scale(.55)}}
 .r3-breath-t{display:flex;gap:12px;font-size:12px;font-weight:700;color:#4a3b2a;background:rgba(255,250,240,.85);padding:6px 12px;border-radius:999px}.r3-breath-t span{opacity:.35;animation:breathT 19s linear infinite}.r3-breath-t span:nth-child(2){animation-delay:-14.95s;animation-name:breathT2}.r3-breath-t span:nth-child(3){animation-name:breathT3}
 @keyframes breathT{0%,20%{opacity:1}21%,100%{opacity:.35}}@keyframes breathT2{0%,21%{opacity:.35}22%,57%{opacity:1}58%,100%{opacity:.35}}@keyframes breathT3{0%,58%{opacity:.35}59%,100%{opacity:1}}
+/* 첫 30초 조작 설명 */
+.howto{display:grid;gap:10px;background:var(--scrub-soft);border:1px solid var(--line);border-radius:14px;padding:12px}
+.howto-t{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.howto-t b{font-size:15px}.howto-t .muted{font-size:12px}
+.howto-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.howto-s{position:relative;display:grid;justify-items:center;text-align:center;gap:4px;background:var(--surface);border-radius:12px;padding:14px 8px 10px}
+.howto-n{position:absolute;top:6px;left:8px;width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:11px;font-weight:800;display:grid;place-items:center}
+.howto-i{font-size:34px;line-height:1}.howto-s b{font-size:13px}.howto-s small{font-size:11.5px;color:var(--muted);line-height:1.35}
+.howto .btn{justify-self:center;padding:8px 18px}
+.howto-q{justify-self:start;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}
+/* 오늘의 목표 */
+.goal{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px dashed var(--scrub);border-radius:12px;padding:8px 12px;font-size:13px}.goal b{color:var(--scrub)}.goal.done{border-style:solid;background:var(--scrub-soft)}.goal small{margin-left:auto;color:var(--muted);white-space:nowrap}
+/* 게임 허브: 오늘 3개만 */
+.gm-more{border:1px solid var(--line);border-radius:14px;background:var(--surface)}.gm-more>summary{cursor:pointer;padding:10px 12px;font-weight:700;font-size:13.5px;list-style:none;display:flex;justify-content:space-between}.gm-more>summary::after{content:"▾";color:var(--muted)}.gm-more[open]>summary::after{content:"▴"}.gm-more>summary::-webkit-details-marker{display:none}.gm-more .gm-battle,.gm-more .gm-hot{border:0;border-radius:0;margin:0}.gm-more .gm-battle{border-top:1px solid var(--line)}
+/* 모드 토글 */
+.mode-tg{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}.mode-tg input{width:16px;height:16px;margin:0}

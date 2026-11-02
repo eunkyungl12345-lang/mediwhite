@@ -3,6 +3,7 @@ import { HERO_SVG, GERM_SVG, art, artSrc } from "./defArt";
 import { useEffect, useRef, useState } from "react";
 import { saveScore, loadGameState, saveGameState, defenseDaily } from "@/lib/actions";
 import Board, { type Row } from "./Board";
+import HowTo from "./HowTo";
 import { sfx, haptic, shake, burst, pop } from "@/lib/juice";
 
 /** 병동 사수 — 스테이지형 줄 지키기 디펜스. 스테이지를 깨면 별·처방전 코인·새 의료진. (계정 저장) */
@@ -362,7 +363,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       for (const z of s.germs) if (!z.warn && z.x < CW * 1.2) { z.warn = true; sfx.tick(); shake(box.current, "s"); }
       // 변이균: 죽으면 둘로 분열
       for (const z of s.germs) if (z.hp <= 0 && z.kind === 4) { spawn(0, z.r, z.x - 6, .4); spawn(0, z.r, z.x + 14, .4); pop(box.current, z.x, z.r * CH + CH * .2, "분열!", "bad"); }
-      for (const z of s.germs) if (z.hp <= 0) { const bg2 = z.kind === 3 || z.kind === 7, R2 = bg2 ? CH * .46 : z.kind === 6 ? CH * .22 : CH * .3; s.fx.push({ kind: "die", r: z.r, x: z.x, t: 1, k: z.kind, gs: R2 * (bg2 ? 3.4 : 3.7) }); for (let k = 0; k < 10; k++) s.drops.push({ x: z.x, y: z.r * CH + CH * .3, vx: (Math.random() - .5) * 120, vy: -60 - Math.random() * 80, c: DRIP[z.kind], t: 1.2, floor: z.r * CH + CH - 6 }); }
+      for (const z of s.germs) if (z.hp <= 0) { const bg2 = z.kind === 3 || z.kind === 7, R2 = bg2 ? CH * .46 : z.kind === 6 ? CH * .22 : CH * .3; if (bg2) { pop(box.current, z.x, z.r * CH + CH / 2, "💥 보스 격파!", "good big"); shake(box.current, "l"); haptic([40, 60, 40]); sfx.record(); const sp = s.speed; s.speed = 0.0001; setTimeout(() => { s.speed = sp; }, 220); } s.fx.push({ kind: "die", r: z.r, x: z.x, t: 1, k: z.kind, gs: R2 * (bg2 ? 3.4 : 3.7) }); for (let k = 0; k < 10; k++) s.drops.push({ x: z.x, y: z.r * CH + CH * .3, vx: (Math.random() - .5) * 120, vy: -60 - Math.random() * 80, c: DRIP[z.kind], t: 1.2, floor: z.r * CH + CH - 6 }); }
       s.lost += s.units.filter(u => u.hp <= 0 && u.kind !== "punk").length; s.units = s.units.filter(u => u.hp > 0); s.germs = s.germs.filter(z => z.hp > 0);
       for (const c of s.cartFx) c.x += 520 * dt; s.cartFx = s.cartFx.filter(c => c.x < s.W + 40);
       draw(); s.raf = requestAnimationFrame(tick);
@@ -413,6 +414,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       </div>
       {toast && <div className="muted">{toast}</div>}
 
+      <HowTo id="defense" steps={[{ icon: "💧", title: "수액 모으기", desc: "떨어지는 💧는 자동으로 모여요" }, { icon: "👆", title: "의료진 골라 → 바닥 탭", desc: "왼쪽부터 배치하면 든든" }, { icon: "🦠", title: "오른쪽 끝 못 가게!", desc: "별 3개 = 아무도 안 잃기" }]} />
       {view === "map" && !showUp && (
         <>
           <div className="def-daily">

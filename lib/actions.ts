@@ -212,7 +212,11 @@ export async function saveScore(game: "dodge" | "sword" | "defense" | "bowling" 
   if (cur && Number(cur.value) >= value) return;
   await s.from("scores").upsert({ user_id: u.id, game, value, mode: mode ?? null, updated_at: new Date().toISOString() });
   { const who = u.nickname ? `[${u.dept}]${u.nickname}` : "누군가";
-    if (game === "apoc" && value >= 5 && value % 5 === 0) await gameEvent(`${who}님이 병원묵시록에서 ${value}일 생존! 🧟`);
+    if (game === "apoc" && value >= 3) await gameEvent(`${who}님이 병원묵시록 ${value}웨이브 방어! 🧟`);
+    if (game === "runner" && value >= 500) await gameEvent(`${who}님이 복도 ${value}m 질주! 🏃‍♀️`);
+    if (game === "dodge" && value >= 15) await gameEvent(`${who}님이 총알 피하기 ${value.toFixed(1)}초 생존! 💥`);
+    if ((game === "trivia" || game === "econ" || game === "quiz") && value >= 300) await gameEvent(`${who}님이 ${game === "quiz" ? "의학용어 퀴즈" : game === "econ" ? "경제 스피드 뉴스" : "상식 스피드퀴즈"} ${value}점! 🧠`);
+    if (game === "lightning" && value >= 100) await gameEvent(`${who}님이 번개 모드 ${Math.floor(value / 10)}판 클리어! ⚡`);
     if (game === "sword" && value >= 15) await gameEvent(`${who}님이 검 +${value} 강화 성공! ⚔️`);
     if (game === "defense" && value % 5 === 0) await gameEvent(`${who}님이 병동사수 ${Math.ceil(value / 10)}-${((value - 1) % 10) + 1} 보스 스테이지 클리어! 🛡️`); }
   revalidatePath("/games"); revalidatePath("/rank");
