@@ -8,7 +8,7 @@ const get = (k: string) => { try { return JSON.parse(localStorage.getItem(k) || 
 const set = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
 /** 다음 카페식 상단 바 + ☰ 게시판 메뉴 (최근 방문 · 즐겨찾기 · 전체) */
-export function CafeHeader({ title, here, items, me }: { title: string; here: string; items: NavItem[]; me: React.ReactNode }) {
+export function CafeHeader({ title, here, items, me, compact }: { title: string; here: string; items: NavItem[]; me: React.ReactNode; compact?: boolean }) {
   const [open, setOpen] = useState(false), [fav, setFav] = useState<string[]>([]), [recent, setRecent] = useState<string[]>([]);
   useEffect(() => {
     setFav(get("mw-fav") ?? []);
@@ -28,10 +28,10 @@ export function CafeHeader({ title, here, items, me }: { title: string; here: st
   const rec = recent.map(by).filter(Boolean) as NavItem[], fv = fav.map(by).filter(Boolean) as NavItem[];
   return (
     <>
-      <div className="cf-head">
+      {compact ? <button type="button" className="cf-menu cf-menu-sm" aria-label="게시판 메뉴" onClick={() => setOpen(true)}>☰</button> : <div className="cf-head">
         <button type="button" className="cf-title" onClick={() => setOpen(true)}>{title} <span>▾</span></button>
         <button type="button" className="cf-menu" aria-label="게시판 메뉴" onClick={() => setOpen(true)}>☰</button>
-      </div>
+      </div>}
       {open && <div className="cf-dim" onClick={() => setOpen(false)} />}
       <aside className={"cf-drawer" + (open ? " open" : "")} aria-hidden={!open}>
         <div className="cf-dtop"><button type="button" onClick={() => setOpen(false)} aria-label="닫기">✕</button><Link href="/home" onClick={() => setOpen(false)}>⌂</Link></div>

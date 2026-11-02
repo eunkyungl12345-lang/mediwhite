@@ -12,6 +12,7 @@ import BlueBadge from "@/components/BlueBadge";
 import { CafeHeader, NoticeFold, CafeBottom, QuerySelect, type NavItem } from "@/components/CafeNav";
 import BoardSearch from "@/components/BoardSearch";
 import { liveCounts } from "@/lib/live";
+import { boardNavItems } from "@/lib/boardNav";
 
 export const dynamic = "force-dynamic";
 const SEL = "id,category,title,body,pinned,boosted,created_at,board_id,topic,hidden,views,author:users(id,username,nickname,dept,xp,blue_badge)";
@@ -59,19 +60,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const canManage = isDept && (s.role === "admin" || leader?.id === s.id);
 
   const enc = encodeURIComponent;
-  const items: NavItem[] = [
-    { href: "/board", name: "전체글", icon: "✨", group: "게시판" },
-    { href: `/board?cat=${enc(NOTICE_CAT)}`, name: "공지사항", icon: "📢", group: "게시판" },
-    { href: "/anon", name: "익명 게시판", icon: "🕶️", group: "게시판" },
-    { href: "/jobs", name: "채용공고", icon: "💼", group: "게시판" },
-    { href: "/hospitals", name: "병원 리뷰", icon: "🏥", group: "게시판" },
-    ...[s.dept, ...DEPTS.filter(x => x !== s.dept)].filter(x => (DEPTS as readonly string[]).includes(x)).map(x => ({ href: `/board?cat=${enc(x)}`, name: `${x} 라운지`, icon: x === s.dept ? "🏷️" : "🏥", group: "직종 라운지" })),
-    ...TOPICS.map(t => ({ href: `/board?topic=${t.key}`, name: t.name, icon: t.icon, group: "주제별" })),
-    { href: "/guide/xray", name: "방사선 촬영법", icon: "📖", group: "실무 가이드" },
-    ...GUIDES.map(g => ({ href: `/guide/${g.slug}`, name: g.title.replace(" 가이드", ""), icon: g.icon, group: "실무 가이드" })),
-    { href: "/ssum", name: "썸", icon: "💘", group: "커뮤니티" }, { href: "/food", name: "맛집", icon: "🍽️", group: "커뮤니티" },
-    { href: "/news", name: "오늘의 핫뉴스", icon: "📰", group: "커뮤니티" }, { href: "/games", name: "게임", icon: "🎮", group: "커뮤니티" },
-  ];
+  const items = boardNavItems(s.dept);
   const here = cat !== "전체" ? `/board?cat=${enc(cat)}` : topic ? `/board?topic=${topic}` : "/board";
   const title = cat === NOTICE_CAT ? "📢 공지사항" : cat !== "전체" ? `${cat} 라운지` : topic ? `${topicOf(topic).icon} ${topicOf(topic).name}` : "✨ 전체글";
   const qs = (o: Record<string, string>) => { const p = new URLSearchParams(Object.entries({ ...(cat !== "전체" ? { cat } : {}), ...(tab ? { tab } : {}), ...(topic ? { topic } : {}), ...(sort !== "rank" ? { sort } : {}), ...o }).filter(([, v]) => v)); return `/board${p.toString() ? "?" + p : ""}`; };

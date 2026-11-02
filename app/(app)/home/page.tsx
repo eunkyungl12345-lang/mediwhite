@@ -2,6 +2,8 @@ import Link from "next/link";
 import { RANKS } from "@/lib/ranks";
 import BlueBadge from "@/components/BlueBadge";
 import HomeFeed from "@/components/HomeFeed";
+import { CafeHeader } from "@/components/CafeNav";
+import { boardNavItems } from "@/lib/boardNav";
 import PromoStrip from "@/components/PromoStrip";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
@@ -86,7 +88,7 @@ export default async function HomePage() {
 
       <PromoStrip items={promoItems} />
 
-      <HomeFeed latest={latestF} recent={recentF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} newsTabs={NEWS_TABS.map(t => ({ key: t.key, name: t.name }))} quotes={quotes} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} />
+      <HomeFeed latest={latestF} recent={recentF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} newsTabs={NEWS_TABS.map(t => ({ key: t.key, name: t.name }))} quotes={quotes} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} menu={<CafeHeader compact title="" here="/home" items={boardNavItems(s.dept)} me={<><b>{s.nickname}</b><span className="muted"> · {s.dept}</span></>} />} />
 
       <Link href="/rank" className={`h-rank2 t${r.tier}`}>
         <Insignia index={r.index} size={26} />
