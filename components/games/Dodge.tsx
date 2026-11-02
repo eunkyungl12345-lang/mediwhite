@@ -21,7 +21,7 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
 
   useEffect(() => {
     const st = stage.current!, c = cv.current!, x = c.getContext("2d")!, s = g.current;
-    const size = () => { const r = st.getBoundingClientRect(); const d = Math.min(2, devicePixelRatio || 1); s.W = r.width; s.H = r.height; c.width = r.width * d; c.height = r.height * d; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
+    const size = () => { const r = st.getBoundingClientRect(); const d = Math.min(3, devicePixelRatio || 1); s.W = r.width; s.H = r.height; c.width = r.width * d; c.height = r.height * d; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
     const M = () => Math.min(s.W, s.H);
     const draw = () => {
       const ph = phaseAt(s.el), pc = PHASES[ph][2];
@@ -62,7 +62,7 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
     const homing = () => { const m = M(); push({ x: Math.random() < .5 ? -8 : s.W + 8, y: Math.random() * s.H, vx: 0, vy: 0, r: Math.max(4, m * .014), k: "home", life: 4 }); };
     const powerup = () => { const m = M(); const ks: P["k"][] = ["slow", "shield", "bomb"]; const fromL = Math.random() < .5; s.pw.push({ x: fromL ? -20 : s.W + 20, y: m * .15 + Math.random() * (s.H - m * .3), vx: (fromL ? 1 : -1) * m * .12, vy: 0, k: ks[Math.floor(Math.random() * 3)], t: 0 }); };
     const hit = () => { if (s.inv > 0 || s.dash > 0) return; if (s.shield > 0) { s.shield = 0; s.inv = 1; sfx.hit(); haptic(20); pop(st, s.pl.x, s.pl.y - 24, "방패!", "good"); burst(st, s.pl.x, s.pl.y, "#fff", 12); return; } end(); };
-    const end = () => { s.run = false; cancelAnimationFrame(s.raf); s.flash = 1; draw(); sfx.boom(); haptic([50, 40, 50]); shake(st, "l"); burst(st, s.pl.x, s.pl.y, "#F07A70", 24); const sec = Math.round(s.el * 100) / 100;
+    const end = () => { s.run = false; lock(false); cancelAnimationFrame(s.raf); s.flash = 1; draw(); sfx.boom(); haptic([50, 40, 50]); shake(st, "l"); burst(st, s.pl.x, s.pl.y, "#F07A70", 24); const sec = Math.round(s.el * 100) / 100;
       setRes({ sec, graze: s.graze, phase: PHASES[phaseAt(s.el)][1], dash: s.dashes }); setState("done"); saveScore("dodge", sec).catch(() => {}); };
     const tick = (t: number) => { if (s.paused) return; const raw = Math.min(.05, (t - s.tl) / 1000); s.tl = t; const ts = s.slow > 0 || s.focusOn > 0 ? .4 : 1, dt = raw * ts; s.el += raw; const el = s.el, m = M(), pl = s.pl;
       const ph = phaseAt(el); if (ph !== s.phase) { s.phase = ph; if (ph > 0) { s.banner = PHASES[ph][1]; s.bannerT = 1.6; sfx.level(); haptic(15); pop(st, s.W / 2, s.H * .3, `${PHASES[ph][0]}초 돌파!`, "good big"); } if (ph === 3) { s.bossT = 15; s.bossA = 0; } }
@@ -92,12 +92,13 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
         if (p.k === "slow") { s.slow = 3; pop(st, p.x, p.y - 20, "슬로우 3초", "good"); } else if (p.k === "shield") { s.shield = 1; pop(st, p.x, p.y - 20, "방패", "good"); } else { for (const b of s.bul) burst(st, b.x, b.y, COL[b.k], 2); s.bul = []; s.las = []; shake(st, "m"); sfx.boom(); pop(st, p.x, p.y - 20, "전부 삭제!", "good big"); } } }
       s.pw = s.pw.filter(p => !(p as any).dead && p.x > -40 && p.x < s.W + 40);
       if (s.slow > 0) s.slow -= raw; if (s.focusOn > 0) { s.focusOn -= raw; if (s.focusOn <= 0) s.focus = 0; } if (s.inv > 0) s.inv -= raw; if (s.dashCd > 0) s.dashCd -= raw; if (s.flash > 0) s.flash -= raw * 2; if (s.bannerT > 0) s.bannerT -= raw;
-      setSec(el); watch.current(el, () => { setRec(true); sfx.record(); setTimeout(() => setRec(false), 1400); });
+      if (Math.floor(el * 8) !== Math.floor((el - raw) * 8)) setSec(el); watch.current(el, () => { setRec(true); sfx.record(); setTimeout(() => setRec(false), 1400); });
       draw(); s.raf = requestAnimationFrame(tick); };
     const dash = () => { if (!s.run || s.paused || s.dashCd > 0) return; s.dash = .18; s.dashCd = 1.6; s.dashes++; sfx.whoosh(); haptic(8); burst(st, s.pl.x, s.pl.y, "#6FBFA9", 8); };
-    (st as any).__start = () => { setRec(false); setRes(null); watch.current = recordWatcher(best); sfx.level(); size(); const m = M(); s.pl = { x: s.W / 2, y: s.H / 2, r: Math.max(6, m * .022) }; s.bul = []; s.las = []; s.pw = []; s.trail = []; s.acc = 0; s.ringT = 2; s.lasT = 1; s.pwT = 5; s.bossT = 0; s.el = 0; s.slow = 0; s.shield = 0; s.dash = 0; s.dashCd = 0; s.inv = 0; s.graze = 0; s.focus = 0; s.focusOn = 0; s.dashes = 0; s.flash = 0; s.phase = -1; s.bannerT = 0; s.tl = performance.now(); s.run = true; s.paused = false; setState("run"); s.raf = requestAnimationFrame(tick); };
+    const lock = (v: boolean) => { try { document.body.style.overflow = v ? "hidden" : ""; document.body.style.touchAction = v ? "none" : ""; (document.body.style as any).overscrollBehavior = v ? "none" : ""; } catch {} };
+    (st as any).__start = () => { setRec(false); setRes(null); lock(true); try { st.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {} watch.current = recordWatcher(best); sfx.level(); size(); const m = M(); s.pl = { x: s.W / 2, y: s.H / 2, r: Math.max(6, m * .022) }; s.bul = []; s.las = []; s.pw = []; s.trail = []; s.acc = 0; s.ringT = 2; s.lasT = 1; s.pwT = 5; s.bossT = 0; s.el = 0; s.slow = 0; s.shield = 0; s.dash = 0; s.dashCd = 0; s.inv = 0; s.graze = 0; s.focus = 0; s.focusOn = 0; s.dashes = 0; s.flash = 0; s.phase = -1; s.bannerT = 0; s.tl = performance.now(); s.run = true; s.paused = false; setState("run"); s.raf = requestAnimationFrame(tick); };
     (st as any).__god = () => { s.inv = 1e9; };
-    (st as any).__pause = (v: boolean) => { if (!s.run) return; s.paused = v; setState(v ? "pause" : "run"); if (!v) { s.tl = performance.now(); s.raf = requestAnimationFrame(tick); } };
+    (st as any).__pause = (v: boolean) => { if (!s.run) return; s.paused = v; lock(!v); setState(v ? "pause" : "run"); if (!v) { s.tl = performance.now(); s.raf = requestAnimationFrame(tick); } };
     const ro = new ResizeObserver(size); ro.observe(st);
     const pd = (e: PointerEvent) => { if (!s.run || s.paused || (e.target as HTMLElement).closest("button")) return; s.drag = { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 }; st.setPointerCapture(e.pointerId); };
     const pm = (e: PointerEvent) => { if (!s.run || !s.drag) return; const dx = (e.clientX - s.drag.x) * 1.3, dy = (e.clientY - s.drag.y) * 1.3; s.pl.x += dx; s.pl.y += dy; s.drag.moved += Math.abs(dx) + Math.abs(dy); if (Math.abs(dx) + Math.abs(dy) > 1) { const l = Math.hypot(dx, dy); s.dashDir = { x: dx / l, y: dy / l }; } s.drag = { ...s.drag, x: e.clientX, y: e.clientY }; };
@@ -105,9 +106,10 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
     const kd = (e: KeyboardEvent) => { if (!s.run) return; if (e.key.startsWith("Arrow") || ["KeyW", "KeyA", "KeyS", "KeyD"].includes(e.code)) { s.keys[e.key] = true; s.keys[e.code] = true; e.preventDefault(); } if (e.code === "Space") { e.preventDefault(); dash(); } if (e.code === "Escape") (st as any).__pause(!s.paused); };
     const ku = (e: KeyboardEvent) => { s.keys[e.key] = false; s.keys[e.code] = false; };
     const vis = () => { if (document.hidden) (st as any).__pause(true); };
+    const tm = (e: TouchEvent) => { if (s.run) e.preventDefault(); }; st.addEventListener("touchmove", tm, { passive: false });
     st.addEventListener("pointerdown", pd); st.addEventListener("pointermove", pm); st.addEventListener("pointerup", pu); st.addEventListener("pointercancel", pu);
     addEventListener("keydown", kd); addEventListener("keyup", ku); document.addEventListener("visibilitychange", vis);
-    return () => { ro.disconnect(); cancelAnimationFrame(s.raf); st.removeEventListener("pointerdown", pd); st.removeEventListener("pointermove", pm); st.removeEventListener("pointerup", pu); st.removeEventListener("pointercancel", pu); removeEventListener("keydown", kd); removeEventListener("keyup", ku); document.removeEventListener("visibilitychange", vis); };
+    return () => { ro.disconnect(); cancelAnimationFrame(s.raf); lock(false); st.removeEventListener("touchmove", tm); st.removeEventListener("pointerdown", pd); st.removeEventListener("pointermove", pm); st.removeEventListener("pointerup", pu); st.removeEventListener("pointercancel", pu); removeEventListener("keydown", kd); removeEventListener("keyup", ku); document.removeEventListener("visibilitychange", vis); };
   }, []);
 
   return (

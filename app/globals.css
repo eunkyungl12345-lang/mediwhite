@@ -1711,3 +1711,5 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
   body:has(.dock.open) .bnav,body:has(.dock.open) .wfab{display:none}
   .dock{padding-bottom:env(safe-area-inset-bottom,0px)}
 }
+
+.dodge2 .stage{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
