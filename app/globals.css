@@ -1665,8 +1665,8 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .cf-post.v3{gap:7px;padding:16px 4px 14px}.cf-post.v3 h3{font-size:16.5px}.cf-post.v3 .post-meta{display:none}.cf-post.v3 .frow-who .name .ins{display:none}.cf-post.v3 p{-webkit-line-clamp:2;font-size:14px;color:var(--muted)}
 .cf-post.v3.pinned{padding-left:10px;padding-right:10px}
 .wfab{display:none}
+@media (max-width:719px) and (prefers-color-scheme:light){:root{--bg:#FFFFFF;--line:#E6EBE9}}
 @media (max-width:719px){
-  :root{--bg:#FFFFFF;--line:#E6EBE9}
   header{padding:12px 0 8px}.brand h1{font-family:var(--f-body);font-weight:800;font-size:21px;letter-spacing:-.4px}
   .hd-desk{display:none!important}
   .bnav{grid-template-columns:repeat(5,1fr);height:calc(56px + env(safe-area-inset-bottom,0px));box-shadow:none}
