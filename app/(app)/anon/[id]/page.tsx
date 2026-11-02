@@ -45,7 +45,7 @@ export default async function AnonPostPage({ params }: { params: { id: string } 
       <Reactions kind="post" id={p.id} {...agg("post", p.id)} />
       <div className="comments-head"><b>댓글 {comments?.length ?? 0}</b><span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>댓글도 익명이에요 · 같은 사람은 같은 번호</span></div>
       <CommentThread postId={p.id} meId={s.id} admin={admin} anon items={(comments ?? []).map((c: any) => { const ag = agg("comment", String(c.id)), who = label(c.author_id); return { id: c.id, author_id: c.author_id, text: c.text, created: fmt(c.created_at), hidden: !!c.hidden, parent_id: c.parent_id ?? null, r: rankOf(0), author: null, label: (who === "글쓴이" ? "✍️ 글쓴이" : `🕶️ ${who}`) + (c.author_id === s.id ? " (나)" : ""), labelColor: col(c.author_id), counts: ag.counts, mine: ag.mine } as CItem; })} />
-      <CommentForm postId={p.id} />
+      <CommentForm postId={p.id} placeholder="댓글 달기 (익명)" />
       <div className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>익명이어도 실명·병원명·비방은 신고 대상이에요. 신고가 쌓이면 임시 블라인드되고, 운영팀이 확인해요.</div>
     </div>
   );

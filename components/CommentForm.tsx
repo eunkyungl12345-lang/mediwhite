@@ -4,7 +4,7 @@ import { personMention } from "@/lib/safety";
 import { useFormStatus } from "react-dom";
 import { addComment } from "@/lib/actions";
 function Btn({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "…" : label}</button>; }
-export default function CommentForm({ postId, parentId, placeholder = "댓글 달기 (익명)", autoFocus, onDone, label = "등록" }: { postId: string; parentId?: number; placeholder?: string; autoFocus?: boolean; onDone?: () => void; label?: string }) {
+export default function CommentForm({ postId, parentId, placeholder = "댓글 달기", autoFocus, onDone, label = "등록" }: { postId: string; parentId?: number; placeholder?: string; autoFocus?: boolean; onDone?: () => void; label?: string }) {
   const ref = useRef<HTMLFormElement>(null);
   const [t, setT] = useState(""); const pm = personMention(t);
   return (<>

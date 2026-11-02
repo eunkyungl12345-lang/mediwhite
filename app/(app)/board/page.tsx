@@ -95,8 +95,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
             <div className="post-top">{isHot(p) && <span className="cf-hot">HOT</span>}{p.pinned ? <span className="pin">📌 공지</span> : <span className="topic-tag">{topicOf(p.topic).icon} {topicOf(p.topic).name}</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{cat === "전체" && !p.pinned && p.category !== NOTICE_CAT && <span className="bd-cat">{p.category}</span>}{p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드</span>}{Date.now() - new Date(p.created_at).getTime() < DAY && <span className="cf-n">N</span>}</div>
             <h3>{p.title}</h3>
             {p.body && <p>{p.body}</p>}
-            <div className="post-meta">{meta(p)}</div>
-            <div className="cf-cnt"><span>♡ {p.nr}</span><span>💬 {p.nc}</span><span>👁 {p.views ?? 0}</span></div>
+            <div className="post-meta">{meta(p)}<span className="cf-cnt"><span>♡ {p.nr}</span><span>💬 {p.nc}</span><span>👁 {p.views ?? 0}</span></span></div>
           </Link>
         ))}
       </div>
