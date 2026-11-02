@@ -1690,3 +1690,4 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .run-up{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;text-align:left;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font:inherit;cursor:pointer;opacity:.6}.run-up.can{opacity:1;border-color:#F4D35E}.run-up.max{opacity:.9;border-color:#6FBFA9}
 .run-ui{font-size:24px}.run-un{font-size:13px;font-weight:700;line-height:1.3}.run-un small{color:#F4D35E;letter-spacing:1px}.run-un em{font-style:normal;font-weight:500;font-size:11.5px;opacity:.8}.run-uc{font-size:12px;font-weight:800;white-space:nowrap}
 .run-ov.shop{justify-content:flex-start}.run-ov.shop .big{font-size:18px!important;margin-top:2px}
+.dodge2 .run-pause{left:auto;right:8px;top:30px;transform:none}
