@@ -27,7 +27,7 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
       const ph = phaseAt(s.el), pc = PHASES[ph][2];
       x.fillStyle = "#0B1210"; x.fillRect(0, 0, s.W, s.H);
       // 움직이는 격자 + 비네트
-      x.strokeStyle = "rgba(111,191,169,.07)"; x.lineWidth = 1; const gs = M() * .1, off = (s.el * 12) % gs; x.beginPath(); for (let i = -1; i < s.W / gs + 1; i++) { x.moveTo(i * gs + off, 0); x.lineTo(i * gs + off, s.H); } for (let j = -1; j < s.H / gs + 1; j++) { x.moveTo(0, j * gs + off); x.lineTo(s.W, j * gs + off); } x.stroke();
+      x.strokeStyle = "rgba(111,191,169,.07)"; x.lineWidth = 1; const gs = M() * .1, off = 0; x.beginPath(); for (let i = -1; i < s.W / gs + 1; i++) { x.moveTo(i * gs + off, 0); x.lineTo(i * gs + off, s.H); } for (let j = -1; j < s.H / gs + 1; j++) { x.moveTo(0, j * gs + off); x.lineTo(s.W, j * gs + off); } x.stroke();
       const vg = x.createRadialGradient(s.W / 2, s.H / 2, M() * .3, s.W / 2, s.H / 2, M() * .8); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, s.slow > 0 ? "rgba(91,192,235,.35)" : "rgba(0,0,0,.55)"); x.fillStyle = vg; x.fillRect(0, 0, s.W, s.H);
       if (!s.run && !s.pl) return;
       // 보스
@@ -35,17 +35,16 @@ export default function Dodge({ ranks, best = 0 }: { ranks: Row[]; best?: number
       // 레이저
       for (const l of s.las) { x.save(); x.translate(l.x, l.y); x.rotate(l.a); if (l.t < .8) { x.strokeStyle = `rgba(91,192,235,${.25 + .5 * Math.abs(Math.sin(l.t * 20))})`; x.lineWidth = 2; x.setLineDash([8, 8]); x.beginPath(); x.moveTo(-M() * 2, 0); x.lineTo(M() * 2, 0); x.stroke(); } else { x.strokeStyle = "#5BC0EB"; x.shadowColor = "#5BC0EB"; x.shadowBlur = 16; x.lineWidth = M() * .03; x.beginPath(); x.moveTo(-M() * 2, 0); x.lineTo(M() * 2, 0); x.stroke(); x.strokeStyle = "#fff"; x.lineWidth = M() * .01; x.stroke(); } x.restore(); }
       // 총알
-      for (const b of s.bul) { x.fillStyle = COL[b.k]; x.shadowColor = COL[b.k]; x.shadowBlur = 8;
-        if (b.k === "ring") { x.save(); x.translate(b.x, b.y); x.rotate(Math.PI / 4 + s.el * 3); x.fillRect(-b.r, -b.r, b.r * 2, b.r * 2); x.restore(); }
-        else if (b.k === "spin") { x.save(); x.translate(b.x, b.y); x.rotate(s.el * 5); x.fillRect(-b.r, -b.r, b.r * 2, b.r * 2); x.restore(); }
+      for (const b of s.bul) { x.fillStyle = COL[b.k];
+        if (b.k === "ring") { x.save(); x.translate(b.x, b.y); x.rotate(Math.PI / 4); x.fillRect(-b.r, -b.r, b.r * 2, b.r * 2); x.restore(); }
+        else if (b.k === "spin") { x.save(); x.translate(b.x, b.y); x.rotate(s.el * 1.5); x.fillRect(-b.r, -b.r, b.r * 2, b.r * 2); x.restore(); }
         else if (b.k === "home") { x.beginPath(); x.moveTo(b.x, b.y - b.r * 1.3); x.lineTo(b.x + b.r, b.y + b.r); x.lineTo(b.x - b.r, b.y + b.r); x.fill(); }
         else { x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); } }
-      x.shadowBlur = 0;
       // 파워업
       for (const p of s.pw) { x.save(); x.translate(p.x, p.y); x.fillStyle = "rgba(255,255,255,.12)"; x.beginPath(); x.arc(0, 0, M() * .035 + Math.sin(p.t * 4) * 2, 0, 7); x.fill(); x.strokeStyle = "#fff"; x.lineWidth = 1.5; x.stroke(); x.font = `${Math.floor(M() * .04)}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(p.k === "slow" ? "⏱" : p.k === "shield" ? "🛡" : "💣", 0, 1); x.restore(); }
       // 플레이어 (꼬리 + 캡슐 + 방패 + 대시 쿨)
       const pl = s.pl; for (let i = 0; i < s.trail.length; i++) { const tr = s.trail[i]; x.fillStyle = `rgba(111,191,169,${(i / s.trail.length) * .35})`; x.beginPath(); x.arc(tr.x, tr.y, pl.r * (i / s.trail.length), 0, 7); x.fill(); }
-      const blink = s.inv > 0 && s.inv < 1e8 && Math.floor(s.el * 16) % 2 === 0; if (!blink) { x.save(); x.translate(pl.x, pl.y); x.shadowColor = "#6FBFA9"; x.shadowBlur = 14; x.fillStyle = "#6FBFA9"; x.beginPath(); x.arc(0, 0, pl.r, 0, 7); x.fill(); x.shadowBlur = 0; x.fillStyle = "#fff"; x.beginPath(); x.arc(-pl.r * .3, -pl.r * .2, pl.r * .18, 0, 7); x.arc(pl.r * .3, -pl.r * .2, pl.r * .18, 0, 7); x.fill(); x.restore(); }
+      const blink = s.inv > 0 && s.inv < 1e8 && Math.floor(s.el * 6) % 2 === 0; if (!blink) { x.save(); x.translate(pl.x, pl.y); x.fillStyle = "#6FBFA9"; x.beginPath(); x.arc(0, 0, pl.r, 0, 7); x.fill(); x.shadowBlur = 0; x.fillStyle = "#fff"; x.beginPath(); x.arc(-pl.r * .3, -pl.r * .2, pl.r * .18, 0, 7); x.arc(pl.r * .3, -pl.r * .2, pl.r * .18, 0, 7); x.fill(); x.restore(); }
       if (s.shield > 0) { x.strokeStyle = "rgba(255,255,255,.8)"; x.lineWidth = 2; x.beginPath(); x.arc(pl.x, pl.y, pl.r * 2, 0, 7); x.stroke(); }
       if (s.dashCd > 0) { x.strokeStyle = "rgba(255,255,255,.35)"; x.lineWidth = 2; x.beginPath(); x.arc(pl.x, pl.y, pl.r * 2.6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - s.dashCd / 1.6)); x.stroke(); }
       // HUD: 집중 게이지 + 페이즈
