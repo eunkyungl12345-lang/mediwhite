@@ -1691,3 +1691,14 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .run-ui{font-size:24px}.run-un{font-size:13px;font-weight:700;line-height:1.3}.run-un small{color:#F4D35E;letter-spacing:1px}.run-un em{font-style:normal;font-weight:500;font-size:11.5px;opacity:.8}.run-uc{font-size:12px;font-weight:800;white-space:nowrap}
 .run-ov.shop{justify-content:flex-start}.run-ov.shop .big{font-size:18px!important;margin-top:2px}
 .dodge2 .run-pause{left:auto;right:8px;top:30px;transform:none}
+/* 병동 사수 모바일: 전장을 위로·크게, 유닛 선택은 가로 스크롤 */
+@media (max-width:719px){
+  .def-play .def-stage{order:-1}
+  .def-play .def-shop{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px}.def-play .def-shop::-webkit-scrollbar{display:none}
+  .def-play .def-unit{flex:none;width:68px}
+}
+/* 병원묵시록 v2: 연구소·일시정지·결과 */
+.ap-lab{display:grid;gap:6px;width:100%;max-width:380px;margin:4px auto 0;text-align:left}.ap-lab .run-up{color:var(--ink);background:var(--surface);border-color:var(--line);opacity:.55}.ap-lab .run-up.can{opacity:1;border-color:#C98A00}.ap-lab .run-up.max{opacity:.9;border-color:var(--scrub)}.ap-lab .run-un small{color:#C98A00}
+.ap-pause{margin-left:auto;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:11px;cursor:pointer}
+.ap-res{display:flex;gap:14px;justify-content:center;font-size:12px;opacity:.9}.ap-res b{display:block;font-size:20px;font-weight:900}
+.ap-over{border:0;font:inherit;cursor:default;width:100%}button.ap-over{cursor:pointer}

@@ -193,7 +193,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
 
   useEffect(() => {
     const c = cv.current!, x = c.getContext("2d")!, s = g.current;
-    const size = () => { const r = box.current!.getBoundingClientRect(); if (!r.width) return; const d = Math.min(2, devicePixelRatio || 1); s.W = r.width; s.H = r.width * 0.62; c.width = s.W * d; c.height = s.H * d; c.style.height = s.H + "px"; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
+    const size = () => { const r = box.current!.getBoundingClientRect(); if (!r.width) return; const d = Math.min(2, devicePixelRatio || 1); s.W = r.width; s.H = r.width * (r.width < 560 ? 0.8 : 0.62); c.width = s.W * d; c.height = s.H * d; c.style.height = s.H + "px"; x.setTransform(d, 0, 0, d, 0, 0); draw(); };
     const cw = () => s.W / COLS, ch = () => s.H / ROWS;
     const rowOk = (r: number) => { const id = s.stage?.id ?? 99; if (id === 1) return r === 2; if (id === 2) return r >= 1 && r <= 2; if (s.stage?.mod === "iso" || id <= 4) return r >= 1 && r <= 3; if (id <= 7) return r <= 3; return true; };
     const lv = (k: UnitKind) => lvMult(s.levels[k] ?? 1);
@@ -228,7 +228,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
       }
       for (const z of s.germs) {
         const big = z.kind === 3 || z.kind === 7;
-        const bounce = z.eating ? Math.abs(Math.sin(s.t * 14)) * 3 : Math.abs(Math.sin(s.t * (z.kind === 6 ? 16 : 6) + z.x * .05)) * (z.kind === 6 ? 8 : 4), cy = z.r * CH + CH / 2 - bounce, R = big ? CH * .46 : z.kind === 6 ? CH * .22 : CH * .3;
+        const bounce = z.eating ? Math.abs(Math.sin(s.t * 14)) * 3 : Math.abs(Math.sin(s.t * (z.kind === 6 ? 16 : 6) + z.x * .05)) * (z.kind === 6 ? 8 : 4), cy = z.r * CH + CH / 2 - bounce, R = (big ? .46 : z.kind === 6 ? .22 : .3) * Math.min(CH, CW * 1.15);
         x.fillStyle = "rgba(0,0,0,.12)"; x.beginPath(); x.ellipse(z.x, z.r * CH + CH - 4, R * .8, 3, 0, 0, 7); x.fill();
         if (big) { x.save(); x.globalAlpha = .18 + Math.sin(s.t * 5) * .08; const ag = x.createRadialGradient(z.x, cy, 0, z.x, cy, R * 1.6); ag.addColorStop(0, z.kind === 7 ? "#FF5A1A" : "#B5FF5A"); ag.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = ag; x.beginPath(); x.arc(z.x, cy, R * 1.6, 0, 7); x.fill(); x.restore(); }
         if (z.poison > 0) { x.save(); x.globalAlpha = .35; x.fillStyle = "#4CAF50"; x.beginPath(); x.arc(z.x, cy, R * 1.2, 0, 7); x.fill(); x.restore(); }
@@ -444,7 +444,7 @@ export default function Defense({ ranks }: { ranks: Row[] }) {
         </div>
       )}
 
-      <div style={{ display: view === "play" ? "grid" : "none", gap: 10 }}>
+      <div className="def-play" style={{ display: view === "play" ? "grid" : "none", gap: 10 }}>
         {stage && <div className="def-bar"><span className="def-sun">💧 {ui.sun}</span><span className="muted">{daily ? "📅 " : ""}{stage.name} · 웨이브 {ui.wave}/{stage.waves}{stage.mod !== "none" ? ` · ${MODS[stage.mod].name}` : ""}</span><span className="muted">잃은 의료진 {g.current.lost}</span></div>}
         {stage && <div className="row" style={{ gap: 6 }}><button type="button" className="btn ghost" style={{ padding: "6px 12px" }} onClick={() => (box.current as any)?.__auto()}>✨ 추천 배치</button><button type="button" className={"btn" + (fast ? "" : " ghost")} style={{ padding: "6px 12px" }} onClick={() => setFast(((box.current as any)?.__speed() ?? 1) === 2)}>⏩ {fast ? "2배속 ON" : "2배속"}</button></div>}
         <div className="def-shop">{unlocked.map(k => <button key={k} type="button" className={"def-unit" + (sel === k ? " sel" : "") + (ui.sun < UNITS[k].cost ? " poor" : "")} onClick={() => setSel(k)} title={UNITS[k].desc}><span className="def-ico art" style={{ background: UCOLOR[k] }}><img src={artSrc(k, HERO_SVG[k])} alt="" draggable={false} /></span><span className="def-name">{UNITS[k].name}{(save.levels[k] ?? 1) > 1 ? ` +${(save.levels[k] ?? 1) - 1}` : ""}</span><span className="def-cost">{UNITS[k].cost}</span></button>)}
