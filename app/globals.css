@@ -1706,3 +1706,8 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .hchips-menu{display:flex;align-items:center;padding:0 10px 0 4px;flex:none;background:linear-gradient(90deg,transparent,var(--surface) 30%)}
 .cf-menu-sm{width:34px;height:34px;font-size:17px;border-radius:9px}
 @media (max-width:719px){.hchips-wrap{margin:0 -16px}.hchips-wrap .hchips.v3{margin:0}}
+/* 모바일: 채팅 서랍이 열리면 하단바·글쓰기 버튼 숨김 (입력창이 가려지던 문제) */
+@media (max-width:719px){
+  body:has(.dock.open) .bnav,body:has(.dock.open) .wfab{display:none}
+  .dock{padding-bottom:env(safe-area-inset-bottom,0px)}
+}
