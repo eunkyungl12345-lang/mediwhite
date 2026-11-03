@@ -1,4 +1,13 @@
 /** 당직실 3D 배경음 — 파일 없이 WebAudio로 합성 (도시 소음·불·귀뚜라미·포차 웅성거림 + 잔잔한 패드 음악) */
+/** iOS: 무음 스위치가 켜져 있으면 Web Audio가 안 들려요 → 오디오 세션을 '재생'으로 바꾸고 무음 <audio>를 한 번 재생 (사용자 탭 안에서 호출) */
+let unlocked = false;
+export function unlockAudio() {
+  try { const as = (navigator as any).audioSession; if (as) as.type = "playback"; } catch {}
+  if (unlocked) return; unlocked = true;
+  try { const sr = 8000, n = sr / 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf); const w = (o: number, t: string) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+    w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
+    const a = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" }))); a.loop = true; (a as any).playsInline = true; a.volume = .01; a.play().catch(() => { unlocked = false; }); } catch { unlocked = false; }
+}
 export type AmbScene = "roof" | "pocha" | "zen" | "mars";
 
 function noiseBuffer(ctx: AudioContext, sec = 4, brown = true) {
@@ -63,12 +72,21 @@ export class Ambience {
     this.every(9000, 20000, () => this.windchime());
   }
   /** 싱잉볼: 비조화 배음 + 미세한 맥놀이 + 긴 여운 */
-  bowl(f0 = 261.6, gain = .9) {
-    const t = this.ctx.currentTime, dur = 9; const out = this.ctx.createGain(); out.gain.value = gain; out.connect(this.sfx); this.nodes.push(out);
+  bowl(f0 = 261.6, gain = 1.6) {
+    this.ctx.resume(); const t = this.ctx.currentTime, dur = 9; const out = this.ctx.createGain(); out.gain.value = gain; out.connect(this.sfx); this.nodes.push(out);
     const parts: [number, number, number][] = [[1, .35, 9], [2.71, .16, 7], [5.4, .07, 5], [8.93, .03, 3.5]];
     for (const [r, a, d] of parts) for (const det of [-1.5, 1.5]) { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = f0 * r; o.detune.value = det * (r > 1 ? 2 : 1); const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a, t + .03); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(out); o.start(t); o.stop(t + d + .1); }
     this.burst("bandpass", 2500, .03, .12); // 채 닿는 소리
     this.timers.push(setTimeout(() => { try { out.disconnect(); } catch {} }, (dur + 1) * 1000));
+  }
+  /** 🎆 불꽃: 쉬익 올라가는 소리 → (delay 후) 펑 + 타닥타닥 */
+  firework(delay = 1.1, big = 1) {
+    this.ctx.resume(); const t0 = this.ctx.currentTime;
+    { const src = this.ctx.createBufferSource(); src.buffer = noiseBuffer(this.ctx, 1.5, false); const f = this.ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 6; f.frequency.setValueAtTime(600, t0); f.frequency.exponentialRampToValueAtTime(3200, t0 + delay); const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.08, t0 + .1); g.gain.linearRampToValueAtTime(0, t0 + delay); src.connect(f); f.connect(g); g.connect(this.sfx); src.start(t0); src.stop(t0 + delay + .05); }
+    const tb = t0 + delay;
+    { const src = this.ctx.createBufferSource(); src.buffer = noiseBuffer(this.ctx, 2, true); const f = this.ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900; const g = this.ctx.createGain(); g.gain.setValueAtTime(0, tb); g.gain.linearRampToValueAtTime(.55 * big, tb + .01); g.gain.exponentialRampToValueAtTime(.0001, tb + 1.6); src.connect(f); f.connect(g); g.connect(this.sfx); src.start(tb); src.stop(tb + 1.7); }
+    { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(90, tb); o.frequency.exponentialRampToValueAtTime(38, tb + .5); const g = this.ctx.createGain(); g.gain.setValueAtTime(.35 * big, tb); g.gain.exponentialRampToValueAtTime(.0001, tb + .7); o.connect(g); g.connect(this.sfx); o.start(tb); o.stop(tb + .8); }
+    for (let i = 0; i < 26; i++) this.timers.push(setTimeout(() => this.burst("highpass", 3000 + Math.random() * 4000, .03, .05 + Math.random() * .06, (Math.random() - .5) * 1.4), (delay + .35 + Math.random() * 1.4) * 1000));
   }
   private windchime() { const base = [1046, 1174, 1318, 1568, 1760]; const n = 2 + Math.floor(Math.random() * 3); for (let i = 0; i < n; i++) { const t = this.ctx.currentTime + i * (.12 + Math.random() * .25); const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = base[Math.floor(Math.random() * base.length)]; const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.03, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + 2.2); const p = this.ctx.createStereoPanner(); p.pan.value = (Math.random() - .5) * 1.2; o.connect(g); g.connect(p); p.connect(this.sfx); o.start(t); o.stop(t + 2.3); } }
   private chirp(freq: number, pan: number) { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = freq; const g = this.ctx.createGain(); const t = this.ctx.currentTime; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.025, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .07); const p = this.ctx.createStereoPanner(); p.pan.value = pan; o.connect(g); g.connect(p); p.connect(this.sfx); o.start(); o.stop(t + .1); }

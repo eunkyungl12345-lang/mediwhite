@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { unlockAudio } from "./ambience";
 /** 💧 수액 방울 명상 — 점적통에서 방울이 똑… 떨어질 때마다 천천히 내쉬어요. 100방울 = 수액 1팩 */
 const GAP = 4200, TOTAL = 100;
 export default function IVDrip({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const [n, setN] = useState(0), [phase, setPhase] = useState(0), [tapOk, setTapOk] = useState(0);
   const ctx = useRef<AudioContext | null>(null), doneRef = useRef(false);
-  const plip = (soft = 1) => { try { const c = ctx.current ?? new AudioContext(); ctx.current = c; c.resume(); const t = c.currentTime; const o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(1100, t); o.frequency.exponentialRampToValueAtTime(420, t + .12); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12 * soft, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + .35); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + .4); } catch {} };
+  const plip = (soft = 1) => { unlockAudio(); try { const c = ctx.current ?? new AudioContext(); ctx.current = c; c.resume(); const t = c.currentTime; const o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(1100, t); o.frequency.exponentialRampToValueAtTime(420, t + .12); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12 * soft, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + .35); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + .4); } catch {} };
   useEffect(() => { const t0 = performance.now(); let raf = 0, last = 0;
     const loop = () => { raf = requestAnimationFrame(loop); const el = performance.now() - t0, k = Math.floor(el / GAP); setPhase((el % GAP) / GAP); if (k > last) { last = k; setN(x => { const nx = Math.min(TOTAL, x + 1); if (nx >= TOTAL && !doneRef.current) { doneRef.current = true; onDone(); } return nx; }); plip(.8); try { navigator.vibrate?.(6); } catch {} } };
     loop(); return () => { cancelAnimationFrame(raf); ctx.current?.close(); }; }, []); // eslint-disable-line

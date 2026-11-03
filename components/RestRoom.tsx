@@ -53,9 +53,9 @@ export default function RestRoom() {
   const pos = useRef<RestPos | null>(null), [pulse, setPulse] = useState<{ k: number; a: string } | null>(null), [gl, setGl] = useState<boolean | null>(null);
   useEffect(() => { try { const c = document.createElement("canvas"); setGl(!!(c.getContext("webgl2") || c.getContext("webgl"))); } catch { setGl(false); } }, []);
 
-  const beat = async (act?: "cheers" | "pat" | "bow") => {
+  const beat = async (act?: string) => {
     try { const r = await restBeat(act ?? null, breathing.current, pos.current); setV(r);
-      for (const p of r.people) if (p.act && p.actAge < 18 && !p.me) { const key = p.nick + p.act + Math.floor(p.actAge / 18); if (!seen.current[p.nick + p.act] || Date.now() - seen.current[p.nick + p.act] > 17000) { seen.current[p.nick + p.act] = Date.now(); const msg = `${ACT[p.act].e} ${p.nick}님이 ${ACT[p.act].t}`; setToast(t => [...t.slice(-2), msg]); setTimeout(() => setToast(t => t.filter(x => x !== msg)), 5000); void key; } }
+      for (const p of r.people) if (p.act && ACT[p.act] && p.actAge < 18 && !p.me) { const key = p.nick + p.act + Math.floor(p.actAge / 18); if (!seen.current[p.nick + p.act] || Date.now() - seen.current[p.nick + p.act] > 17000) { seen.current[p.nick + p.act] = Date.now(); const msg = `${ACT[p.act].e} ${p.nick}님이 ${ACT[p.act].t}`; setToast(t => [...t.slice(-2), msg]); setTimeout(() => setToast(t => t.filter(x => x !== msg)), 5000); void key; } }
     } catch {}
   };
   useEffect(() => { beat(); const id = setInterval(() => beat(), 4000); const t = setInterval(() => setNow(Date.now()), 100); const bye = () => { restLeave().catch(() => {}); }; addEventListener("pagehide", bye);
@@ -73,7 +73,7 @@ export default function RestRoom() {
   const seatXY = (i: number) => { const row = Math.floor(i / 6), col = i % 6; return { x: 60 + col * 72 + (row % 2) * 30, y: 196 + row * 26, s: .62 + row * .1 }; };
   return (
     <div className="rs">
-      {gl ? <Rest3D people={people} me={v?.me ?? "나"} myDept={people.find(p => p.me)?.dept ?? ""} breathK={tool === "breath" ? ph.k : 0} actPulse={pulse} onMove={p => { pos.current = p; beat(); }} onToast={m => { setToast(t => [...t.slice(-2), m]); setTimeout(() => setToast(t => t.slice(1)), 3500); }} onXp={m => { setXpMsg(m); setTimeout(() => setXpMsg(""), 4000); }} full extra={<>
+      {gl ? <Rest3D people={people} me={v?.me ?? "나"} myDept={people.find(p => p.me)?.dept ?? ""} breathK={tool === "breath" ? ph.k : 0} actPulse={pulse} onMove={p => { pos.current = p; beat(); }} onToast={m => { setToast(t => [...t.slice(-2), m]); setTimeout(() => setToast(t => t.slice(1)), 3500); }} onXp={m => { setXpMsg(m); setTimeout(() => setXpMsg(""), 4000); }} full onFirework={code => beat(code)} extra={<>
         <button type="button" onClick={() => act("cheers")}><span>☕</span>건배</button>
         <button type="button" onClick={() => act("pat")}><span>🤝</span>토닥</button>
         <button type="button" onClick={() => act("bow")}><span>🙇</span>수고했어요</button>
@@ -118,7 +118,7 @@ export default function RestRoom() {
                 {recent && p.act === "cheers" && <text x="16" y="4" fontSize="14">☕</text>}
                 {recent && p.act === "pat" && <text x="14" y="-12" fontSize="13">🤝</text>}
               </g>
-              {recent && <text x="0" y="-30" fontSize="14" textAnchor="middle">{ACT[p.act!].e}</text>}
+              {recent && ACT[p.act!] && <text x="0" y="-30" fontSize="14" textAnchor="middle">{ACT[p.act!].e}</text>}
               {p.me && <><rect x="-26" y="40" width="52" height="13" rx="6.5" fill="#F4EFE6" /><text x="0" y="49.5" fontSize="8" textAnchor="middle" fill="#3B2A24" fontWeight="700" fontFamily="sans-serif">나</text></>}
             </g>; })}
         </svg>

@@ -14,7 +14,10 @@ export type RestPerson = { nick: string; dept: string | null; seat: number; act:
 export type RestView = { me: string; people: RestPerson[]; breathing: number };
 
 /** 하트비트: 15초마다. act(건배·토닥·인사)나 breathing 상태를 같이 보내요 */
-export async function restBeat(act?: "cheers" | "pat" | "bow" | null, breathing?: boolean, pos?: RestPos | null): Promise<RestView> {
+const FW = /^fw:[0-5]:-?\d{1,2}(\.\d)?:-?\d{1,2}(\.\d)?$/;
+const SCENES = ["roof", "pocha", "zen", "mars"];
+export async function restBeat(act?: string | null, breathing?: boolean, pos?: RestPos | null): Promise<RestView> {
+  if (act && !["cheers", "pat", "bow"].includes(act) && !FW.test(act)) act = null;
   const s = await getSession(); if (!s) throw new Error("login");
   const d = db(), now = new Date(), since = new Date(Date.now() - 45000).toISOString();
   const { data: cur } = await d.from("rest_presence").select("seat,last_seen").eq("user_id", s.id).maybeSingle();
@@ -24,7 +27,9 @@ export async function restBeat(act?: "cheers" | "pat" | "bow" | null, breathing?
     const used = new Set((taken ?? []).map(r => r.seat)); const start = hash(s.id) % SEATS;
     seat = start; for (let k = 0; k < SEATS; k++) { const c = (start + k) % SEATS; if (!used.has(c)) { seat = c; break; } }
   }
-  await d.from("rest_presence").upsert({ user_id: s.id, nick: nickOf(s.id), dept: s.dept, seat, last_seen: now.toISOString(), ...(act ? { act, act_at: now.toISOString() } : {}), ...(breathing !== undefined ? { breathing } : {}), ...(pos ? { scene: pos.scene === "pocha" ? "pocha" : "roof", x: Math.max(-12, Math.min(12, +pos.x || 0)), z: Math.max(-12, Math.min(12, +pos.z || 0)), pose: String(pos.pose).slice(0, 10) } : {}) });
+  const row = (strict: boolean) => ({ user_id: s.id, nick: nickOf(s.id), dept: s.dept, seat, last_seen: now.toISOString(), ...(act && (!strict || !act.startsWith("fw")) ? { act, act_at: now.toISOString() } : {}), ...(breathing !== undefined ? { breathing } : {}), ...(pos ? { scene: strict ? (pos.scene === "pocha" ? "pocha" : "roof") : SCENES.includes(pos.scene) ? pos.scene : "roof", x: Math.max(-12, Math.min(12, +pos.x || 0)), z: Math.max(-12, Math.min(12, +pos.z || 0)), pose: String(pos.pose).slice(0, 10) } : {}) });
+  // 예전 DB 제약(씬 2개·act 3종)이 남아 있으면 안전하게 한 번 더
+  const { error } = await d.from("rest_presence").upsert(row(false)); if (error) await d.from("rest_presence").upsert(row(true));
   const { data } = await d.from("rest_presence").select("user_id,nick,dept,seat,act,act_at,breathing,last_seen,scene,x,z,pose,say,say_at").gte("last_seen", since).order("seat").limit(60);
   const people = (data ?? []).map(r => ({ nick: r.nick, dept: r.dept, seat: r.seat, act: r.act, actAge: r.act_at ? (Date.now() - Date.parse(r.act_at)) / 1000 : 999, breathing: !!r.breathing, me: r.user_id === s.id, scene: r.scene ?? "roof", x: r.x ?? 0, z: r.z ?? 0, pose: r.pose ?? "stand", say: r.say ?? null, sayAge: r.say_at ? (Date.now() - Date.parse(r.say_at)) / 1000 : 999 }));
   return { me: nickOf(s.id), people, breathing: people.filter(p => p.breathing).length };
