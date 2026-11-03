@@ -1750,3 +1750,34 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 .h3-ico{font-size:24px;text-align:center}
 .h3-hint{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11px;color:rgba(255,255,255,.8);text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none}
 .h3-zoom{position:absolute;right:10px;top:52px;display:grid;gap:6px}.h3-zoom button{width:36px;height:36px;border-radius:10px;border:0;background:rgba(10,14,22,.62);color:#fff;font-size:18px;font-weight:700;cursor:pointer}
+/* 🛋️ 당직실 풀스크린 */
+.r3.full{position:fixed;inset:0;z-index:70;border-radius:0;border:0;height:100dvh}
+.r3.full .r3-canvas{position:absolute;inset:0}.r3.full .r3-canvas canvas{width:100%!important;height:100%!important}
+.r3.full .r3-top{top:max(10px,env(safe-area-inset-top));left:10px;right:10px}
+.r3-back{pointer-events:auto;flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(20,16,12,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;font-size:26px;line-height:1;text-decoration:none;border:1px solid rgba(255,255,255,.18)}
+.r3.full .r3-tabs{overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;background:rgba(20,16,12,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14)}.r3.full .r3-tabs::-webkit-scrollbar{display:none}.r3.full .r3-tabs button{flex:none;white-space:nowrap}
+.r3.full .r3-count,.r3.full .r3-snd{background:rgba(20,16,12,.5);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14)}
+.r3.full .r3-hint{top:calc(max(10px,env(safe-area-inset-top)) + 50px);background:rgba(20,16,12,.45);backdrop-filter:blur(8px);padding:6px 14px;font-size:12px}
+.r3.full .r3-vol{top:calc(max(10px,env(safe-area-inset-top)) + 50px)}
+.r3.full .r3-acts{left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));padding:0 10px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}.r3.full .r3-acts::-webkit-scrollbar{display:none}
+.r3.full .r3-acts button{flex:none;white-space:nowrap;background:rgba(20,16,12,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.16);padding:9px 13px}.r3.full .r3-acts button.on{background:rgba(111,191,169,.75)}
+.r3.full .r3-say{bottom:calc(12px + env(safe-area-inset-bottom))}.r3.full .r3-say input{background:rgba(20,16,12,.55);backdrop-filter:blur(10px)}
+.r3.full .r3-burn{bottom:calc(120px + env(safe-area-inset-bottom));z-index:3}
+.r3.full .r3-zen-exit{bottom:calc(20px + env(safe-area-inset-bottom))}
+body:has(.r3.full){overflow:hidden}
+body:has(.r3.full) .bnav,body:has(.r3.full) .chat-fab,body:has(.r3.full) .wfab,body:has(.r3.full) .dock{display:none!important}
+body:has(.r3.full) .r3-toasts{position:fixed;top:calc(max(10px,env(safe-area-inset-top)) + 92px);left:50%;transform:translateX(-50%);z-index:72;margin:0;width:max-content;max-width:90vw}
+body:has(.r3.full) .rs-breath.r3-breath{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:72;margin:0}
+body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:72}
+.r3-more{position:fixed;left:0;right:0;bottom:0;z-index:74;max-height:78dvh;overflow:auto;background:var(--surface);border-radius:20px 20px 0 0;padding:12px 14px calc(16px + env(safe-area-inset-bottom));display:grid;gap:10px;transform:translateY(105%);transition:transform .3s cubic-bezier(.32,.72,0,1);box-shadow:0 -10px 40px rgba(0,0,0,.4)}
+.r3-more.open{transform:none}
+.r3-more-h{display:flex;justify-content:space-between;align-items:center}.r3-more-h b{font-size:15px}.r3-more-h button{border:0;background:var(--bg);color:var(--ink);width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer}
+/* 💧 수액 명상 */
+.iv{position:fixed;inset:0;z-index:76;background:radial-gradient(ellipse at 50% 35%,rgba(30,50,70,.82),rgba(5,8,14,.94));display:grid;place-items:center;align-content:center;gap:10px;color:#EAF6FF;padding:20px;text-align:center;-webkit-user-select:none;user-select:none}
+.iv-x{position:absolute;top:max(14px,env(safe-area-inset-top));right:14px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:15px;cursor:pointer}
+.iv-svg{width:min(52vw,220px);height:auto;filter:drop-shadow(0 0 24px rgba(143,211,245,.25))}
+.iv-msg{font-size:18px;font-weight:700;min-height:26px;letter-spacing:.2px}
+.iv-n{font-size:13px;opacity:.85}.iv-n b{font-size:22px;font-weight:900}
+.iv-bar{width:min(70vw,260px);height:5px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}.iv-bar i{display:block;height:100%;background:#8FD3F5;transition:width .4s}
+.iv-hint{font-size:11.5px;opacity:.6;max-width:300px}
+.r3.full .r3-tabs button{padding:6px 10px}

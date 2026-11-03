@@ -9,7 +9,7 @@ const kday = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10)
 const hash = (s: string) => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const nickOf = (id: string) => { const h = hash(id + kday()); return `${ADJ[h % ADJ.length]} ${NOUN[(h >>> 5) % NOUN.length]}`; };
 const SEATS = 24;
-export type RestPos = { scene: "roof" | "pocha" | "zen"; x: number; z: number; pose: string };
+export type RestPos = { scene: "roof" | "pocha" | "zen" | "mars"; x: number; z: number; pose: string };
 export type RestPerson = { nick: string; dept: string | null; seat: number; act: string | null; actAge: number; breathing: boolean; me: boolean; scene: string; x: number; z: number; pose: string; say: string | null; sayAge: number };
 export type RestView = { me: string; people: RestPerson[]; breathing: number };
 

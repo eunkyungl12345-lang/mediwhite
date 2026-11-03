@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { restBeat, restLeave, restDone, type RestView, type RestPos } from "@/lib/rest.actions";
+import IVDrip from "./rest3d/IVDrip";
 const Rest3D = dynamic(() => import("./rest3d/Rest3D"), { ssr: false, loading: () => <div className="r3-loading">🌃 당직실 불 켜는 중…</div> });
 
 /* ---------- 자연 소리 (파일 없이 WebAudio로 생성) ---------- */
@@ -48,6 +49,7 @@ export default function RestRoom() {
   const [tool, setTool] = useState<"breath" | "stretch" | "mood" | null>(null), [snd, setSnd] = useState<Snd>(null);
   const [bStart, setBStart] = useState(0), [sIdx, setSIdx] = useState(-1), [sLeft, setSLeft] = useState(0), [mood, setMood] = useState<number | null>(null), [xpMsg, setXpMsg] = useState("");
   const seen = useRef<Record<string, number>>({}), audio = useRef<{ ctx: AudioContext; stop: () => void } | null>(null), breathing = useRef(false);
+  const [more, setMore] = useState(false), [iv, setIv] = useState(false);
   const pos = useRef<RestPos | null>(null), [pulse, setPulse] = useState<{ k: number; a: string } | null>(null), [gl, setGl] = useState<boolean | null>(null);
   useEffect(() => { try { const c = document.createElement("canvas"); setGl(!!(c.getContext("webgl2") || c.getContext("webgl"))); } catch { setGl(false); } }, []);
 
@@ -71,7 +73,14 @@ export default function RestRoom() {
   const seatXY = (i: number) => { const row = Math.floor(i / 6), col = i % 6; return { x: 60 + col * 72 + (row % 2) * 30, y: 196 + row * 26, s: .62 + row * .1 }; };
   return (
     <div className="rs">
-      {gl ? <Rest3D people={people} me={v?.me ?? "나"} myDept={people.find(p => p.me)?.dept ?? ""} breathK={tool === "breath" ? ph.k : 0} actPulse={pulse} onMove={p => { pos.current = p; beat(); }} onToast={m => { setToast(t => [...t.slice(-2), m]); setTimeout(() => setToast(t => t.slice(1)), 3500); }} onXp={m => { setXpMsg(m); setTimeout(() => setXpMsg(""), 4000); }} /> : null}
+      {gl ? <Rest3D people={people} me={v?.me ?? "나"} myDept={people.find(p => p.me)?.dept ?? ""} breathK={tool === "breath" ? ph.k : 0} actPulse={pulse} onMove={p => { pos.current = p; beat(); }} onToast={m => { setToast(t => [...t.slice(-2), m]); setTimeout(() => setToast(t => t.slice(1)), 3500); }} onXp={m => { setXpMsg(m); setTimeout(() => setXpMsg(""), 4000); }} full extra={<>
+        <button type="button" onClick={() => act("cheers")}><span>☕</span>건배</button>
+        <button type="button" onClick={() => act("pat")}><span>🤝</span>토닥</button>
+        <button type="button" onClick={() => act("bow")}><span>🙇</span>수고했어요</button>
+        <button type="button" className={tool === "breath" ? "on" : ""} onClick={() => tool === "breath" ? stopBreath() : startBreath()}><span>🫁</span>{tool === "breath" ? "그만" : "같이 숨쉬기"}</button>
+        <button type="button" onClick={() => setIv(true)}><span>💧</span>수액 명상</button>
+        <button type="button" onClick={() => setMore(true)}><span>✨</span>더보기</button></>} /> : null}
+      {gl && iv && <IVDrip onClose={() => setIv(false)} onDone={() => done("breath")} />}
       {gl ? <div className="rs-toasts r3-toasts">{toast.map(t => <div key={t} className="rs-toast">{t}</div>)}</div> : null}
       {gl && tool === "breath" && <div className="rs-breath r3-breath"><b>{ph.name}</b><span>{Math.ceil(ph.left)}</span><small>{bStart ? `${Math.max(0, 60 - Math.floor((now - bStart) / 1000))}초 남음` : "1분 동안 같이 숨 쉬어요"}</small></div>}
       {gl === false && (
@@ -119,6 +128,8 @@ export default function RestRoom() {
         {v && <div className="rs-me">나는 오늘 <b>{v.me}</b></div>}
       </div>
       )}
+      <div className={gl ? "r3-more" + (more ? " open" : "") : "rs-rest"}>
+      {gl && <div className="r3-more-h"><b>✨ 더 쉬어가기</b><button type="button" onClick={() => setMore(false)} aria-label="닫기">✕</button></div>}
       <div className="rs-acts">
         <button type="button" onClick={() => act("cheers")}><span>☕</span>건배</button>
         <button type="button" onClick={() => act("pat")}><span>🤝</span>토닥토닥</button>
@@ -152,7 +163,8 @@ export default function RestRoom() {
 
       <div className="rs-sounds"><span className="muted">🎧 배경 소리</span>{([["rain", "🌧️ 빗소리"], ["fire", "🔥 모닥불"], ["wave", "🌊 파도"], ["white", "📻 백색소음"]] as const).map(([k, n]) => <button key={k} type="button" className={snd === k ? "on" : ""} onClick={() => sound(k)}>{n}</button>)}</div>
       {xpMsg && <div className="rs-xp">{xpMsg}</div>}
-      <div className="muted" style={{ fontSize: 12 }}>이름은 매일 바뀌는 익명 별명이에요. 숨쉬기·스트레칭·체크인 각각 하루 한 번 +20 XP. 여기는 잠깐 쉬어 가는 곳이고, 치료를 대신하지는 않아요.</div>
+      <div className="muted" style={{ fontSize: 12 }}>이름은 매일 바뀌는 익명 별명이에요. 숨쉬기·스트레칭·체크인 각각 하루 한 번 +20 XP. 여기는 잠깐 쉬어 가는 곳이고, 치료를 대신하지는 않아요.{gl ? " 화면 속 다른 동료들은 분위기를 위한 캐릭터예요(👥 인원수엔 실제 접속자만 세요)." : ""}</div>
+      </div>
     </div>
   );
 }
