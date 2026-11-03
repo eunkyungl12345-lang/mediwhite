@@ -5,6 +5,8 @@ import Board, { type Row } from "./Board";
 import CarArt from "./CarArt";
 import HospitalRoom from "./HospitalRoom";
 import HomeRoom from "./HomeRoom";
+import dynamic from "next/dynamic";
+const Home3D = dynamic(() => import("./home3d/Home3D"), { ssr: false, loading: () => <div className="h3-loading">🏠 집 불 켜는 중…</div> });
 import { sfx, haptic, burst, pop } from "@/lib/juice";
 import {
   STAFF, staffCost, staffRate, PROPS, ARTS, PERKS, CORPS, CITIES, PLANETS, STARS, GALAXIES, VERSES, REMODEL, hospTier, migrateHosp, STAFF_STEP, staffStepMult, WORKER_BRICKS, workerCost, HELPER_UNLOCK,
@@ -34,7 +36,8 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const [season, setSeason] = useState(false);
   const [bagMsg, setBagMsg] = useState("");
   const [helping, setHelping] = useState(0); // 남은 초
-  const [scene, setScene] = useState<"hosp" | "home">("hosp");
+  const [scene, setScene] = useState<"hosp" | "home">("hosp"); const [gl, setGl] = useState(false);
+  useEffect(() => { try { const c = document.createElement("canvas"); setGl(!!(c.getContext("webgl2") || c.getContext("webgl"))); } catch {} }, []);
   const [tab, setTab] = useState<Tab>("doc");
   const [toast, setToast] = useState("");
   const [combo, setCombo] = useState(comboOf(0));
@@ -157,7 +160,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           <button type="button" className={scene === "hosp" ? "on" : ""} onClick={() => { setScene("hosp"); setTab("doc"); }}>🏥 우리 병원</button>
           <button type="button" className={scene === "home" ? "on" : ""} onClick={() => { setScene("home"); setTab("home"); }}>🏠 내 집</button>
         </div>
-        <div onPointerDown={scene === "hosp" ? tap : undefined} className="ty-scene">{scene === "hosp" ? <div className="hr-wrap"><HospitalRoom tier={s.hosp ?? 0} staff={s.staff} clickLv={s.clickLv} /></div> : <HomeScene s={s} onSlot={c => setTab(c === "art" ? "hart" : "furn")} />}</div>
+        <div onPointerDown={scene === "hosp" ? tap : undefined} className="ty-scene">{scene === "hosp" ? <div className="hr-wrap"><HospitalRoom tier={s.hosp ?? 0} staff={s.staff} clickLv={s.clickLv} /></div> : gl ? <Home3D home={s.home} items={s.items} cash={s.cash} nick="나" onBuy={k => { const sl = SLOTS.find(x => x.key === k); if (sl) buySlot(sl); }} /> : <HomeScene s={s} onSlot={c => setTab(c === "art" ? "hart" : "furn")} />}</div>
         {scene === "hosp" && <div className="ty-combo"><span style={{ background: combo.c }} />👆 병원을 탭하면 진료 · 1초에 5번↑ ×1.2 · 8번↑ ×1.3 · 11번↑ ×1.4 · 14번↑ ×1.5{helping > 0 ? ` · 🤖 도우미 진료 중 ${helping}초` : ""}</div>}
         {scene === "hosp" && !s.staff[0] && s.cash >= 1e4 && <button type="button" className="ty-hint" onClick={() => setTab("staff")}>💡 진료만으로는 조금씩 벌려요. <b>👥 직원</b>을 고용하면 가만히 있어도 돈이 쌓여요 →</button>}
         {scene === "hosp" && s.staff[0] > 0 && rate < click && s.cash > clickCost(s.clickLv) * 50 && <button type="button" className="ty-hint" onClick={() => setTab("doc")}>💡 돈이 넉넉해요! <b>👨‍⚕️ 원장</b> 레벨을 올리면 한 번 탭할 때 버는 돈이 확 늘어요 →</button>}
