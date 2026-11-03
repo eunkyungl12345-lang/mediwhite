@@ -3,8 +3,16 @@ export type Outfit = {
   top: string; top2?: string; pants: string; shoes?: string; skin?: string;
   hair: string; style?: "short" | "long" | "bun" | "messy" | "bald" | "pony" | "side";
   coat?: boolean; cap?: "nurse" | "surg" | "ems" | "hard" | "grad" | "helmet"; steth?: boolean; tie?: string; vest?: string; mask?: boolean; glasses?: boolean;
-  beggar?: boolean; badge?: string; skirt?: boolean;
+  beggar?: boolean; badge?: string; skirt?: boolean; alien?: boolean;
 };
+/** 우주복 입히기 (우주 시대 전 직원) */
+export const spaceify = (o: Outfit): Outfit => ({ ...o, top: "#EEF2F7", top2: o.top2 ?? o.top, pants: "#D5DCE6", shoes: "#8A94A6", coat: false, vest: undefined, tie: undefined, cap: "helmet", badge: o.badge });
+/** 외계인 환자들 */
+export const ALIENS: Outfit[] = [
+  { top: "#B8F2C9", pants: "#2E5E4A", hair: "#2E5E4A", style: "bald", skin: "#8FE3A8", alien: true }, { top: "#D9C7FF", pants: "#4A3A7A", hair: "#4A3A7A", style: "bald", skin: "#B59CFF", alien: true },
+  { top: "#FFD6A5", pants: "#7A4A1E", hair: "#7A4A1E", style: "bald", skin: "#FFB36B", alien: true }, { top: "#A5E8FF", pants: "#1E4F6B", hair: "#1E4F6B", style: "bald", skin: "#6FD3FF", alien: true },
+  { top: "#FFB5D8", pants: "#7A2E55", hair: "#7A2E55", style: "bald", skin: "#FF8FC4", alien: true }, { top: "#E6E6E6", pants: "#444", hair: "#444", style: "bald", skin: "#C9C9D9", alien: true },
+];
 const SK = "#F4CDB0", SK2 = "#DDA987", O = "#2B2420";
 
 export function Person({ o, pose = "stand", flip = false }: { o: Outfit; pose?: "stand" | "beg" | "wave" | "walk"; flip?: boolean }) {
@@ -55,6 +63,7 @@ export function Person({ o, pose = "stand", flip = false }: { o: Outfit; pose?: 
           {Array.from({ length: 10 }, (_, i) => <circle key={i} cx={-8 + (i % 5) * 4} cy={-102 + Math.floor(i / 5) * 3} r=".6" fill="#6B5A4A" stroke="none" />)}<ellipse cx="-9" cy="-107" rx="2.4" ry="1.3" fill="#B5856A" opacity=".5" stroke="none" /></>
         : <><path d="M-9 -118 Q-5.5 -120 -2 -118.5 M9 -118 Q5.5 -120 2 -118.5" fill="none" strokeWidth="1.2" /><ellipse cx="-5.5" cy="-112" rx="1.8" ry="2.4" fill={O} stroke="none" /><ellipse cx="5.5" cy="-112" rx="1.8" ry="2.4" fill={O} stroke="none" /><circle cx="-5" cy="-113" r=".6" fill="#fff" stroke="none" /><circle cx="6" cy="-113" r=".6" fill="#fff" stroke="none" />
           <path d="M-4 -104 Q0 -100.5 4 -104" fill="none" /><ellipse cx="-10" cy="-106" rx="2.6" ry="1.4" fill="#F29C9C" opacity=".45" stroke="none" /><ellipse cx="10" cy="-106" rx="2.6" ry="1.4" fill="#F29C9C" opacity=".45" stroke="none" /></>}
+      {o.alien && <><ellipse cx="-5.5" cy="-113" rx="4.2" ry="5.2" fill="#0B0F14" stroke="none" /><ellipse cx="5.5" cy="-113" rx="4.2" ry="5.2" fill="#0B0F14" stroke="none" /><circle cx="-4" cy="-115" r="1.2" fill="#fff" stroke="none" /><circle cx="7" cy="-115" r="1.2" fill="#fff" stroke="none" /><path d="M-7 -128 q-4 -8 -2 -14 M7 -128 q4 -8 2 -14" fill="none" strokeWidth="1.6" /><circle cx="-9.5" cy="-142" r="2.6" fill={skin} /><circle cx="9.5" cy="-142" r="2.6" fill={skin} /></>}
       {o.glasses && <><circle cx="-5.5" cy="-112" r="4" fill="none" /><circle cx="5.5" cy="-112" r="4" fill="none" /><path d="M-1.5 -112 h3" /></>}
       {o.mask && <path d="M-11 -108 Q0 -110 11 -108 L10 -100 Q0 -96 -10 -100 Z" fill="#CFEDEA" />}
       {/* 모자 */}
@@ -86,6 +95,14 @@ export const STAFF_OUTFIT: Outfit[] = [
   { top: "#FFFFFF", tie: "#C9A227", pants: "#14161C", hair: "#CFCFCF", style: "side", coat: true, steth: true },      // 병원장
   { top: "#FFFFFF", tie: "#C9A227", pants: "#14161C", hair: "#E6E6E6", style: "bald", vest: "#3A1F2B", glasses: true }, // 이사장
   { top: "#E9EEF4", top2: "#E2574C", pants: "#C9D0D8", hair: "#2A1E18", style: "short", cap: "helmet" },          // 우주의학 박사
+  { top: "#CFE8FF", pants: "#2E4A6B", hair: "#2E4A6B", style: "bald", skin: "#8FE3A8", alien: true, badge: "통역" },
+  { top: "#B7C3D0", pants: "#6B7A8C", hair: "#6B7A8C", style: "bald", skin: "#DADFE6", glasses: true, badge: "ROBOT" },
+  { top: "#E8FFF0", pants: "#2D5A3D", hair: "#5A3A7A", style: "long", coat: true, glasses: true, cap: "helmet" },
+  { top: "#F2A900", pants: "#2B3A55", hair: "#1C1C1C", style: "short", cap: "helmet", badge: "GEMS" },
+  { top: "#D9C7FF", pants: "#3A2A5A", hair: "#E6E6E6", style: "messy", coat: true, steth: true, cap: "helmet" },
+  { top: "#F5F7FA", top2: "#F48FB1", pants: "#C9D0D8", hair: "#C9D0D8", style: "bald", skin: "#E6EAF0", cap: "nurse", badge: "A-1" },
+  { top: "#7FD1C1", pants: "#2F6F66", hair: "#2A1E18", style: "pony", coat: true, cap: "helmet" },
+  { top: "#FFFFFF", tie: "#C9A227", pants: "#14161C", hair: "#E6E6E6", style: "side", coat: true, steth: true, cap: "helmet", badge: "∞" },
 ];
 /** 원장(나): 폐허~시골 의원 땐 거지 차림, 이후 점점 차려입어요 */
 export const bossOutfit = (tier: number): Outfit => tier <= 1

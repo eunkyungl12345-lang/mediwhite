@@ -119,7 +119,7 @@ export default function HomeRoom({ home, items, onSlot }: { home: number; items:
       {home === 0 && <><path d="M30 40 l20 60 M420 30 l-14 50" stroke="#B5AE9E" strokeWidth="1" /><rect x="60" y="120" width="40" height="30" fill="#CFC6AF" opacity=".6" /></>}
       {/* 창문 + 커튼 */}
       {wins.map((wd, i) => <g key={i}>
-        <svg x={wd.x} y={wd.y} width={wd.w} height={wd.h} viewBox={`0 0 ${wd.w} ${wd.h}`}><View v={h.view} w={wd.w} h={wd.h} id={id + "v" + i} /><rect width={wd.w} height={wd.h} fill={`url(#${id}g)`} /></svg>
+        <svg x={wd.x} y={wd.y} width={wd.w} height={wd.h} viewBox={`0 0 ${wd.w} ${wd.h}`}><View v={(h.view === "space" || h.view === "orbit" || h.view === "mars" ? "nightriver" : h.view) as any} w={wd.w} h={wd.h} id={id + "v" + i} /><rect width={wd.w} height={wd.h} fill={`url(#${id}g)`} /></svg>
         <rect x={wd.x} y={wd.y} width={wd.w} height={wd.h} fill="none" stroke={glassWall ? "#3A3F48" : "#FFFFFF"} strokeWidth={glassWall ? 3 : 5} />
         {glassWall ? <path d={`M${wd.x + wd.w / 3} ${wd.y} V${wd.y + wd.h} M${wd.x + wd.w * 2 / 3} ${wd.y} V${wd.y + wd.h}`} stroke="#3A3F48" strokeWidth="2" /> : <path d={`M${wd.x + wd.w / 2} ${wd.y} V${wd.y + wd.h}`} stroke="#FFFFFF" strokeWidth="3" />}
         {home >= 2 && <><path d={`M${wd.x - 16} ${wd.y - 8} q8 ${wd.h / 2} -2 ${wd.h + 14} h14 q-6 -${wd.h / 2} 2 -${wd.h + 14} z`} fill={dark ? "#3A3F55" : home >= 5 ? "#3F4A5E" : "#E8D9C0"} /><path d={`M${wd.x + wd.w + 16} ${wd.y - 8} q-8 ${wd.h / 2} 2 ${wd.h + 14} h-14 q6 -${wd.h / 2} -2 -${wd.h + 14} z`} fill={dark ? "#3A3F55" : home >= 5 ? "#3F4A5E" : "#E8D9C0"} /><rect x={wd.x - 20} y={wd.y - 12} width={wd.w + 40} height="4" rx="2" fill="#8A7A62" /></>}

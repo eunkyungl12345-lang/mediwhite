@@ -7,7 +7,7 @@ import HospitalRoom from "./HospitalRoom";
 import HomeRoom from "./HomeRoom";
 import { sfx, haptic, burst, pop } from "@/lib/juice";
 import {
-  STAFF, staffCost, staffRate, PROPS, ARTS, PERKS, CORPS, CITIES, PLANETS, REMODEL, WORKER_BRICKS, workerCost, HELPER_UNLOCK,
+  STAFF, staffCost, staffRate, PROPS, ARTS, PERKS, CORPS, CITIES, PLANETS, STARS, GALAXIES, VERSES, REMODEL, hospTier, migrateHosp, STAFF_STEP, staffStepMult, WORKER_BRICKS, workerCost, HELPER_UNLOCK,
   helperTps, helperDur, helperCd, helperUp, PETS, PET_COST, REBIRTH_LV, rebirthGain, canRebirth, OFFLINE_CAP, OFFLINE_RATE, HOMES, SLOTS, YIELD,
   clickOf, clickCost, comboOf, rateOf, assetsOf, valueOf, milestoneSum, remodelBuff, perkSum, staffMine, fmt, tycoonDept, fresh, HOSP_TIERS, SPACE_TIER, migrateStaff, propBuyFee, propSellFee, artBuyFee, artSellFee, homeBuyFee, homeSellAgent, isCurrent, type Saved, type Slot, type Asset,
 } from "@/lib/tycoon";
@@ -55,7 +55,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
       const now = Date.now(); let d: any = raw;
       // 예전 시즌 기록은 버리지 않고 옮겨요: 현금·누적매출·내 집·가구는 그대로
       if (d && d.v !== 3 && typeof d.cash === "number") { d = fresh({ cash: d.cash, total: d.total ?? 0, patients: d.patients ?? 0, home: typeof d.home === "number" ? d.home : 0, items: d.items ?? {}, lastSeen: now }); setSeason(true); saveGameState("tycoon", d).catch(() => {}); }
-      if (isCurrent(d)) { const sv = migrateStaff({ ...fresh(), staffV: undefined, ...d } as Saved); const sec = Math.min(OFFLINE_CAP, Math.max(0, (now - sv.lastSeen) / 1000)); const earn = Math.floor(rateOf(sv, mine) * sec * OFFLINE_RATE * (sv.pet === "ham" ? 1.5 : 1));
+      if (isCurrent(d)) { const sv = migrateHosp(migrateStaff({ ...fresh(), staffV: undefined, hospV: undefined, ...d } as Saved)); const sec = Math.min(OFFLINE_CAP, Math.max(0, (now - sv.lastSeen) / 1000)); const earn = Math.floor(rateOf(sv, mine) * sec * OFFLINE_RATE * (sv.pet === "ham" ? 1.5 : 1));
         setS({ ...sv, cash: sv.cash + earn, total: sv.total + earn, bricks: sv.bricks + (sv.props[0] ? sv.workers * WORKER_BRICKS * sec * OFFLINE_RATE : 0), lastSeen: now }); lastScore.current = assetsOf(sv); if (earn > 0 && sec > 60) setWelcome({ sec, earn }); }
       else { if (d) setSeason(true); const f = fresh(); setS(f); saveGameState("tycoon", f as any).catch(() => {}); }
       setLoaded(true);
@@ -85,10 +85,8 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
     return () => { clearInterval(id); document.removeEventListener("visibilitychange", onHide); window.removeEventListener("pagehide", onHide as any); };
   }, [loaded, mine]); // eslint-disable-line
 
-  /** 우주 단계부터 모든 물가는 '해' 단위 (병원 확장 제외) */
-  const sp = (c: number, raw = false) => raw || (ref.current.hosp ?? 0) < SPACE_TIER ? c : Math.max(1e20, c * 1e12);
-  const spend = (cost0: number, f: (x: Saved) => Saved, msg: string, big = false, raw = false) => {
-    const cost = sp(cost0, raw);
+  const space = (s.hosp ?? 0) >= SPACE_TIER;
+  const spend = (cost: number, f: (x: Saved) => Saved, msg: string, big = false, _raw = false) => {
     if (ref.current.cash < cost) { flash(`💸 ${fmt(cost - ref.current.cash)}원이 부족해요`); haptic(20); return false; }
     setS(x => ({ ...f(x), cash: x.cash - cost })); flash(msg);
     if (big) { sfx.level(); haptic([20, 30, 40]); burst(box.current, (box.current?.clientWidth ?? 300) / 2, 80, "#F2B705", 26); } else { sfx.tap(); haptic(8); }
@@ -123,7 +121,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   const buyAsset = (kind: "props" | "arts", i: number, a: Asset) => { const f = feeB(kind, a.price); return spend(buyCost(kind, a), x => ({ ...x, [kind]: { ...x[kind], [i]: Date.now() }, workers: kind === "props" && i === 0 && x.workers < 3 ? 3 : x.workers }), `${a.icon} ${a.name} 구입! (${kind === "props" ? "취득세" : "경매 수수료"} ${fmt(f.tax || f.agent)}${f.tax ? ` · 복비 ${fmt(f.agent)}` : ""} 포함)${kind === "props" && i === 0 && s.workers < 3 ? " 일꾼 3명 합류" : ""}`, true); };
   const sellAsset = (kind: "props" | "arts", i: number, a: Asset) => { const t = s[kind][i]; if (!t) return; const q = sellNet(kind, a, t); setS(x => { const o = { ...x[kind] }; delete o[i]; return { ...x, [kind]: o, cash: x.cash + q.net }; }); flash(`💰 ${a.name} ${fmt(q.v)}원에 팔았어요 · ${kind === "props" ? "양도세" : "기타소득세"} ${fmt(q.tax)} · ${kind === "props" ? "복비" : "수수료"} ${fmt(q.agent)} 떼고 ${fmt(q.net)}원 입금`); sfx.coin(); setTimeout(() => persist(true), 60); };
   const finishRemodel = () => { const r = REMODEL[s.remodel]; if (!r || !s.props[s.remodel] || s.bricks < r.bricks) return; setS(x => ({ ...x, bricks: x.bricks - r.bricks, remodel: x.remodel + 1 })); flash(`🧱 ${PROPS[s.remodel].name} 리모델링 완료! 초당 매출 +${r.buff}%`); sfx.level(); burst(box.current, 160, 80, "#F2B705", 30); setTimeout(() => persist(true), 60); };
-  const buyList = (key: "perks" | "corps" | "cities" | "planets", i: number, a: { name: string; icon: string; price: number }) => spend(a.price, x => ({ ...x, [key]: [...x[key], i] }), `${a.icon} ${a.name} ${key === "perks" ? "오픈" : "인수"}!`, true);
+  const buyList = (key: "perks" | "corps" | "cities" | "planets" | "stars" | "galaxies" | "verses", i: number, a: { name: string; icon: string; price: number }) => spend(a.price, x => ({ ...x, [key]: [...((x as any)[key] ?? []), i] }), `${a.icon} ${a.name} ${key === "perks" ? "오픈" : "인수"}!`, true);
   const startHelper = () => { const cur = ref.current, cd = helperCd(cur.helperLv) * 1000; if (Date.now() - cur.helperAt < cd || helping > 0) return; setHelping(helperDur(cur.helperLv)); setS(x => ({ ...x, helperAt: Date.now() + helperDur(x.helperLv) * 1000 })); flash(`🤖 자동 진료 도우미 출동! ${helperDur(cur.helperLv)}초 동안 초당 ${helperTps(cur.helperLv)}회 진료`); };
   const rebirth = () => {
     if (!canRebirth(s)) return; const gain = rebirthGain(s.clickLv, s.hosp ?? 0);
@@ -138,7 +136,7 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
     else spend(c, x => ({ ...x, home: i }), `🏠 ${h.area} ${h.name}(으)로 이사!`, true); };
   const buySlot = (sl: Slot) => { const t = s.items[sl.key] ?? 0, nx = sl.tiers[t]; if (nx) spend(nx.price, x => ({ ...x, items: { ...x.items, [sl.key]: t + 1 } }), `${nx.icon} ${nx.name} 들였어요`, t + 1 === sl.tiers.length); };
 
-  const Btn = ({ cost: c0, onClick, label = "구매", raw = false }: { cost: number; onClick: () => void; label?: string; raw?: boolean }) => { const cost = raw || (s.hosp ?? 0) < SPACE_TIER ? c0 : Math.max(1e20, c0 * 1e12); return <button type="button" className={"btn" + (s.cash < cost ? " ghost" : "")} onClick={onClick}>{label}<br /><small>{fmt(cost)}</small></button>; };
+  const Btn = ({ cost, onClick, label = "구매" }: { cost: number; onClick: () => void; label?: string; raw?: boolean }) => { return <button type="button" className={"btn" + (s.cash < cost ? " ghost" : "")} onClick={onClick}>{label}<br /><small>{fmt(cost)}</small></button>; };
   const assets = assetsOf(s), ms = milestoneSum(s), lv30 = s.staff.some(l => l >= 30);
   const cdLeft = Math.max(0, Math.ceil((s.helperAt + helperCd(s.helperLv) * 1000 - Date.now()) / 1000));
   const nextRemodel = REMODEL[s.remodel];
@@ -147,13 +145,13 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
   return (
     <div className="card">
       <div><h3>우리 병원 키우기</h3><div className="muted">병원을 <b>탭해서 진료</b>하고(빠르게 연타하면 보너스), 모은 돈으로 직원을 고용·성장시키면 <b>접속 안 해도 매출이 쌓여요</b>(최대 8시간, 50%). 부동산·미술품은 갖고 있는 동안 값이 올라요. 내 직종(<b>{mine}</b>) 직원은 +20%. 명예의 전당은 <b>총자산</b> 순.</div></div>
-      {season && <div className="warn">🆕 <span><b>시즌 3 오픈!</b> 거지키우기처럼 새로 짜였어요. 갖고 있던 <b>현금·내 집·가구는 그대로 옮겨왔고</b>, 병원(직원·시설)은 새로 키워요. 진료 클릭 → 직원 17명 → 부동산·미술품 → 직원 복지 → 기업·분원·우주병원 → 환생까지!</span></div>}
+      {season && <div className="warn">🆕 <span><b>시즌 3 오픈!</b> 거지키우기처럼 새로 짜였어요. 갖고 있던 <b>현금·내 집·가구는 그대로 옮겨왔고</b>, 병원(직원·시설)은 새로 키워요. 진료 클릭 → 직원 26명 → 부동산·미술품 → 직원 복지 → 기업·분원·우주병원 → 환생까지!</span></div>}
       <div className="ty-top" ref={box}>
         <div className="ty-hud" onPointerDown={tap} role="button" aria-label="탭해서 진료">
           <div key={tapN} className={"ty-hud-cash" + (tapN ? " bump" : "")}>💰 {fmt(s.cash)}원</div>
           <div className="ty-hud-rates"><span style={{ color: combo.c }}>+{fmt(click * combo.m)}원/클릭{combo.m > 1 ? ` ×${combo.m}` : ""}</span><span>+{showRate(rate)}원/초</span></div>
         </div>
-        {(s.hosp ?? 0) >= SPACE_TIER && <div className="ty-space">🚀 우주 물가 적용 중 · 직원·집·차·건물·인수 모든 가격이 <b>해</b> 단위예요</div>}
+        {space && <div className="ty-space">🚀 우주 시대 · 👽 외계 환자 · 우주복 · 우주 직원 9명 · 우주 부동산·미술품·복지 · 항성계/은하/다중우주 인수가 열렸어요</div>}
         <div className="ty-rate" style={{ textAlign: "center" }}>총자산 {fmt(assets)}원{ms ? ` · 직원 보너스 +${fmt(ms)}%` : ""}{s.rebirthBonus ? ` · 환생 +${s.rebirthBonus}%` : ""}{s.pills ? ` · 💊${s.pills}` : ""}</div>
         <div className="ty-scene-tabs">
           <button type="button" className={scene === "hosp" ? "on" : ""} onClick={() => { setScene("hosp"); setTab("doc"); }}>🏥 우리 병원</button>
@@ -185,10 +183,10 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
 
       <div className="ty-list">
         {tab === "doc" && <>
-          {(() => { const h = s.hosp ?? 0, nx = HOSP_TIERS[h + 1]; return <div className={"ty-row" + (nx ? " next" : " cur")}>
+          {(() => { const h = s.hosp ?? 0, cur = hospTier(h), nx = hospTier(h + 1); return <div className="ty-row next">
             <span className="def-ico" style={{ background: "var(--scrub-soft)" }}>🏥</span>
-            <div style={{ flex: 1, minWidth: 0 }}><b>{HOSP_TIERS[h].name}</b> <span className="tag">{h + 1}/{HOSP_TIERS.length}</span><div className="muted" style={{ fontSize: 12 }}>{nx ? `다음: ${nx.name} (${nx.desc}) · 병원 확장할 때마다 전체 초당 매출 +30%` : "최고 규모 달성! 🎉"}</div></div>
-            {nx && <div className="ty-btns"><Btn raw cost={nx.price} onClick={() => spend(nx.price, x => ({ ...x, hosp: (x.hosp ?? 0) + 1 }), `🏥 ${nx.name}(으)로 확장!${(s.hosp ?? 0) + 1 === SPACE_TIER ? " 🚀 이제부터 모든 물가는 해 단위!" : ""}`, true, true)} label="확장" /></div>}
+            <div style={{ flex: 1, minWidth: 0 }}><b>{cur.name}</b> <span className="tag">{h + 1}단계{h >= HOSP_TIERS.length ? " · ∞" : ` · 달까지 ${Math.max(0, SPACE_TIER - h)}`}</span><div className="muted" style={{ fontSize: 12 }}>다음: {nx.name} ({nx.desc}) · 확장할 때마다 전체 초당 매출 +30% · 끝없이 이어져요</div></div>
+            <div className="ty-btns"><Btn cost={nx.price} onClick={() => spend(nx.price, x => ({ ...x, hosp: (x.hosp ?? 0) + 1 }), `🏥 ${nx.name}(으)로 확장!${h + 1 === SPACE_TIER ? " 🚀 우주 시대 개막! 새 직원·부동산·미술품·복지·인수가 열렸어요" : ""}`, true)} label="확장" /></div>
           </div>; })()}
           <div className="ty-row next">
             <span className="def-ico" style={{ background: "var(--scrub-soft)" }}>👨‍⚕️</span>
@@ -202,12 +200,12 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           </div>
         </>}
 
-        {tab === "staff" && STAFF.map((st, i) => { const lv = s.staff[i], open = i === 0 || s.staff[i - 1] >= 10; 
+        {tab === "staff" && STAFF.map((st, i) => { const lv = s.staff[i], open = (i === 0 || s.staff[i - 1] >= 10) && (!st.space || space); if (st.space && !space && i > 17) return null; 
           return <div key={i} className={"ty-row" + (open ? (lv ? "" : " next") : " locked")}>
             <span className="def-ico" style={{ background: lv ? "var(--scrub-soft)" : undefined }}>{open ? st.icon : "🔒"}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <b>{st.name}</b> {lv > 0 && <span className="tag">Lv{lv}</span>}{lv >= 20 && <span className="tag" style={{ marginLeft: 4 }}>+{st.bonus}% ✔</span>}{staffMine(i, mine) && <span className="tag" style={{ marginLeft: 4, background: "var(--scrub)", color: "#fff" }}>내 직종 +20%</span>}
-              <div className="muted" style={{ fontSize: 12 }}>{open ? (lv ? `초당 ${showRate(staffRate(s, i, mine))}원 · ` : `고용비 ${fmt(st.hire)}원 · `) + (lv < 20 ? `20레벨 달성 시 +${st.bonus}%` : "달성 보너스 적용 중") + (lv < 10 && i < STAFF.length - 1 ? ` · 10레벨이면 ${STAFF[i + 1].name} 해금` : "") : `${STAFF[i - 1].name} 10레벨이 되면 열려요 · “${st.ask}”`}</div>
+              <div className="muted" style={{ fontSize: 12 }}>{open ? (lv ? `초당 ${showRate(staffRate(s, i, mine))}원 · ${STAFF_STEP}레벨마다 ×2 (지금 ×${staffStepMult(lv)}, 다음 Lv${(Math.floor(lv / STAFF_STEP) + 1) * STAFF_STEP}) · ` : `고용비 ${fmt(st.hire)}원 · `) + (lv < 20 ? `20레벨 달성 시 +${st.bonus}%` : "달성 보너스 적용 중") + (lv < 10 && i < STAFF.length - 1 ? ` · 10레벨이면 ${STAFF[i + 1].name} 해금` : "") : st.space && !space ? `🌕 달 기지 의원으로 확장하면 채용할 수 있어요 · “${st.ask}”` : `${STAFF[i - 1].name} 10레벨이 되면 열려요 · “${st.ask}”`}</div>
               {open && lv > 0 && lv < 20 && <div className="ty-bar"><i style={{ width: `${lv / 20 * 100}%` }} /></div>}
               {open && lv > 0 && Object.entries(s.coupons).some(([, n]) => n > 0) && <div className="row" style={{ gap: 4, marginTop: 4 }}>{["1", "5", "10"].filter(k => s.coupons[k] > 0).map(k => <button key={k} type="button" className="link" onClick={() => useCoupon(i, k)}>🎟️ +{k} 쿠폰 쓰기 ({s.coupons[k]})</button>)}</div>}
             </div>
@@ -215,10 +213,10 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           </div>; })}
 
         {tab === "prop" && <>
-          {PROPS.map((a, i) => { const t = s.props[i]; return <div key={i} className={"ty-row" + (t ? " cur" : "")}>
+          {PROPS.map((a, i) => { const t = s.props[i]; if (a.space && !space && i > PROPS.findIndex(x => x.space)) return null; const lock = a.space && !space; return <div key={i} className={"ty-row" + (t ? " cur" : lock ? " locked" : "")}>
             <span className="def-ico" style={{ background: t ? "var(--scrub-soft)" : undefined }}>{a.icon}</span>
-            <div style={{ flex: 1, minWidth: 0 }}><b>{a.name}</b> {t && <span className="tag">보유</span>}{s.remodel > i && <span className="tag" style={{ marginLeft: 4 }}>🧱 리모델링 +{REMODEL[i].buff}%</span>}<div className="muted" style={{ fontSize: 12 }}>{fmt(a.price)}원 · 초당 +{fmt(a.grow)}원씩 값이 올라요{t ? (() => { const q = sellNet("props", a, t); return ` · 시세 ${fmt(q.v)}원 → 팔면 양도세 ${fmt(q.tax)}·복비 ${fmt(q.agent)} 떼고 ${fmt(q.net)}원`; })() : ` · 살 때 취득세 4.6% + 복비 0.9%`}</div></div>
-            <div className="ty-btns">{t ? <button type="button" className="btn ghost" onClick={() => sellAsset("props", i, a)}>판매<br /><small>{fmt(sellNet("props", a, t).net)}</small></button> : <Btn cost={buyCost("props", a)} onClick={() => buyAsset("props", i, a)} />}</div>
+            <div style={{ flex: 1, minWidth: 0 }}><b>{a.name}</b> {t && <span className="tag">보유</span>}{s.remodel > i && REMODEL[i] && <span className="tag" style={{ marginLeft: 4 }}>🧱 리모델링 +{REMODEL[i].buff}%</span>}<div className="muted" style={{ fontSize: 12 }}>{fmt(a.price)}원 · 초당 +{fmt(a.grow)}원씩 값이 올라요{t ? (() => { const q = sellNet("props", a, t); return ` · 시세 ${fmt(q.v)}원 → 팔면 양도세 ${fmt(q.tax)}·복비 ${fmt(q.agent)} 떼고 ${fmt(q.net)}원`; })() : ` · 살 때 취득세 4.6% + 복비 0.9%`}</div></div>
+            <div className="ty-btns">{t ? <button type="button" className="btn ghost" onClick={() => sellAsset("props", i, a)}>판매<br /><small>{fmt(sellNet("props", a, t).net)}</small></button> : lock ? <span className="tag">🌕 달부터</span> : <Btn cost={buyCost("props", a)} onClick={() => buyAsset("props", i, a)} />}</div>
           </div>; })}
           <div className="ty-row next">
             <span className="def-ico">🧱</span>
@@ -229,10 +227,10 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           </div>
         </>}
 
-        {tab === "art" && ARTS.map((a, i) => { const t = s.arts[i]; return <div key={i} className={"ty-row" + (t ? " cur" : "")}>
+        {tab === "art" && ARTS.map((a, i) => { const t = s.arts[i]; if (a.space && !space && i > ARTS.findIndex(x => x.space)) return null; const lock = a.space && !space; return <div key={i} className={"ty-row" + (t ? " cur" : lock ? " locked" : "")}>
           <span className="def-ico" style={{ background: t ? "var(--scrub-soft)" : undefined }}>{a.icon}</span>
           <div style={{ flex: 1, minWidth: 0 }}><b>&lt;{a.name}&gt;</b> {t && <span className="tag">소장</span>}<div className="muted" style={{ fontSize: 12 }}>{fmt(a.price)}원 · 초당 +{fmt(a.grow)}원씩 값이 올라요{t ? (() => { const q = sellNet("arts", a, t); return ` · 시세 ${fmt(q.v)}원 → 팔면 경매 수수료 ${fmt(q.agent)}·기타소득세 ${fmt(q.tax)} 떼고 ${fmt(q.net)}원`; })() : " · 경매 수수료 10% 별도"}</div></div>
-          <div className="ty-btns">{t ? <button type="button" className="btn ghost" onClick={() => sellAsset("arts", i, a)}>판매<br /><small>{fmt(sellNet("arts", a, t).net)}</small></button> : <Btn cost={buyCost("arts", a)} onClick={() => buyAsset("arts", i, a)} />}</div>
+          <div className="ty-btns">{t ? <button type="button" className="btn ghost" onClick={() => sellAsset("arts", i, a)}>판매<br /><small>{fmt(sellNet("arts", a, t).net)}</small></button> : lock ? <span className="tag">🌕 달부터</span> : <Btn cost={buyCost("arts", a)} onClick={() => buyAsset("arts", i, a)} />}</div>
         </div>; })}
 
         {tab === "perk" && <>
@@ -241,12 +239,12 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
             return <div key={i} className={"ty-row" + (own ? " cur" : lv30 && next ? " next" : " locked")}>
               <span className="def-ico" style={{ background: own ? "var(--scrub-soft)" : undefined }}>{p.icon}</span>
               <div style={{ flex: 1 }}><b>{p.name}</b> {own && <span className="tag">운영 중</span>}<div className="muted" style={{ fontSize: 12 }}>{fmt(p.price)}원 · 원장 진료 +{fmt(p.bonus)}%{p.noSell ? " · 되팔 수 없어요(자산 가치 없음)" : ""}</div></div>
-              {lv30 && next && <div className="ty-btns"><Btn cost={p.price} onClick={() => buyList("perks", i, p)} /></div>}
+              {lv30 && next && (p.space && !space ? <span className="tag">🌕 달부터</span> : <div className="ty-btns"><Btn cost={p.price} onClick={() => buyList("perks", i, p)} /></div>)}
             </div>; })}
         </>}
 
-        {tab === "buy" && ([["corps", "🏭 기업 인수", CORPS], ["cities", "🌏 해외 분원 (도시)", CITIES], ["planets", "🪐 우주병원 (행성)", PLANETS]] as const).map(([key, title, list]) => {
-          const owned = s[key]; const nextI = list.findIndex((_, i) => !owned.includes(i));
+        {tab === "buy" && ([["corps", "🏭 기업 인수", CORPS], ["cities", "🌏 해외 분원 (도시)", CITIES], ["planets", "🪐 우주병원 (행성)", PLANETS], ["stars", "⭐ 항성계 병원", STARS], ["galaxies", "🌌 은하 의료연합", GALAXIES], ["verses", "♾️ 다중우주 메디화이트", VERSES]] as const).map(([key, title, list]) => {
+          if (list[0].space && !space) return <div key={key} className="ty-group"><div className="ty-group-t">{title} <span className="muted">· 🌕 달 기지 의원부터</span></div></div>; const owned: number[] = (s as any)[key] ?? []; const nextI = list.findIndex((_, i) => !owned.includes(i));
           return <div key={key} className="ty-group"><div className="ty-group-t">{title} <span className="muted">· 갖고 있으면 매초 가격의 100만분의 1을 벌어요</span></div>
             {list.map((a, i) => { const own = owned.includes(i); if (!own && i > nextI) return null;
               return <div key={i} className={"ty-row" + (own ? " cur" : " next")}><span className="def-ico" style={{ background: own ? "var(--scrub-soft)" : undefined }}>{a.icon}</span>
@@ -271,11 +269,11 @@ export default function Tycoon({ ranks, myDept }: { ranks: Row[]; myDept: string
           <div className="muted" style={{ fontSize: 12 }}>💊 영양제는 황금 왕진가방(직원이 있으면 가끔 저절로 도착)에서 나와요. 🎟️ 레벨업 쿠폰은 👥 직원 탭에서 쓸 수 있어요.</div>
         </>}
 
-        {tab === "home" && HOMES.map((h, i) => <div key={i} className={"ty-row" + (i === s.home ? " cur" : i < s.home ? " past" : "")}>
-          <span className="def-ico" style={{ background: i <= s.home ? "var(--scrub-soft)" : undefined }}>{i === 0 ? "🛏️" : i < 3 ? "🏢" : i < 7 ? "🏙️" : i < 9 ? "🌉" : "🏯"}</span>
+        {tab === "home" && HOMES.map((h, i) => { if (h.space && !space && i > HOMES.findIndex(x => x.space)) return null; const lock = h.space && !space; return <div key={i} className={"ty-row" + (i === s.home ? " cur" : i < s.home ? " past" : lock ? " locked" : "")}>
+          <span className="def-ico" style={{ background: i <= s.home ? "var(--scrub-soft)" : undefined }}>{h.space ? "🪐" : i === 0 ? "🛏️" : i < 3 ? "🏢" : i < 7 ? "🏙️" : i < 9 ? "🌉" : "🏯"}</span>
           <div style={{ flex: 1 }}><b>{h.area} {h.name}</b> {i === s.home && <span className="tag">거주 중</span>}<div className="muted" style={{ fontSize: 12 }}>{i ? `${fmt(h.price)}원` : "시작 집"} · {VIEWS[h.view]}{i && i !== s.home ? ` · 취득세 ${fmt(homeBuyFee(h.price).tax)} · 복비 ${fmt(homeBuyFee(h.price).agent)}` : ""}{i !== s.home && s.home > 0 ? " · 지금 집은 팔고(복비만, 1주택 비과세) 이사" : ""}</div></div>
-          {i !== s.home && (moveCost(i) > 0 ? <div className="ty-btns"><Btn cost={moveCost(i)} onClick={() => buyHome(i)} label="이사" /></div> : <div className="ty-btns"><button type="button" className="btn ghost" onClick={() => buyHome(i)}>이사<br /><small>+{fmt(-moveCost(i))} 환급</small></button></div>)}
-        </div>)}
+          {i !== s.home && (lock ? <span className="tag">🌕 달부터</span> : moveCost(i) > 0 ? <div className="ty-btns"><Btn cost={moveCost(i)} onClick={() => buyHome(i)} label="이사" /></div> : <div className="ty-btns"><button type="button" className="btn ghost" onClick={() => buyHome(i)}>이사<br /><small>+{fmt(-moveCost(i))} 환급</small></button></div>)}
+        </div>; })}
 
         {(tab === "furn" || tab === "hart" || tab === "car") && SLOTS.filter(sl => sl.cat === (tab === "hart" ? "art" : tab)).map(sl => { const t = s.items[sl.key] ?? 0, cur = t ? sl.tiers[t - 1] : null, nx = sl.tiers[t];
           return <div key={sl.key} className="ty-row">

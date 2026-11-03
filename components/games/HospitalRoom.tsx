@@ -1,6 +1,8 @@
 "use client";
-import { Person, STAFF_OUTFIT, bossOutfit, PATIENTS } from "./TycoonPeople";
-import { HOSP_TIERS, STAFF } from "@/lib/tycoon";
+import { Person, STAFF_OUTFIT, bossOutfit, PATIENTS, ALIENS, spaceify } from "./TycoonPeople";
+import { hospTier, STAFF, SPACE_TIER } from "@/lib/tycoon";
+/** 병원 단계 → 배경 팔레트(14종) 매핑: 지구 확장 단계(9~13)는 한강뷰 유지, 우주 단계는 달→은하, 그 뒤는 은하 */
+const palIdx = (tier: number) => tier <= 8 ? tier : tier < SPACE_TIER ? 8 : Math.min(13, 9 + (tier - SPACE_TIER));
 
 /** 병원 내부(앞에서 본 단면). 단계마다 벽·바닥·창밖·가구·조명이 바뀌어요 */
 type Pal = { wall: string; wall2: string; trim: string; floor: string; floor2: string; ceil: string; view: View; wins: number; light: "bulb" | "tube" | "panel" | "pendant" | "led" };
@@ -80,7 +82,7 @@ const bench = (x: number, y: number, c: string, n = 3, broken = false) => <g key
 const plant = (x: number, y: number, s = 1) => <g key={"p" + x} transform={`translate(${x} ${y}) scale(${s})`}><path d="M-7 0 L-9 -14 L9 -14 L7 0 Z" fill="#C9A27A" /><path d="M0 -14 Q-14 -30 -10 -42 Q-2 -30 0 -14 Q2 -36 10 -46 Q12 -28 0 -14 Q12 -24 16 -30 Q12 -16 0 -14" fill="#4F9A5A" /></g>;
 
 export default function HospitalRoom({ tier, staff, clickLv }: { tier: number; staff: number[]; clickLv: number }) {
-  const T = Math.max(0, Math.min(PAL.length - 1, tier)), t = Math.min(8, T), P = PAL[T], sp = T >= 9;
+  const T = palIdx(Math.max(0, tier)), t = Math.min(8, T), P = PAL[T], sp = tier >= SPACE_TIER;
   const hired = staff.map((lv, i) => ({ lv, i })).filter(x => x.lv > 0);
   const H = 300, FY = 205, W = 520, CX = 260;
   /** 직원 자리: 원장 양옆에서 시작해 대각선 뒤로 V자 (뒤로 갈수록 작게) */
@@ -88,9 +90,9 @@ export default function HospitalRoom({ tier, staff, clickLv }: { tier: number; s
   const winW = t >= 6 ? 150 : t >= 4 ? 96 : 76, winH = t >= 6 ? 120 : 82, winY = t >= 6 ? 34 : 50;
   const nW = Math.max(P.wins, Math.floor(W / 260)), wins = Array.from({ length: nW }, (_, i) => 200 + i * ((W - 250) / nW));
   const nPat = [2, 3, 3, 4, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10][T];
-  const name = ["메디화 트의원", "메디화이트 보건의원", "메디화이트의원", "메디화이트 의원", "메디화이트 강남의원", "메디화이트 병원", "메디화이트 서울병원", "메디화이트 대학교병원", "메디화이트 대학교병원 본원", "메디화이트 달기지 의원", "메디화이트 화성 종합병원", "메디화이트 유로파 메디컬센터", "메디화이트 궤도정거장 대학병원", "메디화이트 은하연합 중앙병원"][T];
+  const name = ["메디화 트의원", "메디화이트 보건의원", "메디화이트의원", "메디화이트 의원", "메디화이트 강남의원", "메디화이트 병원", "메디화이트 서울병원", "메디화이트 대학교병원", "메디화이트 대학교병원 본원", "메디화이트 달기지 의원", "메디화이트 화성 종합병원", "메디화이트 유로파 메디컬센터", "메디화이트 궤도정거장 대학병원", "메디화이트 은하연합 중앙병원"][T] + (tier > 18 ? ` · ${hospTier(tier).name.replace(/^\S+\s/, "")}` : "");
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="hr-svg" style={{ width: "100%" }} aria-label={HOSP_TIERS[T].name}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="hr-svg" style={{ width: "100%" }} aria-label={hospTier(tier).name}>
       <defs>
         <linearGradient id={"glass" + t} x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".35" /><stop offset=".5" stopColor="#fff" stopOpacity="0" /><stop offset="1" stopColor="#fff" stopOpacity=".18" /></linearGradient>
         <linearGradient id={"flr" + t} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={P.floor2} /><stop offset="1" stopColor={P.floor} /></linearGradient>
@@ -170,14 +172,14 @@ export default function HospitalRoom({ tier, staff, clickLv }: { tier: number; s
       </g>}
       {/* 환자 출입 (뒤쪽 동선) */}
       {Array.from({ length: nPat }, (_, i) => <g key={i} className="hr-pat" style={{ animationDelay: `${i * (14 / nPat)}s`, ["--far" as any]: `${Math.min(W - 120, 150 + (i % 4) * 90)}px` }}>
-        <g transform={`translate(0 ${FY + 18}) scale(.5)`}><Person o={PATIENTS[i % PATIENTS.length]} pose="walk" /></g></g>)}
+        <g transform={`translate(0 ${FY + 18}) scale(.5)`}><Person o={sp ? ALIENS[i % ALIENS.length] : PATIENTS[i % PATIENTS.length]} pose="walk" /></g></g>)}
       {/* 원장(나) + 직원 (한 직종당 한 명) */}
       {hired.map((h, k) => ({ ...h, ...slot(k) })).sort((a, b) => b.row - a.row).map(({ i, lv, x, y, s: sc }, n) => <g key={i} transform={`translate(${x} ${y}) scale(${sc})`}>
-        <g className="hr-idle" style={{ animationDelay: `${(n * .37) % 2}s` }}><Person o={STAFF_OUTFIT[i]} /></g>
+        <g className="hr-idle" style={{ animationDelay: `${(n * .37) % 2}s` }}><Person o={sp && !STAFF_OUTFIT[i].alien && !STAFF_OUTFIT[i].cap ? spaceify(STAFF_OUTFIT[i]) : STAFF_OUTFIT[i]} /></g>
         <text x="0" y="9" fontSize="8.5" textAnchor="middle" fill={t === 0 ? "#E9E0C8" : "#2B2420"} fontFamily="sans-serif" fontWeight="700">{STAFF[i].name} Lv{lv}</text>
       </g>)}
       <g transform={`translate(${CX} ${H - 8})`}>
-        <g className={t <= 1 ? "hr-beg" : undefined}><Person o={bossOutfit(T)} pose={t <= 1 ? "beg" : "wave"} /></g>
+        <g className={t <= 1 ? "hr-beg" : undefined}><Person o={sp ? spaceify(bossOutfit(T)) : bossOutfit(T)} pose={t <= 1 ? "beg" : "wave"} /></g>
         <g transform="translate(-34 -150)"><rect x="0" y="0" width={t <= 1 ? 74 : 62} height="18" rx="9" fill="#fff" stroke="#2B2420" strokeWidth=".8" /><path d="M30 18 l5 6 l3 -6" fill="#fff" stroke="#2B2420" strokeWidth=".8" /><text x={t <= 1 ? 37 : 31} y="12.5" fontSize="8.5" textAnchor="middle" fill="#2B2420" fontFamily="sans-serif" fontWeight="700">{t <= 1 ? "한 푼만 줍쇼~" : "어서 오세요!"}</text></g>
         <text x="0" y="8" fontSize="8" textAnchor="middle" fill={t === 0 ? "#E9E0C8" : "#2B2420"} fontFamily="sans-serif" fontWeight="700">원장 Lv{clickLv}</text>
       </g>
