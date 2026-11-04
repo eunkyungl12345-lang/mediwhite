@@ -5,6 +5,7 @@ import type { RestPerson, RestPos } from "@/lib/rest.actions";
 import { restSay, restBurn } from "@/lib/rest.actions";
 import { Ambience, unlockAudio } from "./ambience";
 import { Fireworks, FW_TYPES } from "./fireworks";
+import BurnPaper from "./BurnPaper";
 import { buildZenHall, buildMarsBase, ZEN_SEATS, MARS_SEATS } from "./scenes2";
 
 /* ========================================================================
@@ -237,9 +238,9 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const [scene, setScene] = useState<Scene>(() => { try { return (localStorage.getItem("mw-rest-scene") as Scene) || "roof"; } catch { return "roof"; } });
   const [snd, setSnd] = useState<"off" | "on" | "wait">("wait"), [vol, setVol] = useState(() => { try { return Number(localStorage.getItem("mw-rest-vol") ?? .7); } catch { return .7; } });
   const amb = useRef<Ambience | null>(null); const sndRef = useRef(snd); sndRef.current = snd;
-  const [fwOpen, setFwOpen] = useState(false); const fwCd = useRef(0);
+  const [fwOpen, setFwOpen] = useState(false); const [burning, setBurning] = useState<string | null>(null); const fwCd = useRef(0);
   const [mode, setMode] = useState<"normal" | "zen">("normal"), [say, setSay] = useState(""), [burn, setBurn] = useState<string | null>(null), [busy, setBusy] = useState(false), [sitting, setSitting] = useState(false);
-  const st = useRef<{ fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
+  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
   const peopleRef = useRef(people), breathRef = useRef(breathK), sceneRef = useRef(scene), modeRef = useRef(mode);
   peopleRef.current = people; breathRef.current = breathK; sceneRef.current = scene; modeRef.current = mode;
   const moveTimer = useRef<any>(null);
@@ -286,7 +287,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     const camPos = new THREE.Vector3(), look = new THREE.Vector3(); S.last = performance.now();
     const tick = () => {
       S.raf = requestAnimationFrame(tick); const now = performance.now(), dt = Math.min(.05, (now - S.last) / 1000); S.last = now; const t = now / 1000;
-      S.fire?.update(dt); S.fw?.update(dt);
+      S.fire?.update(dt); S.fw?.update(dt); if (S.flare && S.flare > 0 && S.fire) { S.flare -= dt; const k = Math.sin(Math.min(1, S.flare / 6) * Math.PI); S.fire.light.intensity += k * 4; S.fire.pts.scale.setScalar(1 + k * .9); } else if (S.fire) S.fire.pts.scale.setScalar(1);
       if (S.fw) for (const p of peopleRef.current) { if (p.me || p.scene !== "roof" || !p.act?.startsWith("fw:") || p.actAge > 6) continue; const key = p.nick + p.act; if (S.fwSeen![key]) continue; S.fwSeen![key] = Date.now(); const [, ty, ox] = p.act.split(":"); launchFw(+ty || 0, +ox || 0, false); }
       // 다른 사람 동기화
       const ps = peopleRef.current.filter(p => !p.me && p.scene === sceneRef.current); const alive = new Set<string>();
@@ -333,7 +334,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     if (!free) { onToast("자리가 다 찼어요 🙈"); return; }
     a.tx = free.s.x; a.tz = free.s.z; a.pose = "sit"; S.seat = free.i; setSitting(true); emitMove("sit"); };
   const sendSay = async () => { const t = say.trim(); if (!t || busy) return; setBusy(true); const r = await restSay(t); setBusy(false); if (r?.error) { onToast(r.error); return; } const a = st.current.me; if (a) setBubble(a, t); setSay(""); setTimeout(() => { if (a && a.bubbleText === t) setBubble(a, null); }, 10000); };
-  const doBurn = async () => { const S = st.current; const a = S.me; const txt = (burn ?? "").trim(); if (!a || !S.sc || !txt) return; const sp = textSprite("📝", { bg: "rgba(0,0,0,0)", size: 40, pad: 2 }); sp.position.set(a.g.position.x, 1.6, a.g.position.z); S.sc.add(sp); S.paper = { sp, t: 0, from: sp.position.clone() }; setBurn(null); navigator.vibrate?.(20); const xp = await restBurn(txt.length).catch(() => 0); onXp(xp ? `🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요 (+${xp} XP)` : "🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요"); };
+  const doBurn = async () => { const S = st.current; const a = S.me; const txt = (burn ?? "").trim(); if (!a || !S.sc || !txt) return; const sp = textSprite("📝", { bg: "rgba(0,0,0,0)", size: 40, pad: 2 }); sp.position.set(a.g.position.x, 1.6, a.g.position.z); S.sc.add(sp); S.paper = { sp, t: 0, from: sp.position.clone() }; S.flare = 6; setBurn(null); setBurning(txt); if (sndRef.current !== "on" && sndRef.current !== "off") soundOn(); navigator.vibrate?.(20); const xp = await restBurn(txt.length).catch(() => 0); onXp(xp ? `🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요 (+${xp} XP)` : "🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요"); };
   const soundOn = async () => { unlockAudio(); try { if (!amb.current) amb.current = new Ambience(); await amb.current.start(sceneRef.current); amb.current.setVolume(vol); setSnd("on"); try { localStorage.setItem("mw-rest-snd", "1"); } catch {} } catch { setSnd("off"); } };
   const strikeBowl = () => { const S = st.current; const r = S.sc?.getObjectByName("bowlring") as THREE.Mesh | undefined; if (r) r.userData.t = 1; if (snd !== "on") soundOn().then(() => amb.current?.bowl()); else amb.current?.bowl(); try { navigator.vibrate?.(15); } catch {} };
   const fire = async (type: number) => { const now = Date.now(); if (now - fwCd.current < 1200) return; fwCd.current = now; if (sndRef.current !== "on" && sndRef.current !== "off") { await soundOn(); sndRef.current = "on"; } launchFw(type, Math.round((Math.random() * 4 - 2) * 10) / 10, true); };
@@ -360,6 +361,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
           <button type="button" onClick={() => setBurn(b => b === null ? "" : null)}><span>🔥</span>걱정 태우기</button>
           {scene === "zen" ? <><button type="button" onClick={strikeBowl}><span>🔔</span>싱잉볼</button><button type="button" onClick={() => setMode("zen")}><span>🧘</span>명상 모드</button></> : <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불멍 모드</button>}{scene === "roof" && <button type="button" className={fwOpen ? "on" : ""} onClick={() => setFwOpen(o => !o)}><span>🎆</span>불꽃놀이</button>}{extra}
         </div>
+        {burning && <BurnPaper text={burning} onDone={() => setBurning(null)} onSound={k => { if (sndRef.current === "on") k === "ignite" ? amb.current?.ignite() : amb.current?.crackle(); }} />}
         {scene === "roof" && fwOpen && <div className="r3-fw">{FW_TYPES.map((f, i) => <button key={i} type="button" onClick={() => fire(i)}><span>{f.icon}</span>{f.name}</button>)}<small>같은 옥상에 있는 사람들도 같이 봐요</small></div>}
         <form className="r3-say" onSubmit={e => { e.preventDefault(); sendSay(); }}><input value={say} onChange={e => setSay(e.target.value)} maxLength={60} placeholder="한마디 (10초 말풍선 · 익명)" /><button className="btn" disabled={busy || !say.trim()}>말하기</button></form>
         {burn !== null && <div className="r3-burn"><b>🔥 오늘 태워버릴 걱정 한 장</b><textarea value={burn} onChange={e => setBurn(e.target.value)} maxLength={120} rows={2} placeholder="여기 적은 건 어디에도 저장되지 않아요. 불에 넣고 잊어버려요." autoFocus /><div className="row" style={{ gap: 6, justifyContent: "flex-end" }}><button type="button" className="link" onClick={() => setBurn(null)}>닫기</button><button type="button" className="btn" disabled={!burn.trim()} onClick={doBurn}>불에 넣기</button></div></div>}

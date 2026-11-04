@@ -1845,3 +1845,11 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .jb-src{display:block;text-align:center;margin:10px 0}
 @media (prefers-color-scheme:dark){.jb2-tags .dept{background:#1F3530;color:#9FE0C0}.jb2-dd{background:#1F3530;color:#9FE0C0}.jb2-dd.hot{background:#3A1F1F;color:#FF9C9C}}
 .jb2-filters .jb2-region{width:auto;flex:none}
+/* 🔥 걱정 태우기 */
+.burnp{position:fixed;inset:0;z-index:78;display:grid;place-items:center;align-content:center;gap:6px;background:radial-gradient(ellipse at 50% 70%,rgba(60,22,8,.86),rgba(8,5,4,.95));padding:16px;text-align:center;color:#FFE9D2;animation:burnIn .4s ease}
+@keyframes burnIn{from{opacity:0}to{opacity:1}}
+.burnp-glow{position:absolute;left:50%;bottom:8%;width:120vw;height:50vh;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 100%,rgba(255,140,40,.45),rgba(255,80,20,0) 65%);opacity:0;transition:opacity .8s;pointer-events:none}.burnp-glow[data-on="1"]{opacity:1;animation:flick .18s infinite alternate}
+@keyframes flick{from{filter:brightness(1)}to{filter:brightness(1.25)}}
+.burnp-cv{position:relative}
+.burnp-msg{position:relative;display:grid;gap:10px;justify-items:center;font-size:15px;min-height:60px;max-width:320px}.burnp-msg b{font-size:17px;line-height:1.5;color:#FFF3E2}.burnp-msg .btn{padding:9px 20px}
+.burnp-note{position:relative;opacity:.5;font-size:11.5px}
