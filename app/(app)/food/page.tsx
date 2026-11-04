@@ -5,7 +5,7 @@ import { display } from "@/lib/depts";
 import { fmt } from "@/lib/format";
 import { deleteRestaurant } from "@/lib/foodActions";
 import { FoodForm, FoodLike, AreaPicker } from "@/components/FoodForms";
-import Roulette from "@/components/games/Roulette";
+import Roulette from "@/components/food/Roulette";
 export const dynamic = "force-dynamic";
 
 export default async function FoodPage({ searchParams }: { searchParams: { r?: string; d?: string; t?: string } }) {

@@ -15,6 +15,6 @@ export function boardNavItems(dept: string): NavItem[] {
     { href: "/guide/xray", name: "방사선 촬영법", icon: "📖", group: "실무 가이드" },
     ...GUIDES.map(g => ({ href: `/guide/${g.slug}`, name: g.title.replace(" 가이드", ""), icon: g.icon, group: "실무 가이드" })),
     { href: "/ssum", name: "썸", icon: "💘", group: "커뮤니티" }, { href: "/food", name: "맛집", icon: "🍽️", group: "커뮤니티" },
-    { href: "/news", name: "오늘의 핫뉴스", icon: "📰", group: "커뮤니티" }, { href: "/games", name: "게임", icon: "🎮", group: "커뮤니티" },
+    { href: "/news", name: "오늘의 핫뉴스", icon: "📰", group: "커뮤니티" },
   ];
 }

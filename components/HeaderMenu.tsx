@@ -10,7 +10,6 @@ export default function HeaderMenu({ admin, logout, name }: { admin: boolean; lo
     {open && <div className="hmenu-pop" role="menu">
       <div className="hmenu-me">{name}</div>
       <Link href="/fortune" role="menuitem" onClick={() => setOpen(false)}>🔮 오늘의 운세</Link>
-      <Link href="/games" role="menuitem" onClick={() => setOpen(false)}>🎮 게임</Link>
       <Link href="/ssum" role="menuitem" onClick={() => setOpen(false)}>💘 썸</Link>
       <Link href="/rest" role="menuitem" onClick={() => setOpen(false)}>🛋️ 당직실</Link>
       <Link href="/rank" role="menuitem" onClick={() => setOpen(false)}>🎖️ 내 계급 · 프로필</Link>

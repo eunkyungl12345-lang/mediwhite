@@ -16,7 +16,7 @@ const I: Record<string, JSX.Element> = {
 };
 export default function SideNav({ admin, unread }: { admin: boolean; unread: number }) {
   const p = usePathname(); const is = (h: string) => p === h || p.startsWith(h + "/");
-  const main: [string, string, string, boolean][] = [["/home", "홈", "home", is("/home")], ["/hospitals", "병원 리뷰", "hosp", is("/hospitals")], ["/jobs", "채용", "jobs", is("/jobs")], ["/board", "커뮤니티", "chat", ["/board", "/anon", "/food", "/news", "/guide"].some(is)], ["/ssum", "썸", "ssum", is("/ssum")], ["/games", "게임", "games", is("/games")], ["/rest", "당직실", "rest", is("/rest")], ["/noti", "알림", "bell", is("/noti")], ["/rank", "MY · 내 계급", "me", is("/rank") || is("/u")]];
+  const main: [string, string, string, boolean][] = [["/home", "홈", "home", is("/home")], ["/hospitals", "병원 리뷰", "hosp", is("/hospitals")], ["/jobs", "채용", "jobs", is("/jobs")], ["/board", "커뮤니티", "chat", ["/board", "/anon", "/food", "/news", "/guide"].some(is)], ["/ssum", "썸", "ssum", is("/ssum")], ["/rest", "당직실", "rest", is("/rest")], ["/noti", "알림", "bell", is("/noti")], ["/rank", "MY · 내 계급", "me", is("/rank") || is("/u")]];
   const quick: [string, string][] = [["/board?cat=%EA%B3%B5%EC%A7%80", "📢 공지사항"], ["/anon", "🕶️ 익명 게시판"], ["/hospitals/check", "🔎 우리 병원 실체 체크"], ["/food", "🍽️ 맛집"], ["/news", "📰 오늘의 뉴스"], ["/badge", "🥇 골드뱃지 인증"], ...(admin ? [["/admin", "🛠️ 관리자"] as [string, string]] : [])];
   return <aside className="side">
     <Link href="/home" className="side-logo">메디화이트웹</Link>
