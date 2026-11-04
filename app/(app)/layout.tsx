@@ -1,3 +1,4 @@
+import CommTabs from "@/components/CommTabs";
 import Link from "next/link";
 import Bell from "@/components/Bell";
 import BottomNav from "@/components/BottomNav";
@@ -59,7 +60,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Tabs admin={s.role === "admin"} />
       <Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense>
       {pub && <PushSetup vapidPublic={pub} />}
-      <main>{children}</main>
+      <main><CommTabs />{children}</main>
       <BottomNav />
       <WriteFab />
       <PromoToast />
