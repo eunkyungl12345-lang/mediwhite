@@ -25,10 +25,11 @@ export const EXIT_STARS = [
   { k: "pay", name: "급여", icon: "💰" }, { k: "balance", name: "워라밸", icon: "⚖️" }, { k: "people", name: "동료·분위기", icon: "🤝" },
   { k: "boss", name: "상사·관리자", icon: "🧑‍💼" }, { k: "edu", name: "교육·성장", icon: "📈" }, { k: "welfare", name: "복지", icon: "🎁" }, { k: "load", name: "업무강도(적당함)", icon: "🏋️" },
 ] as const;
+export const FUTURE = ["📈 좋아질 것 같아요", "➖ 비슷할 것 같아요", "📉 나빠질 것 같아요"] as const;
 export const EXIT_REASONS = ["급여가 낮아서", "태움·인간관계", "업무 과다·인력 부족", "상사·관리자", "교대·근무시간", "결혼·출산·육아", "이사·통근", "커리어·이직", "건강", "계약 만료", "기타"] as const;
-export type HFact = { v?: boolean; stars?: Record<string, number>; reasons?: string[]; last?: string; pay?: string; years?: string; dept?: string; status?: string; taeum?: number; off?: number; quit?: number; risks?: string[]; good?: boolean; at?: string };
+export type HFact = { overall?: number; rec?: number; future?: number; v?: boolean; stars?: Record<string, number>; reasons?: string[]; last?: string; pay?: string; years?: string; dept?: string; status?: string; taeum?: number; off?: number; quit?: number; risks?: string[]; good?: boolean; at?: string };
 export const factKey = (hid: number) => `hfact:${hid}`;
-export type FactAgg = { stars: { k: string; name: string; icon: string; avg: number }[]; starAvg: number; starN: number; exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string; v?: boolean }[] }; n: number; verified: number; pay: { range: string; n: number }[]; payMid?: string; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
+export type FactAgg = { overallAvg: number; recPct: number; recN: number; words: string[]; future: number[]; stars: { k: string; name: string; icon: string; avg: number }[]; starAvg: number; starN: number; exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string; v?: boolean }[] }; n: number; verified: number; pay: { range: string; n: number }[]; payMid?: string; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
 export function aggregate(rows: HFact[]): FactAgg {
   const n = rows.length; const pay = PAY.map(r => ({ range: r, n: rows.filter(x => x.pay === r).length }));
   const paid = rows.map(x => PAY.indexOf(x.pay as any)).filter(i => i >= 0).sort((a, b) => a - b); const payMid = paid.length ? PAY[paid[Math.floor((paid.length - 1) / 2)]] : undefined;
@@ -37,17 +38,19 @@ export function aggregate(rows: HFact[]): FactAgg {
   const sr = rows.filter(x => x.stars && Object.keys(x.stars).length);
   const stars = EXIT_STARS.map(st => { const v = sr.map(x => x.stars![st.k]).filter(v => v >= 1 && v <= 5); return { ...st, avg: v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10 : 0 }; });
   const starAvg = sr.length ? Math.round(stars.reduce((a, b) => a + b.avg, 0) / stars.length * 10) / 10 : 0;
-  const ex = rows.filter(x => x.status === "퇴사" && (x.reasons?.length || x.last));
+  const ex = rows.filter(x => x.status === "퇴사" && x.reasons?.length);
   const exit = { n: ex.length, stars: EXIT_STARS.map(st => { const v = ex.map(x => x.stars![st.k]).filter(v => v >= 1 && v <= 5); return { ...st, avg: v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10 : 0 }; }),
     reasons: EXIT_REASONS.map(r => ({ r, n: ex.filter(x => x.reasons?.includes(r)).length })).filter(r => r.n).sort((a, b) => b.n - a.n),
     last: rows.filter(x => x.last).sort((a, b) => (b.at ?? "").localeCompare(a.at ?? "")).slice(0, 12).map(x => ({ text: x.last!, v: x.v })) };
-  return { stars, starAvg, starN: sr.length, exit, n, verified: rows.filter(x => x.v).length, pay, payMid, mood, risks, good: rows.filter(x => x.good).length };
+  const ov = rows.map(x => x.overall ?? 0).filter(v => v >= 1 && v <= 5), rc = rows.filter(x => x.rec === 0 || x.rec === 1);
+  const overallAvg = ov.length ? Math.round(ov.reduce((a, b) => a + b, 0) / ov.length * 10) / 10 : starAvg;
+  return { overallAvg, recPct: rc.length ? Math.round(rc.filter(x => x.rec === 1).length / rc.length * 100) : 0, recN: rc.length, future: [0, 1, 2].map(k => rows.filter(x => x.future === k).length), words: rows.filter(x => x.last).sort((a, b) => (b.at ?? "").localeCompare(a.at ?? "")).slice(0, 12).map(x => x.last!), stars, starAvg, starN: sr.length, exit, n, verified: rows.filter(x => x.v).length, pay, payMid, mood, risks, good: rows.filter(x => x.good).length };
 }
 /** 공고 카드용 한 줄 */
 export function factLine(a?: FactAgg, locked?: boolean): string[] {
   if (!a || a.n < MIN_N) return [];
-  if (locked) return [`🔒 실수령·리스크 ${a.n}명 응답 — 체크 1번이면 열려요`];
-  const out: string[] = []; if (a.payMid) out.push(`💰 실수령 ${a.payMid}만`); if (a.starN >= MIN_N) out.push(`⭐ ${a.starAvg.toFixed(1)}`);
+  if (locked) return [`🔒 실수령·별점·리스크 ${a.n}명 응답 — 체크 하나면 6개월간 열려요`];
+  const out: string[] = []; if (a.payMid) out.push(`💰 실수령 ${a.payMid}만`); if (a.starN >= MIN_N) out.push(`⭐ ${a.overallAvg.toFixed(1)}`); if (a.recN >= MIN_N) out.push(`👍 추천 ${a.recPct}%`);
   const t = a.mood.find(m => m.k === "taeum"); if (t && t.counts[2] > 0) out.push(`😣 태움 심함 ${t.counts[2]}/${a.n}`);
   if (a.risks[0]) out.push(`⚠️ ${a.risks[0].s} ${a.risks[0].n}/${a.n}`);
   return out;

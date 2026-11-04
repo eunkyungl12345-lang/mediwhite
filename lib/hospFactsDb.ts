@@ -10,9 +10,10 @@ export async function loadFacts(hids?: number[]): Promise<Record<number, FactAgg
   for (const r of data ?? []) { const id = Number(String(r.game).slice(6)); (by[id] ??= []).push({ ...(r.state as HFact), v: ok.has(`${r.user_id}:${id}`) }); }
   return Object.fromEntries(Object.entries(by).map(([k, v]) => [Number(k), aggregate(v)]));
 }
-/** give-to-get: 실체 체크를 1번이라도 했거나 병원 리뷰를 남긴 사람만 상세 열람 */
+/** give-to-get: 최근 6개월 안에 실체 체크(또는 리뷰)를 남긴 사람만 상세 열람 */
 export async function hasContributed(userId: string, role?: string): Promise<boolean> {
   if (role === "admin") return true; const d = db();
-  const [{ count: a }, { count: b }] = await Promise.all([d.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", userId).like("game", "hfact:%"), d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("user_id", userId)]);
+  const since = new Date(Date.now() - 183 * 86400000).toISOString(); // 체크 하나면 6개월간 전체 열람 (잡플래닛식 — 계속 새 정보가 들어오게)
+  const [{ count: a }, { count: b }] = await Promise.all([d.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", userId).like("game", "hfact:%").gte("updated_at", since), d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", since)]);
   return (a ?? 0) + (b ?? 0) > 0;
 }

@@ -11,6 +11,7 @@ import { pushToUsers } from "./push";
 import { JOB_TAGS, SHARE_TAG, joinTags } from "./jobTags";
 import { VOICE_OPTS } from "./jobVoice";
 import { PAY, YEARS, MOOD, RISKS, EXIT_STARS, EXIT_REASONS, factKey } from "./hospFacts";
+import { textProblem } from "./textQuality";
 const okImg = (f: unknown): f is File => f instanceof File && f.size > 0 && f.size <= 6_000_000 && /^image\/(jpeg|png|webp|heic|heif|gif)$/.test(f.type);
 
 type R = { error?: string; ok?: string } | undefined;
@@ -140,14 +141,16 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
   const risks = fd.getAll("risk").map(String).filter(r => RISKS.some(x => x.k === r)); const good = fd.get("good") === "1" && !risks.length;
   let exit: Record<string, any> = {};
   const stars: Record<string, number> = {}; for (const st of EXIT_STARS) { const v = Number(fd.get("st_" + st.k)); if (!(v >= 1 && v <= 5)) return { error: `별점 '${st.name}'을 골라주세요` }; stars[st.k] = v; }
+  const overall = Number(fd.get("st_overall")); if (!(overall >= 1 && overall <= 5)) return { error: "총평점을 매겨주세요" };
+  const rec = Number(fd.get("rec")), future = Number(fd.get("future")); if (![0, 1].includes(rec) || fd.get("rec") === null) return { error: "추천 여부를 골라주세요" }; if (![0, 1, 2].includes(future) || fd.get("future") === null) return { error: "1년 뒤 전망을 골라주세요" };
+  const word = clean(fd.get("last"), 120); if (word) { const tp = textProblem(word, 10); if (tp) return { error: `한줄평: ${tp}` }; const pm = personMention(word); if (pm) return { error: `특정인을 알 수 있는 표현("${pm}")은 빼주세요. 사람이 아니라 병원에 대한 한마디만!` }; }
   if (status === "퇴사") {
     const reasons = fd.getAll("reason").map(String).filter(r => inList(EXIT_REASONS, r)); if (!reasons.length) return { error: "퇴사 사유를 하나 이상 골라주세요" };
-    const last = clean(fd.get("last"), 120); if (last) { const pm = personMention(last); if (pm) return { error: `특정인을 알 수 있는 표현("${pm}")은 빼주세요. 사람이 아니라 병원에 대한 한마디만!` }; }
-    exit = { reasons, last: last || undefined };
+    exit = { reasons };
   }
   const key = factKey(hid); const { data: prev } = await s.from("game_state").select("user_id").eq("user_id", u.id).eq("game", key).maybeSingle();
   if (!prev) { const { count } = await s.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", u.id).like("game", "hfact:%").gte("updated_at", new Date(Date.now() - 86400000).toISOString()); if ((count ?? 0) >= 5) return { error: "하루 5곳까지만 체크할 수 있어요" }; }
-  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, ...mood, stars, risks, good, ...exit, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
+  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, ...mood, stars, overall, rec, future, risks, good, ...exit, last: word || undefined, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
   if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");
   revalidatePath(`/hospitals/${hid}`); revalidatePath("/jobs"); redirect(`/hospitals/${hid}?checked=1`);
