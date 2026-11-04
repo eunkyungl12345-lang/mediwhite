@@ -26,9 +26,9 @@ export const EXIT_STARS = [
   { k: "boss", name: "상사·관리자", icon: "🧑‍💼" }, { k: "edu", name: "교육·성장", icon: "📈" }, { k: "welfare", name: "복지", icon: "🎁" }, { k: "load", name: "업무강도(적당함)", icon: "🏋️" },
 ] as const;
 export const EXIT_REASONS = ["급여가 낮아서", "태움·인간관계", "업무 과다·인력 부족", "상사·관리자", "교대·근무시간", "결혼·출산·육아", "이사·통근", "커리어·이직", "건강", "계약 만료", "기타"] as const;
-export type HFact = { stars?: Record<string, number>; reasons?: string[]; last?: string; pay?: string; years?: string; dept?: string; status?: string; taeum?: number; off?: number; quit?: number; risks?: string[]; good?: boolean; at?: string };
+export type HFact = { v?: boolean; stars?: Record<string, number>; reasons?: string[]; last?: string; pay?: string; years?: string; dept?: string; status?: string; taeum?: number; off?: number; quit?: number; risks?: string[]; good?: boolean; at?: string };
 export const factKey = (hid: number) => `hfact:${hid}`;
-export type FactAgg = { exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string }[] }; n: number; pay: { range: string; n: number }[]; payMid?: string; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
+export type FactAgg = { exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string; v?: boolean }[] }; n: number; verified: number; pay: { range: string; n: number }[]; payMid?: string; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
 export function aggregate(rows: HFact[]): FactAgg {
   const n = rows.length; const pay = PAY.map(r => ({ range: r, n: rows.filter(x => x.pay === r).length }));
   const paid = rows.map(x => PAY.indexOf(x.pay as any)).filter(i => i >= 0).sort((a, b) => a - b); const payMid = paid.length ? PAY[paid[Math.floor((paid.length - 1) / 2)]] : undefined;
@@ -37,8 +37,8 @@ export function aggregate(rows: HFact[]): FactAgg {
   const ex = rows.filter(x => x.status === "퇴사" && x.stars && Object.keys(x.stars).length);
   const exit = { n: ex.length, stars: EXIT_STARS.map(st => { const v = ex.map(x => x.stars![st.k]).filter(v => v >= 1 && v <= 5); return { ...st, avg: v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10 : 0 }; }),
     reasons: EXIT_REASONS.map(r => ({ r, n: ex.filter(x => x.reasons?.includes(r)).length })).filter(r => r.n).sort((a, b) => b.n - a.n),
-    last: rows.filter(x => x.last).sort((a, b) => (b.at ?? "").localeCompare(a.at ?? "")).slice(0, 12).map(x => ({ text: x.last!, dept: x.dept, years: x.years })) };
-  return { exit, n, pay, payMid, mood, risks, good: rows.filter(x => x.good).length };
+    last: rows.filter(x => x.last).sort((a, b) => (b.at ?? "").localeCompare(a.at ?? "")).slice(0, 12).map(x => ({ text: x.last!, dept: x.dept, years: x.years, v: x.v })) };
+  return { exit, n, verified: rows.filter(x => x.v).length, pay, payMid, mood, risks, good: rows.filter(x => x.good).length };
 }
 /** 공고 카드용 한 줄 */
 export function factLine(a?: FactAgg): string[] {

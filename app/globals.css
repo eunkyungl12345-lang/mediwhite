@@ -1925,3 +1925,8 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .bg-sec{display:grid;gap:8px;margin:10px 0}.bg-sec-h{display:flex;justify-content:space-between;align-items:center}
 .bg-row{display:grid;grid-auto-flow:column;grid-auto-columns:78%;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.bg-row>*{scroll-snap-align:start}
 @media (min-width:700px){.bg-row{grid-auto-columns:300px}}
+/* ✅ 병원 인증 */
+.vf-guide{display:grid;gap:8px;padding:12px 14px;border-radius:12px;background:var(--bg);font-size:13.5px}.vf-guide ol{margin:0;padding-left:20px;display:grid;gap:4px}.vf-guide small{color:var(--muted)}
+.vf-postit{display:grid;gap:4px;justify-items:start;font-size:12px;color:var(--muted)}.vf-postit span{font-family:'Nanum Pen Script',cursive,system-ui;font-size:20px;color:#3a2f28;background:#FFE97A;padding:10px 16px;transform:rotate(-2deg);box-shadow:2px 3px 6px rgba(0,0,0,.15)}
+.vf-agree{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--muted);line-height:1.5}.vf-agree input{width:auto;margin-top:3px}
+.fb-vlink{font-size:13px;font-weight:700;color:#1F5E3C;justify-self:start}

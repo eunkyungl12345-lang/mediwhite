@@ -1,4 +1,6 @@
 import { voiceLabel } from "@/lib/jobVoice";
+import AdminHVerify from "@/components/AdminHVerify";
+import { hverifyPending } from "@/lib/hverify.actions";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
@@ -58,6 +60,7 @@ export default async function AdminPage() {
   ]);
   const { data: proofReqs } = await db().from("review_proofs").select("id,path,created_at,user:users(nickname,dept,username),hospital:hospitals(name,region),review:hospital_reviews(dept,status,pros)").eq("status", "pending").order("created_at");
   const { data: badgeReqs } = await db().from("badge_requests").select("id,user_id,id_path,lic_path,note,created_at,user:users(nickname,dept,username)").eq("status", "pending").order("created_at");
+  const hvReqs = await hverifyPending();
   const wk = new Date(Date.now() - 7 * 86400000).toISOString();
   const [{ data: jv }, { data: jo }, { data: jvo }] = await Promise.all([db().from("events").select("text").eq("kind", "jobview").gte("created_at", wk).limit(5000), db().from("events").select("text").eq("kind", "jobout").gte("created_at", wk).limit(5000), db().from("events").select("text,created_at").eq("kind", "jobvoice").order("created_at", { ascending: false }).limit(1000)]);
   const tally = (rows: any[] | null, i: number) => { const m: Record<string, number> = {}; for (const r of rows ?? []) { const k = String(r.text).split("|")[i] || "?"; m[k] = (m[k] ?? 0) + 1; } return Object.entries(m).sort((a, b) => b[1] - a[1]); };
@@ -67,6 +70,10 @@ export default async function AdminPage() {
   return (
     <div className="games">
       <Stats series={series} totals={{ users: (signups ?? []).length, today: series[series.length - 1]?.visitors ?? 0, msg24h: msg24 ?? 0, posts: postsAll ?? 0, games24h: scores24 ?? 0 }} />
+      <div className="card" id="hverify">
+        <h3>✅ 병원 재직·퇴사 인증 {hvReqs.length ? <span className="mt-wait">{hvReqs.length}</span> : null}</h3>
+        <AdminHVerify reqs={hvReqs as any} />
+      </div>
       <div className="card" id="jobstats">
         <h3>📊 채용 반응 (최근 7일)</h3>
         <div className="muted" style={{ fontSize: 12 }}>공고 열람 {(jv ?? []).length}회 · 원문 지원 클릭 {(jo ?? []).length}회 — 어디서 반응이 오는지 보고 그쪽을 더 뾰족하게</div>

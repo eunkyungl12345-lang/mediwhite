@@ -12,6 +12,7 @@ import BragCard from "@/components/jobs/BragCard";
 import { loadBrags } from "@/lib/bragDb";
 import { loadFacts } from "@/lib/hospFactsDb";
 import { aggregate, factKey } from "@/lib/hospFacts";
+import { vKey } from "@/lib/hverify";
 export const dynamic = "force-dynamic";
 
 export default async function HospitalPage({ params, searchParams }: { params: { id: string }; searchParams: { write?: string; checked?: string } }) {
@@ -28,12 +29,13 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const { data: myJobs } = await d.from("jobs").select("id,dept,emp_type").eq("closed", false).eq("hidden", false).ilike("hospital", h.name).limit(3);
   const cur = rs.filter(r => r.status === "재직").length;
   const [facts, { data: myFact }, brags] = await Promise.all([loadFacts([id]), d.from("game_state").select("user_id").eq("user_id", s.id).eq("game", factKey(id)).maybeSingle(), loadBrags(s.id, { hid: id })]);
+  const { data: myV } = await d.from("game_state").select("state").eq("user_id", s.id).eq("game", vKey(id)).maybeSingle(); const vstat = (myV?.state as any)?.status ?? null;
   return (
     <div className="detail hs-detail">
       <Link className="link" href="/hospitals">← 병원 리뷰</Link>
       <h2 style={{ margin: "8px 0 2px" }}>{h.name}</h2><div className="muted" style={{ fontSize: 13 }}>📍 {h.region} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></div>
-      {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요. <b>+50 XP</b></div>}
-      <FactBox a={facts[id] ?? aggregate([])} hid={id} mine={!!myFact} />
+      {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요. <b>+50 XP</b>{vstat !== "approved" && <> · <Link href={`/hospitals/verify?id=${id}`} className="link"><b>✅ 명찰/서류로 인증하면 더 믿을 만해져요 →</b></Link></>}</div>}
+      <FactBox a={facts[id] ?? aggregate([])} hid={id} mine={!!myFact} vstat={vstat} />
       <div className="bg-sec"><div className="bg-sec-h"><b>🏆 현직자 자랑 {brags.length || ""}</b><Link href={`/hospitals/brag/new?id=${id}`} className="link">📸 자랑하기</Link></div>
         {brags.length ? <div className="bg-row">{brags.map(b => <BragCard key={b.owner} b={b} me={s.id} admin={s.role === "admin"} showHosp={false} />)}</div> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>이 병원 다니는데 자랑할 게 있다면 사진 한 장 올려주세요.</p>}</div>
       <div className="hs-summary">

@@ -16,7 +16,7 @@ export default function BragCard({ b, me, admin, rank, showHosp = true }: { b: B
       {showHosp && <Link href={`/hospitals/${b.hid}`} className="bg-h"><b>{b.hospital}</b><small>{b.region}</small></Link>}
       <div className="bg-tags">{b.tags.map(t => <span key={t}>{t}</span>)}</div>
       <p>{b.text}</p>
-      <div className="bg-f"><small>{b.dept ? `${b.dept} 재직자` : "재직자"} 자랑</small>
+      <div className="bg-f"><small>{b.verified ? "✅ " : ""}{b.dept ? `${b.dept} 재직자` : "재직자"} 자랑{b.verified ? " · 재직 인증" : ""}</small>
         {mine || admin ? <span className="row" style={{ gap: 8 }}>{mine && <Link href={`/hospitals/brag/new?id=${b.hid}`} className="link">수정</Link>}<button type="button" className="link" onClick={() => confirm("자랑을 지울까요?") && start(() => deleteBrag(b.owner, b.hid))}>삭제</button>{mine && <span className="bg-like on">❤️ {n}</span>}</span>
           : <button type="button" className={"bg-like" + (liked ? " on" : "")} onClick={() => { setLiked(!liked); setN(n + (liked ? -1 : 1)); start(() => toggleBragLike(b.owner, b.hid)); }}>{liked ? "❤️" : "🤍"} 부러워요 {n}</button>}
       </div>
