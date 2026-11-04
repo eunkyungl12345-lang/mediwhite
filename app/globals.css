@@ -2016,3 +2016,19 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
   .ht-h a{color:#A9BCB3}.ht-chips i{background:#1F3A30;color:#8FE3B5}.ht-chips i.h{background:#3A3016;color:#FFD48A}
 }
 .ht-roll-i{display:block;animation:rollin .35s ease}@keyframes rollin{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}
+/* 🏥 리뷰 하이라이트 · 커뮤니티 인기글 */
+.rh{display:grid;gap:8px;min-width:0}.rh-row{display:grid;grid-auto-flow:column;grid-auto-columns:82%;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.rh-row>*{scroll-snap-align:start}@media (min-width:700px){.rh-row{grid-auto-columns:300px}}
+.rh-card{display:grid;gap:10px;padding:16px;border-radius:18px;background:linear-gradient(180deg,#FFF6E6,var(--surface) 70%);border:1px solid var(--line);text-decoration:none;color:var(--ink)}.rh-card>b{font-size:15.5px;line-height:1.45}
+.rh-card p{margin:0;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}.rh-card p em{font-style:normal;font-size:11px;font-weight:800;color:#2F6FD6;background:#E8F0FF;padding:2px 6px;border-radius:5px;flex:none}
+.rh-more{justify-self:stretch;text-align:center;font-size:13px;font-weight:700;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.rh-h{display:flex;gap:10px;align-items:center;padding-top:10px;border-top:1px solid var(--line)}.rh-h>span{width:36px;height:36px;border-radius:10px;background:var(--bg);display:grid;place-items:center}.rh-h div{display:grid}.rh-h strong{font-size:14px}.rh-h small{font-size:11.5px;color:var(--muted)}
+.rh-empty{display:grid;gap:4px;padding:16px;border-radius:16px;border:1.5px dashed #1F5E3C;text-decoration:none;color:var(--ink)}.rh-empty span{font-size:12.5px;color:var(--muted)}
+.hc-sec{display:grid;gap:6px;margin-top:14px}.hc-list{display:grid;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}.hc-list .h-row{padding:11px 14px;border-bottom:1px solid var(--line)}.hc-list .h-row:last-child{border-bottom:0}
+@media (prefers-color-scheme:dark){.rh-card{background:linear-gradient(180deg,#2A2416,#18211D 70%);border-color:#2C3A34}.rh-card p em{background:#1E2A44;color:#9CC0FF}}
+/* 💰 급여 */
+.sal{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}.sal-top{display:flex;justify-content:space-between;align-items:center;padding:16px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}.sal-top span{color:var(--muted);font-size:14px}.sal-top b{font-size:19px}
+.sal-h{margin:6px 0 0;font-size:19px}.sc{display:grid;gap:12px}.sc-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.sc-tabs button{all:unset;cursor:pointer;flex:none;padding:7px 13px;border-radius:999px;border:1px solid var(--line);font-size:13px;font-weight:700}.sc-tabs button.on{background:#1F5E3C;color:#fff;border-color:#1F5E3C}
+.sc-svg{width:100%;height:auto;color:var(--ink)}.sc-me{display:grid;justify-items:center;gap:2px;padding:12px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}.sc-me b{font-size:18px;color:#1F7A4C}.sc-me span{font-size:12.5px;color:var(--muted)}
+.sal-list{display:grid;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}.sal-row{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink)}.sal-row:last-child{border-bottom:0}.sal-row>b{width:20px;color:#1F9D63}.sal-row div{flex:1;display:grid;min-width:0}.sal-row small{font-size:12px;color:var(--muted)}.sal-row em{font-style:normal;font-weight:800}
+@media (prefers-color-scheme:dark){.sc-me b{color:#8FE3B5}}
+.rh-card{align-content:start}.rh-more{align-self:start;padding:8px}

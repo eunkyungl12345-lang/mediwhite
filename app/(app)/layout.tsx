@@ -26,6 +26,7 @@ import { OFFICIAL } from "@/lib/depts";
 import { db } from "@/lib/supabase";
 import { Suspense } from "react";
 import TodayBar from "@/components/TodayBar";
+import OnlyOn from "@/components/OnlyOn";
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -58,7 +59,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       <Tabs admin={s.role === "admin"} />
-      <Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense>
+      <OnlyOn prefixes={["/board", "/anon", "/games", "/ssum", "/news", "/fortune", "/food"]}><Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense></OnlyOn>
       {pub && <PushSetup vapidPublic={pub} />}
       <main><CommTabs />{children}</main>
       <BottomNav />

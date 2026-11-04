@@ -4,6 +4,7 @@ import BlueBadge from "@/components/BlueBadge";
 import HomeFeed from "@/components/HomeFeed";
 import FocusCard from "@/components/jobs/FocusCard";
 import HomeTop from "@/components/home/HomeTop";
+import ReviewHighlights from "@/components/home/ReviewHighlights";
 import { dday } from "@/lib/jobs";
 import { CafeHeader } from "@/components/CafeNav";
 import { boardNavItems } from "@/lib/boardNav";
@@ -82,29 +83,9 @@ export default async function HomePage() {
   return (
     <div className="home v2">
       <div className="h-greet"><b>{me?.nickname ?? s.nickname}님,</b> {hourGreet()}{(memberN ?? 0) >= 300 && <span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 {online.toLocaleString()}명</span>}</div>
-      <HomeTop />
-      <nav className="hstrip" aria-label="오늘">
-        <Link href="/games?g=wordle" className={"hs-pill" + (wd?.data?.done ? " done" : "")}><span>🟩</span>{wd?.data?.done ? "메디워들 완료" : "메디워들"}</Link>
-        <Link href="/games?g=tycoon" className="hs-pill"><span>🏥</span>{tyPending > 0 ? `우리 병원 +${won(tyPending)}` : "우리 병원"}</Link>
-        {heads[0] && <a href={heads[0].link} target="_blank" rel="noopener noreferrer" className="hs-pill news"><span>📰</span><em>{heads[0].title}</em></a>}
-        <Link href="/hospitals/brag" className="hs-pill"><span>🏆</span>우리병원 자랑</Link>
-        <Link href="/rest" className="hs-pill"><span>🛋️</span>당직실</Link>
-        <Link href="/anon" className="hs-pill"><span>🕶️</span>익명</Link>
-        <Link href="/ssum" className="hs-pill"><span>💘</span>썸</Link>
-        <Link href="/games" className="hs-pill"><span>🎮</span>게임</Link>
-        <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
-      </nav>
-
-
-      <PromoStrip items={promoItems} />
-
-      <HomeFeed latest={latestF} recent={recentF} hot={hotF} mine={mineF} notices={noticesF} news={newsF} newsTabs={NEWS_TABS.map(t => ({ key: t.key, name: t.name }))} quotes={quotes} dept={s.dept} moreMine={`/board?cat=${encodeURIComponent(s.dept)}&sort=new`} menu={<CafeHeader compact title="" here="/home" items={boardNavItems(s.dept)} me={<><b>{s.nickname}</b><span className="muted"> · {s.dept}</span></>} />} />
-
-      <Link href="/rank" className={`h-rank2 t${r.tier}`}>
-        <Insignia index={r.index} size={26} />
-        <div className="h-rank2-mid"><div className="h-rank2-name"><b>{r.name}</b><span className="muted">{xp.toLocaleString()} XP{r.next ? ` · ${r.nextName}까지 ${(r.next - xp).toLocaleString()}` : " · 최고 계급"}</span></div><div className="xpbar"><i style={{ width: `${Math.round(r.progress * 100)}%` }} /></div></div>
-        <div className="h-rank2-right"><span className={"h-q" + (daily.all ? " done" : "")}>{daily.all ? "🎉 퀘스트 완료" : `퀘스트 ${doneN}/3`}</span><small>🔥 {daily.streak}일</small></div>
-      </Link>
+      <HomeTop mid={<ReviewHighlights />} />
+      <section className="hc-sec"><div className="ht-h"><b>💬 커뮤니티 인기글</b><Link href="/board">더보기 ›</Link></div>
+        {hot.length ? <div className="hc-list">{hot.map(p => <Row key={p.id} p={p} />)}</div> : <p className="muted" style={{ fontSize: 13 }}>아직 인기글이 없어요.</p>}</section>
     </div>
   );
 }

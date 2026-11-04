@@ -7,7 +7,7 @@ import { MIN_N } from "@/lib/hospFacts";
 import { splitTags, SHARE_TAG } from "@/lib/jobTags";
 import RankRoll from "./RankRoll";
 /** 🏠 잡플래닛식 홈 상단 — 검색창 · 지금 많이 보는 병원 순위 · 아이콘 4개 · 곧 마감 배너 · 지금 뜨는 공고 */
-export default async function HomeTop() {
+export default async function HomeTop({ mid }: { mid?: React.ReactNode }) {
   const d = db(); const wk = new Date(Date.now() - 7 * 86400000).toISOString();
   const [rank, jobs] = await Promise.all([
     memo("home-hrank", 10 * 60_000, async () => { const { data: ev } = await d.from("events").select("text").eq("kind", "hview").gte("created_at", wk).limit(5000);
@@ -28,11 +28,12 @@ export default async function HomeTop() {
     <form action="/search" className="ht-search"><input name="q" placeholder="어느 병원이 궁금해요? (병원·약국·직종)" aria-label="검색" /><button aria-label="검색">⌕</button></form>
     {rank.length > 0 && <div className="ht-rank"><span className="ht-live">🩺 요즘 많이 찾는 병원</span><RankRoll items={rank} /></div>}
     <nav className="ht-icons">
-      <Link href="/hospitals/check"><span className="ic i1">🔎</span>실체 체크</Link>
-      <Link href="/jobs/day"><span className="ic i2">☀️</span>3교대 탈출</Link>
-      <Link href="/hospitals"><span className="ic i3">💰</span>병원 급여</Link>
+      <Link href="/hospitals"><span className="ic i1">🏥</span>병원 리뷰</Link>
+      <Link href="/salary"><span className="ic i3">💰</span>급여</Link>
+      <Link href="/jobs"><span className="ic i2">💼</span>채용</Link>
       <Link href="/board"><span className="ic i4">💬</span>커뮤니티</Link>
     </nav>
+    {mid}
     {soon > 0 && <Link href="/jobs?soon=1" className="ht-hot"><span className="ht-hot-ic">⏰</span><span>이번 주 마감 공고 <b>{soon}개</b> · 놓치기 전에 확인</span><em>›</em></Link>}
     {hot.length > 0 && <section className="ht-jobs"><div className="ht-h"><b>💼 오늘의 의료 공고</b><Link href="/jobs">전체보기 ›</Link></div>
       <div className="ht-row">{hot.map(j => { const h = hOf(j), a = h ? facts[h.id] : undefined, pub = (j.author as any)?.username === "mw_bot", share = splitTags(j.body).tags.includes(SHARE_TAG);
