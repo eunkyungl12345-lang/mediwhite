@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 /** 🔎 병원 실체 체크 — 다니는/다녔던 병원 30초 익명 체크 */
 export default async function CheckPage({ searchParams }: { searchParams: { id?: string } }) {
   const s = (await getSession())!; const d = db(); const id = Number(searchParams.id) || 0;
-  const { data: h } = id ? await d.from("hospitals").select("id,name,region").eq("id", id).maybeSingle() : { data: null };
+  const { data: h } = id ? await d.from("hospitals").select("id,name,region,kind").eq("id", id).maybeSingle() : { data: null };
   const { data: mine } = h ? await d.from("game_state").select("state").eq("user_id", s.id).eq("game", factKey(h.id)).maybeSingle() : { data: null };
   return <div className="detail hc-page">
     <Link className="link" href={h ? `/hospitals/${h.id}` : "/jobs"}>← {h ? h.name : "채용"}</Link>

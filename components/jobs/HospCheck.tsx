@@ -9,15 +9,17 @@ import { textProblem } from "@/lib/textQuality";
 function Send({ edit }: { edit: boolean }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : edit ? "✏️ 수정 완료" : "🔎 익명으로 체크 완료 (+50 XP)"}</button>; }
 const Chips = ({ name, opts, def, values, big }: { name: string; opts: readonly string[]; def?: string | number; values?: (string | number)[]; big?: boolean }) =>
   <div className={"hc-chips" + (big ? " big" : "")}>{opts.map((o, i) => { const v = values ? values[i] : o; return <label key={o}><input type="radio" name={name} value={v} defaultChecked={def !== undefined && String(def) === String(v)} /><span>{o}</span></label>; })}</div>;
+const STAR_W = ["", "별로예요", "아쉬워요", "보통", "좋아요", "최고예요"];
 function Star5({ name, def, big }: { name: string; def?: number; big?: boolean }) { const [v, setV] = useState(def ?? 0);
-  return <span className={"hc-stars" + (big ? " big" : "")}>{[1, 2, 3, 4, 5].map(n => <button key={n} type="button" className={v >= n ? "on" : ""} onClick={() => setV(n)} aria-label={`${n}점`}>★</button>)}<input type="hidden" name={name} value={v || ""} /></span>; }
+  return <span className={"hc-stars" + (big ? " big" : "")}>{[1, 2, 3, 4, 5].map(n => <button key={n} type="button" className={v >= n ? "on" : ""} onClick={() => setV(n)} aria-label={`${n}점`}>★</button>)}<em className="hc-sw">{STAR_W[v]}</em><input type="hidden" name={name} value={v || ""} /></span>; }
 
 /** 🔎 병원 실체 체크 — 잡플래닛식 한 단계씩. 급여 → 분위기 → 별점 → 추천 → 리스크 → 한줄평(퇴사자는 퇴사 사유) */
-export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: number; name: string; region: string } | null; dept?: string; mine?: HFact | null }) {
+const BIG_KIND = /상급종합|종합병원|^병원$|요양병원/, LOCAL_KIND = /의원|치과|약국|한방병원/;
+export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: number; name: string; region: string; kind?: string } | null; dept?: string; mine?: HFact | null }) {
   const [st, act] = useFormState(submitHospFact, undefined); const form = useRef<HTMLFormElement>(null);
   const [q, setQ] = useState(""), [hits, setHits] = useState<any[]>([]), [picked, setPicked] = useState(hospital ?? null), [isNew, setIsNew] = useState(false);
-  const [risk, setRisk] = useState<string[]>(mine?.risks ?? []), [good, setGood] = useState(mine?.good ?? false), [status, setStatus] = useState(mine?.status ?? "재직"), [txt, setTxt] = useState(mine?.last ?? "");
-  const steps = [...(hospital ? [] : ["hosp"]), "me", "pay", "mood", "field", "star", "rec", "risk", "word"] as const;
+  const [risk, setRisk] = useState<string[]>(mine?.risks ?? []), [good, setGood] = useState(mine?.good ?? false), [status, setStatus] = useState(mine?.status ?? "재직"), [txt, setTxt] = useState(mine?.last ?? ""), [pros, setPros] = useState((mine as any)?.pros ?? ""), [cons, setCons] = useState((mine as any)?.cons ?? "");
+  const steps = [...(hospital ? [] : ["hosp"]), "me", "pay", "mood", "field", "star", "rec", "risk", "pc", "word"] as const;
   const [i, setI] = useState(0), [err, setErr] = useState(""); const cur = steps[i], last = i === steps.length - 1;
   const search = async (v: string) => { setQ(v); setPicked(null); setIsNew(false); setHits(v.trim() ? await searchHospitals(v) : []); };
   const check = (): string => {
@@ -29,6 +31,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     if (cur === "star") return has("st_overall") && EXIT_STARS.every(s => has("st_" + s.k)) ? "" : "총평점과 항목별 별점을 모두 매겨주세요";
     if (cur === "rec") return has("rec") && has("future") ? "" : "두 질문 모두 골라주세요";
     if (cur === "risk") return risk.length || good ? "" : "해당하는 걸 고르거나 '딱히 없어요'를 눌러주세요";
+    if (cur === "pc") { for (const [k, n] of [["pros", "장점"], ["cons", "단점"]] as const) { const v = String(fd.get(k) ?? "").trim(); if (v) { const e = textProblem(v, 20); if (e) return `${n}: ${e}`; } } return ""; }
     if (cur === "word") { if (status === "퇴사" && !fd.getAll("reason").length) return "퇴사 사유를 하나 이상 골라주세요"; return txt.trim() ? textProblem(txt, 10) ?? "" : ""; }
     return "";
   };
@@ -36,8 +39,8 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
   const show = (k: string) => ({ display: cur === k ? undefined : "none" });
   return <form ref={form} action={act} className="form hc wiz" onSubmit={e => { const x = check(); if (x) { e.preventDefault(); setErr(x); } }} onKeyDown={e => { if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") { e.preventDefault(); if (!last) next(); } }}>
     <div className="wz-top"><div className="wz-bar"><i style={{ width: `${(i + 1) / steps.length * 100}%` }} /></div><small><b>{i + 1}</b> / {steps.length}</small></div>
-    {(picked || hospital) && cur !== "hosp" && <div className="wz-h">🏥 <b>{(picked ?? hospital)!.name}</b><small>{(picked ?? hospital)!.region}</small></div>}
-    <div className="wz-safe">🔒 <b>안심하고 솔직하게.</b> 닉네임은 절대 안 보이고, 3명 이상 모여야 합친 숫자로만 공개돼요.</div>
+    {(picked || hospital || (isNew && q)) && cur !== "hosp" && <div className="wz-h"><b>{picked?.name ?? hospital?.name ?? q}</b><small>{picked?.region ?? hospital?.region ?? ""}</small>{!hospital && <button type="button" className="wz-chg" onClick={() => { setI(0); setErr(""); }}>변경</button>}</div>}
+    <div className="wz-safe">🔒 입력하신 모든 정보는 <b>익명으로 처리</b>되니 걱정 마세요! 닉네임은 안 보이고, 여러 명이 모여야 합친 숫자로만 공개돼요.</div>
 
     <div style={show("hosp")} className="wz-step"><h3>어느 병원을 알려줄까요?</h3><p>다니는 곳, 다녔던 곳 모두 좋아요.</p>
       <div className="rv-pick"><input value={picked ? `${picked.name} (${picked.region})` : q} onChange={e => search(e.target.value)} placeholder="병원·약국 이름 검색" autoComplete="off" />
@@ -50,7 +53,9 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     <div style={show("me")} className="wz-step"><h3>어떤 자리에서 일했나요?</h3>
       <div className="row" style={{ gap: 6 }}><select name="dept" defaultValue={mine?.dept ?? (JOB_DEPTS.includes(dept as any) ? dept : "간호사")}>{JOB_DEPTS.map(r => <option key={r}>{r}</option>)}</select>
         <select name="status" value={status} onChange={e => setStatus(e.target.value)}><option>재직</option><option>퇴사</option></select></div>
-      <b className="wz-sub">근무 형태</b><Chips name="shift" opts={SHIFT} values={[0, 1, 2]} def={mine?.shift} big />
+      <b className="wz-sub">고용 형태 <small className="muted">(비공개)</small></b><Chips name="emp" opts={["정규직", "계약직", "파트타임", "인턴·수습"] as const} def={(mine as any)?.emp} />
+      <b className="wz-sub">근무 형태</b><Chips key={String((picked as any)?.kind ?? hospital?.kind)} name="shift" opts={SHIFT} values={[0, 1, 2]} def={mine?.shift ?? (BIG_KIND.test(String((picked as any)?.kind ?? hospital?.kind ?? "")) ? 0 : LOCAL_KIND.test(String((picked as any)?.kind ?? hospital?.kind ?? "")) ? 2 : undefined)} big />
+      <small className="muted">대학·종합병원은 보통 3교대, 의원·치과·약국 같은 로컬은 보통 상근이라 미리 골라뒀어요. 다르면 바꿔주세요.</small>
       <b className="wz-sub">연차</b><Chips name="years" opts={YEARS} def={mine?.years} big /></div>
 
     <div style={show("pay")} className="wz-step"><h3>💰 세후 실수령은 얼마쯤이에요?</h3><p>수당 포함 월 평균, 만원 단위. 정확하지 않아도 돼요. 동료 급여를 아는 범위로 골라도 좋아요.</p><Chips name="pay" opts={PAY} def={mine?.pay} big /></div>
@@ -73,14 +78,18 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
       <div className="hc-chips multi">{RISKS.map(r => <label key={r.k}><input type="checkbox" name="risk" value={r.k} checked={risk.includes(r.k)} onChange={e => setRisk(x => e.target.checked ? [...x, r.k] : x.filter(y => y !== r.k))} /><span>{r.label}</span></label>)}
         <label className="good"><input type="checkbox" name="good" value="1" checked={!risk.length && good} disabled={risk.length > 0} onChange={e => setGood(e.target.checked)} /><span>{risk.length ? "—" : "딱히 없어요, 괜찮은 곳 👍"}</span></label></div></div>
 
+    <div style={show("pc")} className="wz-step"><h3>👍 좋았던 점, 👎 아쉬운 점 <small>(선택 · 쓰면 +20 XP)</small></h3><p>체크만으로는 담기 어려운 이야기를 남겨주세요. 사람이 아니라 병원 이야기만요.</p>
+      <label className="hc-q"><b>장점 <small>{pros.length} / 1000</small></b><textarea name="pros" rows={4} maxLength={1000} value={pros} onChange={e => setPros(e.target.value)} placeholder="이 병원을 다니며 좋았던 점 (20자 이상)" /></label>
+      <label className="hc-q"><b>단점 <small>{cons.length} / 1000</small></b><textarea name="cons" rows={4} maxLength={1000} value={cons} onChange={e => setCons(e.target.value)} placeholder="아쉬웠던 점, 입사 전에 알았으면 좋았을 것 (20자 이상)" /></label></div>
+
     <div style={show("word")} className="wz-step">
       {status === "퇴사" && <><h3>🚪 왜 퇴사했나요?</h3><div className="hc-chips multi">{EXIT_REASONS.map(r => <label key={r}><input type="checkbox" name="reason" value={r} defaultChecked={mine?.reasons?.includes(r)} /><span>{r}</span></label>)}</div></>}
       <h3 style={{ marginTop: status === "퇴사" ? 18 : 0 }}>✍️ 한줄평 <small>(선택)</small></h3><p>이 병원 갈까 고민하는 사람에게 한마디. 사람이 아니라 병원 이야기만 해주세요.</p>
-      <textarea name="last" maxLength={120} rows={3} value={txt} onChange={e => setTxt(e.target.value)} placeholder="예: 배울 건 많지만 신규한텐 버거워요. 면접 때 교대 꼭 물어보세요" />
-      <small className="muted" style={{ textAlign: "right" }}>{txt.length} / 120</small></div>
+      <input name="last" maxLength={100} value={txt} onChange={e => setTxt(e.target.value)} placeholder="예: 배울 건 많지만 신규한텐 버거운 곳" />
+      <small className="muted" style={{ textAlign: "right" }}><b style={{ color: "#1F9D63" }}>{txt.length}</b> / 최대 100자</small></div>
 
     {(err || st?.error) && <div className="error">{err || st?.error}</div>}
-    <div className="wz-nav">{i > 0 && <button type="button" className="btn ghost" onClick={() => { setErr(""); setI(i - 1); }}>이전</button>}
+    <div className="wz-nav">{i > 0 && <button type="button" className="btn ghost wz-prev" onClick={() => { setErr(""); setI(i - 1); }}>이전으로</button>}
       {last ? <Send edit={!!mine} /> : <button type="button" className="btn wz-next" onClick={next}>다음</button>}</div>
   </form>;
 }

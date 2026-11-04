@@ -34,7 +34,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
   const items: Item[] = [
     ...(revs ?? []).map(r => ({ key: "r" + r.id, hid: r.hospital_id, title: r.pros.split(/[.!?\n]/)[0].slice(0, 60), pros: r.pros, cons: r.cons, star: overall([r]), meta: [r.dept, r.status === "재직" ? "현직원" : "전직원"], at: r.created_at, v: r.verified, uid: r.user_id, status: r.status })),
     ...(hfs ?? []).map(f => ({ f, hid: Number(String(f.game).slice(6)) })).filter(({ f, hid }) => (f.state as any)?.last && (facts[hid]?.n ?? 0) >= (facts[hid]?.need ?? MIN_N))
-      .map(({ f, hid }) => ({ key: "f" + f.user_id + hid, hid, title: (f.state as any).last, star: (f.state as any).overall ?? 0, meta: ["실체 체크 한줄평"], at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
+      .map(({ f, hid }) => ({ key: "f" + f.user_id + hid, hid, title: (f.state as any).last, pros: (f.state as any).pros, cons: (f.state as any).cons, star: (f.state as any).overall ?? 0, meta: ["실체 체크 한줄평"], at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
   ].filter(x => H.has(x.hid)) as any[];
   let feed = items.filter((x: any) => (tab !== "mine" || x.meta[0] === s.dept) && (tab !== "my" || myH.has(x.hid)) && (!region || H.get(x.hid)!.region === region) && (!st || x.status === st));
   feed.sort((a, b) => sort === "top" ? b.star - a.star : sort === "low" ? a.star - b.star : b.at.localeCompare(a.at)); feed = feed.slice(0, 60);

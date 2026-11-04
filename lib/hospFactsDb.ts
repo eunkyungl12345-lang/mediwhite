@@ -28,12 +28,14 @@ export async function hasContributed(userId: string, role?: string, hid?: number
 }
 export const FREE_N = 3;
 export async function freeLeft(userId: string): Promise<number> { const { data: g } = await db().from("game_state").select("state").eq("user_id", userId).eq("game", "hseen").maybeSingle(); return Math.max(0, FREE_N - (((g?.state as any)?.ids ?? []).length)); }
-/** ☀️ 3교대 탈출 비교 — 교대(3·2교대) vs 상근 응답 전체를 합쳐서 */
+/** ☀️ 3교대 탈출 비교 — 대학·종합병원(대부분 교대) vs 로컬 의원·치과·약국(대부분 상근). 병원 종류 기준이라 근무 형태 답이 없어도 비교돼요 */
 export async function shiftCompare() {
   const { data } = await db().from("game_state").select("game,state").like("game", "hfact:%").limit(10000);
-  const rows = (data ?? []).map(r => ({ hid: Number(String(r.game).slice(6)), s: r.state as HFact })).filter(r => r.s.shift === 0 || r.s.shift === 1 || r.s.shift === 2);
-  const grp = (f: (x: HFact) => boolean) => { const g = rows.filter(r => f(r.s)).map(r => r.s); return { n: g.length, a: aggregate(g), offPct: g.length ? Math.round(g.filter(x => x.off === 0).length / g.length * 100) : 0 }; };
-  const byH: Record<number, { day: number; all: number }> = {}; for (const r of rows) { const b = (byH[r.hid] ??= { day: 0, all: 0 }); b.all++; if (r.s.shift === 2) b.day++; }
-  const dayHosp = Object.entries(byH).filter(([, v]) => v.day * 2 > v.all).map(([k]) => Number(k));
-  return { shift: grp(x => x.shift !== 2), day: grp(x => x.shift === 2), dayHosp };
+  const rows0 = (data ?? []).map(r => ({ hid: Number(String(r.game).slice(6)), s: r.state as HFact }));
+  const hids = Array.from(new Set(rows0.map(r => r.hid))); const { data: hs } = hids.length ? await db().from("hospitals").select("id,kind").in("id", hids) : { data: [] as any[] };
+  const K = new Map((hs ?? []).map(h => [h.id, h.kind as string])), big = (k?: string) => /상급종합|종합병원|^병원$|요양병원/.test(k ?? ""), local = (k?: string) => /의원|치과|약국|한방병원/.test(k ?? "");
+  const rows = rows0.filter(r => K.has(r.hid));
+  const grp = (f: (hid: number) => boolean) => { const g = rows.filter(r => f(r.hid)).map(r => r.s); return { n: g.length, a: aggregate(g), offPct: g.length ? Math.round(g.filter(x => x.off === 0).length / g.length * 100) : 0 }; };
+  const dayHosp = hids.filter(h => local(K.get(h)));
+  return { shift: grp(h => big(K.get(h))), day: grp(h => local(K.get(h))), dayHosp };
 }
