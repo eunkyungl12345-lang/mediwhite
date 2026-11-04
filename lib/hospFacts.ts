@@ -30,7 +30,7 @@ export const RISKS = [
 ] as const;
 /** 🚪 퇴사자 내부 평가 — 별 5개 기준 + 퇴사 사유 + 마지막 한마디 */
 export const EXIT_STARS = [
-  { k: "pay", name: "급여", icon: "💰" }, { k: "balance", name: "워라밸", icon: "⚖️" }, { k: "people", name: "동료·분위기", icon: "🤝" },
+  { k: "people", name: "분위기·동료", icon: "🤝" }, { k: "pay", name: "급여", icon: "💰" }, { k: "balance", name: "워라밸", icon: "⚖️" },
   { k: "boss", name: "상사·관리자", icon: "🧑‍💼" }, { k: "edu", name: "교육·성장", icon: "📈" }, { k: "welfare", name: "복지", icon: "🎁" }, { k: "load", name: "업무강도(적당함)", icon: "🏋️" },
 ] as const;
 export const FUTURE = ["📈 좋아질 것 같아요", "➖ 비슷할 것 같아요", "📉 나빠질 것 같아요"] as const;

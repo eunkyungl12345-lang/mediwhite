@@ -19,8 +19,9 @@ export async function lockMode(): Promise<LockMode> { const { memo } = await imp
 export async function hasContributed(userId: string, role?: string, hid?: number): Promise<boolean> {
   if (role === "admin") return true; const mode = await lockMode(); if (mode === "off") return true; const d = db();
   const since = new Date(Date.now() - 183 * 86400000).toISOString();
-  const [{ count: a }, { count: b }] = await Promise.all([d.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", userId).like("game", "hfact:%").gte("updated_at", since), d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", since)]);
-  if ((a ?? 0) + (b ?? 0) > 0) return true;
+  const gs = (p: string) => d.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", userId).like("game", p).gte("updated_at", since);
+  const [{ count: a }, { count: b }, { count: c }] = await Promise.all([gs("hfact:%"), d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", since), gs("hwel:%")]);
+  if ((a ?? 0) + (b ?? 0) + (c ?? 0) > 0) return true;
   if (mode !== "free3" || !hid) return false;
   const { data: g } = await d.from("game_state").select("state").eq("user_id", userId).eq("game", "hseen").maybeSingle(); const ids: number[] = (g?.state as any)?.ids ?? [];
   if (ids.includes(hid)) return true; if (ids.length >= FREE_N) return false;

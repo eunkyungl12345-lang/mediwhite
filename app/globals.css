@@ -2082,3 +2082,36 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .wz-h{align-items:center}.wz-h b{font-size:20px}.wz-chg{all:unset;cursor:pointer;margin-left:auto;padding:7px 14px;border-radius:10px;border:1px solid var(--line);color:#1F9D63;font-weight:800;font-size:13.5px;background:var(--surface)}
 .wz-safe{background:#FFF4DE;color:#5A4300}.wz-safe b{color:#E08A2E}@media (prefers-color-scheme:dark){.wz-safe{background:#2A2416;color:#FFE3A3}}
 .wz-nav .wz-prev{flex:1!important;padding:14px;font-size:16px}
+/* 🏥 병원 리뷰 탭(잡플래닛식) · 복지 평가 */
+.rv2-stat{display:grid;gap:12px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--card,var(--bg))}.rv2-stat h3{margin:0;font-size:17px}.rv2-stat h3 em{font-style:normal;color:#1F9D63}.rv2-stat h3 small{color:var(--muted);font-weight:600}
+.rv2-big{display:flex;gap:10px;align-items:center}.rv2-big b{font-size:40px;letter-spacing:-1px;line-height:1}.rv2-big .rf-stars i{font-size:24px}.rv2-big .rf-stars i.on{color:#F5B400}
+.rv2-grid{display:flex;gap:18px;align-items:center}.rv2-grid .fb-donut{display:grid;gap:4px;justify-items:center;flex:none}.rv2-grid .fb-donut span{font-size:12px;color:var(--muted)}
+.rv2-bars{flex:1;display:grid;gap:9px;min-width:0}.rv2-bars div{display:grid;grid-template-columns:84px 1fr 44px;gap:8px;align-items:center;font-size:13.5px}.rv2-bars span{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rv2-bars i{height:7px;border-radius:99px;background:var(--line);overflow:hidden}.rv2-bars i em{display:block;height:100%;background:#1F9D63;border-radius:99px}.rv2-bars b{font-size:13px;text-align:right}
+.rv2-head{display:flex;gap:10px;align-items:baseline;padding:8px 0 0;border-top:8px solid var(--bg);margin-top:4px}.rv2-head b{font-size:18px}.rv2-head b em{font-style:normal;color:#1F9D63}.rv2-head small{color:var(--muted)}
+.rv2-list{display:grid}.rv2{display:grid;gap:9px;padding:20px 0;border-bottom:1px solid var(--line)}.rv2.mine{background:linear-gradient(90deg,rgba(31,157,99,.06),transparent)}.rf-meta em.me{color:var(--muted)}
+.rv2-body{display:grid;gap:9px;position:relative}.rv2-body:not(.open){max-height:5.2em;overflow:hidden}.rv2-body:not(.open)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2em;background:linear-gradient(transparent,var(--bg))}
+.rv2-more{all:unset;cursor:pointer;position:absolute;right:0;bottom:0;z-index:1;font-size:13.5px;color:var(--muted);background:var(--bg);padding-left:8px}
+.rf-pc em.t{background:#FFF3C4;color:#7A5200}
+.rv2-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+.rv2-help{all:unset;cursor:pointer;padding:9px 16px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:700;color:var(--ink)}.rv2-help b{color:#1F9D63}.rv2-help.on{border-color:#1F9D63;background:#E6F6EE}
+.rv2-act{display:flex;gap:8px;font-size:13px}
+.wf-em{font-style:normal;color:#1F9D63}
+.wf-list{display:grid;gap:8px}.wf-item{border:1px solid var(--line);border-radius:12px;background:var(--bg);display:grid;gap:6px;padding:4px}.wf-item.on{border:1.5px solid #1F9D63;background:#F1FBF5;padding:4px 4px 12px}
+.wf-name{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font-size:15px;font-weight:600;color:var(--ink)}.wf-name span{color:#1F9D63;font-weight:800}
+.wf-item .hc-stars{justify-content:center}
+.wf-add{display:flex;gap:6px}.wf-add input{flex:1}.wf-add .btn{flex:none}
+.wf-agg{display:grid;gap:9px}.wf-agg div{display:grid;grid-template-columns:minmax(0,1.4fr) 1fr auto auto;gap:8px;align-items:center;font-size:13.5px}.wf-agg span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wf-agg i{height:7px;border-radius:99px;background:var(--line);overflow:hidden}.wf-agg i em{display:block;height:100%;background:#3CC07A}.wf-agg small{color:var(--muted);font-size:12px;white-space:nowrap}.wf-agg b{font-size:12.5px;color:#C98A00;white-space:nowrap}
+.wf-texts{display:grid;gap:10px}
+@media (prefers-color-scheme:dark){.wf-item.on{background:#1F3530}.rv2-help.on{background:#1F3530}.rf-pc em.t{background:#3A3216;color:#F2D27A}}
+@media (max-width:420px){.wf-agg div{grid-template-columns:minmax(0,1fr) auto auto}.wf-agg i{display:none}.rv2-bars div{grid-template-columns:72px 1fr 42px}}
+/* 💼 채용 카드(잡플래닛식, 테두리 없는 목록) */
+.jb2-list:has(.jb3){gap:0}
+.jb3{display:grid;gap:7px;padding:16px 2px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}.jb3.closed{opacity:.55}
+.jb3-top{display:flex;gap:12px;align-items:flex-start;min-width:0}.jb3-main{display:grid;gap:3px;min-width:0;flex:1}
+.jb3-t{font-size:16.5px;font-weight:800;line-height:1.4;letter-spacing:-.2px;display:flex;gap:6px;align-items:center}
+.jb3-h{font-size:13.5px;color:var(--ink);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jb3-meta{font-size:13.5px;color:var(--muted);padding-left:56px}
+.jb3-tags{display:flex;gap:5px;flex-wrap:wrap;padding-left:56px}.jb3-tags span{font-size:12px;padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--ink)}
+.jb3 .jb2-facts{margin-left:56px}
+.jb3-f{font-size:12px;color:var(--muted);padding-left:56px}
+.jb3-t{display:block}.jb3-t .n-badge{display:inline-flex;margin-left:5px;vertical-align:2px}
