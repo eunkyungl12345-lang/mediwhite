@@ -1876,3 +1876,27 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .ad-js{display:grid;gap:8px;margin-top:8px}.ad-js>div{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.ad-js b{font-size:12px;width:100%}.ad-js span{font-size:12px;padding:3px 8px;border-radius:7px;background:var(--bg)}.ad-js em{font-style:normal;font-weight:800;margin-left:3px}
 .jv.done summary{cursor:pointer;font-size:13px;font-weight:700}
 .jb2-cta .btn{flex:1;justify-content:center;text-align:center}.jb2-hero.v2{padding:16px}.jb2-why{margin-top:10px}
+/* 🔎 병원 실체 체크 */
+.hc{display:grid;gap:14px}.hc-q{display:grid;gap:8px}.hc-q>b{font-size:14px}.hc-q>b small{font-weight:500;color:var(--muted);font-size:12px}
+.hc-q select{width:auto}
+.hc-chips{display:flex;flex-wrap:wrap;gap:6px}.hc-chips label{cursor:pointer;position:relative}.hc-chips input{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;margin:0}
+.hc-chips span{display:inline-block;padding:8px 12px;border-radius:999px;border:1px solid var(--line);font-size:13px;background:var(--surface)}
+.hc-chips input:checked+span{background:#1F5E3C;border-color:#1F5E3C;color:#fff;font-weight:700}
+.hc-q.risk .hc-chips input:checked+span{background:#B3261E;border-color:#B3261E}.hc-chips label.good input:checked+span{background:#1F5E3C}
+.hc-chips.multi span{border-radius:10px}
+.hc-safe{font-size:12.5px;padding:10px 12px;border-radius:10px;background:var(--bg);color:var(--muted);line-height:1.6}.hc-send{width:100%;padding:13px;font-size:15px}
+.hc-banner{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#123B2E,#1F5E3C);color:#fff;text-decoration:none}.hc-banner>span{font-size:24px}.hc-banner div{flex:1;display:grid}.hc-banner small{opacity:.8;font-size:12px}.hc-banner em{font-style:normal;font-weight:800;background:#fff;color:#1F5E3C;border-radius:999px;padding:3px 9px;font-size:12px}
+.fb{display:grid;gap:12px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);margin:10px 0;text-decoration:none;color:var(--ink)}
+.fb-wait{background:linear-gradient(135deg,rgba(31,94,60,.08),rgba(31,94,60,.02))}.fb-wait p{margin:0;font-size:13px;color:var(--muted);line-height:1.6}.fb-wait .btn{justify-self:start}
+.fb-h{display:flex;justify-content:space-between;align-items:baseline}.fb-h small{color:var(--muted);font-weight:500;margin-left:4px}.fb-h span{font-size:12px;color:var(--muted)}
+.fb-sec{display:grid;gap:8px}.fb-sec>b{font-size:13.5px}.fb-sec>b em{font-style:normal;color:#1F5E3C;margin-left:6px}
+.fb-pay{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;height:84px;align-items:end}.fb-pay div{display:grid;grid-template-rows:1fr auto;height:100%;align-items:end;text-align:center}.fb-pay i{display:block;background:rgba(31,94,60,.25);border-radius:5px 5px 0 0;min-height:2px}.fb-pay .top i{background:#1F5E3C}.fb-pay small{font-size:9.5px;color:var(--muted);margin-top:3px;white-space:nowrap}
+.fb-mood{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:center;font-size:12.5px}.fb-seg{display:flex;border-radius:8px;overflow:hidden;min-height:24px}.fb-seg i{font-style:normal;font-size:11px;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;padding:0 4px;color:#fff}
+.fb-seg .s0{background:#3C8D65}.fb-seg .s1{background:#C9A227}.fb-seg .s2{background:#C0392B}
+.fb-risk{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:8px 10px;border-radius:9px;background:rgba(192,57,43,.08)}.fb-risk em{font-style:normal;font-weight:800;color:#B3261E;white-space:nowrap}
+.fb-foot{display:grid;gap:8px}.fb-foot small{color:var(--muted);font-size:11.5px}.fb-foot .btn{justify-self:start}
+.fb-thanks{padding:12px;border-radius:12px;background:#E3F2EA;color:#1F5E3C;font-size:13.5px;margin-top:8px}
+.jb2-facts{display:flex;flex-wrap:wrap;gap:5px}.jb2-facts span{font-size:12px;padding:3px 8px;border-radius:7px;background:rgba(192,57,43,.08);color:var(--ink);font-weight:700}.jb2-facts span:first-child{background:#E3F2EA;color:#1F5E3C}
+.jb2-facts.none{font-size:11.5px;color:var(--muted)}
+.h-job.check b{color:#1F5E3C}
+@media (prefers-color-scheme:dark){.fb-thanks,.jb2-facts span:first-child{background:#1F3530;color:#9FE0C0}.fb-sec>b em{color:#9FE0C0}}

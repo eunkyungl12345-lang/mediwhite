@@ -20,7 +20,7 @@ export default function ReviewForm({ hospital, dept, mine, proofState }: { hospi
   return <form action={action} className="form rv-form">
     {!hospital && <div className="rv-pick">
       <label className="jb-lab">병원 찾기 *<input value={picked ? `${picked.name} (${picked.region})` : q} onChange={e => search(e.target.value)} placeholder="병원명 검색 — 없으면 새로 등록" autoComplete="off" /></label>
-      {!picked && q && <div className="rv-hits">{hits.map(h => <button key={h.id} type="button" className="rv-hit" onClick={() => { setPicked(h); setHits([]); }}>🏥 {h.name} <small className="muted">{h.region} · {h.kind}</small></button>)}
+      {!picked && !isNew && q && <div className="rv-hits">{hits.map(h => <button key={h.id} type="button" className="rv-hit" onClick={() => { setPicked(h); setHits([]); }}>🏥 {h.name} <small className="muted">{h.region} · {h.kind}</small></button>)}
         <button type="button" className="rv-hit new" onClick={() => { setIsNew(true); setHits([]); }}>➕ “{q}” 새 병원으로 등록</button></div>}
       {isNew && !picked && <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
         <input type="hidden" name="name" value={q} />

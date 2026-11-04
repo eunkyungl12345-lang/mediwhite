@@ -7,9 +7,12 @@ import ReviewForm from "@/components/jobs/ReviewForm";
 import ReportButton from "@/components/ReportButton";
 import LiveViewers from "@/components/LiveViewers";
 import { ReviewDelete } from "@/components/jobs/Buttons";
+import FactBox from "@/components/jobs/FactBox";
+import { loadFacts } from "@/lib/hospFactsDb";
+import { aggregate, factKey } from "@/lib/hospFacts";
 export const dynamic = "force-dynamic";
 
-export default async function HospitalPage({ params, searchParams }: { params: { id: string }; searchParams: { write?: string } }) {
+export default async function HospitalPage({ params, searchParams }: { params: { id: string }; searchParams: { write?: string; checked?: string } }) {
   const s = (await getSession())!; const d = db(); const id = Number(params.id);
   const [{ data: h }, { data: revs }] = await Promise.all([
     d.from("hospitals").select("*").eq("id", id).maybeSingle(),
@@ -22,10 +25,13 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const vN = rs.filter(r => r.verified).length;
   const { data: myJobs } = await d.from("jobs").select("id,dept,emp_type").eq("closed", false).eq("hidden", false).ilike("hospital", h.name).limit(3);
   const cur = rs.filter(r => r.status === "재직").length;
+  const [facts, { data: myFact }] = await Promise.all([loadFacts([id]), d.from("game_state").select("user_id").eq("user_id", s.id).eq("game", factKey(id)).maybeSingle()]);
   return (
     <div className="detail hs-detail">
       <Link className="link" href="/hospitals">← 병원 리뷰</Link>
       <h2 style={{ margin: "8px 0 2px" }}>{h.name}</h2><div className="muted" style={{ fontSize: 13 }}>📍 {h.region} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></div>
+      {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요. <b>+50 XP</b></div>}
+      <FactBox a={facts[id] ?? aggregate([])} hid={id} mine={!!myFact} />
       <div className="hs-summary">
         <div className="hs-big"><b>{rs.length ? overall(rs).toFixed(1) : "-"}</b><span className="hs-stars">{stars(overall(rs))}</span><small className="muted">리뷰 {rs.length}개 · ✅ 인증 {vN} · 재직 {cur} / 퇴사 {rs.length - cur}</small></div>
         <div className="hs-bars big">{RATING_KEYS.map(k => <span key={k.key} className="hs-bar"><i>{k.icon} {k.name}</i><em style={{ width: `${avg(rs, k.key) / 5 * 100}%` }} /><small>{avg(rs, k.key).toFixed(1)}</small></span>)}</div>

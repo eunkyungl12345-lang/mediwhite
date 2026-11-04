@@ -93,7 +93,8 @@ export default async function HomePage() {
       <section className="h-jobs">
         <Link href={myJobs.length ? `/jobs?dept=${encodeURIComponent(s.dept)}` : "/jobs"} className="h-jobs-h"><b>💼 의료 채용</b><span>{newJobs > 0 ? `3일간 새 공고 ${newJobs}` : `모집 중 ${openJobs.length}`}{myJobs.length ? ` · ${s.dept} ${myJobs.length}` : ""}</span><em>전체 ›</em></Link>
         {jobPick.length ? jobPick.map(j => <Link key={j.id} href={`/jobs/${j.id}`} className="h-job"><b>{j.hospital}</b><span>{(j.author as any)?.username === "mw_bot" ? (j.welfare || j.dept) : `${j.dept} ${j.emp_type}`}</span><small>{j.region} · {dday(j.deadline)}</small></Link>)
-          : <Link href="/jobs/new?tip=1" className="h-job empty"><b>📢 단톡방에서 본 공고 있어요?</b><span>여기 올리면 다들 여기서 찾아요 · +30 XP</span></Link>}
+          : null}
+        <Link href="/hospitals/check" className="h-job empty check"><b>🔎 우리 병원 실체 체크 · 30초 익명</b><span>실수령·태움·육아휴직 불이익… 다음 사람은 입사 전에 알 수 있게 · +50 XP</span></Link>
       </section>
 
       <PromoStrip items={promoItems} />

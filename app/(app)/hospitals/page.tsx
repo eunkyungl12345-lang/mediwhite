@@ -2,6 +2,8 @@ import Link from "next/link";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { JOB_REGIONS, RATING_KEYS, avg, overall } from "@/lib/jobs";
+import { loadFacts } from "@/lib/hospFactsDb";
+import { factLine } from "@/lib/hospFacts";
 export const dynamic = "force-dynamic";
 
 export default async function HospitalsPage({ searchParams }: { searchParams: { region?: string; q?: string; sort?: string } }) {
@@ -12,12 +14,14 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
   const [{ data: hs }, { count: jobsN }] = await Promise.all([hq, d.from("jobs").select("id", { count: "exact", head: true }).eq("closed", false).eq("hidden", false)]);
   const ids = (hs ?? []).map(h => h.id);
   const { data: revs } = ids.length ? await d.from("hospital_reviews").select("hospital_id,r_welfare,r_balance,r_pay,r_culture,r_growth,created_at,verified").in("hospital_id", ids).eq("hidden", false) : { data: [] as any[] };
+  const facts = await loadFacts(ids);
   const by = (id: number) => (revs ?? []).filter(r => r.hospital_id === id);
-  const list = (hs ?? []).map(h => ({ ...h, n: by(h.id).length, score: overall(by(h.id)), last: Math.max(0, ...by(h.id).map(r => Date.parse(r.created_at))) })).filter(h => h.n > 0 || q);
+  const list = (hs ?? []).map(h => ({ ...h, n: by(h.id).length, score: overall(by(h.id)), last: Math.max(0, ...by(h.id).map(r => Date.parse(r.created_at))) })).filter(h => h.n > 0 || facts[h.id]?.n || q);
   list.sort((a, b) => sort === "new" ? b.last - a.last : (b.score - a.score) || (b.n - a.n));
   const link = (p: Record<string, string>) => `/hospitals?${new URLSearchParams({ ...(region ? { region } : {}), ...(q ? { q } : {}), ...(sort !== "top" ? { sort } : {}), ...p })}`;
   return (
     <div className="games jb-page">
+      <Link href="/hospitals/check" className="hc-banner"><span>🔎</span><div><b>우리 병원 실체 체크 · 30초 · 익명</b><small>실수령·태움·육아휴직 불이익… 입사해야만 알던 걸 다음 사람에게</small></div><em>+50</em></Link>
       <div className="jb-hero"><div><h2 style={{ margin: 0 }}>🏥 병원 리뷰</h2><p className="muted" style={{ margin: "4px 0 0" }}>복지·워라밸·급여·분위기·성장 — 다녀본 사람만 아는 진짜 후기. 닉네임 없이 직종만 표시돼요.</p></div><Link href="/hospitals/new" className="btn">＋ 리뷰 쓰기</Link></div>
       <div className="jb-tabs"><Link href="/jobs" className="topic">💼 채용공고 {jobsN ? <small className="muted">{jobsN}</small> : null}</Link><Link href="/hospitals" className="topic on">🏥 병원 리뷰</Link></div>
       <form className="row" style={{ gap: 6 }} action="/hospitals"><input name="q" defaultValue={q} placeholder="병원명 검색" style={{ flex: 1 }} />{region && <input type="hidden" name="region" value={region} />}<button className="btn ghost">검색</button></form>
@@ -26,7 +30,8 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
       {list.length === 0 && <div className="ss-empty-box" style={{ padding: "30px 20px" }}><span style={{ fontSize: 36 }}>🏥</span><b>{q ? `"${q}" 리뷰가 아직 없어요` : "아직 리뷰가 없어요"}</b><p className="muted" style={{ fontSize: 13, margin: "6px 0 0" }}>다녔던 병원 첫 리뷰 남기면 +40 XP. 후배들이 진짜 고마워해요 🙏</p><Link href={`/hospitals/new${q ? `?name=${encodeURIComponent(q)}` : ""}`} className="btn" style={{ marginTop: 8 }}>리뷰 쓰기</Link></div>}
       <div className="jb-list">{list.map(h => { const rs = by(h.id); return <Link key={h.id} href={`/hospitals/${h.id}`} className="hs-row">
         <div className="hs-score"><b>{h.n ? h.score.toFixed(1) : "-"}</b><small>★ {h.n}개{by(h.id).filter((r: any) => r.verified).length ? ` · ✅${by(h.id).filter((r: any) => r.verified).length}` : ""}</small></div>
-        <div className="hs-body"><b className="jb-title">{h.name}</b><div className="jb-meta">📍 {h.region} · {h.kind}</div>
+        <div className="hs-body"><b className="jb-title">{h.name}</b><div className="jb-meta">📍 {h.region} · {h.kind}{facts[h.id]?.n ? ` · 🔎 체크 ${facts[h.id].n}` : ""}</div>
+          {factLine(facts[h.id]).length > 0 && <div className="jb2-facts">{factLine(facts[h.id]).map(x => <span key={x}>{x}</span>)}</div>}
           {h.n > 0 && <div className="hs-bars">{RATING_KEYS.map(k => <span key={k.key} className="hs-bar" title={k.name}><i>{k.icon}</i><em style={{ width: `${avg(rs, k.key) / 5 * 100}%` }} /><small>{avg(rs, k.key).toFixed(1)}</small></span>)}</div>}
         </div></Link>; })}</div>
     </div>

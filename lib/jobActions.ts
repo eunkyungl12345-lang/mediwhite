@@ -9,6 +9,7 @@ import { JOB_REGIONS, JOB_DEPTS, EMP_TYPES, HOSP_KINDS, RATING_KEYS } from "./jo
 import { pushToUsers } from "./push";
 import { JOB_TAGS, SHARE_TAG, joinTags } from "./jobTags";
 import { VOICE_OPTS } from "./jobVoice";
+import { PAY, YEARS, MOOD, RISKS, factKey } from "./hospFacts";
 const okImg = (f: unknown): f is File => f instanceof File && f.size > 0 && f.size <= 6_000_000 && /^image\//.test(f.type);
 
 type R = { error?: string; ok?: string } | undefined;
@@ -116,4 +117,28 @@ export async function submitJobVoice(_: R, fd: FormData): Promise<R> {
   if (ex) await s.from("events").update({ text: `${picks.join(",")}|${free}|${u.dept}` }).eq("id", ex.id);
   else { await s.from("events").insert({ kind: "jobvoice", user_id: u.id, text: `${picks.join(",")}|${free}|${u.dept}` }); await awardXp(u.id, 10, "jobvoice", "quest"); }
   revalidatePath("/jobs"); return { ok: "고마워요! 이 의견대로 채용 게시판을 고쳐갈게요 🙏" };
+}
+
+/* ---------- 🔎 병원 실체 체크 (실수령·분위기·치명적 리스크, 익명·탭만) ---------- */
+export async function submitHospFact(_: R, fd: FormData): Promise<R> {
+  const u = await me(); const s = db();
+  let hid = Number(fd.get("hospital_id")) || 0; const name = clean(fd.get("name"), 40), region = clean(fd.get("region"), 10), kind = clean(fd.get("kind"), 10);
+  if (!hid) {
+    if (!name || !inList(JOB_REGIONS, region) || !inList(HOSP_KINDS, kind)) return { error: "병원을 찾거나, 새 병원 이름·지역·종류를 골라주세요" };
+    const { data: ex } = await s.from("hospitals").select("id").eq("name", name).eq("region", region).maybeSingle();
+    if (ex) hid = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hid = h.id; }
+  }
+  const pay = clean(fd.get("pay"), 12), years = clean(fd.get("years"), 12), status = clean(fd.get("status"), 4), dept = clean(fd.get("dept"), 10);
+  if (!inList(PAY, pay)) return { error: "실수령 월급 구간을 골라주세요 (대략이면 돼요)" };
+  if (!inList(YEARS, years)) return { error: "연차를 골라주세요" };
+  if (!["재직", "퇴사"].includes(status)) return { error: "재직/퇴사를 골라주세요" };
+  if (!inList(JOB_DEPTS, dept)) return { error: "직종을 골라주세요" };
+  const mood: Record<string, number> = {}; for (const m of MOOD) { const v = Number(fd.get(m.k)); if (!(v >= 0 && v <= 2) || fd.get(m.k) === null) return { error: `'${m.q}'를 골라주세요` }; mood[m.k] = v; }
+  const risks = fd.getAll("risk").map(String).filter(r => RISKS.some(x => x.k === r)); const good = fd.get("good") === "1" && !risks.length;
+  const key = factKey(hid); const { data: prev } = await s.from("game_state").select("user_id").eq("user_id", u.id).eq("game", key).maybeSingle();
+  if (!prev) { const { count } = await s.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", u.id).like("game", "hfact:%").gte("updated_at", new Date(Date.now() - 86400000).toISOString()); if ((count ?? 0) >= 5) return { error: "하루 5곳까지만 체크할 수 있어요" }; }
+  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, ...mood, risks, good, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
+  if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
+  if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");
+  revalidatePath(`/hospitals/${hid}`); revalidatePath("/jobs"); redirect(`/hospitals/${hid}?checked=1`);
 }
