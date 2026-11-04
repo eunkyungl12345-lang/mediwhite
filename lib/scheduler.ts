@@ -1,6 +1,7 @@
 import { db } from "./supabase";
 import { memoOnce } from "./memo";
 import { importPublicJobs } from "./jobImport";
+import { npsSweep } from "./nps";
 
 /** 접속이 있을 때마다 가볍게 확인: 오늘 슬롯이 아직 안 돌았으면 실행 (크론 없이). */
 /** 임시조치 30일 경과 → 자동 복구 (운영팀이 처리 안 한 건) */
@@ -18,5 +19,6 @@ export async function runSchedulers() {
     const claim = async (name: string) => { const { error } = await s.from("daily_runs").insert({ day, slot: name }); return !error; };
   if (await claim("blinds")) restoreExpiredBlinds().catch(() => {});
   if (process.env.DATA_GO_KR_KEY && await claim(`jobs-${Math.floor(hour / 6)}`)) importPublicJobs().catch(() => {});
+  if (process.env.DATA_GO_KR_KEY && await claim(`nps-${hour}`)) npsSweep().catch(() => {});
 
 }
