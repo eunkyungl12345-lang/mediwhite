@@ -2033,3 +2033,19 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 @media (prefers-color-scheme:dark){.sc-me b{color:#8FE3B5}}
 .rh-card{align-content:start}.rh-more{align-self:start;padding:8px}
 .rv-blind{font-size:12.5px;padding:10px 12px;border-radius:10px;background:var(--bg);color:var(--muted);line-height:1.55;margin:8px 0}
+/* 🏥 병원 리뷰 피드 (잡플래닛식) */
+.rf{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}.rf>*{min-width:0}
+.rf-top{display:grid;gap:10px;min-width:0}.rf-top h2{margin:0;font-size:20px}.rf-top h2 em{font-style:normal;color:#E08A2E}
+.rf-kw{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}.rf-kw a{flex:none;padding:9px 15px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:14px;font-weight:700;color:var(--ink);text-decoration:none}.rf-kw a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rf-tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-top:6px}.rf-tabs a{padding:12px 2px;font-size:16px;font-weight:800;color:var(--muted);text-decoration:none}.rf-tabs a.on{color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.rf-filters{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;align-items:center}.rf-filters>a{flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:none}.rf-filters>a.on{border:1.5px solid var(--ink);font-weight:800}
+.rf-sel{display:flex;gap:4px;flex:none}.rf-sel select{width:auto;border-radius:999px;padding:7px 12px;font-size:13.5px}.rf-go{all:unset;cursor:pointer;font-size:12.5px;color:var(--muted);padding:0 4px}
+.rf-list{display:grid}.rf-item{display:grid;gap:8px;padding:20px 0;border-bottom:1px solid var(--line)}
+.rf-h{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink)}.rf-logo{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;font-size:20px;flex:none}.rf-h b{font-size:18px}
+.rf-meta{font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rf-meta em{font-style:normal;color:#1F9D63;font-weight:700}
+.rf-score{display:flex;gap:8px;align-items:center}.rf-score b{font-size:24px}.rf-stars i{font-style:normal;color:var(--line);font-size:16px}.rf-stars i.on{color:#3CC07A}
+.rf-title{margin:2px 0;font-size:17px;line-height:1.45}
+.rf-pc{margin:0;font-size:14px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;color:var(--ink)}.rf-pc em{font-style:normal;flex:none;font-size:12px;font-weight:800;padding:2px 8px;border-radius:5px;margin-top:2px}.rf-pc em.g{background:#E8F0FF;color:#2F6FD6}.rf-pc em.b{background:#FFECEC;color:#D93025}
+.rf-lock{position:relative;display:grid;gap:8px;justify-items:start}.rf-lock .btn{font-size:13px}
+.rf-more{justify-self:center;padding:9px 22px;border-radius:12px;border:1px solid var(--line);font-size:14px;color:var(--ink);text-decoration:none;margin-top:4px}
+@media (prefers-color-scheme:dark){.rf-pc em.g{background:#1E2A44;color:#9CC0FF}.rf-pc em.b{background:#3A1F1F;color:#FF9C9C}}
