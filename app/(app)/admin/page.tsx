@@ -1,5 +1,8 @@
 import { voiceLabel } from "@/lib/jobVoice";
 import AdminHVerify from "@/components/AdminHVerify";
+import AdminFocus from "@/components/AdminGrowth";
+import { getFocus } from "@/lib/focus";
+import { MIN_N } from "@/lib/hospFacts";
 import { hverifyPending } from "@/lib/hverify.actions";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/supabase";
@@ -61,15 +64,35 @@ export default async function AdminPage() {
   const { data: proofReqs } = await db().from("review_proofs").select("id,path,created_at,user:users(nickname,dept,username),hospital:hospitals(name,region),review:hospital_reviews(dept,status,pros)").eq("status", "pending").order("created_at");
   const { data: badgeReqs } = await db().from("badge_requests").select("id,user_id,id_path,lic_path,note,created_at,user:users(nickname,dept,username)").eq("status", "pending").order("created_at");
   const hvReqs = await hverifyPending();
+  const ago7 = new Date(Date.now() - 7 * 86400000).toISOString(), day7 = new Date(Date.now() + 9 * 3600000 - 7 * 86400000).toISOString().slice(0, 10);
+  const [focus, { data: hf }, { data: wv }, { count: sign7 }, { data: hvAll }, { count: out7 }, { data: tds }] = await Promise.all([getFocus(), db().from("game_state").select("game,updated_at").like("game", "hfact:%").limit(10000), db().from("visits").select("user_id").gte("day", day7).limit(20000), db().from("users").select("id", { count: "exact", head: true }).gte("created_at", ago7), db().from("game_state").select("state").like("game", "hverify:%").limit(10000), db().from("events").select("id", { count: "exact", head: true }).eq("kind", "jobout").gte("created_at", ago7), db().from("events").select("id,text,created_at").eq("kind", "takedown").order("created_at", { ascending: false }).limit(20)]);
+  const perH: Record<string, number> = {}; for (const r of hf ?? []) perH[r.game] = (perH[r.game] ?? 0) + 1;
+  const kpi = { wau: new Set((wv ?? []).map(v => v.user_id)).size, sign7: sign7 ?? 0, checks: (hf ?? []).length, checks7: (hf ?? []).filter(r => r.updated_at >= ago7).length, openH: Object.values(perH).filter(n => n >= MIN_N).length, anyH: Object.keys(perH).length, vOk: (hvAll ?? []).filter(v => (v.state as any)?.status === "approved").length, vAll: (hvAll ?? []).length, out7: out7 ?? 0 };
   const wk = new Date(Date.now() - 7 * 86400000).toISOString();
   const [{ data: jv }, { data: jo }, { data: jvo }] = await Promise.all([db().from("events").select("text").eq("kind", "jobview").gte("created_at", wk).limit(5000), db().from("events").select("text").eq("kind", "jobout").gte("created_at", wk).limit(5000), db().from("events").select("text,created_at").eq("kind", "jobvoice").order("created_at", { ascending: false }).limit(1000)]);
   const tally = (rows: any[] | null, i: number) => { const m: Record<string, number> = {}; for (const r of rows ?? []) { const k = String(r.text).split("|")[i] || "?"; m[k] = (m[k] ?? 0) + 1; } return Object.entries(m).sort((a, b) => b[1] - a[1]); };
   const vc: Record<string, number> = {}; for (const r of jvo ?? []) for (const id of String(r.text).split("|")[0].split(",").filter(Boolean)) vc[id] = (vc[id] ?? 0) + 1;
   const vFree = (jvo ?? []).map(r => { const [, f, dp] = String(r.text).split("|"); return f ? `[${dp}] ${f}` : ""; }).filter(Boolean).slice(0, 12);
-  const SRC: Record<string, string> = { pub: "🏛️ 공공", own: "🏥 병원 구인", share: "📢 숨은 공고", member: "👤 회원" };
+  const SRC: Record<string, string> = { pub: "🏛️ 공공", own: "🏥 병원 구인", share: "🤫 히든 공고", member: "👤 회원" };
   return (
     <div className="games">
       <Stats series={series} totals={{ users: (signups ?? []).length, today: series[series.length - 1]?.visitors ?? 0, msg24h: msg24 ?? 0, posts: postsAll ?? 0, games24h: scores24 ?? 0 }} />
+      <div className="card" id="kpi">
+        <h3>📈 핵심 지표 (최근 7일)</h3>
+        <div className="kpi">
+          <div><b>{kpi.openH}</b><span>정보 공개된 병원<br /><small>체크 {MIN_N}명↑ · 체크 있는 병원 {kpi.anyH}</small></span></div>
+          <div><b>{kpi.checks7}</b><span>새 실체 체크<br /><small>누적 {kpi.checks}</small></span></div>
+          <div><b>{kpi.wau}</b><span>주간 방문자<br /><small>신규 가입 {kpi.sign7}</small></span></div>
+          <div><b>{kpi.vAll ? Math.round(kpi.vOk / kpi.vAll * 100) : 0}%</b><span>인증 승인<br /><small>{kpi.vOk}/{kpi.vAll}건</small></span></div>
+          <div><b>{kpi.out7}</b><span>공고 원문 지원 클릭</span></div>
+        </div>
+        <h3 style={{ marginTop: 12 }}>📍 집중 지역</h3><AdminFocus cur={focus} />
+      </div>
+      <div className="card" id="takedown">
+        <h3>🏥 병원 반론·게시중단 요청 {tds?.length ? <span className="mt-wait">{tds.length}</span> : null}</h3>
+        {(tds ?? []).length === 0 ? <div className="muted">들어온 요청이 없어요.</div> : (tds ?? []).map(t => { let x: any = {}; try { x = JSON.parse(t.text); } catch {} return <div key={t.id} className="card" style={{ padding: 10, display: "grid", gap: 4, fontSize: 13 }}>
+          <b><a className="link" href={`/hospitals/${x.hid}`}>{x.hospital}</a> · {x.what}</b><span>{x.who} · 연락처 {x.contact}</span><span style={{ whiteSpace: "pre-wrap" }}>{x.detail}</span><small className="muted">{new Date(t.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · 해당 리뷰는 병원 페이지에서 신고(권리침해)로 바로 임시 블라인드할 수 있어요</small></div>; })}
+      </div>
       <div className="card" id="hverify">
         <h3>✅ 병원 재직·퇴사 인증 {hvReqs.length ? <span className="mt-wait">{hvReqs.length}</span> : null}</h3>
         <AdminHVerify reqs={hvReqs as any} />

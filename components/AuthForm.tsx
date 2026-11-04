@@ -6,12 +6,13 @@ import { DEPTS, DEPT_GROUPS, VENDOR_FIELDS, deptLabel, display } from "@/lib/dep
 
 function Submit({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "잠시만요…" : label}</button>; }
 
-export default function AuthForm({ refCode }: { refCode?: string }) {
+export default function AuthForm({ refCode, next }: { refCode?: string; next?: string }) {
   const [mode, setMode] = useState<"login" | "signup" | "find">(refCode ? "signup" : "login");
   const [fs, findAction] = useFormState<FormState, FormData>(findUsername, undefined);
   const [ls, loginAction] = useFormState<FormState, FormData>(login, undefined);
   const [ss, signupAction] = useFormState<FormState, FormData>(signup, undefined);
   const [nick, setNick] = useState(""); const [dept, setDept] = useState("");
+  useEffect(() => { if (next) try { document.cookie = `mw_next=${encodeURIComponent(next)}; path=/; max-age=1800`; } catch {} }, [next]);
   useEffect(() => { if (refCode) try { document.cookie = `mw_ref=${encodeURIComponent(refCode)}; path=/; max-age=${60 * 60 * 24 * 7}`; } catch {} }, [refCode]);
   return (
     <>

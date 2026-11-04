@@ -10,7 +10,7 @@ export default function ReportButton({ kind, id }: { kind: "post" | "comment" | 
   const [detail, setDetail] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
-  const send = async () => { setBusy(true); const r = await reportContent(kind, id, reason, detail); setBusy(false); if (r?.error) setMsg(r.error); else { setMsg("신고 접수 · 임시 블라인드 처리됐어요. 운영팀이 확인합니다."); setTimeout(() => setOpen(false), 1500); } };
+  const send = async () => { setBusy(true); const r = await reportContent(kind, id, reason, detail); setBusy(false); if (r?.error) setMsg(r.error); else { setMsg((r as any)?.hidden ? "신고 접수 · 임시 블라인드 처리됐어요 (최대 30일). 운영팀이 확인합니다." : "신고 접수됐어요. 운영팀이 확인합니다."); setTimeout(() => setOpen(false), 1500); } };
   return (
     <>
       <button type="button" className="link" style={{ color: "var(--muted)" }} onClick={() => { setOpen(true); setMsg(""); }}>🚩 신고</button>

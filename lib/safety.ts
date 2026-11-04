@@ -16,6 +16,7 @@ export function personMention(text: string): string | null {
   return null;
 }
 export const REPORT_REASONS = [
+  ["rights", "내 권리 침해 · 게시중단 요청 (병원·당사자)"],
   ["defame", "특정 개인 실명·비방"],
   ["privacy", "환자·개인정보 노출"],
   ["adult", "19금·욕설"],

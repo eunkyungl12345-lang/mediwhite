@@ -24,6 +24,8 @@ async function requireUser(): Promise<Session> { const s = await getSession(); i
 async function requireAdmin(): Promise<Session> { const s = await requireUser(); if (s.role !== "admin") redirect("/board"); return s; }
 
 /* ---------- 가입/로그인 ---------- */
+/** 공유 링크(/h/<id>)로 들어와 가입·로그인하면 원래 보려던 병원으로 */
+async function afterLogin() { const { cookies } = await import("next/headers"); const c = cookies(); const n = decodeURIComponent(c.get("mw_next")?.value ?? ""); if (n) c.delete("mw_next"); return /^\/(hospitals|jobs)\/[\w-]+$/.test(n) ? n : "/home"; }
 export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const username = clean(fd.get("username"), 20).toLowerCase();
   const password = String(fd.get("password") ?? "");
@@ -47,7 +49,7 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   await awardXp(data.id, signupBonus(order), "signup", "signup");
   if (ref && ref !== username) { const { data: r } = await s.from("users").select("id").eq("username", ref).maybeSingle(); if (r) await repeatXp(r.id, "referral"); }
   await createSession({ id: data.id, username, nickname, dept, role });
-  redirect("/home");
+  redirect(await afterLogin());
 }
 
 export async function login(_: FormState, fd: FormData): Promise<FormState> {
@@ -57,7 +59,7 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   if (!u || !(await bcrypt.compare(password, u.password_hash))) return { error: "아이디 또는 비밀번호가 맞지 않아요" };
   const role = u.role === "admin" || admins().includes(username) ? "admin" : "member";
   await createSession({ id: u.id, username, nickname: u.nickname, dept: u.dept, role });
-  redirect("/home");
+  redirect(await afterLogin());
 }
 /** 아이디 찾기: 닉네임+직종으로 일부 가린 아이디 안내 (개인정보 없이) */
 export async function findUsername(_: FormState, fd: FormData): Promise<FormState> {
@@ -457,12 +459,14 @@ export async function reportContent(kind: "post" | "comment" | "job" | "review",
   const { data: dup } = await s.from("reports").select("id").eq("kind", kind).eq("target_id", targetId).eq("reporter_id", u.id).eq("status", "open").maybeSingle();
   if (dup) return { error: "이미 신고했어요. 운영팀이 확인 중이에요" };
   await s.from("reports").insert({ kind, target_id: targetId, reporter_id: u.id, reason, detail: clean(detail, 500) || null });
-  // 임시조치: 신고 즉시 블라인드(최대 30일), 운영팀 판단 후 복구/삭제
-  if (!t.hidden) await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", targetId);
+  // 임시조치(최대 30일): 권리침해 당사자의 게시중단 요청·운영자 신고는 즉시, 일반 신고는 서로 다른 3명이 신고하면 블라인드. 운영팀 판단 후 복구/삭제
+  const { count: nRep } = await s.from("reports").select("id", { count: "exact", head: true }).eq("kind", kind).eq("target_id", targetId).eq("status", "open");
+  const hideNow = reason === "rights" || u.role === "admin" || (nRep ?? 0) >= 3;
+  if (!t.hidden && hideNow) await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", targetId);
   const { data: admins } = await s.from("users").select("id").eq("role", "admin");
   if (admins?.length) pushToUsers(admins.map(a => a.id), { title: "🚨 신고 접수", body: `${REPORT_LABEL[kind] ?? "글"} 신고 · ${REPORT_REASONS.find(r => r[0] === reason)?.[1]}`, url: "/admin", tag: "report" }).catch(() => {});
   revalidatePath("/board"); if (kind === "post") revalidatePath(`/board/${targetId}`); if (kind === "job") revalidatePath(`/jobs/${targetId}`); if (kind === "review") revalidatePath("/hospitals");
-  return { ok: true };
+  return { ok: true, hidden: hideNow };
 }
 export async function resolveReport(id: number, action: "restore" | "delete") {
   await requireAdmin();

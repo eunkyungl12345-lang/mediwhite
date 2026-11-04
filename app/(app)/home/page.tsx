@@ -2,6 +2,7 @@ import Link from "next/link";
 import { RANKS } from "@/lib/ranks";
 import BlueBadge from "@/components/BlueBadge";
 import HomeFeed from "@/components/HomeFeed";
+import FocusCard from "@/components/jobs/FocusCard";
 import { dday } from "@/lib/jobs";
 import { CafeHeader } from "@/components/CafeNav";
 import { boardNavItems } from "@/lib/boardNav";
@@ -79,7 +80,7 @@ export default async function HomePage() {
   const noticesF = posts.filter(p => p.category === "공지" || p.pinned).slice(0, 8).map(feedRow);
   return (
     <div className="home v2">
-      <div className="h-greet"><b>{hourGreet()},</b> {me?.nickname ?? s.nickname}님<span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 {online.toLocaleString()}명</span></div>
+      <div className="h-greet"><b>{me?.nickname ?? s.nickname}님,</b> {hourGreet()}{(memberN ?? 0) >= 300 && <span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 {online.toLocaleString()}명</span>}</div>
       <nav className="hstrip" aria-label="오늘">
         <Link href="/games?g=wordle" className={"hs-pill" + (wd?.data?.done ? " done" : "")}><span>🟩</span>{wd?.data?.done ? "메디워들 완료" : "메디워들"}</Link>
         <Link href="/games?g=tycoon" className="hs-pill"><span>🏥</span>{tyPending > 0 ? `우리 병원 +${won(tyPending)}` : "우리 병원"}</Link>
@@ -91,6 +92,7 @@ export default async function HomePage() {
         <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
       </nav>
 
+      <FocusCard />
       <section className="h-jobs">
         <Link href={myJobs.length ? `/jobs?dept=${encodeURIComponent(s.dept)}` : "/jobs"} className="h-jobs-h"><b>💼 의료 채용</b><span>{newJobs > 0 ? `3일간 새 공고 ${newJobs}` : `모집 중 ${openJobs.length}`}{myJobs.length ? ` · ${s.dept} ${myJobs.length}` : ""}</span><em>전체 ›</em></Link>
         {jobPick.length ? jobPick.map(j => <Link key={j.id} href={`/jobs/${j.id}`} className="h-job"><b>{j.hospital}</b><span>{(j.author as any)?.username === "mw_bot" ? (j.welfare || j.dept) : `${j.dept} ${j.emp_type}`}</span><small>{j.region} · {dday(j.deadline)}</small></Link>)
