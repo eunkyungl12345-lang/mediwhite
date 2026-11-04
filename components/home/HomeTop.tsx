@@ -37,7 +37,7 @@ export default async function HomeTop({ mid }: { mid?: React.ReactNode }) {
     {soon > 0 && <Link href="/jobs?soon=1" className="ht-hot"><span className="ht-hot-ic">⏰</span><span>이번 주 마감 공고 <b>{soon}개</b> · 놓치기 전에 확인</span><em>›</em></Link>}
     {hot.length > 0 && <section className="ht-jobs"><div className="ht-h"><b>💼 오늘의 의료 공고</b><Link href="/jobs">전체보기 ›</Link></div>
       <div className="ht-row">{hot.map(j => { const h = hOf(j), a = h ? facts[h.id] : undefined, pub = (j.author as any)?.username === "mw_bot", share = splitTags(j.body).tags.includes(SHARE_TAG);
-        const chip = a && a.starN >= MIN_N ? (() => { const best = [...a.stars].sort((x, y) => y.avg - x.avg)[0]; return `${best.name} ${best.avg.toFixed(1)}`; })() : null;
+        const chip = a && a.starN >= (a.need ?? MIN_N) ? (() => { const best = [...a.stars].sort((x, y) => y.avg - x.avg)[0]; return `${best.name} ${best.avg.toFixed(1)}`; })() : null;
         return <Link key={j.id} href={`/jobs/${j.id}`} className="ht-card"><small>{j.hospital}</small><b>{pub ? (j.welfare || `${j.dept} 채용`) : `${j.dept} ${j.emp_type} 모집`}</b><span>{dday(j.deadline)} · {j.region}</span>
           <div className="ht-chips">{share && <i className="h">🤫 히든</i>}{chip && <i>{chip}</i>}</div></Link>; })}</div></section>}
   </div>;

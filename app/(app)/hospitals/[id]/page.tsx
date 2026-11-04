@@ -31,6 +31,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   if (h && memoOnce(`hv:${id}:${s.id}`, 3600000)) d.from("events").insert({ kind: "hview", user_id: s.id, text: String(id) }).then(() => {}, () => {});
   if (!h) return <div className="detail"><Link className="link" href="/hospitals">← 병원 리뷰</Link><div className="empty">없는 병원이에요.</div></div>;
   const { data: myHidden } = await d.from("hospital_reviews").select("id").eq("hospital_id", id).eq("user_id", s.id).eq("hidden", true).maybeSingle();
+  const { count: blindN } = await d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("hospital_id", id).eq("hidden", true);
   const rs = (revs ?? []).sort((a, b) => Number(b.verified) - Number(a.verified)), mine = rs.find(r => r.user_id === s.id);
   const { data: myProof } = mine ? await d.from("review_proofs").select("status").eq("review_id", mine.id).eq("status", "pending").maybeSingle() : { data: null };
   const proofState = mine?.verified ? "verified" : myProof ? "pending" : null;
@@ -38,7 +39,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const { data: myJobs } = await d.from("jobs").select("id,dept,emp_type").eq("closed", false).eq("hidden", false).eq("hospital", h.name).eq("region", h.region).limit(3);
   const cur = rs.filter(r => r.status === "재직").length;
   const [facts, { data: myFact }, brags] = await Promise.all([loadFacts([id]), d.from("game_state").select("user_id").eq("user_id", s.id).eq("game", factKey(id)).maybeSingle(), loadBrags(s.id, { hid: id })]);
-  const { data: myV } = await d.from("game_state").select("state").eq("user_id", s.id).eq("game", vKey(id)).maybeSingle(); const vstat = (myV?.state as any)?.status ?? null; const [contributed, distm, npsm] = await Promise.all([hasContributed(s.id, s.role), loadDistricts([id]), loadNps([id])]); const nps = npsm[id]; const locked = !contributed, gu = distm[id]; const fa = facts[id] ?? aggregate([]); const score = fa.starN >= MIN_N ? fa.overallAvg : rs.length ? overall(rs) : 0;
+  const { data: myV } = await d.from("game_state").select("state").eq("user_id", s.id).eq("game", vKey(id)).maybeSingle(); const vstat = (myV?.state as any)?.status ?? null; const [contributed, distm, npsm] = await Promise.all([hasContributed(s.id, s.role), loadDistricts([id]), loadNps([id])]); const nps = npsm[id]; const locked = !contributed, gu = distm[id]; const fa = facts[id] ?? aggregate([]); const score = fa.starN >= (fa.need ?? MIN_N) ? fa.overallAvg : rs.length ? overall(rs) : 0;
   return (
     <div className="detail hs-detail">
       <div className="hh">
@@ -61,6 +62,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       </div>
       <div id="jobs" />{!!myJobs?.length && <div className="jb-revlink">💼 이 병원 채용 중: {myJobs.map((j: any, i: number) => <Link key={j.id} href={`/jobs/${j.id}`} className="link">{i ? " · " : ""}{j.dept} {j.emp_type}</Link>)}</div>}
       {myHidden ? <div className="card fb-wait"><b>🔎 내 리뷰는 신고가 들어와 검토 중이에요</b><p>운영팀이 확인하는 동안(최대 30일) 다른 사람에게 보이지 않고, 수정도 잠시 막혀요. 결과는 알림으로 알려드려요.</p></div> : <details className="card ss-details" open={!!searchParams.write || rs.length === 0}><summary><b>{mine ? "✏️ 내 리뷰 수정" : "⭐ 리뷰 쓰기"}</b> <span className="muted">— 닉네임 비공개, +40 XP</span></summary><ReviewForm hospital={{ id: h.id, name: h.name, region: h.region }} dept={s.dept} mine={mine} proofState={proofState as any} /></details>}
+      {(blindN ?? 0) > 0 && <div className="rv-blind">🔒 신고·권리침해 요청으로 <b>{blindN}개</b> 리뷰가 운영팀 검토 중이라 잠시 가려져 있어요 (최대 30일). 검토 후 다시 보이거나 삭제돼요.</div>}
       <div className="hs-revs">{rs.map(r => <div key={r.id} className={"hs-rev" + (r.user_id === s.id ? " mine" : "")}>
         <div className="meta">{r.verified ? <span className="tag vf">✅ 재직 인증</span> : <span className="tag" style={{ opacity: .6 }}>미인증</span>}<span className="tag">{r.dept}</span><span className={"tag " + (r.status === "재직" ? "cur" : "")}>{r.status}</span><b style={{ color: "#C98A00" }}>★ {overall([r]).toFixed(1)}</b><span className="time">{r.created_at.slice(0, 7).replace("-", "년 ")}월</span>{r.user_id === s.id && <span className="tag">내 리뷰</span>}</div>
         <div className="hs-mini">{RATING_KEYS.map(k => <span key={k.key} title={k.name}>{k.icon}{r[k.key]}</span>)}</div>

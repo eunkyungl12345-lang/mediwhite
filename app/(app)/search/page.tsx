@@ -26,7 +26,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
     {!q ? <p className="muted" style={{ fontSize: 13.5 }}>병원 이름(예: 서울아산, 척척마취), 직종(예: 간호사, 방사선)으로 찾아보세요.</p> : <>
       <nav className="sr-tabs">{T("all", "전체")}{T("hosp", "병원", hs?.length ?? 0)}{T("jobs", "채용 공고", jobs.length)}</nav>
       {tab !== "jobs" && <section><h3 className="sr-h">병원 <small>{hs?.length ?? 0}</small></h3>
-        {(hs ?? []).length ? <div className="sr-list">{(hs ?? []).slice(0, tab === "all" ? 6 : 30).map(h => { const a = facts[h.id], n = nps[h.id], score = a && a.starN >= MIN_N ? a.overallAvg : 0, lines = factLine(a, !contributed).slice(0, 2);
+        {(hs ?? []).length ? <div className="sr-list">{(hs ?? []).slice(0, tab === "all" ? 6 : 30).map(h => { const a = facts[h.id], n = nps[h.id], score = a && a.starN >= (a.need ?? MIN_N) ? a.overallAvg : 0, lines = factLine(a, !contributed).slice(0, 2);
           return <Link key={h.id} href={`/hospitals/${h.id}`} className="sr-h-card"><span className="sr-logo">🏥</span><div><b>{h.name}</b>
             <small>{score ? <em>★ {score.toFixed(1)}</em> : null}{h.kind} · {h.region}{dist[h.id] ? ` ${dist[h.id]}` : ""}</small>
             <small className="sr-meta">{[n?.cnt ? `👥 ${n.cnt}명` : "", a?.n ? `🔎 체크 ${a.n}` : "", rvN(h.id) ? `리뷰 ${rvN(h.id)}` : ""].filter(Boolean).join(" · ") || "아직 정보가 없어요 — 첫 체크를 남겨주세요"}</small>

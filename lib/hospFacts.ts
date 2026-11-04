@@ -3,6 +3,8 @@
  *  저장: game_state(user_id, game = "hfact:<병원id>", state) — 1인 1병원 1응답(수정 가능)
  *  공개: 응답 MIN_N명 이상일 때만 집계로 (누가 답했는지 특정 안 되게) */
 export const MIN_N = 3;
+/** 직원 10명 이하 작은 병원·약국은 누가 썼는지 짐작되기 쉬워서 5명 */
+export const SMALL_N = 5;
 export const PAY = ["~200", "200~250", "250~300", "300~350", "350~400", "400~500", "500~600", "600~700", "700~800", "800~1000", "1000~1500", "1500+"] as const; // 세후 월 실수령(만원)
 export const SHIFT = ["3교대", "2교대", "상근(데이)"] as const; // 0·1 = 교대, 2 = 상근
 export const YEARS = ["신규·1년 미만", "1~3년", "4~7년", "8년 이상"] as const;
@@ -35,7 +37,7 @@ export const FUTURE = ["📈 좋아질 것 같아요", "➖ 비슷할 것 같아
 export const EXIT_REASONS = ["급여가 낮아서", "태움·인간관계", "업무 과다·인력 부족", "상사·관리자", "교대·근무시간", "결혼·출산·육아", "이사·통근", "커리어·이직", "건강", "계약 만료", "기타"] as const;
 export type HFact = { shift?: number; overall?: number; rec?: number; future?: number; v?: boolean; stars?: Record<string, number>; reasons?: string[]; last?: string; pay?: string; years?: string; dept?: string; status?: string; taeum?: number; off?: number; quit?: number; risks?: string[]; good?: boolean; at?: string };
 export const factKey = (hid: number) => `hfact:${hid}`;
-export type FactAgg = { overallAvg: number; recPct: number; recN: number; words: string[]; future: number[]; stars: { k: string; name: string; icon: string; avg: number }[]; starAvg: number; starN: number; exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string; v?: boolean }[] }; n: number; verified: number; pay: { range: string; n: number }[]; payMid?: string; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
+export type FactAgg = { need?: number; overallAvg: number; recPct: number; recN: number; words: string[]; future: number[]; stars: { k: string; name: string; icon: string; avg: number }[]; starAvg: number; starN: number; exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string; v?: boolean }[] }; n: number; verified: number; pay: { range: string; n: number }[]; payMid?: string; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
 export function aggregate(rows: HFact[]): FactAgg {
   const n = rows.length; const pay = PAY.map(r => ({ range: r, n: rows.filter(x => x.pay === r).length }));
   const paid = rows.map(x => PAY.indexOf(x.pay as any)).filter(i => i >= 0).sort((a, b) => a - b); const payMid = paid.length ? PAY[paid[Math.floor((paid.length - 1) / 2)]] : undefined;
@@ -54,9 +56,9 @@ export function aggregate(rows: HFact[]): FactAgg {
 }
 /** 공고 카드용 한 줄 */
 export function factLine(a?: FactAgg, locked?: boolean): string[] {
-  if (!a || a.n < MIN_N) return [];
+  const M = a?.need ?? MIN_N; if (!a || a.n < M) return [];
   if (locked) return [`🔒 실수령·별점·리스크 ${a.n}명 응답 — 체크 하나면 6개월간 열려요`];
-  const out: string[] = []; if (a.payMid) out.push(`💰 실수령 ${a.payMid}만`); if (a.starN >= MIN_N) out.push(`⭐ ${a.overallAvg.toFixed(1)}`); if (a.recN >= MIN_N) out.push(`👍 추천 ${a.recPct}%`);
+  const out: string[] = []; if (a.payMid) out.push(`💰 실수령 ${a.payMid}만`); if (a.starN >= M) out.push(`⭐ ${a.overallAvg.toFixed(1)}`); if (a.recN >= M) out.push(`👍 추천 ${a.recPct}%`);
   const t = a.mood.find(m => m.k === "taeum"); if (t && t.counts[2] > 0) out.push(`😣 태움 심함 ${t.counts[2]}/${a.n}`);
   const ot = a.mood.find(m => m.k === "ot"); if (ot && ot.counts[1] + ot.counts[2] > 0 && ot.counts[1] + ot.counts[2] >= ot.counts[0]) out.push(`⏱️ OT 수당 눈치 ${ot.counts[1] + ot.counts[2]}/${a.n}`);
   if (a.risks[0]) out.push(`⚠️ ${a.risks[0].s} ${a.risks[0].n}/${a.n}`);

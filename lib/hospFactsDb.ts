@@ -1,5 +1,5 @@
 import { db } from "./supabase";
-import { aggregate, type FactAgg, type HFact } from "./hospFacts";
+import { aggregate, SMALL_N, MIN_N, type FactAgg, type HFact } from "./hospFacts";
 /** 병원 id들 → 실체 체크 집계 */
 export async function loadFacts(hids?: number[]): Promise<Record<number, FactAgg>> {
   let q = db().from("game_state").select("user_id,game,state").like("game", "hfact:%").limit(5000);
@@ -8,7 +8,9 @@ export async function loadFacts(hids?: number[]): Promise<Record<number, FactAgg
   const [{ data }, { data: vs }] = await Promise.all([q, vq]); const by: Record<number, HFact[]> = {};
   const ok = new Set((vs ?? []).filter(v => (v.state as any)?.status === "approved").map(v => `${v.user_id}:${String(v.game).slice(8)}`));
   for (const r of data ?? []) { const id = Number(String(r.game).slice(6)); (by[id] ??= []).push({ ...(r.state as HFact), v: ok.has(`${r.user_id}:${id}`) }); }
-  return Object.fromEntries(Object.entries(by).map(([k, v]) => [Number(k), aggregate(v)]));
+  const ids = Object.keys(by); const { data: np } = ids.length ? await db().from("settings").select("key,value").in("key", ids.map(k => `nps:${k}`)) : { data: [] as any[] };
+  const small = new Set((np ?? []).filter(r => { try { const c = JSON.parse(r.value).cnt; return c > 0 && c <= 10; } catch { return false; } }).map(r => Number(String(r.key).slice(4))));
+  return Object.fromEntries(Object.entries(by).map(([k, v]) => [Number(k), { ...aggregate(v), need: small.has(Number(k)) ? SMALL_N : MIN_N }]));
 }
 /** give-to-get: 최근 6개월 안에 실체 체크(또는 리뷰)를 남긴 사람만 상세 열람 */
 export async function hasContributed(userId: string, role?: string): Promise<boolean> {

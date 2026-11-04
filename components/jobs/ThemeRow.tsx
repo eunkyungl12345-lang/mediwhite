@@ -8,7 +8,7 @@ const THEMES: { key: string; t: string; d: string; icon: string; bg: string; pic
   { key: "rec", t: "추천받는 곳", d: "동료에게 추천해요", icon: "👍", bg: "#FFE8EE", pick: a => a.recN >= MIN_N ? a.recPct : null, fmt: v => `추천 ${v}%` },
 ];
 export default function ThemeRow({ hs, facts }: { hs: { id: number; name: string }[]; facts: Record<number, FactAgg> }) {
-  const cards = THEMES.map(th => ({ th, top: hs.filter(h => (facts[h.id]?.n ?? 0) >= MIN_N).map(h => ({ h, v: th.pick(facts[h.id]) })).filter(x => x.v != null && x.v > 0).sort((a, b) => b.v! - a.v!).slice(0, 3) })).filter(c => c.top.length);
+  const cards = THEMES.map(th => ({ th, top: hs.filter(h => (facts[h.id]?.n ?? 0) >= (facts[h.id]?.need ?? MIN_N)).map(h => ({ h, v: th.pick(facts[h.id]) })).filter(x => x.v != null && x.v > 0).sort((a, b) => b.v! - a.v!).slice(0, 3) })).filter(c => c.top.length);
   if (!cards.length) return null;
   return <section className="th"><h3>전·현직원이 인정한</h3><div className="th-row">{cards.map(({ th, top }) => <div key={th.key} className="th-card" style={{ background: th.bg }}>
     <span className="th-ic">{th.icon}</span><b>{th.t}</b><small>{th.d}</small>
