@@ -14,4 +14,4 @@ export type RatingKey = typeof RATING_KEYS[number]["key"];
 export const avg = (rows: any[], k: string) => rows.length ? Math.round(rows.reduce((a, r) => a + (r[k] ?? 0), 0) / rows.length * 10) / 10 : 0;
 export const overall = (rows: any[]) => rows.length ? Math.round(RATING_KEYS.reduce((a, k) => a + avg(rows, k.key), 0) / RATING_KEYS.length * 10) / 10 : 0;
 export const stars = (n: number) => "★".repeat(Math.round(n)) + "☆".repeat(5 - Math.round(n));
-export const dday = (d?: string | null) => { if (!d) return "상시"; const n = Math.ceil((Date.parse(d + "T23:59:59+09:00") - Date.now()) / 86400000); return n < 0 ? "마감" : n === 0 ? "오늘 마감" : `D-${n}`; };
+export const dday = (d?: string | null) => { if (!d) return "상시"; const n = Math.ceil((Date.parse(d + "T23:59:59+09:00") - Date.now()) / 86400000); return n < 0 ? "마감" : n === 0 ? "오늘 마감" : n > 365 ? "상시" : `D-${n}`; };
