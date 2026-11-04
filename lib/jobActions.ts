@@ -9,7 +9,7 @@ import { JOB_REGIONS, JOB_DEPTS, EMP_TYPES, HOSP_KINDS, RATING_KEYS } from "./jo
 import { pushToUsers } from "./push";
 import { JOB_TAGS, SHARE_TAG, joinTags } from "./jobTags";
 import { VOICE_OPTS } from "./jobVoice";
-import { PAY, YEARS, MOOD, RISKS, factKey } from "./hospFacts";
+import { PAY, YEARS, MOOD, RISKS, EXIT_STARS, EXIT_REASONS, factKey } from "./hospFacts";
 const okImg = (f: unknown): f is File => f instanceof File && f.size > 0 && f.size <= 6_000_000 && /^image\//.test(f.type);
 
 type R = { error?: string; ok?: string } | undefined;
@@ -135,9 +135,16 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
   if (!inList(JOB_DEPTS, dept)) return { error: "직종을 골라주세요" };
   const mood: Record<string, number> = {}; for (const m of MOOD) { const v = Number(fd.get(m.k)); if (!(v >= 0 && v <= 2) || fd.get(m.k) === null) return { error: `'${m.q}'를 골라주세요` }; mood[m.k] = v; }
   const risks = fd.getAll("risk").map(String).filter(r => RISKS.some(x => x.k === r)); const good = fd.get("good") === "1" && !risks.length;
+  let exit: Record<string, any> = {};
+  if (status === "퇴사") {
+    const stars: Record<string, number> = {}; for (const st of EXIT_STARS) { const v = Number(fd.get("st_" + st.k)); if (!(v >= 1 && v <= 5)) return { error: `퇴사자 평가 '${st.name}' 별점을 골라주세요` }; stars[st.k] = v; }
+    const reasons = fd.getAll("reason").map(String).filter(r => inList(EXIT_REASONS, r)); if (!reasons.length) return { error: "퇴사 사유를 하나 이상 골라주세요" };
+    const last = clean(fd.get("last"), 120); if (last) { const pm = personMention(last); if (pm) return { error: `특정인을 알 수 있는 표현("${pm}")은 빼주세요. 사람이 아니라 병원에 대한 한마디만!` }; }
+    exit = { stars, reasons, last: last || undefined };
+  }
   const key = factKey(hid); const { data: prev } = await s.from("game_state").select("user_id").eq("user_id", u.id).eq("game", key).maybeSingle();
   if (!prev) { const { count } = await s.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", u.id).like("game", "hfact:%").gte("updated_at", new Date(Date.now() - 86400000).toISOString()); if ((count ?? 0) >= 5) return { error: "하루 5곳까지만 체크할 수 있어요" }; }
-  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, ...mood, risks, good, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
+  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, ...mood, risks, good, ...exit, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
   if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");
   revalidatePath(`/hospitals/${hid}`); revalidatePath("/jobs"); redirect(`/hospitals/${hid}?checked=1`);

@@ -1900,3 +1900,28 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .jb2-facts.none{font-size:11.5px;color:var(--muted)}
 .h-job.check b{color:#1F5E3C}
 @media (prefers-color-scheme:dark){.fb-thanks,.jb2-facts span:first-child{background:#1F3530;color:#9FE0C0}.fb-sec>b em{color:#9FE0C0}}
+.hc-exit{display:grid;gap:14px;padding:14px;border-radius:14px;background:rgba(31,94,60,.05);border:1px dashed rgba(31,94,60,.35)}
+.hc-srow{display:flex;justify-content:space-between;align-items:center;font-size:13.5px}.hc-stars{display:flex}.hc-stars button{all:unset;cursor:pointer;font-size:24px;line-height:1;padding:0 2px;color:var(--line)}.hc-stars button.on{color:#F2B01E}
+.hc-q input[name=last]{width:100%}
+.fb-stars{display:grid;gap:6px}.fb-stars>div{display:grid;grid-template-columns:118px 1fr 30px;gap:8px;align-items:center;font-size:12.5px}.fb-stars i{height:8px;border-radius:99px;background:var(--bg);overflow:hidden}.fb-stars i em{display:block;height:100%;background:#F2B01E}.fb-stars b{text-align:right}
+.fb-reasons{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.fb-reasons small{width:100%;color:var(--muted)}.fb-reasons span{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--bg)}.fb-reasons em{font-style:normal;font-weight:800;margin-left:2px}
+.fb-last{font-size:13.5px;padding:10px 12px;border-radius:10px;background:var(--bg);line-height:1.55;display:grid;gap:3px}.fb-last small{color:var(--muted);font-size:11px}
+/* 🏆 우리병원 자랑대회 */
+.hc-banner.gold{background:linear-gradient(135deg,#7A4B00,#C98A00)}.hc-banner.gold em{color:#7A4B00}
+.bg-page{gap:12px}.bg-hero{display:grid;gap:10px;padding:16px;border-radius:18px;background:linear-gradient(135deg,#FFF4D6,#FFE3A3);color:#4A3000}.bg-hero h2{margin:0;font-size:20px}.bg-hero p{margin:4px 0 0;font-size:13px;line-height:1.55}.bg-hero .btn{justify-self:start;background:#7A4B00;border:0}.bg-hero .btn small{opacity:.7;margin-left:3px}
+@media (prefers-color-scheme:dark){.bg-hero{background:linear-gradient(135deg,#3A2A0A,#4A360C);color:#FFE3A3}}
+.bg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.bg-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);display:flex;flex-direction:column}
+.bg-ph{position:relative;aspect-ratio:4/3;background:var(--bg);cursor:pointer}.bg-ph img{width:100%;height:100%;object-fit:cover;display:block}.bg-noph{display:grid;place-items:center;height:100%;font-size:40px}
+.bg-rank{position:absolute;left:8px;top:8px;font-size:28px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+.bg-dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:4px}.bg-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55)}.bg-dots i.on{background:#fff}
+.bg-b{padding:12px;display:grid;gap:8px}.bg-h{display:flex;gap:6px;align-items:baseline;text-decoration:none;color:var(--ink)}.bg-h small{color:var(--muted);font-size:12px}
+.bg-tags{display:flex;flex-wrap:wrap;gap:4px}.bg-tags span{font-size:11.5px;padding:3px 8px;border-radius:999px;background:#FFF4D6;color:#7A4B00;font-weight:700}@media (prefers-color-scheme:dark){.bg-tags span{background:#3A2A0A;color:#FFD48A}}
+.bg-b p{margin:0;font-size:13.5px;line-height:1.55;white-space:pre-wrap}
+.bg-f{display:flex;justify-content:space-between;align-items:center;gap:8px}.bg-f small{color:var(--muted);font-size:11.5px}
+.bg-like{all:unset;cursor:pointer;font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:999px;border:1px solid var(--line)}.bg-like.on{border-color:#E57399;color:#C2185B;background:rgba(229,115,153,.08)}
+.bg-up{display:block;border:1.5px dashed var(--line);border-radius:12px;padding:14px;text-align:center;cursor:pointer;color:var(--muted);font-size:13.5px;position:relative}.bg-up input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.bg-prev{display:flex;gap:6px;justify-content:center}.bg-prev img{width:31%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.bg-sec{display:grid;gap:8px;margin:10px 0}.bg-sec-h{display:flex;justify-content:space-between;align-items:center}
+.bg-row{display:grid;grid-auto-flow:column;grid-auto-columns:78%;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.bg-row>*{scroll-snap-align:start}
+@media (min-width:700px){.bg-row{grid-auto-columns:300px}}

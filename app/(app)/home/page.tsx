@@ -84,6 +84,7 @@ export default async function HomePage() {
         <Link href="/games?g=wordle" className={"hs-pill" + (wd?.data?.done ? " done" : "")}><span>🟩</span>{wd?.data?.done ? "메디워들 완료" : "메디워들"}</Link>
         <Link href="/games?g=tycoon" className="hs-pill"><span>🏥</span>{tyPending > 0 ? `우리 병원 +${won(tyPending)}` : "우리 병원"}</Link>
         {heads[0] && <a href={heads[0].link} target="_blank" rel="noopener noreferrer" className="hs-pill news"><span>📰</span><em>{heads[0].title}</em></a>}
+        <Link href="/hospitals/brag" className="hs-pill"><span>🏆</span>우리병원 자랑</Link>
         <Link href="/rest" className="hs-pill"><span>🛋️</span>당직실</Link>
         <Link href="/anon" className="hs-pill"><span>🕶️</span>익명</Link>
         <Link href="/jobs" className="hs-pill"><span>💼</span>채용·병원리뷰</Link>
