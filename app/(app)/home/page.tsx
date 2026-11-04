@@ -2,6 +2,7 @@ import Link from "next/link";
 import { RANKS } from "@/lib/ranks";
 import BlueBadge from "@/components/BlueBadge";
 import HomeFeed from "@/components/HomeFeed";
+import { dday } from "@/lib/jobs";
 import { CafeHeader } from "@/components/CafeNav";
 import { boardNavItems } from "@/lib/boardNav";
 import PromoStrip from "@/components/PromoStrip";
@@ -72,6 +73,9 @@ export default async function HomePage() {
   const { data: chs } = pids.length ? await d.from("cheers").select("event_id,user_id").in("event_id", pids) : { data: [] as any[] };
   const agoK = (t: string) => { const m = Math.max(1, Math.round((now - Date.parse(t)) / 60000)); return m < 60 ? `${m}분 전` : m < 1440 ? `${Math.round(m / 60)}시간 전` : `${Math.round(m / 1440)}일 전`; };
   const promoItems = (promoEv ?? []).filter(e => !/강등/.test(e.text)).map(e => { const [, idx, dept, nick] = e.text.split("|"); const i = Number(idx); return { id: e.id, dept: dept ?? "", nick: nick ?? "", rank: RANKS[i]?.[0] ?? "", index: i, n: (chs ?? []).filter((c: any) => c.event_id === e.id).length, mine: (chs ?? []).some((c: any) => c.event_id === e.id && c.user_id === s.id), me: e.user_id === s.id, ago: agoK(e.created_at) }; }).filter(x => x.dept && x.nick);
+  const { data: hjobs } = await d.from("jobs").select("id,hospital,region,dept,emp_type,deadline,welfare,created_at,author:users!jobs_author_id_fkey(username)").eq("hidden", false).eq("closed", false).order("created_at", { ascending: false }).limit(40);
+  const openJobs = (hjobs ?? []).filter(j => dday(j.deadline) !== "마감"), myJobs = openJobs.filter(j => j.dept === s.dept);
+  const jobPick = [...myJobs, ...openJobs.filter(j => j.dept !== s.dept)].slice(0, 3), newJobs = openJobs.filter(j => now - Date.parse(j.created_at) < 3 * 86400000).length;
   const noticesF = posts.filter(p => p.category === "공지" || p.pinned).slice(0, 8).map(feedRow);
   return (
     <div className="home v2">
@@ -85,6 +89,12 @@ export default async function HomePage() {
         <Link href="/jobs" className="hs-pill"><span>💼</span>채용·병원리뷰</Link>
         <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
       </nav>
+
+      <section className="h-jobs">
+        <Link href={myJobs.length ? `/jobs?dept=${encodeURIComponent(s.dept)}` : "/jobs"} className="h-jobs-h"><b>💼 의료 채용</b><span>{newJobs > 0 ? `3일간 새 공고 ${newJobs}` : `모집 중 ${openJobs.length}`}{myJobs.length ? ` · ${s.dept} ${myJobs.length}` : ""}</span><em>전체 ›</em></Link>
+        {jobPick.length ? jobPick.map(j => <Link key={j.id} href={`/jobs/${j.id}`} className="h-job"><b>{j.hospital}</b><span>{(j.author as any)?.username === "mw_bot" ? (j.welfare || j.dept) : `${j.dept} ${j.emp_type}`}</span><small>{j.region} · {dday(j.deadline)}</small></Link>)
+          : <Link href="/jobs/new?tip=1" className="h-job empty"><b>📢 단톡방에서 본 공고 있어요?</b><span>여기 올리면 다들 여기서 찾아요 · +30 XP</span></Link>}
+      </section>
 
       <PromoStrip items={promoItems} />
 

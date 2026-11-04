@@ -7,6 +7,8 @@ import { personMention } from "./safety";
 import { awardXp } from "./xp";
 import { JOB_REGIONS, JOB_DEPTS, EMP_TYPES, HOSP_KINDS, RATING_KEYS } from "./jobs";
 import { pushToUsers } from "./push";
+import { JOB_TAGS, SHARE_TAG, joinTags } from "./jobTags";
+import { VOICE_OPTS } from "./jobVoice";
 const okImg = (f: unknown): f is File => f instanceof File && f.size > 0 && f.size <= 6_000_000 && /^image\//.test(f.type);
 
 type R = { error?: string; ok?: string } | undefined;
@@ -27,9 +29,11 @@ export async function createJob(_: R, fd: FormData): Promise<R> {
   if (deadline && isNaN(Date.parse(deadline))) return { error: "마감일 형식이 이상해요" };
   const { count } = await s.from("jobs").select("id", { count: "exact", head: true }).eq("author_id", u.id).gte("created_at", new Date(Date.now() - 86400000).toISOString());
   if ((count ?? 0) >= 5) return { error: "채용공고는 하루 5개까지만 올릴 수 있어요" };
-  const { data, error } = await s.from("jobs").insert({ author_id: u.id, hospital, region, dept, emp_type: emp, pay: pay || null, hours: hours || null, welfare: welfare || null, deadline: deadline || null, contact: contact || null, body }).select("id").single();
+  const tags = fd.getAll("tag").map(String).filter(t => JOB_TAGS.some(x => x.id === t)).slice(0, 8);
+  const shared = fd.get("who") === "share"; if (shared) tags.unshift(SHARE_TAG);
+  const { data, error } = await s.from("jobs").insert({ author_id: u.id, hospital, region, dept, emp_type: emp, pay: pay || null, hours: hours || null, welfare: welfare || null, deadline: deadline || null, contact: contact || null, body: joinTags(tags, body) }).select("id").single();
   if (error || !data) return { error: "잠시 후 다시 시도해주세요" };
-  await awardXp(u.id, 20, `job:${data.id}`, "quest");
+  await awardXp(u.id, shared ? 30 : 20, `job:${data.id}`, "quest");
   revalidatePath("/jobs"); redirect(`/jobs/${data.id}`);
 }
 export async function closeJob(id: number) {
@@ -101,4 +105,15 @@ export async function searchHospitals(q: string) {
 export async function runJobImport() {
   const { getSession } = await import("./auth"); const s = await getSession(); if (!s || s.role !== "admin") return { ok: false, fetched: 0, hospitals: 0, added: 0, error: "관리자만" };
   const { importPublicJobs } = await import("./jobImport"); const r = await importPublicJobs(); const { revalidatePath } = await import("next/cache"); revalidatePath("/jobs"); return r;
+}
+
+/* ---------- 🗣️ 의료직 구직 불편 설문 (메디잡·사람인 써보니) ---------- */
+export async function submitJobVoice(_: R, fd: FormData): Promise<R> {
+  const u = await me(); const s = db();
+  const picks = fd.getAll("v").map(String).filter(v => VOICE_OPTS.some(o => o.id === v)).slice(0, 7), free = clean(fd.get("free"), 300).replace(/\|/g, "/");
+  if (!picks.length && free.length < 4) return { error: "하나 이상 골라주거나 한 줄 적어주세요" };
+  const { data: ex } = await s.from("events").select("id").eq("kind", "jobvoice").eq("user_id", u.id).limit(1).maybeSingle();
+  if (ex) await s.from("events").update({ text: `${picks.join(",")}|${free}|${u.dept}` }).eq("id", ex.id);
+  else { await s.from("events").insert({ kind: "jobvoice", user_id: u.id, text: `${picks.join(",")}|${free}|${u.dept}` }); await awardXp(u.id, 10, "jobvoice", "quest"); }
+  revalidatePath("/jobs"); return { ok: "고마워요! 이 의견대로 채용 게시판을 고쳐갈게요 🙏" };
 }

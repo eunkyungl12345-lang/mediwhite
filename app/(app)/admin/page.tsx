@@ -1,3 +1,4 @@
+import { voiceLabel } from "@/lib/jobVoice";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
@@ -57,9 +58,27 @@ export default async function AdminPage() {
   ]);
   const { data: proofReqs } = await db().from("review_proofs").select("id,path,created_at,user:users(nickname,dept,username),hospital:hospitals(name,region),review:hospital_reviews(dept,status,pros)").eq("status", "pending").order("created_at");
   const { data: badgeReqs } = await db().from("badge_requests").select("id,user_id,id_path,lic_path,note,created_at,user:users(nickname,dept,username)").eq("status", "pending").order("created_at");
+  const wk = new Date(Date.now() - 7 * 86400000).toISOString();
+  const [{ data: jv }, { data: jo }, { data: jvo }] = await Promise.all([db().from("events").select("text").eq("kind", "jobview").gte("created_at", wk).limit(5000), db().from("events").select("text").eq("kind", "jobout").gte("created_at", wk).limit(5000), db().from("events").select("text,created_at").eq("kind", "jobvoice").order("created_at", { ascending: false }).limit(1000)]);
+  const tally = (rows: any[] | null, i: number) => { const m: Record<string, number> = {}; for (const r of rows ?? []) { const k = String(r.text).split("|")[i] || "?"; m[k] = (m[k] ?? 0) + 1; } return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const vc: Record<string, number> = {}; for (const r of jvo ?? []) for (const id of String(r.text).split("|")[0].split(",").filter(Boolean)) vc[id] = (vc[id] ?? 0) + 1;
+  const vFree = (jvo ?? []).map(r => { const [, f, dp] = String(r.text).split("|"); return f ? `[${dp}] ${f}` : ""; }).filter(Boolean).slice(0, 12);
+  const SRC: Record<string, string> = { pub: "🏛️ 공공", own: "🏥 병원 구인", share: "📢 숨은 공고", member: "👤 회원" };
   return (
     <div className="games">
       <Stats series={series} totals={{ users: (signups ?? []).length, today: series[series.length - 1]?.visitors ?? 0, msg24h: msg24 ?? 0, posts: postsAll ?? 0, games24h: scores24 ?? 0 }} />
+      <div className="card" id="jobstats">
+        <h3>📊 채용 반응 (최근 7일)</h3>
+        <div className="muted" style={{ fontSize: 12 }}>공고 열람 {(jv ?? []).length}회 · 원문 지원 클릭 {(jo ?? []).length}회 — 어디서 반응이 오는지 보고 그쪽을 더 뾰족하게</div>
+        <div className="ad-js">
+          <div><b>파트별 열람</b>{tally(jv, 0).slice(0, 8).map(([k, n]) => <span key={k}>{k} <em>{n}</em></span>)}</div>
+          <div><b>지역별 열람</b>{tally(jv, 1).slice(0, 8).map(([k, n]) => <span key={k}>{k} <em>{n}</em></span>)}</div>
+          <div><b>출처별 열람</b>{tally(jv, 2).map(([k, n]) => <span key={k}>{SRC[k] ?? k} <em>{n}</em></span>)}</div>
+          <div><b>원문 지원 클릭</b>{tally(jo, 0).slice(0, 8).map(([k, n]) => <span key={k}>{k} <em>{n}</em></span>)}</div>
+        </div>
+        <h3 style={{ marginTop: 12 }}>🗣️ 메디잡·사람인 불편 설문 — {(jvo ?? []).length}명</h3>
+        <div className="ad-js"><div>{Object.entries(vc).sort((a, b) => b[1] - a[1]).map(([k, n]) => <span key={k}>{voiceLabel(k)} <em>{n}</em></span>)}</div>{vFree.length > 0 && <div><b>직접 적은 말</b>{vFree.map((f, i) => <span key={i}>{f}</span>)}</div>}</div>
+      </div>
       <div className="card" id="badges">
         <h3>🥇 골드뱃지 심사 {badgeReqs?.length ? <span className="mt-wait">{badgeReqs.length}</span> : null}</h3>
         <div className="muted">운전면허증 + 의료 면허·자격증 이름이 같은지 확인. 승인/거절하면 사진은 즉시 삭제돼요.</div>
