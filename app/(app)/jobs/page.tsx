@@ -45,12 +45,8 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const soon = open.filter(j => { const x = dday(j.deadline); return x === "오늘 마감" || (x.startsWith("D-") && Number(x.slice(2)) <= 3); }).length;
   return (
     <div className="jb2">
-      <div className="jb2-hero v2">
-        <div><h2>💼 공고는 어디에나 있어요.<br /><span>입사해야만 알던 건 여기서만.</span></h2>
-          <ul className="jb2-why"><li><b>💰 내부 급여</b>“500~600”처럼 진짜 세후 실수령 구간</li><li><b>😶 내부 분위기</b>태움·칼퇴·사람 나가는 편인지</li><li><b>⭐ 별점</b>급여·워라밸·동료·상사·교육·복지</li><li><b>🤫 히든 공고</b>단톡방·지인으로만 도는 공고까지</li></ul></div>
-        <div className="jb2-cta"><Link href="/hospitals/check" className="btn">🔎 우리 병원 실체 체크 <small>+50</small></Link><Link href="/jobs/new?tip=1" className="btn ghost">🤫 히든 공고 제보</Link></div>
-      </div>
-      <Link href="/jobs/day" className="day-banner"><span>☀️</span><div><b>3교대 탈출</b><small>나이트 없는 삶, 실수령은 얼마나 줄까? 상근·칼퇴 병원만 모아봤어요</small></div><em>›</em></Link>
+      <div className="jb-head"><h2>💼 의료 채용</h2><Link href="/jobs/new" className="btn">📤 공고 올리기</Link></div>
+      <Link href="/jobs/day" className="day-banner"><span>☀️</span><div><b>3교대 탈출</b><small>상근·칼퇴 병원만 모아봤어요</small></div><em>›</em></Link>
       <form className="jb2-search" action="/jobs">{dept && <input type="hidden" name="dept" value={dept} />}{region && <input type="hidden" name="region" value={region} />}<input name="q" defaultValue={kw} placeholder="병원 이름으로 찾기 (예: 서울대, 의료원)" /><button className="btn">검색</button></form>
       <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && cnt[x] ? <small>{cnt[x]}</small> : null}</Link>)}</div>
       <div className="jb2-filters">
@@ -59,11 +55,11 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
       </div>
       <div className="jb2-quick">{QUICK.map(x => <Link key={x.id} href={link({ t: tg === x.id ? "" : x.id })} className={tg === x.id ? "on" : ""}>{x.label}</Link>)}</div>
       <div className="jb2-sum"><span>모집 중 <b>{open.length}</b></span>{soon > 0 && <span className="hot">⏰ 3일 안에 마감 {soon}</span>}{kw && <span>‘{kw}’ 검색 · <Link href={link({ q: "" })}>해제</Link></span>}</div>
-      <JobVoice n={vN} top={vTop} answered={answered} />
       {s.role === "admin" && <ImportButton />}
       {open.length === 0 ? <div className="jb2-empty"><span>💼</span><b>{dept ? `${deptLabel(dept)} 공고가 아직 없어요` : "아직 올라온 공고가 없어요"}</b><p>단톡방에서 본 공고, 우리 병원 구인 — 첫 공고를 올려주세요. 공공병원 공고는 자동 수집이 켜지면 여기에 모여요.</p></div>
         : <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={isPublic(j)} rv={hmap[nk(j.hospital, j.region)]} fa={fmap[nk(j.hospital, j.region)]} locked={!contributed} />)}</div>}
       {closed.length > 0 && <details className="jb2-closed"><summary>마감된 공고 {closed.length}개</summary><div className="jb2-list">{closed.map(j => <JobCard key={j.id} j={j} pub={isPublic(j)} rv={hmap[nk(j.hospital, j.region)]} />)}</div></details>}
+      <JobVoice n={vN} top={vTop} answered={answered} />
     </div>
   );
 }

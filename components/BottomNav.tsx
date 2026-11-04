@@ -17,7 +17,7 @@ export default function BottomNav() {
   const is = (h: string) => p === h || p.startsWith(h + "/") || p.startsWith(h + "?");
   // 잡플래닛처럼 핵심 기능을 하단에: 홈 · 병원 리뷰 · 채용 · 커뮤니티 · MY (썸·게임·당직실은 커뮤니티/메뉴 안으로)
   const commOn = ["/board", "/anon", "/ssum", "/games", "/rest", "/food", "/news", "/guide"].some(is);
-  const items: [string, string, keyof typeof I, boolean][] = [["/home", "홈", "home", is("/home")], ["/hospitals", "병원 리뷰", "hosp", is("/hospitals")], ["/jobs", "채용", "jobs", is("/jobs")], ["/board", "커뮤니티", "chat", commOn], ["/rank", "MY", "me", is("/rank") || is("/u") || is("/noti") || is("/badge")]];
+  const items: [string, string, keyof typeof I, boolean][] = [["/home", "홈", "home", is("/home")], ["/hospitals", "병원 리뷰", "hosp", is("/hospitals")], ["/jobs", "채용", "jobs", is("/jobs")], ["/board", "커뮤니티", "chat", commOn], ["/my", "MY", "me", is("/my") || is("/rank") || is("/u") || is("/noti") || is("/badge")]];
   return <nav className="bnav" aria-label="메인">
     {items.map(([href, label, k, on]) => <Link key={href} href={href} className={"bnav-i" + (on ? " on" : "")} aria-current={on ? "page" : undefined}><i>{I[k]}</i><span>{label}</span></Link>)}
   </nav>;

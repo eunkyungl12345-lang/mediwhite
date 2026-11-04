@@ -10,7 +10,7 @@ export default function JobForm({ dept, tip }: { dept?: string; tip?: boolean })
   return <form action={action} className="form jb-form">
     <div className="jb-who" role="radiogroup">
       <label className={!share ? "on" : ""}><input type="radio" name="who" value="own" checked={!share} onChange={() => setWho("own")} /><b>🏥 우리 병원 구인</b><small>병원·관리자가 직접 올려요</small></label>
-      <label className={share ? "on" : ""}><input type="radio" name="who" value="share" checked={share} onChange={() => setWho("share")} /><b>📢 어디서 본 공고 제보</b><small>단톡방·지인·병원 게시판에서 본 공고</small></label>
+      <label className={share ? "on" : ""}><input type="radio" name="who" value="share" checked={share} onChange={() => setWho("share")} /><b>🤫 다른 곳에서 본 공고</b><small>단톡방·지인·다른 사이트 공고 공유</small></label>
     </div>
     {share && <div className="jb-tipnote">메디잡·사람인에 안 올라오는 공고가 여기 모일수록 다들 여기서 찾아요. 받은 공고 내용을 <b>그대로 붙여넣기</b>만 해도 돼요. (개인 번호는 지워주세요)</div>}
     <label className="jb-lab">병원명 *<input name="hospital" maxLength={40} placeholder="예: 동탄○○정형외과 (실제 병원명 — 채용공고라 공개돼요)" required /></label>

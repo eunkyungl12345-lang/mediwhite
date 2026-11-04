@@ -2052,3 +2052,13 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .hh-tabs a.on{color:var(--ink)!important;box-shadow:inset 0 -2px 0 var(--ink)!important}.hh-tabs a:first-child:not(.on){color:var(--muted);box-shadow:none}
 .iv-sec{display:grid;gap:12px}.iv-sec>.btn{justify-self:start}.iv-tags{display:flex;gap:5px;flex-wrap:wrap}.iv-tags span{font-size:12px;padding:3px 9px;border-radius:7px;background:var(--bg)}
 .iv-sec{margin-top:12px}
+.jb-head{display:flex;justify-content:space-between;align-items:center}.jb-head h2{margin:0;font-size:22px}
+/* 👤 MY */
+.my{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}.my-prof{display:flex;gap:14px;align-items:center;padding:6px 2px}.my-prof>div{display:grid;gap:2px}.my-prof b{font-size:20px}.my-prof small{color:var(--muted);font-size:13px}.my-rank{font-size:12.5px;color:#1F7A4C;text-decoration:none;font-weight:700}
+.my-pass{display:grid;gap:6px;padding:16px;border-radius:16px;background:var(--bg);border:1px solid var(--line)}.my-pass.on{background:linear-gradient(135deg,#E6F6EE,#F4FBF7);border-color:#BFE6D0}.my-pass span{font-size:13px;color:var(--muted)}.my-pass .btn{justify-self:start;margin-top:4px}
+@media (prefers-color-scheme:dark){.my-pass.on{background:#17251F;border-color:#2C4A3C}}
+.my-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:14px 6px;border-radius:16px;border:1px solid var(--line);background:var(--surface)}.my-stats>div{display:grid;justify-items:center;gap:2px}.my-stats b{font-size:19px}.my-stats span{font-size:11px;color:var(--muted);white-space:nowrap}
+.my-sec{display:grid;border-radius:16px;border:1px solid var(--line);background:var(--surface);overflow:hidden}.my-sec h3{margin:0;padding:14px 16px 6px;font-size:14px;color:var(--muted)}
+.my-row{display:flex;gap:12px;align-items:center;padding:13px 16px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink)}.my-row:first-of-type{border-top:0}.my-row>span{width:24px;text-align:center}.my-row b{font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.my-row small{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}.my-row em{font-style:normal;color:var(--muted)}.my-row b+em{margin-left:auto}
+.my-out{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:14px 16px;border-top:1px solid var(--line);color:#D93025;font-size:14px}
+.my-sec>p{padding:4px 16px 14px!important;margin:0}
