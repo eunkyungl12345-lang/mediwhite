@@ -1,4 +1,5 @@
 import { db } from "./supabase";
+import { dataKey } from "./dataKey";
 import { guessTags, joinTags } from "./jobTags";
 /** 🏛️ 공공기관 채용정보(잡알리오, 공공데이터포털) → 병원 공고만 골라 채용 게시판에 자동 등록
  *  - 환경변수 DATA_GO_KR_KEY 필요 (data.go.kr '재정경제부_공공기관 채용정보 조회서비스' 활용신청, 개발키 자동승인)
@@ -16,7 +17,7 @@ const ymd = (s: string) => { const m = s.replace(/\D/g, "").slice(0, 8); return 
 function items(doc: any): any[] { if (Array.isArray(doc)) return doc; if (doc && typeof doc === "object") { for (const k of ["result", "items", "item", "data", "list"]) { const v = doc[k]; if (Array.isArray(v)) return v; if (v && typeof v === "object") { const f = items(v); if (f.length) return f; } } for (const v of Object.values(doc)) if (v && typeof v === "object") { const f = items(v); if (f.length) return f; } } return []; }
 export type ImportResult = { ok: boolean; fetched: number; hospitals: number; added: number; error?: string };
 export async function importPublicJobs(maxPages = 6): Promise<ImportResult> {
-  const key = (process.env.DATA_GO_KR_KEY || "").trim(); if (!key) return { ok: false, fetched: 0, hospitals: 0, added: 0, error: "DATA_GO_KR_KEY 환경변수가 없어요" };
+  const key = await dataKey(); if (!key) return { ok: false, fetched: 0, hospitals: 0, added: 0, error: "DATA_GO_KR_KEY 환경변수가 없어요" };
   const s = db(); const { data: bot } = await s.from("users").select("id").eq("username", "mw_bot").maybeSingle(); if (!bot) return { ok: false, fetched: 0, hospitals: 0, added: 0, error: "mw_bot 계정이 없어요" };
   let rows: any[] = [];
   for (let page = 1; page <= maxPages; page++) {

@@ -1,4 +1,5 @@
 import { db } from "./supabase";
+import { dataKey } from "./dataKey";
 /** 📊 국민연금 가입 사업장 공공데이터 — 체크가 0개인 병원도 첫날부터 '직원 수·입퇴사·추정 평균 월급'
  *  공공데이터포털 '국민연금공단_국민연금 가입 사업장 내역 서비스' (DATA_GO_KR_KEY 하나로 같이 씀, 활용 신청 필요)
  *  응답 형식이 JSON/XML 어느 쪽이든, V2/구버전 오퍼레이션 이름 어느 쪽이든 동작하게 방어적으로 */
@@ -14,7 +15,7 @@ function parseItems(text: string): Record<string, string>[] {
   const out: Record<string, string>[] = []; for (const m of Array.from(text.matchAll(/<item>([\s\S]*?)<\/item>/g))) { const o: Record<string, string> = {}; for (const f of Array.from(m[1].matchAll(/<(\w+)>([\s\S]*?)<\/\1>/g))) o[f[1]] = f[2].trim(); out.push(o); } return out;
 }
 async function call(kind: keyof typeof OPS, params: Record<string, string>): Promise<{ items: Record<string, string>[]; raw: string }> {
-  const key = (process.env.DATA_GO_KR_KEY || "").trim(); if (!key) throw new Error("DATA_GO_KR_KEY 환경변수가 없어요");
+  const key = await dataKey(); if (!key) throw new Error("공공데이터 인증키가 없어요");
   let last = "";
   for (const base of BASES) for (const op of OPS[kind]) {
     const u = `${base}/${op}?${new URLSearchParams({ serviceKey: key, pageNo: "1", numOfRows: "100", dataType: "json", ...params })}`;
