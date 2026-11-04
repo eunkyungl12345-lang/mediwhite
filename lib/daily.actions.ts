@@ -1,9 +1,10 @@
 "use server";
+import { isWord } from "./words5";
 import { db } from "./supabase";
 import { getSession } from "./auth";
 import { awardXp } from "./xp";
 import { gameEvent } from "./feed";
-import { answerFor, kstDay, marks, puzzleNo } from "./wordle";
+import { WORDS, answerFor, kstDay, marks, puzzleNo } from "./wordle";
 import { revalidatePath } from "next/cache";
 
 async function me() { const s = await getSession(); if (!s) throw new Error("로그인이 필요해요"); return s; }
@@ -30,6 +31,7 @@ export async function wordleGuess(raw: string): Promise<WordleState> {
   if (st.done) return wordleView(day, st);
   if (guess.length !== 5) return { ...(await wordleView(day, st)), error: "영어 5글자를 입력해 주세요" };
   if (st.guesses.includes(guess)) return { ...(await wordleView(day, st)), error: "이미 넣어본 단어예요" };
+  if (!isWord(guess, WORDS.map(w => w[0]))) return { ...(await wordleView(day, st)), error: "사전에 없는 단어예요 · 진짜 영어 단어나 의학 약어만 넣을 수 있어요" };
   const [ans] = answerFor(day), mk = marks(guess, ans);
   st.guesses.push(guess); st.marks.push(mk);
   if (mk === "ggggg") { st.done = true; st.won = true; } else if (st.guesses.length >= 6) st.done = true;
