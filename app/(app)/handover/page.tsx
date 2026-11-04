@@ -40,7 +40,7 @@ export default async function Handover() {
       <Link href="/hospitals" className="btn ghost" style={{ justifySelf: "start" }}>병원 찾아서 인계 남기기</Link>
     </section>
 
-    <section className="ho-card"><h3>🗓️ 2027 근무표 도우미 <small>공휴일 {HOLIDAYS_2027.length}일 (대체공휴일 포함)</small></h3>
+    <section className="ho-card" id="cal"><h3>🗓️ 2027 근무표 도우미 <small>공휴일 {HOLIDAYS_2027.length}일 (대체공휴일 포함)</small></h3>
       {next && <p className="ho-next">다음 공휴일은 <b>{Number(next[0].slice(5, 7))}월 {Number(next[0].slice(8))}일({WD[new Date(next[0]).getDay()]}) {next[1]}</b></p>}
       <div className="ho-cal">{months.map((hs2, m) => <div key={m} className={hs2.length ? "" : "none"}><b>{m + 1}월 <em>{hs2.length || ""}</em></b>{hs2.map(h => <span key={h[0]} className={h[1].startsWith("대체") ? "sub" : ""}>{Number(h[0].slice(8))}일({WD[new Date(h[0]).getDay()]}) {h[1].replace("대체공휴일", "대체")}</span>)}</div>)}</div>
       <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.6 }}>5인 이상 병원은 공휴일이 유급휴일이라, 공휴일에 근무하면 휴일근로수당(통상임금의 1.5배 이상)이나 대체휴무를 받을 수 있어요. 날짜는 한국천문연구원 월력 자료 기준이고, 정부 공식 발표로 확정돼요.</p>

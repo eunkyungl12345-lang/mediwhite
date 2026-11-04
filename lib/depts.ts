@@ -32,6 +32,8 @@ export const TOPICS = [
   { key: "hospital", name: "병원 리뷰", icon: "🏥", hint: "분위기·복지·근무환경 솔직 후기 (실명 금지)" },
   { key: "pay", name: "급여·연봉", icon: "💰", hint: "급여·연봉·수당 이야기" },
   { key: "study", name: "공부·시험", icon: "📚", hint: "자격·시험·실무 공부" },
+  { key: "data", name: "자료실", icon: "🗂️", hint: "서식·양식·정리 노트 공유 (교재 스캔·유료 자료는 올리면 안 돼요)" },
+  { key: "req", name: "자료 요청", icon: "🙋", hint: "구하는 자료·양식 요청" },
   { key: "info", name: "정보·꿀팁", icon: "💡", hint: "꿀팁·뉴스·제도 정보" },
   { key: "job", name: "이직·채용", icon: "💼", hint: "이직 경험담·조언 (공식 채용공고는 💼 채용 탭에!)" },
   { key: "qna", name: "질문", icon: "❓", hint: "궁금한 거 뭐든 물어보기" },
