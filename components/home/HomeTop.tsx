@@ -5,6 +5,7 @@ import { memo } from "@/lib/memo";
 import { loadFacts } from "@/lib/hospFactsDb";
 import { MIN_N } from "@/lib/hospFacts";
 import { splitTags, SHARE_TAG } from "@/lib/jobTags";
+import RankRoll from "./RankRoll";
 /** 🏠 잡플래닛식 홈 상단 — 검색창 · 지금 많이 보는 병원 순위 · 아이콘 4개 · 곧 마감 배너 · 지금 뜨는 공고 */
 export default async function HomeTop() {
   const d = db(); const wk = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -25,7 +26,7 @@ export default async function HomeTop() {
   const facts = await loadFacts((hs ?? []).map(h => h.id)); const hOf = (j: any) => (hs ?? []).find(h => h.name === j.hospital && h.region === j.region);
   return <div className="ht">
     <form action="/search" className="ht-search"><input name="q" placeholder="어느 병원이 궁금해요? (병원·약국·직종)" aria-label="검색" /><button aria-label="검색">⌕</button></form>
-    {rank.length > 0 && <div className="ht-rank"><span className="ht-live">🩺 요즘 많이 찾는 병원</span><div className="ht-roll"><div style={{ animationDuration: `${rank.length * 3}s` }}>{[...rank, rank[0]].map((h, i) => <Link key={i} href={`/hospitals/${h.id}`}><b>{(i % rank.length) + 1}</b>{h.name}</Link>)}</div></div></div>}
+    {rank.length > 0 && <div className="ht-rank"><span className="ht-live">🩺 요즘 많이 찾는 병원</span><RankRoll items={rank} /></div>}
     <nav className="ht-icons">
       <Link href="/hospitals/check"><span className="ic i1">🔎</span>실체 체크</Link>
       <Link href="/jobs/day"><span className="ic i2">☀️</span>3교대 탈출</Link>

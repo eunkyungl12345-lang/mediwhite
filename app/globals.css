@@ -2005,3 +2005,14 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .ht-roll a{display:block}.ht-hot>span:nth-child(2){flex:1;text-align:left}
 .sr{grid-template-columns:minmax(0,1fr)}.sr>*{min-width:0}
 .ht-roll{clip-path:inset(0);max-height:22px}
+/* 다크 모드 가독성 */
+.ht-hot .ht-hot-ic{flex:none}.ht-hot>span:last-of-type{flex:1;text-align:left}
+@media (prefers-color-scheme:dark){
+  .ht-search{border-color:#4FBF8A;background:#15201C}.ht-search input{color:#F2F5F3}.ht-search input::placeholder{color:#9FB3AA}.ht-search button{color:#CFE3DA}
+  .ht-live{background:#1F3A30;color:#8FE3B5}.ht-roll a{color:#F2F5F3}.ht-roll b{color:#6FD69E}
+  .ht-icons a{color:#F2F5F3}.ht-icons .ic{background:#22302B!important}
+  .ht-hot{border-color:#F0A04B;color:#F2F5F3;background:#1E1A14}.ht-hot b{color:#FFB46B}
+  .ht-card{background:#18211D;border-color:#2C3A34}.ht-card small,.ht-card span{color:#A9BCB3}.ht-card b{color:#F2F5F3}
+  .ht-h a{color:#A9BCB3}.ht-chips i{background:#1F3A30;color:#8FE3B5}.ht-chips i.h{background:#3A3016;color:#FFD48A}
+}
+.ht-roll-i{display:block;animation:rollin .35s ease}@keyframes rollin{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}
