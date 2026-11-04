@@ -12,13 +12,22 @@ export async function loadFacts(hids?: number[]): Promise<Record<number, FactAgg
   const small = new Set((np ?? []).filter(r => { try { const c = JSON.parse(r.value).cnt; return c > 0 && c <= 10; } catch { return false; } }).map(r => Number(String(r.key).slice(4))));
   return Object.fromEntries(Object.entries(by).map(([k, v]) => [Number(k), { ...aggregate(v), need: small.has(Number(k)) ? SMALL_N : MIN_N }]));
 }
-/** give-to-get: 최근 6개월 안에 실체 체크(또는 리뷰)를 남긴 사람만 상세 열람 */
-export async function hasContributed(userId: string, role?: string): Promise<boolean> {
-  if (role === "admin") return true; const d = db();
-  const since = new Date(Date.now() - 183 * 86400000).toISOString(); // 체크 하나면 6개월간 전체 열람 (잡플래닛식 — 계속 새 정보가 들어오게)
+/** 열람 잠금 방식 (관리자 설정 settings.lock_mode): off = 모두 열람 / free3 = 병원 3곳까지 무료 / on = 체크해야 열람 */
+export type LockMode = "off" | "free3" | "on";
+export async function lockMode(): Promise<LockMode> { const { memo } = await import("./memo"); return memo("lock_mode", 60_000, async () => { const { data } = await db().from("settings").select("value").eq("key", "lock_mode").maybeSingle(); const v = data?.value; return v === "off" || v === "on" ? v : "free3"; }); }
+/** give-to-get: 최근 6개월 안에 실체 체크(또는 리뷰)를 남긴 사람만 상세 열람. hid를 주면 'free3' 모드에서 병원 3곳까지 무료 */
+export async function hasContributed(userId: string, role?: string, hid?: number): Promise<boolean> {
+  if (role === "admin") return true; const mode = await lockMode(); if (mode === "off") return true; const d = db();
+  const since = new Date(Date.now() - 183 * 86400000).toISOString();
   const [{ count: a }, { count: b }] = await Promise.all([d.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", userId).like("game", "hfact:%").gte("updated_at", since), d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", since)]);
-  return (a ?? 0) + (b ?? 0) > 0;
+  if ((a ?? 0) + (b ?? 0) > 0) return true;
+  if (mode !== "free3" || !hid) return false;
+  const { data: g } = await d.from("game_state").select("state").eq("user_id", userId).eq("game", "hseen").maybeSingle(); const ids: number[] = (g?.state as any)?.ids ?? [];
+  if (ids.includes(hid)) return true; if (ids.length >= FREE_N) return false;
+  await d.from("game_state").upsert({ user_id: userId, game: "hseen", state: { ids: [...ids, hid] }, updated_at: new Date().toISOString() }); return true;
 }
+export const FREE_N = 3;
+export async function freeLeft(userId: string): Promise<number> { const { data: g } = await db().from("game_state").select("state").eq("user_id", userId).eq("game", "hseen").maybeSingle(); return Math.max(0, FREE_N - (((g?.state as any)?.ids ?? []).length)); }
 /** ☀️ 3교대 탈출 비교 — 교대(3·2교대) vs 상근 응답 전체를 합쳐서 */
 export async function shiftCompare() {
   const { data } = await db().from("game_state").select("game,state").like("game", "hfact:%").limit(10000);

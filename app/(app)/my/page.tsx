@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { logout } from "@/lib/actions";
 import { rankFor, deptLeaders } from "@/lib/ranksvc";
 import Avatar from "@/components/Avatar";
+import { lockMode, freeLeft } from "@/lib/hospFactsDb";
 export const dynamic = "force-dynamic";
 /** 👤 MY — 내 프로필 · 열람권 · 인증 · 내 활동(체크·리뷰·면접·자랑·공고) · 설정 */
 export default async function MyPage() {
@@ -20,12 +21,13 @@ export default async function MyPage() {
   const hids = Array.from(new Set([...rows.map(r => Number(String(r.game).split(":")[1])), ...(revs ?? []).map(r => r.hospital_id)])).filter(Boolean);
   const { data: hs } = hids.length ? await d.from("hospitals").select("id,name").in("id", hids) : { data: [] as any[] }; const hn = (id: number) => (hs ?? []).find(h => h.id === id)?.name ?? "병원";
   const lastC = Math.max(0, ...checks.map(r => Date.parse(r.updated_at)), ...(revs ?? []).map(r => Date.parse(r.created_at)));
-  const left = lastC ? Math.ceil((lastC + half - Date.now()) / 86400000) : 0, unlocked = s.role === "admin" || left > 0;
+  const [mode, free] = await Promise.all([lockMode(), freeLeft(s.id)]);
+  const left = lastC ? Math.ceil((lastC + half - Date.now()) / 86400000) : 0, unlocked = s.role === "admin" || left > 0 || mode === "off";
   const r = rankFor(me as any, leaders); const vOk = vers.filter(v => (v.state as any)?.status === "approved").length;
   const Row = ({ href, icon, t, sub }: { href: string; icon: string; t: string; sub?: string }) => <Link href={href} className="my-row"><span>{icon}</span><b>{t}</b>{sub && <small>{sub}</small>}<em>›</em></Link>;
   return <div className="my">
     <div className="my-prof"><Avatar name={me?.nickname ?? s.nickname} size={56} /><div><b>{me?.nickname ?? s.nickname}</b><small>{s.dept}{me?.blue_badge ? " · 🥇 골드뱃지" : ""}{vOk ? ` · ✅ 병원 인증 ${vOk}` : ""}</small><Link href="/rank" className="my-rank">{r.name} · {(me?.xp ?? 0).toLocaleString()} XP ›</Link></div></div>
-    <div className={"my-pass" + (unlocked ? " on" : "")}>{unlocked ? <><b>🎫 열람권 사용 중</b><span>{s.role === "admin" ? "관리자" : `${left}일 남았어요 · 모든 병원 리뷰·급여·면접 열람`}</span></> : <><b>🔒 열람권이 없어요</b><span>다니는(다녔던) 병원 하나 체크하면 6개월간 모든 병원 정보가 열려요</span><Link href="/hospitals/check" className="btn">🔎 체크하고 열기</Link></>}</div>
+    <div className={"my-pass" + (unlocked ? " on" : "")}>{unlocked ? <><b>🎫 열람권 사용 중</b><span>{s.role === "admin" ? "관리자" : mode === "off" && left <= 0 ? "지금은 모든 병원 정보가 열려 있어요" : `${left}일 남았어요 · 모든 병원 리뷰·급여·면접 열람`}</span></> : <><b>🔒 열람권이 없어요</b><span>{mode === "free3" ? `무료로 볼 수 있는 병원 ${free}곳 남았어요. ` : ""}다니는(다녔던) 병원 하나 체크하면 6개월간 모든 병원 정보가 열려요</span><Link href="/hospitals/check" className="btn">🔎 체크하고 열기</Link></>}</div>
     <div className="my-stats">{[["🔎", "실체 체크", checks.length], ["⭐", "리뷰", (revs ?? []).length], ["🎤", "면접 후기", ivs.length], ["🏆", "자랑", brags.length], ["💼", "올린 공고", (jobs ?? []).length]].map(([i, t, n]) => <div key={t as string}><b>{n as number}</b><span>{i} {t}</span></div>)}</div>
     <section className="my-sec"><h3>내 활동</h3>
       {checks.map(c => { const id = Number(String(c.game).slice(6)); return <Row key={c.game} href={`/hospitals/check?id=${id}`} icon="🔎" t={hn(id)} sub={`실체 체크 · ${c.updated_at.slice(0, 10)}`} />; })}

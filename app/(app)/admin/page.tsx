@@ -1,6 +1,8 @@
 import { voiceLabel } from "@/lib/jobVoice";
 import AdminHVerify from "@/components/AdminHVerify";
 import AdminFocus from "@/components/AdminGrowth";
+import AdminLock from "@/components/AdminLock";
+import { lockMode } from "@/lib/hospFactsDb";
 import { getFocus } from "@/lib/focus";
 import { MIN_N } from "@/lib/hospFacts";
 import { hverifyPending } from "@/lib/hverify.actions";
@@ -87,6 +89,7 @@ export default async function AdminPage() {
           <div><b>{kpi.vAll ? Math.round(kpi.vOk / kpi.vAll * 100) : 0}%</b><span>인증 승인<br /><small>{kpi.vOk}/{kpi.vAll}건</small></span></div>
           <div><b>{kpi.out7}</b><span>공고 원문 지원 클릭</span></div>
         </div>
+        <h3 style={{ marginTop: 12 }}>🔐 리뷰 열람 잠금</h3><AdminLock cur={await lockMode()} />
         <h3 style={{ marginTop: 12 }}>📍 집중 지역</h3><AdminFocus cur={focus} />
       </div>
       <div className="card" id="takedown">

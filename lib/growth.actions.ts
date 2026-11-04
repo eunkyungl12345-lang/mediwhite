@@ -29,3 +29,8 @@ export async function requestTakedown(_: R, fd: FormData): Promise<R> {
   pushToUsers((admins ?? []).map(a => a.id), { title: "🏥 병원 반론·게시중단 요청", body: `${h.name} · ${who}`, url: "/admin#takedown", tag: "takedown" }).catch(() => {});
   return { ok: "요청이 접수됐어요. 운영팀이 영업일 기준 3일 안에 검토하고, 적어주신 연락처로 결과를 알려드려요. 권리침해가 소명되면 해당 내용은 최대 30일 임시 블라인드돼요." };
 }
+
+export async function setLockMode(mode: string) {
+  const u = await getSession(); if (u?.role !== "admin") return; if (!["off", "free3", "on"].includes(mode)) return;
+  await db().from("settings").upsert({ key: "lock_mode", value: mode }); revalidatePath("/admin");
+}

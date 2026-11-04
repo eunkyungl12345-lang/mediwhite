@@ -21,7 +21,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   if (memoOnce(`jobv:${id}:${s.id}`, 3600000)) await Promise.all([d.from("jobs").update({ views: (j.views ?? 0) + 1 }).eq("id", id), d.from("events").insert({ kind: "jobview", user_id: s.id, text: `${j.dept}|${j.region}|${pub ? "pub" : shared ? "share" : "own"}|${id}` }).then(() => {}, () => {})]);
   const { data: hosp } = await d.from("hospitals").select("id,name,region").eq("name", j.hospital.trim()).eq("region", j.region).limit(1).maybeSingle();
   const { data: revs } = hosp ? await d.from("hospital_reviews").select("r_welfare,r_balance,r_pay,r_culture,r_growth").eq("hospital_id", hosp.id).eq("hidden", false) : { data: [] as any[] };
-  const [facts, contributed] = await Promise.all([hosp ? loadFacts([hosp.id]) : Promise.resolve({} as Record<number, any>), hasContributed(s.id, s.role)]);
+  const [facts, contributed] = await Promise.all([hosp ? loadFacts([hosp.id]) : Promise.resolve({} as Record<number, any>), hasContributed(s.id, s.role, hosp?.id)]);
   const dd = dday(j.deadline), mine = j.author_id === s.id || s.role === "admin";
   const rows: [string, string | null][] = [["📍 지역", j.region], ["👩‍⚕️ 모집 직종", j.dept], ["📄 고용 형태", j.emp_type], ["💰 급여", j.pay], ["⏰ 근무 시간", j.hours], ["🎁 복지·혜택", j.welfare], ["📅 마감", j.deadline ? `${j.deadline} (${dd})` : "상시 채용"]];
   return (
