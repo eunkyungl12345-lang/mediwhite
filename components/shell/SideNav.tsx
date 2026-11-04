@@ -7,14 +7,17 @@ const I: Record<string, JSX.Element> = {
   board: <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 9h8M8 13h8M8 17h5" /></svg>,
   ssum: <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" /></svg>,
   games: <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="5" /><path d="M8 11v3M6.5 12.5h3M15 11.5h.01M17.5 13.5h.01" /></svg>,
+  hosp: <svg viewBox="0 0 24 24"><path d="M12 4 4 9v11h16V9Z" /><path d="M12 10v6M9 13h6" /></svg>,
+  jobs: <svg viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5" /><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 13h17" /></svg>,
+  chat: <svg viewBox="0 0 24 24"><path d="M5 5h14v10H10l-4 4v-4H5Z" /><path d="M9 9.5h6M9 12h4" /></svg>,
   rest: <svg viewBox="0 0 24 24"><path d="M4 13v5M20 13v5M4 15h16M6 13V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4" /></svg>,
   bell: <svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>,
   me: <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></svg>,
 };
 export default function SideNav({ admin, unread }: { admin: boolean; unread: number }) {
   const p = usePathname(); const is = (h: string) => p === h || p.startsWith(h + "/");
-  const main: [string, string, string, boolean][] = [["/home", "홈", "home", is("/home")], ["/board", "게시판", "board", ["/board", "/anon", "/jobs", "/hospitals", "/food", "/news", "/guide"].some(is)], ["/ssum", "썸", "ssum", is("/ssum")], ["/games", "게임", "games", is("/games")], ["/rest", "당직실", "rest", is("/rest")], ["/noti", "알림", "bell", is("/noti")], ["/rank", "MY · 내 계급", "me", is("/rank") || is("/u")]];
-  const quick: [string, string][] = [["/board?cat=%EA%B3%B5%EC%A7%80", "📢 공지사항"], ["/anon", "🕶️ 익명 게시판"], ["/jobs", "💼 채용공고"], ["/hospitals", "🏥 병원 리뷰"], ["/food", "🍽️ 맛집"], ["/news", "📰 오늘의 뉴스"], ["/badge", "🥇 골드뱃지 인증"], ...(admin ? [["/admin", "🛠️ 관리자"] as [string, string]] : [])];
+  const main: [string, string, string, boolean][] = [["/home", "홈", "home", is("/home")], ["/hospitals", "병원 리뷰", "hosp", is("/hospitals")], ["/jobs", "채용", "jobs", is("/jobs")], ["/board", "커뮤니티", "chat", ["/board", "/anon", "/food", "/news", "/guide"].some(is)], ["/ssum", "썸", "ssum", is("/ssum")], ["/games", "게임", "games", is("/games")], ["/rest", "당직실", "rest", is("/rest")], ["/noti", "알림", "bell", is("/noti")], ["/rank", "MY · 내 계급", "me", is("/rank") || is("/u")]];
+  const quick: [string, string][] = [["/board?cat=%EA%B3%B5%EC%A7%80", "📢 공지사항"], ["/anon", "🕶️ 익명 게시판"], ["/hospitals/check", "🔎 우리 병원 실체 체크"], ["/food", "🍽️ 맛집"], ["/news", "📰 오늘의 뉴스"], ["/badge", "🥇 골드뱃지 인증"], ...(admin ? [["/admin", "🛠️ 관리자"] as [string, string]] : [])];
   return <aside className="side">
     <Link href="/home" className="side-logo">메디화이트웹</Link>
     <nav className="side-nav">{main.map(([h, n, k, on]) => <Link key={h} href={h} className={on ? "on" : ""}><i>{I[k]}</i><span>{n}</span>{k === "bell" && unread > 0 && <b className="side-n">{unread > 99 ? "99+" : unread}</b>}</Link>)}</nav>

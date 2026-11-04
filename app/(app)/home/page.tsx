@@ -88,7 +88,8 @@ export default async function HomePage() {
         <Link href="/hospitals/brag" className="hs-pill"><span>🏆</span>우리병원 자랑</Link>
         <Link href="/rest" className="hs-pill"><span>🛋️</span>당직실</Link>
         <Link href="/anon" className="hs-pill"><span>🕶️</span>익명</Link>
-        <Link href="/jobs" className="hs-pill"><span>💼</span>채용·병원리뷰</Link>
+        <Link href="/ssum" className="hs-pill"><span>💘</span>썸</Link>
+        <Link href="/games" className="hs-pill"><span>🎮</span>게임</Link>
         <Link href="/food" className="hs-pill"><span>🍚</span>맛집</Link>
       </nav>
 

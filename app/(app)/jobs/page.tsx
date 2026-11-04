@@ -48,7 +48,6 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
           <ul className="jb2-why"><li><b>💰 내부 급여</b>“500~600”처럼 진짜 세후 실수령 구간</li><li><b>😶 내부 분위기</b>태움·칼퇴·사람 나가는 편인지</li><li><b>⭐ 별점</b>급여·워라밸·동료·상사·교육·복지</li><li><b>🤫 히든 공고</b>단톡방·지인으로만 도는 공고까지</li></ul></div>
         <div className="jb2-cta"><Link href="/hospitals/check" className="btn">🔎 우리 병원 실체 체크 <small>+50</small></Link><Link href="/jobs/new?tip=1" className="btn ghost">🤫 히든 공고 제보</Link></div>
       </div>
-      <div className="jb2-switch"><Link href="/jobs" className="on">💼 채용공고 <small>{open.length}</small></Link><Link href="/hospitals">🏥 병원 리뷰 <small>{hospN ?? 0}</small></Link></div>
       <form className="jb2-search" action="/jobs">{dept && <input type="hidden" name="dept" value={dept} />}{region && <input type="hidden" name="region" value={region} />}<input name="q" defaultValue={kw} placeholder="병원 이름으로 찾기 (예: 서울대, 의료원)" /><button className="btn">검색</button></form>
       <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && cnt[x] ? <small>{cnt[x]}</small> : null}</Link>)}</div>
       <div className="jb2-filters">

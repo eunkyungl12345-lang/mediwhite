@@ -9,6 +9,9 @@ export default function HeaderMenu({ admin, logout, name }: { admin: boolean; lo
     <button type="button" className="ico-btn" aria-label="메뉴" aria-expanded={open} onClick={() => setOpen(o => !o)}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
     {open && <div className="hmenu-pop" role="menu">
       <div className="hmenu-me">{name}</div>
+      <Link href="/games" role="menuitem" onClick={() => setOpen(false)}>🎮 게임</Link>
+      <Link href="/ssum" role="menuitem" onClick={() => setOpen(false)}>💘 썸</Link>
+      <Link href="/rest" role="menuitem" onClick={() => setOpen(false)}>🛋️ 당직실</Link>
       <Link href="/rank" role="menuitem" onClick={() => setOpen(false)}>🎖️ 내 계급 · 프로필</Link>
       <Link href="/noti" role="menuitem" onClick={() => setOpen(false)}>🔔 알림</Link>
       <Link href="/badge" role="menuitem" onClick={() => setOpen(false)}>🥇 골드뱃지 인증</Link>
