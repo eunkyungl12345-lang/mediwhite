@@ -1,0 +1,45 @@
+import Link from "next/link";
+import { db } from "@/lib/supabase";
+import { getSession } from "@/lib/auth";
+import { dday } from "@/lib/jobs";
+import { MIN_N, factLine } from "@/lib/hospFacts";
+import { loadFacts, hasContributed, shiftCompare } from "@/lib/hospFactsDb";
+import { loadDistricts } from "@/lib/districtDb";
+import { getFocus } from "@/lib/focus";
+import JobCard from "@/components/jobs/JobCard";
+export const dynamic = "force-dynamic";
+/** ☀️ 3교대 탈출 — 나이트 없는 삶, 실수령은 얼마나 줄까? (교대 vs 상근 비교 · 상근 공고 · 상근 병원) */
+export default async function DayPage() {
+  const s = (await getSession())!; const d = db();
+  const [cmp, contributed, focus, { data: jobs }] = await Promise.all([shiftCompare(), hasContributed(s.id, s.role), getFocus(),
+    d.from("jobs").select("id,hospital,region,dept,emp_type,pay,hours,welfare,deadline,views,closed,created_at,contact,body,author:users!jobs_author_id_fkey(nickname,dept,username)").eq("hidden", false).eq("closed", false).or("body.ilike.%#상근%,body.ilike.%#주4일%,hours.ilike.%상근%,hours.ilike.%평일%").order("created_at", { ascending: false }).limit(60)]);
+  const open = (jobs ?? []).filter(j => dday(j.deadline) !== "마감");
+  const { data: hs } = cmp.dayHosp.length ? await d.from("hospitals").select("id,name,region,kind").in("id", cmp.dayHosp) : { data: [] as any[] };
+  const [facts, dist] = await Promise.all([loadFacts((hs ?? []).map(h => h.id)), loadDistricts((hs ?? []).map(h => h.id))]);
+  const inFocus = (h: any) => !!focus && h.region === focus.region && (!focus.gus.length || focus.gus.includes(dist[h.id]));
+  const hlist = [...(hs ?? [])].sort((a, b) => Number(inFocus(b)) - Number(inFocus(a)) || (facts[b.id]?.n ?? 0) - (facts[a.id]?.n ?? 0));
+  const ready = cmp.shift.n >= MIN_N && cmp.day.n >= MIN_N, show = ready && contributed;
+  const Col = ({ t, g, icon }: { t: string; g: typeof cmp.day; icon: string }) => <div className="dy-col"><small>{icon} {t}</small>
+    <div><span>세후 실수령</span><b className={show ? "" : "dy-blur"}>{show ? (g.a.payMid ? `${g.a.payMid}만` : "-") : "300~350만"}</b></div>
+    <div><span>대부분 칼퇴</span><b className={show ? "" : "dy-blur"}>{show ? `${g.offPct}%` : "47%"}</b></div>
+    <div><span>총평점</span><b className={show ? "" : "dy-blur"}>{show ? (g.a.starN ? g.a.overallAvg.toFixed(1) : "-") : "3.4"}</b></div>
+    <div><span>추천</span><b className={show ? "" : "dy-blur"}>{show ? (g.a.recN ? `${g.a.recPct}%` : "-") : "52%"}</b></div>
+    <em>{g.n}명 응답</em></div>;
+  return <div className="jb2 dy">
+    <div className="dy-hero"><span>☀️</span><h2>3교대 탈출</h2><p>나이트 없는 삶, 실수령은 얼마나 줄까?<br />교대 근무자와 상근 근무자가 직접 알려준 숫자로 비교해요.</p></div>
+    <div className="dy-cmp"><Col t="교대 근무" g={cmp.shift} icon="🌙" /><div className="dy-vs">VS</div><Col t="상근(데이)" g={cmp.day} icon="☀️" /></div>
+    {!ready ? <div className="fb fb-wait"><b>📊 비교 데이터가 모이는 중이에요</b><p>교대·상근 각각 {MIN_N}명 이상 모이면 공개돼요. 지금 다니는(다녔던) 병원을 체크하면서 근무 형태를 골라주세요.</p><Link href="/hospitals/check" className="btn">🔎 내 병원 체크하고 비교 열기</Link></div>
+      : !contributed ? <div className="fb-lockmsg"><b>🔒 체크 하나 남기고 6개월간 비교 자유롭게</b><span>다녔던 병원 하나만 체크하면 이 비교와 모든 병원 정보가 열려요.</span><Link href="/hospitals/check" className="btn">🔎 체크하고 보기</Link></div> : null}
+
+    <h3 className="dy-h">☀️ 상근·칼퇴 공고 <small>{open.length}</small></h3>
+    {open.length ? <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={(j.author as any)?.username === "mw_bot"} locked={!contributed} />)}</div>
+      : <div className="jb2-empty"><span>☀️</span><b>아직 상근 공고가 없어요</b><p>단톡방에서 상근·평일 근무 공고 봤다면 제보해주세요. 공고 올릴 때 '상근(데이)'·'주4일' 태그를 고르면 여기에 모여요.</p><Link href="/jobs/new?tip=1" className="btn">🤫 상근 공고 제보</Link></div>}
+
+    <h3 className="dy-h">🏥 상근 근무자가 많은 병원 {focus && <small>{focus.label} 먼저</small>}</h3>
+    {hlist.length ? <div className="jb2-list">{hlist.map(h => <Link key={h.id} href={`/hospitals/${h.id}`} className="jb2-card"><div className="jb2-h"><div className="jb2-hn"><b>{h.name}</b><small>{h.region}{dist[h.id] ? ` ${dist[h.id]}` : ""} · {h.kind}{inFocus(h) ? " · 📍" : ""}</small></div></div>
+      {factLine(facts[h.id], !contributed).length > 0 ? <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[h.id], !contributed).map(x => <span key={x}>{x}</span>)}</div> : <div className="jb2-facts none">🔎 {facts[h.id]?.n ?? 0}명 체크 · {MIN_N}명 모이면 공개</div>}</Link>)}</div>
+      : <p className="muted" style={{ fontSize: 13 }}>상근으로 일하는 병원을 체크하면 여기에 모여요.</p>}
+
+    <Link href="/hospitals/check" className="dy-cta"><b>🙋 3교대에서 탈출해봤어요</b><span>예전 병원과 지금 병원을 각각 체크해주면, 다음 사람이 "탈출하면 얼마나 달라지는지" 알 수 있어요</span></Link>
+  </div>;
+}

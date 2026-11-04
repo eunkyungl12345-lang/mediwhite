@@ -4,6 +4,7 @@
  *  공개: 응답 MIN_N명 이상일 때만 집계로 (누가 답했는지 특정 안 되게) */
 export const MIN_N = 3;
 export const PAY = ["~200", "200~250", "250~300", "300~350", "350~400", "400~500", "500~600", "600~700", "700~800", "800~1000", "1000~1500", "1500+"] as const; // 세후 월 실수령(만원)
+export const SHIFT = ["3교대", "2교대", "상근(데이)"] as const; // 0·1 = 교대, 2 = 상근
 export const YEARS = ["신규·1년 미만", "1~3년", "4~7년", "8년 이상"] as const;
 export const MOOD = [
   { k: "taeum", q: "태움·갑질", opts: ["거의 없어요", "가끔 있어요", "심해요"] },
@@ -32,7 +33,7 @@ export const EXIT_STARS = [
 ] as const;
 export const FUTURE = ["📈 좋아질 것 같아요", "➖ 비슷할 것 같아요", "📉 나빠질 것 같아요"] as const;
 export const EXIT_REASONS = ["급여가 낮아서", "태움·인간관계", "업무 과다·인력 부족", "상사·관리자", "교대·근무시간", "결혼·출산·육아", "이사·통근", "커리어·이직", "건강", "계약 만료", "기타"] as const;
-export type HFact = { overall?: number; rec?: number; future?: number; v?: boolean; stars?: Record<string, number>; reasons?: string[]; last?: string; pay?: string; years?: string; dept?: string; status?: string; taeum?: number; off?: number; quit?: number; risks?: string[]; good?: boolean; at?: string };
+export type HFact = { shift?: number; overall?: number; rec?: number; future?: number; v?: boolean; stars?: Record<string, number>; reasons?: string[]; last?: string; pay?: string; years?: string; dept?: string; status?: string; taeum?: number; off?: number; quit?: number; risks?: string[]; good?: boolean; at?: string };
 export const factKey = (hid: number) => `hfact:${hid}`;
 export type FactAgg = { overallAvg: number; recPct: number; recN: number; words: string[]; future: number[]; stars: { k: string; name: string; icon: string; avg: number }[]; starAvg: number; starN: number; exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string; v?: boolean }[] }; n: number; verified: number; pay: { range: string; n: number }[]; payMid?: string; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
 export function aggregate(rows: HFact[]): FactAgg {

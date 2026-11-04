@@ -4,7 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useRef, useState } from "react";
 import { submitHospFact, searchHospitals } from "@/lib/jobActions";
 import { JOB_DEPTS, HOSP_KINDS } from "@/lib/jobs";
-import { isField, PAY, YEARS, MOOD, RISKS, EXIT_STARS, EXIT_REASONS, FUTURE, type HFact } from "@/lib/hospFacts";
+import { isField, SHIFT, PAY, YEARS, MOOD, RISKS, EXIT_STARS, EXIT_REASONS, FUTURE, type HFact } from "@/lib/hospFacts";
 import { textProblem } from "@/lib/textQuality";
 function Send({ edit }: { edit: boolean }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : edit ? "✏️ 수정 완료" : "🔎 익명으로 체크 완료 (+50 XP)"}</button>; }
 const Chips = ({ name, opts, def, values, big }: { name: string; opts: readonly string[]; def?: string | number; values?: (string | number)[]; big?: boolean }) =>
@@ -23,7 +23,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
   const check = (): string => {
     const fd = new FormData(form.current!); const has = (k: string) => !!String(fd.get(k) ?? "");
     if (cur === "hosp") return picked || (isNew && q.trim()) ? "" : "병원을 고르거나 새로 등록해주세요";
-    if (cur === "me") return has("years") ? "" : "연차를 골라주세요";
+    if (cur === "me") return !has("shift") ? "근무 형태를 골라주세요" : has("years") ? "" : "연차를 골라주세요";
     if (cur === "pay") return has("pay") ? "" : "실수령 구간을 골라주세요 (대략이면 돼요)";
     if (cur === "mood" || cur === "field") return MOOD.filter(m => isField(m) === (cur === "field")).every(m => has(m.k)) ? "" : "세 가지 모두 골라주세요";
     if (cur === "star") return has("st_overall") && EXIT_STARS.every(s => has("st_" + s.k)) ? "" : "총평점과 항목별 별점을 모두 매겨주세요";
@@ -50,6 +50,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     <div style={show("me")} className="wz-step"><h3>어떤 자리에서 일했나요?</h3>
       <div className="row" style={{ gap: 6 }}><select name="dept" defaultValue={mine?.dept ?? (JOB_DEPTS.includes(dept as any) ? dept : "간호사")}>{JOB_DEPTS.map(r => <option key={r}>{r}</option>)}</select>
         <select name="status" value={status} onChange={e => setStatus(e.target.value)}><option>재직</option><option>퇴사</option></select></div>
+      <b className="wz-sub">근무 형태</b><Chips name="shift" opts={SHIFT} values={[0, 1, 2]} def={mine?.shift} big />
       <b className="wz-sub">연차</b><Chips name="years" opts={YEARS} def={mine?.years} big /></div>
 
     <div style={show("pay")} className="wz-step"><h3>💰 세후 실수령은 얼마쯤이에요?</h3><p>수당 포함 월 평균, 만원 단위. 정확하지 않아도 돼요. 동료 급여를 아는 범위로 골라도 좋아요.</p><Chips name="pay" opts={PAY} def={mine?.pay} big /></div>

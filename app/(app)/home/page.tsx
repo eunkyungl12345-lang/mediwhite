@@ -82,6 +82,7 @@ export default async function HomePage() {
     <div className="home v2">
       <div className="h-greet"><b>{me?.nickname ?? s.nickname}님,</b> {hourGreet()}{(memberN ?? 0) >= 300 && <span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 {online.toLocaleString()}명</span>}</div>
       <nav className="hstrip" aria-label="오늘">
+        <Link href="/jobs/day" className="hs-pill"><span>☀️</span>3교대 탈출</Link>
         <Link href="/games?g=wordle" className={"hs-pill" + (wd?.data?.done ? " done" : "")}><span>🟩</span>{wd?.data?.done ? "메디워들 완료" : "메디워들"}</Link>
         <Link href="/games?g=tycoon" className="hs-pill"><span>🏥</span>{tyPending > 0 ? `우리 병원 +${won(tyPending)}` : "우리 병원"}</Link>
         {heads[0] && <a href={heads[0].link} target="_blank" rel="noopener noreferrer" className="hs-pill news"><span>📰</span><em>{heads[0].title}</em></a>}

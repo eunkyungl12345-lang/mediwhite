@@ -1957,3 +1957,12 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .fb-head{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.fb-head>div{display:grid;justify-items:center;padding:12px 6px;border-radius:12px;background:var(--bg)}.fb-head b{font-size:22px}.fb-head span{font-size:11.5px;color:var(--muted)}
 .ctabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 10px;margin-bottom:4px}.ctabs::-webkit-scrollbar{display:none}
 .ctabs a{flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;font-size:13.5px;font-weight:700}.ctabs a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+/* ☀️ 3교대 탈출 */
+.day-banner{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#FFF3C4,#FFD98A);color:#4A3200;text-decoration:none}.day-banner>span{font-size:26px}.day-banner div{flex:1;display:grid}.day-banner small{font-size:12px;opacity:.85}.day-banner em{font-style:normal;font-size:22px}
+@media (prefers-color-scheme:dark){.day-banner{background:linear-gradient(135deg,#3A2F12,#4A3A10);color:#FFE3A3}}
+.dy{gap:14px}.dy-hero{display:grid;justify-items:center;text-align:center;gap:4px;padding:22px 16px;border-radius:20px;background:linear-gradient(160deg,#1B2A4A 0%,#3B4C7A 40%,#FFB347 100%);color:#fff}.dy-hero>span{font-size:40px}.dy-hero h2{margin:0;font-size:26px;letter-spacing:-.5px}.dy-hero p{margin:0;font-size:13.5px;opacity:.9;line-height:1.6}
+.dy-cmp{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}.dy-vs{font-weight:900;color:var(--muted);font-size:13px}
+.dy-col{display:grid;gap:8px;padding:14px 12px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}.dy-col>small{font-weight:800;font-size:13px}.dy-col div{display:grid;gap:1px}.dy-col div span{font-size:11px;color:var(--muted)}.dy-col div b{font-size:19px}.dy-col em{font-style:normal;font-size:11px;color:var(--muted)}
+.dy-h{margin:8px 0 0;font-size:17px}.dy-h small{font-size:12px;color:var(--muted);font-weight:600;margin-left:4px}
+.dy-cta{display:grid;gap:4px;padding:14px;border-radius:14px;border:1.5px dashed #E0A030;text-decoration:none;color:var(--ink)}.dy-cta span{font-size:12.5px;color:var(--muted)}
+.dy-blur{filter:blur(7px);user-select:none;opacity:.6}

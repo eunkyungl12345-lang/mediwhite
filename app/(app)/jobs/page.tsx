@@ -8,6 +8,7 @@ import Avatar from "@/components/Avatar";
 import ImportButton from "@/components/jobs/ImportButton";
 import RegionSelect from "@/components/jobs/RegionSelect";
 import JobVoice from "@/components/jobs/JobVoice";
+import JobCard from "@/components/jobs/JobCard";
 import { QUICK, splitTags, tagLabel, SHARE_TAG } from "@/lib/jobTags";
 import { VOICE_OPTS } from "@/lib/jobVoice";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
@@ -48,6 +49,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
           <ul className="jb2-why"><li><b>💰 내부 급여</b>“500~600”처럼 진짜 세후 실수령 구간</li><li><b>😶 내부 분위기</b>태움·칼퇴·사람 나가는 편인지</li><li><b>⭐ 별점</b>급여·워라밸·동료·상사·교육·복지</li><li><b>🤫 히든 공고</b>단톡방·지인으로만 도는 공고까지</li></ul></div>
         <div className="jb2-cta"><Link href="/hospitals/check" className="btn">🔎 우리 병원 실체 체크 <small>+50</small></Link><Link href="/jobs/new?tip=1" className="btn ghost">🤫 히든 공고 제보</Link></div>
       </div>
+      <Link href="/jobs/day" className="day-banner"><span>☀️</span><div><b>3교대 탈출</b><small>나이트 없는 삶, 실수령은 얼마나 줄까? 상근·칼퇴 병원만 모아봤어요</small></div><em>›</em></Link>
       <form className="jb2-search" action="/jobs">{dept && <input type="hidden" name="dept" value={dept} />}{region && <input type="hidden" name="region" value={region} />}<input name="q" defaultValue={kw} placeholder="병원 이름으로 찾기 (예: 서울대, 의료원)" /><button className="btn">검색</button></form>
       <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && cnt[x] ? <small>{cnt[x]}</small> : null}</Link>)}</div>
       <div className="jb2-filters">
@@ -63,16 +65,4 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
       {closed.length > 0 && <details className="jb2-closed"><summary>마감된 공고 {closed.length}개</summary><div className="jb2-list">{closed.map(j => <JobCard key={j.id} j={j} pub={isPublic(j)} rv={hmap[nk(j.hospital, j.region)]} />)}</div></details>}
     </div>
   );
-}
-function JobCard({ j, pub, rv, fa, locked }: { j: any; pub: boolean; rv?: { id: number; avg: number; n: number }; fa?: FactAgg; locked?: boolean }) {
-  const dd = j.closed ? "마감" : dday(j.deadline), hot = dd === "오늘 마감" || (dd.startsWith("D-") && Number(dd.slice(2)) <= 3), isNew = Date.now() - Date.parse(j.created_at) < 2 * 86400000;
-  const title = pub ? (j.welfare || `${deptLabel(j.dept)} 채용`) : `${deptLabel(j.dept)} ${j.emp_type} 모집`;
-  const tags = splitTags(j.body).tags, share = !pub && tags.includes(SHARE_TAG), ft = tags.filter(t => t !== SHARE_TAG).slice(0, 4);
-  return <Link href={`/jobs/${j.id}`} className={"jb2-card" + (j.closed ? " closed" : "")}>
-    <div className="jb2-h"><Avatar name={j.hospital} size={40} /><div className="jb2-hn"><b>{j.hospital}</b><small>{rv && rv.n ? <span className="jb2-star">★ {rv.avg.toFixed(1)} <em>리뷰 {rv.n}</em></span> : <span className="jb2-norev">리뷰 없음</span>} · {j.region}</small></div><span className={"jb2-dd" + (hot ? " hot" : "") + (dd === "마감" ? " end" : "")}>{dd}</span></div>
-    <div className="jb2-t">{title}{isNew && !j.closed && <span className="n-badge">N</span>}</div>
-    <div className="jb2-tags"><span className="dept">{deptLabel(j.dept)}</span><span>{j.emp_type}</span>{j.pay && <span>💰 {j.pay}</span>}{j.hours && <span>⏰ {j.hours}</span>}{!pub && j.welfare && <span>🎁 {j.welfare}</span>}{ft.map(t => <span key={t} className="ft">{tagLabel(t)}</span>)}</div>
-    {factLine(fa, locked).length > 0 ? <div className={"jb2-facts" + (locked ? " lock" : "")}>{factLine(fa, locked).map(x => <span key={x}>{x}</span>)}</div> : !j.closed && <div className="jb2-facts none">🔎 실수령·분위기 아직 몰라요 — 다녀본 분 체크 기다리는 중</div>}
-    <div className="jb2-f"><span className={pub ? "src pub" : "src"}>{pub ? "🏛️ 공공 채용 자동수집" : `${share ? "📢" : "🏥"} ${j.author ? `[${deptLabel(j.author.dept)}]${j.author.nickname}` : "회원"} ${share ? "히든 공고 제보" : "구인"}`}</span><span>{ago(j.created_at)} · 조회 {j.views ?? 0}</span></div>
-  </Link>;
 }

@@ -17,3 +17,12 @@ export async function hasContributed(userId: string, role?: string): Promise<boo
   const [{ count: a }, { count: b }] = await Promise.all([d.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", userId).like("game", "hfact:%").gte("updated_at", since), d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", since)]);
   return (a ?? 0) + (b ?? 0) > 0;
 }
+/** ☀️ 3교대 탈출 비교 — 교대(3·2교대) vs 상근 응답 전체를 합쳐서 */
+export async function shiftCompare() {
+  const { data } = await db().from("game_state").select("game,state").like("game", "hfact:%").limit(10000);
+  const rows = (data ?? []).map(r => ({ hid: Number(String(r.game).slice(6)), s: r.state as HFact })).filter(r => r.s.shift === 0 || r.s.shift === 1 || r.s.shift === 2);
+  const grp = (f: (x: HFact) => boolean) => { const g = rows.filter(r => f(r.s)).map(r => r.s); return { n: g.length, a: aggregate(g), offPct: g.length ? Math.round(g.filter(x => x.off === 0).length / g.length * 100) : 0 }; };
+  const byH: Record<number, { day: number; all: number }> = {}; for (const r of rows) { const b = (byH[r.hid] ??= { day: 0, all: 0 }); b.all++; if (r.s.shift === 2) b.day++; }
+  const dayHosp = Object.entries(byH).filter(([, v]) => v.day * 2 > v.all).map(([k]) => Number(k));
+  return { shift: grp(x => x.shift !== 2), day: grp(x => x.shift === 2), dayHosp };
+}
