@@ -12,8 +12,8 @@ export async function npsCandidates(hid: number, q?: string) {
   try { return { list: (await npsSearch(q?.trim() || h.name, h.region, g?.value)).slice(0, 15) }; } catch (e: any) { return { error: String(e?.message ?? e).slice(0, 300) }; }
 }
 /** 관리자: 후보 하나 골라 연결 (상세·입퇴사 가져와 저장) */
-export async function npsLink(hid: number, seq: string, name: string, addr: string) {
+export async function npsLink(hid: number, seq: string, name: string, addr: string, ym = "") {
   if (!(await admin())) return { error: "관리자만" };
-  try { const info = await npsFetch(seq, name, addr); await saveNps(hid, info); revalidatePath(`/hospitals/${hid}`); return { ok: `${info.name} · ${info.cnt}명 연결했어요` }; } catch (e: any) { return { error: String(e?.message ?? e).slice(0, 300) }; }
+  try { const info = await npsFetch(seq, name, addr, ym); await saveNps(hid, info); revalidatePath(`/hospitals/${hid}`); return { ok: `${info.name} · ${info.cnt}명 연결했어요` }; } catch (e: any) { return { error: String(e?.message ?? e).slice(0, 300) }; }
 }
 export async function npsUnlink(hid: number) { if (!(await admin())) return; await db().from("settings").delete().eq("key", `nps:${hid}`); await db().from("settings").upsert({ key: `npstry:${hid}`, value: "관리자가 해제" }); revalidatePath(`/hospitals/${hid}`); }

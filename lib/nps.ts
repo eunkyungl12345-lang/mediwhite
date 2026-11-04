@@ -35,13 +35,13 @@ export async function npsSearch(name: string, region: string, gu?: string) {
     .sort((a, b) => Number(!!gu && b.addr.includes(gu)) - Number(!!gu && a.addr.includes(gu)) || Number(norm(b.name) === norm(name)) - Number(norm(a.name) === norm(name)));
 }
 /** seq 하나로 상세(가입자수·고지금액) + 최근 6개월 입사·퇴사 */
-export async function npsFetch(seq: string, nameHint = "", addrHint = ""): Promise<NpsInfo> {
+export async function npsFetch(seq: string, nameHint = "", addrHint = "", ymHint = ""): Promise<NpsInfo> {
   const { items } = await call("detail", { seq }); const d = items[0] ?? {};
   const cnt = Number(pick(d, "jnngpCnt")) || 0, amt = Number(pick(d, "crrmmNtcAmt")) || 0;
   let inN = 0, outN = 0, months = 0; const now = new Date(Date.now() + 9 * 3600000);
   for (let k = 1; k <= 6; k++) { const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - k, 1)); const ym = `${t.getUTCFullYear()}${String(t.getUTCMonth() + 1).padStart(2, "0")}`;
     try { const { items: p } = await call("period", { seq, data_crt_ym: ym }); if (p[0]) { inN += Number(pick(p[0], "nwAcqzrCnt")) || 0; outN += Number(pick(p[0], "lssJnngpCnt")) || 0; months++; } } catch {} }
-  return { seq, name: pick(d, "wkplNm") || nameHint, addr: pick(d, "wkplRoadNmDtlAddr") || addrHint, cnt, amt, avgPay: cnt ? Math.round(amt / cnt / NPS_RATE / 10000) : 0, inN, outN, months, ym: pick(d, "dataCrtYm"), at: new Date().toISOString() };
+  return { seq, name: pick(d, "wkplNm") || nameHint, addr: pick(d, "wkplRoadNmDtlAddr") || addrHint, cnt, amt, avgPay: cnt ? Math.round(amt / cnt / NPS_RATE / 10000) : 0, inN, outN, months, ym: pick(d, "dataCrtYm") || ymHint, at: new Date().toISOString() };
 }
 export async function saveNps(hid: number, info: NpsInfo) { await db().from("settings").upsert({ key: npsKey(hid), value: JSON.stringify(info) }); }
 export async function loadNps(hids: number[]): Promise<Record<number, NpsInfo>> {
@@ -56,7 +56,7 @@ export async function autoLinkNps(hid: number, name: string, region: string, gu?
   if (!g && gu) { const inGu = Array.from(groups.values()).filter(v => v.some(x => x.addr.includes(gu))); if (inGu.length === 1) g = inGu[0]; }
   if (!g) return { ok: false, msg: c.length ? `후보 ${groups.size}곳 — 관리자가 골라주세요` : "국민연금 사업장에서 못 찾았어요" };
   const tries = g.sort((a, b) => b.ym.localeCompare(a.ym)).slice(0, 4); let best: NpsInfo | null = null;
-  for (const t of tries) { const info = await npsFetch(t.seq, t.name, t.addr); if (!best || info.cnt > best.cnt) best = info; }
+  for (const t of tries) { const info = await npsFetch(t.seq, t.name, t.addr, t.ym); if (!best || info.cnt > best.cnt) best = info; }
   if (!best || !best.cnt) return { ok: false, msg: "가입자 0명 — 관리자가 확인해주세요" };
   await saveNps(hid, best); return { ok: true, msg: `${best.name} 연결`, info: best };
 }
@@ -68,5 +68,5 @@ export async function npsSweep(limit = 8) {
   for (const h of hs ?? []) { if (n >= limit) break; const cur = have[h.id];
     if (cur && Date.now() - Date.parse(cur.at) < 30 * 86400000) continue;
     if (!cur && triedSet.has(h.id)) continue; n++;
-    try { if (cur) await saveNps(h.id, await npsFetch(cur.seq, cur.name, cur.addr)); else { const { data: g } = await d.from("settings").select("value").eq("key", `hdist:${h.id}`).maybeSingle(); const r = await autoLinkNps(h.id, h.name, h.region, g?.value); if (!r.ok) await d.from("settings").upsert({ key: `npstry:${h.id}`, value: r.msg }); } } catch { break; } }
+    try { if (cur) await saveNps(h.id, await npsFetch(cur.seq, cur.name, cur.addr, cur.ym)); else { const { data: g } = await d.from("settings").select("value").eq("key", `hdist:${h.id}`).maybeSingle(); const r = await autoLinkNps(h.id, h.name, h.region, g?.value); if (!r.ok) await d.from("settings").upsert({ key: `npstry:${h.id}`, value: r.msg }); } } catch { break; } }
 }
