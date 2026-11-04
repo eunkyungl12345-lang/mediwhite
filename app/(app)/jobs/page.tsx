@@ -16,7 +16,7 @@ import { factLine, type FactAgg } from "@/lib/hospFacts";
 export const dynamic = "force-dynamic";
 
 /** 💼 의료인 채용 — 파트별 탭 · 공공병원 자동수집 + 현직자 제보 · 병원 리뷰 평점 같이 보기 (의료계의 블라인드) */
-export default async function JobsPage({ searchParams }: { searchParams: { region?: string; dept?: string; src?: string; q?: string; t?: string } }) {
+export default async function JobsPage({ searchParams }: { searchParams: { region?: string; dept?: string; src?: string; q?: string; t?: string; soon?: string } }) {
   const s = (await getSession())!; const d = db();
   const region = JOB_REGIONS.includes(searchParams.region as any) ? searchParams.region! : "", dept = JOB_DEPTS.includes(searchParams.dept as any) ? searchParams.dept! : "";
   const src = ["public", "member", "share"].includes(searchParams.src ?? "") ? searchParams.src! : "", tg = QUICK.some(x => x.id === searchParams.t) ? searchParams.t! : "", kw = (searchParams.q ?? "").trim().slice(0, 30);
@@ -30,7 +30,8 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const vN = (voices ?? []).length, vc: Record<string, number> = {}; for (const v of voices ?? []) for (const id of String(v.text).split("|")[0].split(",").filter(Boolean)) vc[id] = (vc[id] ?? 0) + 1;
   const vTop = vN >= 3 ? VOICE_OPTS.map(o => ({ label: o.label, pct: Math.round((vc[o.id] ?? 0) / vN * 100) })).sort((a, b) => b.pct - a.pct).slice(0, 3) : [];
   const answered = (voices ?? []).some(v => v.user_id === s.id);
-  const open = jobs.filter(j => !j.closed && dday(j.deadline) !== "마감").sort((a, b) => Number(isShare(b)) - Number(isShare(a))), closed = jobs.filter(j => j.closed || dday(j.deadline) === "마감");
+  const soonOnly = searchParams.soon === "1", isSoon = (j: any) => { const x = dday(j.deadline); return x === "오늘 마감" || (x.startsWith("D-") && Number(x.slice(2)) <= 3); };
+  const open = jobs.filter(j => !j.closed && dday(j.deadline) !== "마감" && (!soonOnly || isSoon(j))).sort((a, b) => Number(isShare(b)) - Number(isShare(a))), closed = jobs.filter(j => j.closed || dday(j.deadline) === "마감");
   // 병원 리뷰 평점 붙이기 (이름이 같거나 포함)
   const nk = (name: string, region: string) => `${name.replace(/\s+/g, "")}|${region}`; // 이름(공백 무시)+지역이 정확히 같을 때만 같은 병원
   const names = Array.from(new Set(open.map(j => nk(j.hospital, j.region)))); const hmap: Record<string, { id: number; avg: number; n: number }> = {};

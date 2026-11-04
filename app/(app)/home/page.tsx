@@ -3,6 +3,7 @@ import { RANKS } from "@/lib/ranks";
 import BlueBadge from "@/components/BlueBadge";
 import HomeFeed from "@/components/HomeFeed";
 import FocusCard from "@/components/jobs/FocusCard";
+import HomeTop from "@/components/home/HomeTop";
 import { dday } from "@/lib/jobs";
 import { CafeHeader } from "@/components/CafeNav";
 import { boardNavItems } from "@/lib/boardNav";
@@ -81,6 +82,7 @@ export default async function HomePage() {
   return (
     <div className="home v2">
       <div className="h-greet"><b>{me?.nickname ?? s.nickname}님,</b> {hourGreet()}{(memberN ?? 0) >= 300 && <span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 {online.toLocaleString()}명</span>}</div>
+      <HomeTop />
       <nav className="hstrip" aria-label="오늘">
         <Link href="/jobs/day" className="hs-pill"><span>☀️</span>3교대 탈출</Link>
         <Link href="/games?g=wordle" className={"hs-pill" + (wd?.data?.done ? " done" : "")}><span>🟩</span>{wd?.data?.done ? "메디워들 완료" : "메디워들"}</Link>
@@ -95,12 +97,6 @@ export default async function HomePage() {
       </nav>
 
       <FocusCard />
-      <section className="h-jobs">
-        <Link href={myJobs.length ? `/jobs?dept=${encodeURIComponent(s.dept)}` : "/jobs"} className="h-jobs-h"><b>💼 의료 채용</b><span>{newJobs > 0 ? `3일간 새 공고 ${newJobs}` : `모집 중 ${openJobs.length}`}{myJobs.length ? ` · ${s.dept} ${myJobs.length}` : ""}</span><em>전체 ›</em></Link>
-        {jobPick.length ? jobPick.map(j => <Link key={j.id} href={`/jobs/${j.id}`} className="h-job"><b>{j.hospital}</b><span>{(j.author as any)?.username === "mw_bot" ? (j.welfare || j.dept) : `${j.dept} ${j.emp_type}`}</span><small>{j.region} · {dday(j.deadline)}</small></Link>)
-          : null}
-        <Link href="/hospitals/check" className="h-job empty check"><b>🔎 우리 병원 실체 체크 · 30초 익명</b><span>실수령·태움·육아휴직 불이익… 다음 사람은 입사 전에 알 수 있게 · +50 XP</span></Link>
-      </section>
 
       <PromoStrip items={promoItems} />
 

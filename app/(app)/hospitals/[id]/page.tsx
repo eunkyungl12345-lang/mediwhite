@@ -17,6 +17,7 @@ import Takedown from "@/components/jobs/Takedown";
 import { aggregate, factKey, MIN_N } from "@/lib/hospFacts";
 import { vKey } from "@/lib/hverify";
 import { loadNps } from "@/lib/nps";
+import { memoOnce } from "@/lib/memo";
 import NpsBox from "@/components/jobs/NpsBox";
 import NpsAdmin from "@/components/jobs/NpsAdmin";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
     d.from("hospitals").select("*").eq("id", id).maybeSingle(),
     d.from("hospital_reviews").select("*").eq("hospital_id", id).eq("hidden", false).order("created_at", { ascending: false }),
   ]);
+  if (h && memoOnce(`hv:${id}:${s.id}`, 3600000)) d.from("events").insert({ kind: "hview", user_id: s.id, text: String(id) }).then(() => {}, () => {});
   if (!h) return <div className="detail"><Link className="link" href="/hospitals">← 병원 리뷰</Link><div className="empty">없는 병원이에요.</div></div>;
   const { data: myHidden } = await d.from("hospital_reviews").select("id").eq("hospital_id", id).eq("user_id", s.id).eq("hidden", true).maybeSingle();
   const rs = (revs ?? []).sort((a, b) => Number(b.verified) - Number(a.verified)), mine = rs.find(r => r.user_id === s.id);
