@@ -19,7 +19,7 @@ export default function JobForm({ dept }: { dept?: string }) {
     </div>
     <label className="jb-lab">복지·혜택<input name="welfare" maxLength={200} placeholder="예: 식대·명절 보너스·연차 15일·기숙사·학자금" /></label>
     <label className="jb-lab">업무 내용 · 자격 요건 *<textarea name="body" maxLength={2000} rows={6} required placeholder={"담당 업무, 필요한 자격·경력, 우대사항, 병원 소개 등\n예) 외래 간호 / 신규 가능 / 정형외과 경력 우대 / 주사·드레싱·수술 보조"} /></label>
-    <label className="jb-lab">지원 방법·연락처<input name="contact" maxLength={120} placeholder="예: 이력서 → abc@hospital.com / 원무과 031-000-0000 / 메디화이트 1:1 문의" /></label>
+    <label className="jb-lab">지원 방법·연락처<input name="contact" maxLength={300} placeholder="원문 공고 링크(https://…)를 넣으면 '원문 보고 지원' 버튼이 생겨요 · 또는 이메일·원무과 번호" /></label>
     <div className="muted" style={{ fontSize: 12 }}>✔️ 채용공고는 병원명·연락처가 공개돼요 · 허위 공고·개인 연락처 수집 목적 글은 삭제되고 제재받아요 · 올린 사람은 나중에 "마감" 처리할 수 있어요.</div>
     {st?.error && <div className="error">{st.error}</div>}
     <Submit />

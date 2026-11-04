@@ -18,7 +18,7 @@ const inList = (list: readonly string[], v: string) => list.includes(v);
 export async function createJob(_: R, fd: FormData): Promise<R> {
   const u = await me(); const s = db();
   const hospital = clean(fd.get("hospital"), 40), region = clean(fd.get("region"), 10), dept = clean(fd.get("dept"), 10), emp = clean(fd.get("emp_type"), 10);
-  const pay = clean(fd.get("pay"), 60), hours = clean(fd.get("hours"), 60), welfare = clean(fd.get("welfare"), 200), contact = clean(fd.get("contact"), 120), body = clean(fd.get("body"), 2000), deadline = clean(fd.get("deadline"), 10);
+  const pay = clean(fd.get("pay"), 60), hours = clean(fd.get("hours"), 60), welfare = clean(fd.get("welfare"), 200), contact = clean(fd.get("contact"), 300), body = clean(fd.get("body"), 2000), deadline = clean(fd.get("deadline"), 10);
   if (!hospital) return { error: "병원명을 적어주세요" };
   if (!inList(JOB_REGIONS, region)) return { error: "지역을 골라주세요" };
   if (!inList(JOB_DEPTS, dept)) return { error: "모집 직종을 골라주세요" };
@@ -95,4 +95,10 @@ export async function searchHospitals(q: string) {
   await me(); const t = q.trim(); if (t.length < 1) return [];
   const { data } = await db().from("hospitals").select("id,name,region,kind").ilike("name", `%${t}%`).limit(8);
   return data ?? [];
+}
+
+/** 관리자: 공공 채용 지금 가져오기 */
+export async function runJobImport() {
+  const { getSession } = await import("./auth"); const s = await getSession(); if (!s || s.role !== "admin") return { ok: false, fetched: 0, hospitals: 0, added: 0, error: "관리자만" };
+  const { importPublicJobs } = await import("./jobImport"); const r = await importPublicJobs(); const { revalidatePath } = await import("next/cache"); revalidatePath("/jobs"); return r;
 }

@@ -1819,3 +1819,29 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
   .shell .home.v2 .hf,.shell .hchips-wrap{margin-left:0;margin-right:0}
   .shell .hf{border:1px solid var(--line)!important;border-radius:16px!important}
 }
+/* 💼 채용 v2 (의료계의 블라인드) */
+.jb2{display:grid;gap:12px}
+.jb2-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.jb2-hero h2{margin:0;font-size:22px;letter-spacing:-.4px}.jb2-hero p{margin:4px 0 0;font-size:13px;color:var(--muted)}.jb2-hero .btn{white-space:nowrap}
+.jb2-switch{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}.jb2-switch a{text-align:center;padding:11px;font-weight:800;color:var(--muted);text-decoration:none;font-size:14.5px}.jb2-switch a.on{background:var(--ink);color:var(--bg)}.jb2-switch small{font-weight:600;opacity:.7;margin-left:3px}
+.jb2-search{display:flex;gap:6px}.jb2-search input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);color:var(--ink);font:inherit}.jb2-search .btn{padding:8px 14px}
+.jb2-tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);gap:2px}.jb2-tabs::-webkit-scrollbar{display:none}
+.jb2-tabs a{flex:none;position:relative;padding:9px 11px 11px;font-size:15.5px;font-weight:700;color:var(--muted);text-decoration:none;white-space:nowrap}.jb2-tabs a small{font-size:11px;margin-left:3px;color:var(--scrub);font-weight:800}
+.jb2-tabs a.on{color:var(--ink)}.jb2-tabs a.on::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2.5px;border-radius:2px;background:var(--ink)}
+.jb2-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.jb2-filters a{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;font-size:13px;font-weight:600}.jb2-filters a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.jb2-region{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px}
+.jb2-rgform{display:none}
+.jb2-sum{display:flex;gap:12px;font-size:13px;color:var(--muted)}.jb2-sum b{color:var(--ink)}.jb2-sum .hot{color:#C62828;font-weight:700}
+.jb2-list{display:grid;gap:10px}
+.jb2-card{display:grid;gap:8px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);text-decoration:none;transition:transform .12s,box-shadow .12s}.jb2-card:hover{box-shadow:0 6px 18px rgba(0,0,0,.06);transform:translateY(-1px)}.jb2-card.closed{opacity:.6}
+.jb2-h{display:flex;align-items:center;gap:10px;min-width:0}.jb2-hn{display:grid;min-width:0;line-height:1.3}.jb2-hn b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.jb2-hn small{font-size:12px;color:var(--muted)}
+.jb2-star{color:#E09A00;font-weight:800}.jb2-star em{font-style:normal;color:var(--muted);font-weight:600}.jb2-norev{color:var(--muted)}
+.jb2-dd{margin-left:auto;flex:none;font-size:12px;font-weight:800;color:#2E7D32;background:#E8F5E9;border-radius:999px;padding:3px 9px}.jb2-dd.hot{color:#C62828;background:#FDECEA}.jb2-dd.end{color:var(--muted);background:var(--bg)}
+.jb2-t{font-size:16px;font-weight:700;line-height:1.4;display:flex;gap:6px;align-items:center}
+.jb2-tags{display:flex;gap:5px;flex-wrap:wrap}.jb2-tags span{font-size:12px;padding:3px 8px;border-radius:7px;background:var(--bg);color:var(--ink)}.jb2-tags .dept{background:#E3F2EA;color:#1F5E3C;font-weight:800}
+.jb2-f{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}.jb2-f .src.pub{color:#3D5A80;font-weight:700}
+.jb2-empty{display:grid;justify-items:center;text-align:center;gap:4px;padding:30px 16px;border:1px dashed var(--line);border-radius:16px}.jb2-empty span{font-size:36px}.jb2-empty p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.jb2-closed summary{cursor:pointer;color:var(--muted);font-size:13px;padding:6px 0}
+.jb-admin{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.jb-admin small{font-size:12px;color:var(--muted)}
+.jb-src{display:block;text-align:center;margin:10px 0}
+@media (prefers-color-scheme:dark){.jb2-tags .dept{background:#1F3530;color:#9FE0C0}.jb2-dd{background:#1F3530;color:#9FE0C0}.jb2-dd.hot{background:#3A1F1F;color:#FF9C9C}}
+.jb2-filters .jb2-region{width:auto;flex:none}
