@@ -59,7 +59,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       <Tabs admin={s.role === "admin"} />
-      <OnlyOn prefixes={["/board", "/anon", "/games", "/ssum", "/news", "/fortune", "/food"]}><Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense></OnlyOn>
+      <OnlyOn prefixes={["/news", "/fortune"]}><Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense></OnlyOn>
       {pub && <PushSetup vapidPublic={pub} />}
       <main><CommTabs />{children}</main>
       <BottomNav />
