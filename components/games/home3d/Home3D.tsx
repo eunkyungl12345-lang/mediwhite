@@ -5,6 +5,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { HOMES, SLOTS, fmt } from "@/lib/tycoon";
 import { planOf, roomOf, roomCenter, roomForSlot, SLOT_POS, type Plan, type Room } from "./plan";
 import { buildFurniture } from "./furniture";
+import { buildKit, hasKit } from "./kit";
 
 /** 🏠 내 집 3D — 평면도(왼쪽 위)에서 방을 누르거나 바닥을 탭하면 캐릭터가 걸어가요. 방마다 가구를 사서 꾸며요. */
 type Props = { home: number; items: Record<string, number>; cash: number; onBuy: (slot: string) => void; nick: string };
@@ -176,13 +177,14 @@ export default function Home3D(props: Props) {
   }, [plan]);
 
   // 가구 배치 (아이템 바뀔 때마다)
-  useEffect(() => { const S = st.current; if (!S.furn) return; const { furn, markers } = S as { furn: THREE.Group; markers: THREE.Group };
-    for (const g of [furn, markers]) { while (g.children.length) { const c = g.children.pop()!; c.traverse(o => { const m = o as THREE.Mesh; m.geometry?.dispose?.(); }); } }
+  useEffect(() => { const S = st.current; if (!S.furn) return; const { furn, markers } = S as { furn: THREE.Group; markers: THREE.Group }; const ver = (S.furnVer = (S.furnVer ?? 0) + 1);
+    for (const g of [furn, markers]) { while (g.children.length) { const c = g.children.pop()!; if (!c.userData.kit) c.traverse(o => { const m = o as THREE.Mesh; m.geometry?.dispose?.(); }); } }
     for (const sl of SLOTS) { const outside = sl.key === "car" && !plan.rooms.some(r => r.kind === "garage"); const rm = roomForSlot(plan, sl.key); if (!rm) continue; const [fx, fz] = SLOT_POS[sl.key] ?? [.5, .5]; const x = outside ? plan.W + 2.8 : rm.x + rm.w * fx, z = outside ? plan.D - 2.5 : rm.z + rm.d * fz; const t = items[sl.key] ?? 0; if (outside && !t) continue;
-      if (t > 0) { const f = buildFurniture(sl.key, t, rm.w, rm.d); f.position.set(x, sl.key === "light" ? 0 : 0, z);
+      if (t > 0) { const place = (f: THREE.Group) => { f.position.set(x, 0, z);
         if (sl.key === "car") { // 차고 크기에 맞춰 세로로 세우고, 큰 탈것(전용기·요트·우주선)은 줄여서 쏙
-          if (!outside && rm.d > rm.w) f.rotation.y = Math.PI / 2; const bb = new THREE.Box3().setFromObject(f), sz = new THREE.Vector3(); bb.getSize(sz); const along = f.rotation.y ? sz.z : sz.x, across = f.rotation.y ? sz.x : sz.z;
-          const limL = outside ? 5 : Math.max(rm.w, rm.d) * .82, limW = outside ? 3 : Math.min(rm.w, rm.d) * .82, k = Math.min(1, limL / Math.max(along, .1), limW / Math.max(across, .1)); f.scale.setScalar(k); } if (sl.key === "sofa") f.rotation.y = Math.PI; if (sl.key === "art") f.position.z = rm.z + T + .02; f.traverse(o => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.receiveShadow = true; } }); furn.add(f); }
+          if (!outside && rm.d > rm.w && !f.userData.kit) f.rotation.y = Math.PI / 2; const bb = new THREE.Box3().setFromObject(f), sz = new THREE.Vector3(); bb.getSize(sz); const along = f.rotation.y ? sz.z : sz.x, across = f.rotation.y ? sz.x : sz.z;
+          const limL = outside ? 5 : Math.max(rm.w, rm.d) * .82, limW = outside ? 3 : Math.min(rm.w, rm.d) * .82, k = Math.min(1, limL / Math.max(along, .1), limW / Math.max(across, .1)); f.scale.setScalar(k); } if (sl.key === "sofa") f.rotation.y = Math.PI; if (sl.key === "art") f.position.z = rm.z + T + .02; f.traverse(o => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.receiveShadow = true; } }); furn.add(f); };
+        if (hasKit(sl.key, t)) buildKit(sl.key, t).then(g => { if (S.furnVer !== ver) return; if (g) { g.userData.kit = true; place(g); } else place(buildFurniture(sl.key, t, rm.w, rm.d)); }); else place(buildFurniture(sl.key, t, rm.w, rm.d)); }
       else { const mk = new THREE.Group(); mk.userData.slot = sl.key; const ring = new THREE.Mesh(new THREE.TorusGeometry(.22, .03, 8, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 })); ring.rotation.x = Math.PI / 2; const plus = new THREE.Mesh(new THREE.BoxGeometry(.2, .04, .04), new THREE.MeshBasicMaterial({ color: 0xffffff })); const plus2 = plus.clone(); plus2.rotation.y = Math.PI / 2; const hit = new THREE.Mesh(new THREE.SphereGeometry(.35, 8, 8), new THREE.MeshBasicMaterial({ visible: false })); mk.add(ring, plus, plus2, hit); mk.position.set(x, .5, z); markers.add(mk); } }
   }, [itemsKey, plan, home]); // eslint-disable-line
 
