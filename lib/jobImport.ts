@@ -36,7 +36,7 @@ export async function importPublicJobs(maxPages = 6): Promise<ImportResult> {
     const hire = pick(r, "hireTypeNmLst", "hireTypeLst"), emp = /인턴/.test(hire) ? "인턴" : /비정규|계약|기간제/.test(hire) ? "계약직" : /정규|무기/.test(hire) ? "정규직" : "계약직";
     const nope = pick(r, "recrutNope", "nope"), qual = pick(r, "aplyQlfcCn", "aplyQlfc"), pref = pick(r, "prefCondCn", "prefCn");
     const { data: ex } = await s.from("jobs").select("id").eq("contact", url).maybeSingle(); if (ex) continue;
-    const body = `🏛️ 공공기관 채용정보(잡알리오) 자동 수집 공고예요. 지원은 원문 공고에서 해주세요.\n\n📌 ${title}\n${nope ? `👥 모집 인원: ${nope}명\n` : ""}${ncs ? `🗂️ 직무: ${ncs}\n` : ""}${qual ? `\n✅ 지원 자격\n${qual.slice(0, 600)}\n` : ""}${pref ? `\n⭐ 우대 사항\n${pref.slice(0, 400)}\n` : ""}`;
+    const body = `${nope ? `👥 모집 인원: ${nope}명\n` : ""}${ncs ? `🗂️ 직무: ${ncs}\n` : ""}${qual ? `\n✅ 지원 자격\n${qual.slice(0, 600)}\n` : ""}${pref ? `\n⭐ 우대 사항\n${pref.slice(0, 400)}\n` : ""}`;
     const { error } = await s.from("jobs").insert({ author_id: bot.id, hospital: inst, region, dept, emp_type: emp, deadline: ymd(pick(r, "pbancEndYmd", "endYmd", "rceptEndYmd")), contact: url, body: joinTags(guessTags(`${title} ${qual} ${pref}`), body), welfare: title.slice(0, 80) });
     if (!error) added++;
   }

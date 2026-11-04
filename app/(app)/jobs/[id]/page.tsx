@@ -11,6 +11,8 @@ import { aggregate } from "@/lib/hospFacts";
 import ReportButton from "@/components/ReportButton";
 import LiveViewers from "@/components/LiveViewers";
 import { JobOwnerButtons } from "@/components/jobs/Buttons";
+import Avatar from "@/components/Avatar";
+import { deptLabel } from "@/lib/depts";
 export const dynamic = "force-dynamic";
 
 export default async function JobPage({ params }: { params: { id: string } }) {
@@ -23,21 +25,34 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const { data: revs } = hosp ? await d.from("hospital_reviews").select("r_welfare,r_balance,r_pay,r_culture,r_growth").eq("hospital_id", hosp.id).eq("hidden", false) : { data: [] as any[] };
   const [facts, contributed] = await Promise.all([hosp ? loadFacts([hosp.id]) : Promise.resolve({} as Record<number, any>), hasContributed(s.id, s.role, hosp?.id)]);
   const dd = dday(j.deadline), mine = j.author_id === s.id || s.role === "admin";
-  const rows: [string, string | null][] = [["📍 지역", j.region], ["👩‍⚕️ 모집 직종", j.dept], ["📄 고용 형태", j.emp_type], ["💰 급여", j.pay], ["⏰ 근무 시간", j.hours], ["🎁 복지·혜택", j.welfare], ["📅 마감", j.deadline ? `${j.deadline} (${dd})` : "상시 채용"]];
+  const bodyText = pub ? rest.split("\n").filter(l => !/^🏛️ 공공기관 채용정보|^📌 /.test(l.trim())).join("\n").trim() : rest;
+  const ftags = tags.filter(t => t !== SHARE_TAG), career = ftags.includes("신규가능") ? "신규 가능" : ftags.includes("경력만") ? "경력만" : null;
+  const title = pub ? (j.welfare || `${deptLabel(j.dept)} 채용`) : `${deptLabel(j.dept)} ${j.emp_type} 모집`, fa = hosp ? facts[hosp.id] ?? aggregate([]) : null;
+  const score = fa && fa.starN >= (fa.need ?? 3) ? fa.overallAvg : revs?.length ? Number(overall(revs)) : 0;
+  const I = (d: string) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: d }} />;
+  const ic = { cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', job: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>', lvl: '<path d="M6 20v-4M12 20v-9M18 20V5"/>', emp: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>', loc: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>', pay: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>', time: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', gift: '<rect x="3" y="8" width="18" height="13" rx="1"/><path d="M12 8v13M3 12h18M12 8S9 3 7 4.5 9 8 12 8zm0 0s3-5 5-3.5S15 8 12 8z"/>' };
+  const rows: [string, string, React.ReactNode | null][] = [
+    [ic.cal, "마감일", j.closed ? "마감" : j.deadline && dd !== "상시" ? <>{j.deadline.replaceAll("-", ".")} <em className="jd-dd">{dd}</em></> : "상시 채용"],
+    [ic.job, "직무", deptLabel(j.dept)], [ic.lvl, "경력", career], [ic.emp, "고용형태", j.emp_type], [ic.loc, "근무지역", j.region],
+    [ic.pay, "급여", j.pay], [ic.time, "근무시간", j.hours], [ic.gift, "복지", pub ? null : j.welfare]];
+  const link = j.contact && /^https?:\/\//.test(j.contact);
   return (
-    <div className="detail">
-      <Link className="link" href="/jobs">← 채용</Link>
-      <div className="jb-top" style={{ marginTop: 8 }}><span className="tag jb-dept">{j.dept}</span><span className="tag">{j.emp_type}</span><span className={"jb-dd" + (j.closed || dd === "마감" ? " end" : "")}>{j.closed ? "마감" : dd}</span></div>
-      <h2 style={{ margin: "6px 0" }}>{j.hospital}</h2>
-      <div className="meta"><span>{pub ? "🏛️ 공공 채용 자동수집" : shared ? `📢 ${j.author ? `[${j.author.dept}]${j.author.nickname}` : "회원"} 제보` : j.author ? `[${j.author.dept}]${j.author.nickname}` : "회원"}</span><span className="time">{fmt(j.created_at)}</span><span>👁 {j.views}</span><LiveViewers kind="job" id={String(id)} /></div>
-      {hosp ? <Link href={`/hospitals/${hosp.id}`} className="jb-revlink">🏥 이 병원 리뷰 {revs?.length ? <>{revs.length}개 · 평균 <b>★ {overall(revs ?? [])}</b></> : "아직 없음 — 첫 리뷰 남기기"} →</Link> : <Link href={`/hospitals/new?name=${encodeURIComponent(j.hospital)}`} className="jb-revlink">🏥 이 병원 리뷰가 아직 없어요 — 다녀본 분이 첫 리뷰 남기기 →</Link>}
-      {hosp ? <FactBox a={facts[hosp.id] ?? aggregate([])} hid={hosp.id} mine={false} locked={!contributed} /> : <Link href="/hospitals/check" className="fb fb-wait"><b>🔎 이 병원 실수령·분위기·리스크</b><p>아직 체크한 사람이 없어요. 다녀본 적 있으면 30초만 알려주세요.</p></Link>}
-      <table className="jb-table"><tbody>{rows.filter(r => r[1]).map(([k, v]) => <tr key={k}><th>{k}</th><td>{v}</td></tr>)}</tbody></table>
-      {tags.filter(t => t !== SHARE_TAG).length > 0 && <div className="jb-ftags"><b>현장 정보</b>{tags.filter(t => t !== SHARE_TAG).map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}
-      <div className="body" style={{ whiteSpace: "pre-wrap" }}>{rest}</div>
-      {j.contact && (/^https?:\/\//.test(j.contact) ? <a href={`/api/jobout?id=${id}`} target="_blank" rel="noopener noreferrer" className="btn jb-src">📄 원문 공고 보고 지원하기 ↗</a> : <div className="card jb-contact"><b>📮 지원 방법</b><div style={{ whiteSpace: "pre-wrap" }}>{j.contact}</div></div>)}
+    <div className="detail jd">
+      <Link className="jd-back" href="/jobs" aria-label="채용 목록">‹</Link>
+      <header className="jd-h"><Avatar name={j.hospital} size={52} /><div><h2>{title}</h2>
+        <div className="jd-sub">{hosp ? <Link href={`/hospitals/${hosp.id}`}>{j.hospital}</Link> : <span>{j.hospital}</span>}<i>|</i><span>{j.region}</span>{score > 0 && <><i>|</i><b>★ {score.toFixed(1)}</b></>}</div></div></header>
+      <section className="jd-sum"><h3>요약</h3>{rows.filter(r => r[2]).map(([d, k, v]) => <div key={k} className="jd-row">{I(d)}<span>{k}</span><div>{v}</div></div>)}
+        {ftags.filter(t => t !== "신규가능" && t !== "경력만").length > 0 && <div className="jd-tags">{ftags.filter(t => t !== "신규가능" && t !== "경력만").map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}</section>
+      {bodyText.trim() && <section className="jd-body"><h3>상세 내용</h3><div style={{ whiteSpace: "pre-wrap" }}>{bodyText}</div></section>}
+      {j.contact && !link && <section className="jd-body"><h3>지원 방법</h3><div style={{ whiteSpace: "pre-wrap" }}>{j.contact}</div></section>}
+      <section className="jd-body"><h3>이 병원은 어때요?</h3>
+        {hosp ? <Link href={`/hospitals/${hosp.id}`} className="jb-revlink">🏥 {j.hospital} 리뷰·급여·면접 보러 가기 →</Link> : <Link href="/hospitals/check" className="jb-revlink">🏥 아직 리뷰가 없어요. 다녀본 적 있다면 첫 리뷰를 남겨주세요 →</Link>}
+        {hosp && fa && <FactBox a={fa} hid={hosp.id} mine={false} locked={!contributed} />}</section>
+      <div className="jd-meta"><span>{pub ? "출처: 잡알리오(공공기관 채용정보)" : shared ? "회원 제보" : j.author ? `[${j.author.dept}]${j.author.nickname}` : "회원"} · {fmt(j.created_at)} · 조회 {j.views}</span><LiveViewers kind="job" id={String(id)} /></div>
       <div className="row" style={{ gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>{mine ? <JobOwnerButtons id={id} closed={j.closed} /> : <span />}<ReportButton kind="job" id={String(id)} /></div>
       <div className="muted" style={{ fontSize: 12 }}>⚠️ 지원 전 근로계약서·급여 조건을 꼭 서면으로 확인하세요. 선입금·개인정보(계좌·신분증) 먼저 요구하면 신고해주세요.</div>
+      {!j.closed && (link ? <div className="jd-apply"><a href={`/api/jobout?id=${id}`} target="_blank" rel="noopener noreferrer" className="btn">{pub ? "원문 공고에서 지원하기" : "지원하기"}</a></div>
+        : hosp ? <div className="jd-apply"><Link href={`/hospitals/${hosp.id}`} className="btn ghost">병원 리뷰 먼저 보기</Link></div> : null)}
     </div>
   );
 }

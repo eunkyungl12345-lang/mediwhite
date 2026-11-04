@@ -26,6 +26,7 @@ import { dday } from "@/lib/jobs";
 import { welAgg, welKey, type Welfare } from "@/lib/welfare";
 import { factPubKey } from "@/lib/helpKey";
 import { HelpBtn, More } from "@/components/jobs/RvBits";
+import NoteBoard from "@/components/jobs/NoteBoard";
 export const dynamic = "force-dynamic";
 
 export default async function HospitalPage({ params, searchParams }: { params: { id: string }; searchParams: { write?: string; checked?: string; t?: string; done?: string } }) {
@@ -46,7 +47,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const cur = rs.filter(r => r.status === "재직").length;
   const [facts, { data: myFact }, brags] = await Promise.all([loadFacts([id]), d.from("game_state").select("user_id").eq("user_id", s.id).eq("game", factKey(id)).maybeSingle(), loadBrags(s.id, { hid: id })]);
   const { data: myV } = await d.from("game_state").select("state").eq("user_id", s.id).eq("game", vKey(id)).maybeSingle(); const vstat = (myV?.state as any)?.status ?? null; const [contributed, distm, npsm] = await Promise.all([hasContributed(s.id, s.role, id), loadDistricts([id]), loadNps([id])]); const nps = npsm[id]; const locked = !contributed, gu = distm[id]; const fa = facts[id] ?? aggregate([]); const score = fa.starN >= (fa.need ?? MIN_N) ? fa.overallAvg : rs.length ? overall(rs) : 0;
-  const t = ["pay", "intv", "welfare", "jobs"].includes(searchParams.t ?? "") ? searchParams.t! : "rev";
+  const t = ["pay", "intv", "welfare", "note", "jobs"].includes(searchParams.t ?? "") ? searchParams.t! : "rev";
   const [{ data: ivRows }, { data: hfFull }] = await Promise.all([d.from("game_state").select("user_id,state").eq("game", ivKey(id)).limit(500), d.from("game_state").select("user_id,state").eq("game", factKey(id)).limit(1000)]);
   const ivs = (ivRows ?? []).map(r => ({ uid: r.user_id, ...(r.state as Interview) })).sort((a, b) => b.at.localeCompare(a.at)), myIv = ivs.some(x => x.uid === s.id);
   const need = fa.need ?? MIN_N, payByDept = Object.entries((hfFull ?? []).map(r => r.state as any).filter(x => x?.pay).reduce((m: Record<string, string[]>, x) => ((m[x.dept ?? "기타"] ??= []).push(x.pay), m), {})).filter(([, v]) => v.length >= need)
@@ -71,7 +72,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <div className="hh-name"><span className="hh-logo">🏥</span><div><h2>{h.name}</h2><small>{h.region}{gu ? ` ${gu}` : ""} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></small></div></div>
         <div className="hh-score">★ <b>{score ? score.toFixed(1) : "-"}</b><small>{fa.n ? `실체 체크 ${fa.n}` : ""}{fa.n && rs.length ? " · " : ""}{rs.length ? `리뷰 ${rs.length}` : ""}{!fa.n && !rs.length ? "아직 평가 없음" : ""}</small></div>
       </div>
-      <nav className="hh-tabs">{([["rev", `리뷰 ${rs.length + fa.n || ""}`], ["pay", "급여"], ["intv", `면접 ${ivs.length || ""}`], ["welfare", "복지"], ["jobs", `채용 ${myJobs?.length || ""}`]] as [string, string][]).map(([k, n]) => <Link key={k} href={tabHref(k)} className={t === k ? "on" : ""} scroll={false}>{n}</Link>)}</nav>
+      <nav className="hh-tabs">{([["rev", `리뷰 ${rs.length + fa.n || ""}`], ["pay", "급여"], ["intv", `면접 ${ivs.length || ""}`], ["welfare", "복지"], ["note", "인계장"], ["jobs", `채용 ${myJobs?.length || ""}`]] as [string, string][]).map(([k, n]) => <Link key={k} href={tabHref(k)} className={t === k ? "on" : ""} scroll={false}>{n}</Link>)}</nav>
       {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요. <b>+50 XP</b>{vstat !== "approved" && <> · <Link href={`/hospitals/verify?id=${id}`} className="link"><b>✅ 명찰/서류로 인증하면 더 믿을 만해져요 →</b></Link></>}</div>}
       {t === "rev" && <>
       <section className="rv2-stat">
@@ -132,6 +133,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       <div className="bg-sec" id="brag"><div className="bg-sec-h"><b>🏆 현직자 자랑 {brags.length || ""}</b><Link href={`/hospitals/brag/new?id=${id}`} className="link">📸 자랑하기</Link></div>
         {brags.length ? <div className="bg-row">{brags.map(b => <BragCard key={b.owner} b={b} me={s.id} admin={s.role === "admin"} showHosp={false} />)}</div> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>이 병원 다니는데 자랑할 게 있다면 사진 한 장 올려주세요.</p>}</div>
       </>}
+      {t === "note" && <NoteBoard hid={id} me={s.id} admin={s.role === "admin"} />}
       {t === "jobs" && <div className="sal-list">{myJobs?.length ? myJobs.map((j: any) => <Link key={j.id} href={`/jobs/${j.id}`} className="sal-row"><b>💼</b><div><strong>{(j.author as any)?.username === "mw_bot" ? (j.welfare || j.dept) : `${j.dept} ${j.emp_type} 모집`}</strong><small>{j.dept} · {j.emp_type}</small></div><em>{dday(j.deadline)}</em></Link>)
         : <div style={{ padding: 14 }}><p className="muted" style={{ margin: "0 0 8px", fontSize: 13 }}>지금 이 병원 채용 공고가 없어요.</p><Link href="/jobs/new?tip=1" className="btn ghost">🤫 이 병원 공고 봤어요 (제보)</Link></div>}</div>}
       <div className="muted" style={{ fontSize: 12, lineHeight: 1.6 }}>리뷰는 작성자 개인의 경험이에요. 사실과 다르거나 특정인을 비방하는 리뷰는 신고해주세요 — 즉시 블라인드 후 운영팀이 확인해요.</div>
