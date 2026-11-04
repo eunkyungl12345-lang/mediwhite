@@ -1,4 +1,5 @@
 "use client";
+import RegionPick from "./RegionPick";
 import { useFormState, useFormStatus } from "react-dom";
 import { useState } from "react";
 import { createReview, searchHospitals } from "@/lib/jobActions";
@@ -24,7 +25,7 @@ export default function ReviewForm({ hospital, dept, mine, proofState }: { hospi
         <button type="button" className="rv-hit new" onClick={() => { setIsNew(true); setHits([]); }}>➕ “{q}” 새 병원으로 등록</button></div>}
       {isNew && !picked && <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
         <input type="hidden" name="name" value={q} />
-        <label className="jb-lab">지역 *<select name="region" defaultValue="경기 남부">{JOB_REGIONS.map(r => <option key={r}>{r}</option>)}</select></label>
+        <RegionPick />
         <label className="jb-lab">종류 *<select name="kind" defaultValue="병원">{HOSP_KINDS.map(r => <option key={r}>{r}</option>)}</select></label>
       </div>}
     </div>}

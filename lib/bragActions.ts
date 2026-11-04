@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "./supabase";
+import { saveDistrict } from "./districtDb";
 import { getSession } from "./auth";
 import { personMention } from "./safety";
 import { awardXp } from "./xp";
@@ -16,7 +17,7 @@ export async function submitBrag(_: R, fd: FormData): Promise<R> {
   if (!hid) {
     if (!name || !(JOB_REGIONS as readonly string[]).includes(region) || !(HOSP_KINDS as readonly string[]).includes(kind)) return { error: "병원을 찾거나, 새 병원 이름·지역·종류를 골라주세요" };
     const { data: ex } = await s.from("hospitals").select("id").eq("name", name).eq("region", region).maybeSingle();
-    if (ex) hid = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hid = h.id; }
+    if (ex) hid = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hid = h.id; await saveDistrict(h.id, region, String(fd.get("gu") ?? "")); }
   }
   const tags = fd.getAll("tag").map(String).filter(t => (BRAG_TAGS as readonly string[]).includes(t)).slice(0, 6), text = clean(fd.get("text"), 300);
   if (!tags.length) return { error: "자랑 포인트를 하나 이상 골라주세요" };

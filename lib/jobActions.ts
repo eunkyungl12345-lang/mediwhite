@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "./supabase";
+import { saveDistrict } from "./districtDb";
 import { getSession, type Session } from "./auth";
 import { personMention } from "./safety";
 import { awardXp } from "./xp";
@@ -68,7 +69,7 @@ export async function createReview(_: R, fd: FormData): Promise<R> {
     if (!name || !inList(JOB_REGIONS, region)) return { error: "병원명과 지역을 적어주세요" };
     if (!inList(HOSP_KINDS, kind)) return { error: "병원 종류를 골라주세요" };
     const { data: ex } = await s.from("hospitals").select("id").eq("name", name).eq("region", region).maybeSingle();
-    if (ex) hospitalId = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hospitalId = h.id; }
+    if (ex) hospitalId = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hospitalId = h.id; await saveDistrict(h.id, region, String(fd.get("gu") ?? "")); }
   }
   const proof = fd.get("proof");
   if (proof instanceof File && proof.size > 0 && !okImg(proof)) return { error: "재직 인증 서류는 jpg/png 6MB 이하로 올려주세요" };
@@ -128,7 +129,7 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
   if (!hid) {
     if (!name || !inList(JOB_REGIONS, region) || !inList(HOSP_KINDS, kind)) return { error: "병원을 찾거나, 새 병원 이름·지역·종류를 골라주세요" };
     const { data: ex } = await s.from("hospitals").select("id").eq("name", name).eq("region", region).maybeSingle();
-    if (ex) hid = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hid = h.id; }
+    if (ex) hid = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hid = h.id; await saveDistrict(h.id, region, String(fd.get("gu") ?? "")); }
   }
   const pay = clean(fd.get("pay"), 12), years = clean(fd.get("years"), 12), status = clean(fd.get("status"), 4), dept = clean(fd.get("dept"), 10);
   if (!inList(PAY, pay)) return { error: "실수령 월급 구간을 골라주세요 (대략이면 돼요)" };

@@ -5,6 +5,7 @@ import { JOB_REGIONS, RATING_KEYS, avg, overall } from "@/lib/jobs";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
 import { factLine } from "@/lib/hospFacts";
 import FocusCard from "@/components/jobs/FocusCard";
+import { loadDistricts } from "@/lib/districtDb";
 export const dynamic = "force-dynamic";
 
 export default async function HospitalsPage({ searchParams }: { searchParams: { region?: string; q?: string; sort?: string } }) {
@@ -15,7 +16,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
   const [{ data: hs }, { count: jobsN }] = await Promise.all([hq, d.from("jobs").select("id", { count: "exact", head: true }).eq("closed", false).eq("hidden", false)]);
   const ids = (hs ?? []).map(h => h.id);
   const { data: revs } = ids.length ? await d.from("hospital_reviews").select("hospital_id,r_welfare,r_balance,r_pay,r_culture,r_growth,created_at,verified").in("hospital_id", ids).eq("hidden", false) : { data: [] as any[] };
-  const [facts, contributed] = await Promise.all([loadFacts(ids), hasContributed(s.id, s.role)]);
+  const [facts, contributed, dist] = await Promise.all([loadFacts(ids), hasContributed(s.id, s.role), loadDistricts(ids)]);
   const by = (id: number) => (revs ?? []).filter(r => r.hospital_id === id);
   const list = (hs ?? []).map(h => ({ ...h, n: by(h.id).length, score: overall(by(h.id)), last: Math.max(0, ...by(h.id).map(r => Date.parse(r.created_at))) })).filter(h => h.n > 0 || facts[h.id]?.n || q);
   list.sort((a, b) => sort === "new" ? b.last - a.last : (b.score - a.score) || (b.n - a.n));
@@ -33,7 +34,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
       {list.length === 0 && <div className="ss-empty-box" style={{ padding: "30px 20px" }}><span style={{ fontSize: 36 }}>🏥</span><b>{q ? `"${q}" 리뷰가 아직 없어요` : "아직 리뷰가 없어요"}</b><p className="muted" style={{ fontSize: 13, margin: "6px 0 0" }}>다녔던 병원 첫 리뷰 남기면 +40 XP. 후배들이 진짜 고마워해요 🙏</p><Link href={`/hospitals/new${q ? `?name=${encodeURIComponent(q)}` : ""}`} className="btn" style={{ marginTop: 8 }}>리뷰 쓰기</Link></div>}
       <div className="jb-list">{list.map(h => { const rs = by(h.id); return <Link key={h.id} href={`/hospitals/${h.id}`} className="hs-row">
         <div className="hs-score"><b>{h.n ? h.score.toFixed(1) : "-"}</b><small>★ {h.n}개{by(h.id).filter((r: any) => r.verified).length ? ` · ✅${by(h.id).filter((r: any) => r.verified).length}` : ""}</small></div>
-        <div className="hs-body"><b className="jb-title">{h.name}</b><div className="jb-meta">📍 {h.region} · {h.kind}{facts[h.id]?.n ? ` · 🔎 체크 ${facts[h.id].n}` : ""}</div>
+        <div className="hs-body"><b className="jb-title">{h.name}</b><div className="jb-meta">📍 {h.region}{dist[h.id] ? ` ${dist[h.id]}` : ""} · {h.kind}{facts[h.id]?.n ? ` · 🔎 체크 ${facts[h.id].n}` : ""}</div>
           {factLine(facts[h.id], !contributed).length > 0 && <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[h.id], !contributed).map(x => <span key={x}>{x}</span>)}</div>}
           {h.n > 0 && <div className="hs-bars">{RATING_KEYS.map(k => <span key={k.key} className="hs-bar" title={k.name}><i>{k.icon}</i><em style={{ width: `${avg(rs, k.key) / 5 * 100}%` }} /><small>{avg(rs, k.key).toFixed(1)}</small></span>)}</div>}
         </div></Link>; })}</div>

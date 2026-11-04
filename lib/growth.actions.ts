@@ -4,6 +4,7 @@ import { db } from "./supabase";
 import { getSession } from "./auth";
 import { pushToUsers } from "./push";
 import { JOB_REGIONS } from "./jobs";
+import { isGu } from "./district";
 type R = { error?: string; ok?: string } | undefined;
 const clean = (v: FormDataEntryValue | null, max: number) => String(v ?? "").trim().slice(0, max);
 /** 관리자: 집중 지역 설정 */
@@ -12,7 +13,7 @@ export async function setFocus(_: R, fd: FormData): Promise<R> {
   const region = clean(fd.get("region"), 10);
   if (!region) { await db().from("settings").delete().eq("key", "focus_region"); revalidatePath("/home"); return { ok: "집중 지역을 껐어요" }; }
   if (!(JOB_REGIONS as readonly string[]).includes(region)) return { error: "지역을 골라주세요" };
-  await db().from("settings").upsert({ key: "focus_region", value: JSON.stringify({ region, label: clean(fd.get("label"), 20) || region, goal: Math.max(10, Number(fd.get("goal")) || 100) }) });
+  await db().from("settings").upsert({ key: "focus_region", value: JSON.stringify({ region, gus: region === "서울" ? fd.getAll("gu").map(String).filter(isGu) : [], label: clean(fd.get("label"), 20), goal: Math.max(10, Number(fd.get("goal")) || 100) }) });
   revalidatePath("/home"); revalidatePath("/hospitals"); return { ok: "저장했어요" };
 }
 /** 병원 관계자·당사자: 반론·게시중단 요청 (정보통신망법 44조의2 임시조치 요청 창구) */

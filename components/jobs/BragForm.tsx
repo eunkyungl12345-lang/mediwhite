@@ -1,4 +1,5 @@
 "use client";
+import RegionPick from "./RegionPick";
 import { useFormState, useFormStatus } from "react-dom";
 import { useState } from "react";
 import { submitBrag } from "@/lib/bragActions";
@@ -17,7 +18,7 @@ export default function BragForm({ hospital, mine }: { hospital?: { id: number; 
       {!picked && !isNew && q && <div className="rv-hits">{hits.map(h => <button key={h.id} type="button" className="rv-hit" onClick={() => { setPicked(h); setHits([]); }}>🏥 {h.name} <small className="muted">{h.region} · {h.kind}</small></button>)}
         <button type="button" className="rv-hit new" onClick={() => { setIsNew(true); setHits([]); }}>➕ “{q}” 새 병원으로 등록</button></div>}
       {isNew && !picked && <div className="row" style={{ gap: 6, flexWrap: "wrap" }}><input type="hidden" name="name" value={q} />
-        <label className="jb-lab">지역<select name="region" defaultValue="경기 남부">{JOB_REGIONS.map(r => <option key={r}>{r}</option>)}</select></label>
+        <RegionPick />
         <label className="jb-lab">종류<select name="kind" defaultValue="병원">{HOSP_KINDS.map(r => <option key={r}>{r}</option>)}</select></label></div>}
     </div>}
     <input type="hidden" name="hospital_id" value={picked?.id ?? ""} />
