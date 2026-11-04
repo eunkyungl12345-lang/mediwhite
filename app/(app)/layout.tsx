@@ -15,6 +15,8 @@ import { memo, memoOnce } from "@/lib/memo";
 import Onboarding, { TourButton } from "@/components/Onboarding";
 import HeaderMenu from "@/components/HeaderMenu";
 import WriteFab from "@/components/WriteFab";
+import SideNav from "@/components/shell/SideNav";
+import RightRail from "@/components/shell/RightRail";
 import { bump } from "@/lib/daily";
 import Name from "@/components/Name";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
@@ -43,6 +45,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // 참모총장 후보일 때만 파트 1위 확인 (추가 조회 1번)
   const rank = me && me.xp >= RANKS[GENERAL][1] ? rankFor(me, await deptLeaders()) : rankOf(me?.xp ?? 0);
   return (
+    <div className="shell">
+    <SideNav admin={s.role === "admin"} unread={unread ?? 0} />
     <div className="app">
       <header>
         <div className="brand"><h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트웹</Link></h1></div>
@@ -60,6 +64,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <WriteFab />
       <PromoToast />
       <Onboarding show={!!me && !me.onboarded} />
+      </div>
+      <Suspense fallback={<aside className="rail" />}><RightRail rank={rank} xp={me?.xp ?? 0} nick={s.nickname} dept={s.dept} /></Suspense>
       <ChatDock me={s} initial={(msgs ?? []).reverse()} myRank={String(rank.index)} official={official} online={<Presence user={s} stealth={!!me?.stealth} />} roomsOn={roomsOn} />
     </div>
   );

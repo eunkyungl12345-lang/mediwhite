@@ -1786,3 +1786,36 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .r3-fw button{display:flex;align-items:center;gap:4px;border:0;border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:12.5px;font-weight:700;padding:8px 12px;cursor:pointer}.r3-fw button:active{transform:scale(.94);background:rgba(255,211,110,.5)}
 .r3-fw small{width:100%;text-align:center;color:rgba(255,255,255,.65);font-size:11px}
 .r3:not(.full) .r3-fw{bottom:100px}
+/* 💻 PC 3단 레이아웃 (1080px 이상): 왼쪽 사이드바 · 가운데 본문 · 오른쪽 레일 */
+.side,.rail{display:none}
+@media (min-width:1080px){
+  :root:not([data-x]){--pc:1}
+  @media (prefers-color-scheme:light){body{background:#F6F8F7}}
+  .shell{display:grid;grid-template-columns:232px minmax(0,680px) 300px;gap:28px;justify-content:center;max-width:1320px;margin:0 auto;padding:0 24px;align-items:start}
+  .shell>.app{max-width:none;margin:0;padding:0 0 40px;min-height:100vh}
+  .shell>.app>header{position:sticky;top:0;z-index:30;background:var(--bg);padding:14px 0 10px}
+  .shell>.app>header .brand{visibility:hidden}
+  .shell nav.tabs{display:none}
+  .shell .hd-desk .me-rank{display:none}
+  .side{display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;padding:18px 0 20px;overflow:auto;scrollbar-width:none}
+  .side-logo{font-weight:900;font-size:22px;letter-spacing:-.6px;color:var(--ink);text-decoration:none;padding:4px 12px 14px}
+  .side-nav{display:grid;gap:2px}
+  .side-nav a{position:relative;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:var(--ink);text-decoration:none;font-size:16px;font-weight:600}
+  .side-nav a:hover{background:var(--surface)}.side-nav a.on{font-weight:800;background:var(--surface);box-shadow:0 1px 0 var(--line)}
+  .side-nav i{width:24px;height:24px;display:block}.side-nav i svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.side-nav a.on i svg{stroke-width:2.3}
+  .side-n{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#E53935;color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center}
+  .side-write{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0 6px;padding:12px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:800;font-size:15px;text-decoration:none}.side-write:hover{opacity:.9}
+  .side-sec{font-size:12px;font-weight:700;color:var(--muted);padding:14px 12px 4px}
+  .side-quick{display:grid}.side-quick a{padding:8px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:14px}.side-quick a:hover{background:var(--surface)}
+  .rail{display:grid;gap:14px;position:sticky;top:0;padding:72px 0 20px;max-height:100vh;overflow:auto;scrollbar-width:none}
+  .rail-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:8px;color:var(--ink);text-decoration:none}
+  .rail-me{grid-template-columns:auto 1fr;align-items:center;gap:12px}.rail-me>div{display:grid;gap:3px;min-width:0}.rail-me b{font-size:15px}.rail-me small{font-size:12px;color:var(--muted)}.rail-me .ins{line-height:0}
+  .rail-h{font-weight:800;font-size:14px}
+  .rail-hot{list-style:none;margin:0;padding:0;display:grid;gap:2px}.rail-hot a{display:grid;grid-template-columns:20px 1fr;column-gap:8px;padding:7px 4px;border-radius:8px;color:var(--ink);text-decoration:none}.rail-hot a:hover{background:var(--bg)}.rail-hot em{grid-row:span 2;font-style:normal;font-weight:900;color:var(--scrub)}.rail-hot span{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rail-hot small{font-size:11.5px;color:var(--muted)}
+  .rail-games{display:grid;grid-template-columns:1fr 1fr;gap:6px}.rail-games a{display:flex;align-items:center;gap:6px;padding:9px 10px;border-radius:10px;background:var(--bg);color:var(--ink);text-decoration:none;font-size:13px;font-weight:700}.rail-games a:hover{background:var(--scrub-soft)}
+  .rail-foot{font-size:11.5px;color:var(--muted);padding:0 4px}.rail-foot a{color:inherit;text-decoration:none}
+  .cf-bottom{display:none}
+  .chat-fab{right:max(24px,calc((100vw - 1320px) / 2 + 24px))}
+  .shell .home.v2 .hf,.shell .hchips-wrap{margin-left:0;margin-right:0}
+  .shell .hf{border:1px solid var(--line)!important;border-radius:16px!important}
+}
