@@ -2,10 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import XrayFig from "@/components/XrayFig";
 import { XVIEWS, xvBySlug } from "@/lib/xrayAll";
+import { getSession } from "@/lib/auth";
+import { loadXrayPhotos } from "@/lib/xrayPhotoDb";
+import XrayGallery from "@/components/XrayGallery";
 export function generateMetadata({ params }: { params: { slug: string } }) { const x = xvBySlug(params.slug); return { title: x ? `${x.d?.title ?? `${x.exam.en} ${x.view.v}`} 촬영법 · 메디화이트웹` : "촬영법" }; }
 /** 🩻 촬영법 폼 한 장 — 콘솔 촬영 가이드처럼: 제목·투사명·노출·부위·병변·SID·중심선·호흡·포지셔닝·콜리메이션·평가·팁 */
-export default function XrayForm({ params }: { params: { slug: string } }) {
-  const x = xvBySlug(params.slug); if (!x) notFound();
+export default async function XrayForm({ params }: { params: { slug: string } }) {
+  const x = xvBySlug(params.slug); if (!x) notFound(); const me = (await getSession())!; const photos = await loadXrayPhotos(x.slug, me.id);
   const { exam, view, d } = x, sibs = XVIEWS.filter(v => v.ei === x.ei), i = XVIEWS.indexOf(x), prev = XVIEWS[i - 1], next = XVIEWS[i + 1];
   const title = d?.title ?? `${exam.en.toUpperCase()} ${view.v}`;
   const Sec = ({ h, children }: { h: string; children: React.ReactNode }) => <div className="xf-sec"><h4>{h}</h4>{children}</div>;
@@ -15,7 +18,7 @@ export default function XrayForm({ params }: { params: { slug: string } }) {
     <header className="xf-h"><small>{exam.part} · {exam.name} ({exam.en})</small><h2>{title}</h2>{d?.proj && <p>{d.proj}</p>}
       <div className="xf-chips">{d?.kvp && <span>kVp <b>{d.kvp}</b></span>}<span>SID <b>{d?.sid ?? exam.sid ?? "100cm"}</b></span>{(d?.breath ?? exam.breath) && <span>호흡 <b>{d?.breath ?? exam.breath}</b></span>}</div></header>
     <div className="xf-grid">
-      <div className="xf-left">{view.fig ? <XrayFig name={view.fig} /> : <div className="xf-nofig">그림 준비 중</div>}
+      <div className="xf-left"><XrayGallery slug={x.slug} me={me.id} photos={photos.map(p => ({ uid: p.uid, game: p.game, url: p.url, kind: p.kind, note: p.note, status: p.status }))} fig={view.fig ? <XrayFig name={view.fig} /> : <div className="xf-nofig">그림 준비 중</div>} />
         <div className="xf-sibs">{sibs.map(v => <Link key={v.slug} href={`/study/xray/${v.slug}`} className={v.slug === x.slug ? "on" : ""}>{v.view.v}</Link>)}</div></div>
       <div className="xf-right">
         {d?.region && <Sec h="Region · 촬영 부위"><p>{d.region}</p></Sec>}

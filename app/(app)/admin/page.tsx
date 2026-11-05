@@ -1,5 +1,7 @@
 import { voiceLabel } from "@/lib/jobVoice";
 import AdminHVerify from "@/components/AdminHVerify";
+import { XrayPhotoAdmin } from "@/components/XrayGallery";
+import { pendingXrayPhotos } from "@/lib/xrayPhotoDb";
 import AdminFocus from "@/components/AdminGrowth";
 import AdminLock from "@/components/AdminLock";
 import { lockMode } from "@/lib/hospFactsDb";
@@ -100,6 +102,7 @@ export default async function AdminPage() {
       <div className="card" id="hverify">
         <h3>✅ 병원 재직·퇴사 인증 {hvReqs.length ? <span className="mt-wait">{hvReqs.length}</span> : null}</h3>
         <AdminHVerify reqs={hvReqs as any} />
+        <h3 style={{ marginTop: 12 }}>🩻 촬영법 사진 심사</h3><XrayPhotoAdmin rows={(await pendingXrayPhotos()).map(p => ({ uid: p.uid, game: p.game, url: p.url, kind: p.kind, note: p.note, status: p.status, slug: p.slug }))} />
       </div>
       <div className="card" id="jobstats">
         <h3>📊 채용 반응 (최근 7일)</h3>
