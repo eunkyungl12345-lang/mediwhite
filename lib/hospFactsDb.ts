@@ -14,7 +14,9 @@ export async function loadFacts(hids?: number[]): Promise<Record<number, FactAgg
 }
 /** 열람 잠금 방식 (관리자 설정 settings.lock_mode): off = 모두 열람 / free3 = 병원 3곳까지 무료 / on = 체크해야 열람 */
 export type LockMode = "off" | "free3" | "on";
-export async function lockMode(): Promise<LockMode> { const { memo } = await import("./memo"); return memo("lock_mode", 60_000, async () => { const { data } = await db().from("settings").select("value").eq("key", "lock_mode").maybeSingle(); const v = data?.value; return v === "off" || v === "on" ? v : "free3"; }); }
+/** 🎉 오픈 기념 무료 열람 마감일 (settings.open_promo = "YYYY-MM-DD"). 이 날까지는 체크 없이도 전부 열람 */
+export async function promoUntil(): Promise<string | null> { const { memo } = await import("./memo"); return memo("open_promo", 60_000, async () => { const { data } = await db().from("settings").select("value").eq("key", "open_promo").maybeSingle(); const v = data?.value ?? ""; const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(v) && v >= today ? v : null; }); }
+export async function lockMode(): Promise<LockMode> { if (await promoUntil()) return "off"; const { memo } = await import("./memo"); return memo("lock_mode", 60_000, async () => { const { data } = await db().from("settings").select("value").eq("key", "lock_mode").maybeSingle(); const v = data?.value; return v === "off" || v === "on" ? v : "free3"; }); }
 /** give-to-get: 최근 6개월 안에 실체 체크(또는 리뷰)를 남긴 사람만 상세 열람. hid를 주면 'free3' 모드에서 병원 3곳까지 무료 */
 export async function hasContributed(userId: string, role?: string, hid?: number): Promise<boolean> {
   if (role === "admin") return true; const mode = await lockMode(); if (mode === "off") return true; const d = db();

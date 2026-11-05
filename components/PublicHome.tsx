@@ -3,25 +3,31 @@ import { db } from "@/lib/supabase";
 import { openExtJobs, isG3, extTags, EXT_SRC } from "@/lib/extJobs";
 import { tagLabel } from "@/lib/jobTags";
 import { dday } from "@/lib/jobs";
+import OpenPromo from "@/components/OpenPromo";
 /** 🌐 로그인 없이 보는 첫 화면 — 강남 3구 상근 공고 · 병원 검색 · 공고 목록. 지원·리뷰 자세히는 로그인 */
-export default async function PublicHome({ q, c }: { q?: string; c?: string }) {
+const DL: Record<string, string> = { 간호: "간호사", 간호조무사: "간호조무사", 방사선: "방사선사", 물리치료: "물리치료사", 임상병리: "임상병리사", 원무: "원무" };
+export default async function PublicHome({ q, c, k }: { q?: string; c?: string; k?: string }) {
   const d = db(), kw = (q ?? "").trim().slice(0, 30);
   const [{ data: hs }, { data: jobs }] = await Promise.all([
     kw ? d.from("hospitals").select("id,name,region,kind").ilike("name", `%${kw}%`).limit(12) : Promise.resolve({ data: [] as any[] }),
     d.from("jobs").select("id,hospital,region,dept,emp_type,deadline,closed,welfare,author:users!jobs_author_id_fkey(username)").eq("hidden", false).eq("closed", false).order("created_at", { ascending: false }).limit(40)]);
   const CONDS = ["야간진료없음", "토요휴무", "연차별도", "조기퇴근", "인센티브", "잡무없음"];
-  const ext = openExtJobs().filter(e => !c || extTags(e.id).includes(c)).sort((a, b) => Number(isG3(b)) - Number(isG3(a)));
+  const all = openExtJobs(), kinds = Object.keys(DL).filter(x => all.some(e => e.k === x)), ek = kinds.includes(k ?? "") ? k! : "";
+  const qs = (o: Record<string, string>) => { const u = new URLSearchParams(Object.entries({ k: ek, c: c ?? "", ...o }).filter(([, v]) => v)); return `/${u.toString() ? "?" + u : ""}#ext`; };
+  const ext = all.filter(e => (!c || extTags(e.id).includes(c)) && (!ek || e.k === ek)).sort((a, b) => Number(isG3(b)) - Number(isG3(a)));
   const open = (jobs ?? []).filter(j => dday(j.deadline) !== "마감").slice(0, 12);
   const login = (next: string) => `/login?next=${encodeURIComponent(next)}`;
   return <div className="pub-bg"><div className="app"><main className="pub">
     <header className="pub-h"><Link href="/" className="pub-brand">메디화이트웹</Link><Link href="/login" className="btn">로그인 · 30초 가입</Link></header>
+    <OpenPromo href="/login" />
     <section className="pub-hero"><small className="pub-kicker">📍 강남 3구부터</small><h1>강남 3구 병원<br />실제 실수령액 &<br />분위기 팩트체크 🏥</h1><p>입사하기 전에 <b>원장 성향</b>과 <b>실제 퇴근 시간</b> 확인하고 가세요.</p>
       <div className="pub-pts"><span>💰 통장 실수령</span><span>🙆 원장 성향</span><span>⏰ 실제 퇴근</span><span>😶 태움</span><span>🌴 연차 방식</span></div>
       <form action="/" className="jb2-search"><input name="q" defaultValue={kw} placeholder="지원할 병원 이름 검색 (예: 연세, 정형외과)" /><button className="btn">검색</button></form>
       {kw && <div className="pub-hosp">{(hs ?? []).length ? (hs ?? []).map(h => <Link key={h.id} href={`/h/${h.id}`}><b>🏥 {h.name}</b><small>{h.region} · {h.kind}</small></Link>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>‘{kw}’ 병원이 아직 없어요. <Link href={login("/hospitals/check")} className="link">처음 등록하고 리뷰 남기기</Link></p>}</div>}
     </section>
     <section id="ext" className="pub-sec"><h2>☀️ 분위기 확인하고 지원하는 상근 공고 <small>{ext.length}</small></h2><p className="muted" style={{ margin: "-4px 0 0", fontSize: 12.5 }}>강남 3구 먼저 · 다녀본 사람 리뷰가 모이면 초록 뱃지(정시 퇴근·원장 터치 적음…)가 붙어요</p>
-      <div className="rf-kw ex-conds">{CONDS.map(x => <Link key={x} href={c === x ? "/#ext" : `/?c=${encodeURIComponent(x)}#ext`} className={c === x ? "on" : ""} scroll={false}>{tagLabel(x)}</Link>)}</div>
+      <div className="dtab">{[["", "전체", all.length] as const, ...kinds.map(x => [x, DL[x], all.filter(e => e.k === x).length] as const)].map(([x, n, cnt]) => <Link key={x} href={qs({ k: x })} className={ek === x ? "on" : ""} scroll={false}>{n} <small>{cnt}</small></Link>)}</div>
+      <div className="rf-kw ex-conds">{CONDS.map(x => <Link key={x} href={qs({ c: c === x ? "" : x })} className={c === x ? "on" : ""} scroll={false}>{tagLabel(x)}</Link>)}</div>
       <div className="ex-list">{ext.map(e => <div key={e.id} className="ex">
         <div className="ex-top"><b>{e.h}</b>{isG3(e) && <span className="ex-g3">강남 3구</span>}</div>
         <div className="ex-meta">{e.dept} · {e.area}</div>

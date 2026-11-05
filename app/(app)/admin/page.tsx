@@ -4,6 +4,7 @@ import { XrayPhotoAdmin } from "@/components/XrayGallery";
 import { pendingXrayPhotos } from "@/lib/xrayPhotoDb";
 import AdminFocus from "@/components/AdminGrowth";
 import AdminLock from "@/components/AdminLock";
+import AdminPromo from "@/components/AdminPromo";
 import { lockMode } from "@/lib/hospFactsDb";
 import { getFocus } from "@/lib/focus";
 import { MIN_N } from "@/lib/hospFacts";
@@ -92,6 +93,7 @@ export default async function AdminPage() {
           <div><b>{kpi.out7}</b><span>공고 원문 지원 클릭</span></div>
         </div>
         <h3 style={{ marginTop: 12 }}>🔐 리뷰 열람 잠금</h3><AdminLock cur={await lockMode()} />
+        <h3 style={{ marginTop: 12 }}>🎉 오픈 기념 무료 열람</h3><AdminPromo cur={(await db().from("settings").select("value").eq("key", "open_promo").maybeSingle()).data?.value ?? ""} />
         <h3 style={{ marginTop: 12 }}>📍 집중 지역</h3><AdminFocus cur={focus} />
       </div>
       <div className="card" id="takedown">

@@ -30,6 +30,10 @@ export async function requestTakedown(_: R, fd: FormData): Promise<R> {
   return { ok: "요청이 접수됐어요. 운영팀이 영업일 기준 3일 안에 검토하고, 적어주신 연락처로 결과를 알려드려요. 권리침해가 소명되면 해당 내용은 최대 30일 임시 블라인드돼요." };
 }
 
+export async function setPromo(until: string) {
+  const u = await getSession(); if (u?.role !== "admin") return; const v = /^\d{4}-\d{2}-\d{2}$/.test(until) ? until : "";
+  await db().from("settings").upsert({ key: "open_promo", value: v }); revalidatePath("/admin"); revalidatePath("/home"); revalidatePath("/");
+}
 export async function setLockMode(mode: string) {
   const u = await getSession(); if (u?.role !== "admin") return; if (!["off", "free3", "on"].includes(mode)) return;
   await db().from("settings").upsert({ key: "lock_mode", value: mode }); revalidatePath("/admin");

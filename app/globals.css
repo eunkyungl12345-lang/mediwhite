@@ -2239,3 +2239,8 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 @media (prefers-color-scheme:dark){.pub-cta{background:#1F3530}.pub-cta p{color:#9FE0C0}.ex-g3{background:#1E2A44;color:#9CC0FF}}
 .pub-kicker{font-size:12.5px;font-weight:800;color:#2F5BB5}.pub-pts{display:flex;flex-wrap:wrap;gap:6px}.pub-pts span{font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
 .pub-bg{min-height:100vh;background:var(--bg);color:var(--ink)}
+/* 🎉 오픈 기념 배너 */
+.op{display:flex;gap:12px;align-items:center;padding:13px 15px;border-radius:16px;background:linear-gradient(120deg,#FF8A3D,#FFB547);color:#3A1F00;text-decoration:none;box-shadow:0 6px 16px rgba(255,138,61,.25)}.op span{font-size:26px}.op div{display:grid;gap:2px}.op b{font-size:15px;line-height:1.35}.op small{font-size:12px;opacity:.85}
+.login-bg .op{position:relative;z-index:1;margin-bottom:10px}
+/* 직종 탭 */
+.dtab{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.dtab::-webkit-scrollbar{display:none}.dtab a{flex:none;padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-size:14px;font-weight:800;color:var(--ink);text-decoration:none}.dtab a small{font-weight:700;color:var(--muted);margin-left:2px}.dtab a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}.dtab a.on small{color:inherit;opacity:.7}
