@@ -4,6 +4,7 @@ import BlueBadge from "@/components/BlueBadge";
 import HomeFeed from "@/components/HomeFeed";
 import FocusCard from "@/components/jobs/FocusCard";
 import HomeTop from "@/components/home/HomeTop";
+import G3Banner from "@/components/home/G3Banner";
 import ReviewHighlights from "@/components/home/ReviewHighlights";
 import { dday } from "@/lib/jobs";
 import { CafeHeader } from "@/components/CafeNav";
@@ -83,6 +84,7 @@ export default async function HomePage() {
   return (
     <div className="home v2">
       <div className="h-greet"><b>{me?.nickname ?? s.nickname}님,</b> {hourGreet()}{(memberN ?? 0) >= 300 && <span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 {online.toLocaleString()}명</span>}</div>
+      <G3Banner />
       <HomeTop mid={<ReviewHighlights />} />
       <section className="hc-sec"><div className="ht-h"><b>💬 커뮤니티 인기글</b><Link href="/board">더보기 ›</Link></div>
         {hot.length ? <div className="hc-list">{hot.map(p => <Row key={p.id} p={p} />)}</div> : <p className="muted" style={{ fontSize: 13 }}>아직 인기글이 없어요.</p>}</section>
