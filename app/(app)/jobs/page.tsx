@@ -52,7 +52,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   return (
     <div className="jb2">
       <div className="jb-head"><h2>💼 의료 채용</h2><Link href="/jobs/new" className="btn">📤 공고 올리기</Link></div>
-      <Link href="/jobs/day" className="day-banner"><span>☀️</span><div><b>3교대 탈출</b><small>나이트 없는 상근·낮 근무 공고 {openExtJobs().length}개 모아봤어요</small></div><em>›</em></Link>
+      <Link href="/jobs/day" className="day-banner"><span>☀️</span><div><b>🌙 저녁 약속 잡을 수 있는 알짜 병원</b><small>나이트 없는 상근·낮 근무 {openExtJobs().length}곳 · 3교대 탈출관</small></div><em>›</em></Link>
       <form className="jb2-search" action="/jobs">{dept && <input type="hidden" name="dept" value={dept} />}{region && <input type="hidden" name="region" value={region} />}<input name="q" defaultValue={kw} placeholder="병원 이름으로 찾기 (예: 서울대, 의료원)" /><button className="btn">검색</button></form>
       <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && cnt[x] ? <small>{cnt[x]}</small> : null}</Link>)}</div>
       <div className="jb2-filters">
@@ -62,7 +62,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
       <div className="jb2-quick"><Link href={link({ g3: searchParams.g3 === "1" ? "" : "1" })} className={"g3" + (searchParams.g3 === "1" ? " on" : "")}>📍 강남 3구</Link>{QUICK.map(x => <Link key={x.id} href={link({ t: tg === x.id ? "" : x.id })} className={tg === x.id ? "on" : ""}>{x.label}</Link>)}</div>
       <div className="jb2-sum"><span>모집 중 <b>{(src === "ext" ? 0 : open.length) + ext.length}</b></span>{soon > 0 && <span className="hot">⏰ 3일 안에 마감 {soon}</span>}{kw && <span>‘{kw}’ 검색 · <Link href={link({ q: "" })}>해제</Link></span>}</div>
       {s.role === "admin" && <ImportButton />}
-      {ext.length > 0 && <><h3 className="dy-h" style={{ margin: "4px 0 0" }}>☀️ 상근·낮 근무 공고 <small>{ext.length}</small></h3><div className="jb2-list">{ext.map(e => <ExtCard key={e.id} e={e} hid={EXH.get(e.h)} fa={EXH.get(e.h) ? exF[EXH.get(e.h)!] : undefined} />)}</div></>}
+      {ext.length > 0 && <><h3 className="dy-h" style={{ margin: "4px 0 0" }}>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h3><div className="jb2-list">{ext.map(e => <ExtCard key={e.id} e={e} hid={EXH.get(e.h)} fa={EXH.get(e.h) ? exF[EXH.get(e.h)!] : undefined} />)}</div></>}
       {src === "ext" ? null : open.length === 0 ? <div className="jb2-empty"><span>💼</span><b>{dept ? `${deptLabel(dept)} 공고가 아직 없어요` : "아직 올라온 공고가 없어요"}</b><p>단톡방에서 본 공고, 우리 병원 구인 — 첫 공고를 올려주세요. 공공병원 공고는 자동 수집이 켜지면 여기에 모여요.</p></div>
         : <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={isPublic(j)} rv={hmap[nk(j.hospital, j.region)]} fa={fmap[nk(j.hospital, j.region)]} locked={!contributed} />)}</div>}
       {closed.length > 0 && src !== "ext" && <details className="jb2-closed"><summary>마감된 공고 {closed.length}개</summary><div className="jb2-list">{closed.map(j => <JobCard key={j.id} j={j} pub={isPublic(j)} rv={hmap[nk(j.hospital, j.region)]} />)}</div></details>}

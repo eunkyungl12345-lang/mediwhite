@@ -38,6 +38,8 @@ const T: Record<number, string[]> = {
   3763585: ["연차별도"], 3735874: ["조기퇴근", "야간진료없음"], 3757554: ["야간진료없음"], 3755424: ["연차별도", "토요휴무", "야간진료없음"], 3765155: ["연차별도", "야간진료없음"],
   3707497: ["연차별도", "야간진료없음"], 3745441: ["야간진료없음"], 3759144: ["조기퇴근", "야간진료없음"], 3767458: ["인센티브", "잡무없음"], 3767505: ["인센티브"],
 };
+/** "서울 강남 · 양재역 1분" → 지역 / 역 */
+export const splitArea = (a: string) => { const [r, st] = a.split(" · "); return { r, st: st && /역/.test(st) ? st : "" }; };
 export const isG3 = (j: ExtJob) => /강남|서초|송파/.test(j.area);
 export const extTags = (id: number) => T[id] ?? [];
 export const openExtJobs = (today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10)) => EXT_JOBS.filter(j => !j.until || j.until >= today);

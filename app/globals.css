@@ -2244,3 +2244,9 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .login-bg .op{position:relative;z-index:1;margin-bottom:10px}
 /* 직종 탭 */
 .dtab{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.dtab::-webkit-scrollbar{display:none}.dtab a{flex:none;padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-size:14px;font-weight:800;color:var(--ink);text-decoration:none}.dtab a small{font-weight:700;color:var(--muted);margin-left:2px}.dtab a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}.dtab a.on small{color:inherit;opacity:.7}
+/* 공고 카드 위계 */
+.ex-top b{font-size:17px;font-weight:900;letter-spacing:-.3px}
+.ex-sta{display:inline-flex;margin-left:6px;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:#DDF6F1;color:#0F7A6A;vertical-align:1px}
+.ex-acts .btn:not(.ghost){background:#1F9D63;border-color:#1F9D63;color:#fff}.ex-acts .btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.pb-ex{display:grid;gap:6px;padding:10px 12px;border:1px dashed #BFE8D2;border-radius:12px;background:#F6FCF8}.pb-ex small{font-size:12px;color:var(--muted)}.pb-ex b{color:#17784A}
+@media (prefers-color-scheme:dark){.ex-sta{background:#163A34;color:#7FE0CF}.pb-ex{background:#132A20;border-color:#245A41}}

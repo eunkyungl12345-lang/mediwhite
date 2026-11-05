@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/supabase";
-import { openExtJobs, isG3, extTags, EXT_SRC } from "@/lib/extJobs";
+import { openExtJobs, isG3, extTags, EXT_SRC, splitArea } from "@/lib/extJobs";
+import PosBadges from "@/components/jobs/PosBadges";
 import { tagLabel } from "@/lib/jobTags";
 import { dday } from "@/lib/jobs";
 import OpenPromo from "@/components/OpenPromo";
@@ -15,6 +16,7 @@ export default async function PublicHome({ q, c, k }: { q?: string; c?: string; 
   const all = openExtJobs(), kinds = Object.keys(DL).filter(x => all.some(e => e.k === x)), ek = kinds.includes(k ?? "") ? k! : "";
   const qs = (o: Record<string, string>) => { const u = new URLSearchParams(Object.entries({ k: ek, c: c ?? "", ...o }).filter(([, v]) => v)); return `/${u.toString() ? "?" + u : ""}#ext`; };
   const ext = all.filter(e => (!c || extTags(e.id).includes(c)) && (!ek || e.k === ek)).sort((a, b) => Number(isG3(b)) - Number(isG3(a)));
+  const { data: ehp } = await d.from("hospitals").select("id,name").in("name", Array.from(new Set(all.map(e => e.h)))); const EHP = new Map((ehp ?? []).map(h => [h.name, h.id]));
   const open = (jobs ?? []).filter(j => dday(j.deadline) !== "마감").slice(0, 12);
   const login = (next: string) => `/login?next=${encodeURIComponent(next)}`;
   return <div className="pub-bg"><div className="app"><main className="pub">
@@ -25,16 +27,16 @@ export default async function PublicHome({ q, c, k }: { q?: string; c?: string; 
       <form action="/" className="jb2-search"><input name="q" defaultValue={kw} placeholder="지원할 병원 이름 검색 (예: 연세, 정형외과)" /><button className="btn">검색</button></form>
       {kw && <div className="pub-hosp">{(hs ?? []).length ? (hs ?? []).map(h => <Link key={h.id} href={`/h/${h.id}`}><b>🏥 {h.name}</b><small>{h.region} · {h.kind}</small></Link>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>‘{kw}’ 병원이 아직 없어요. <Link href={login("/hospitals/check")} className="link">처음 등록하고 리뷰 남기기</Link></p>}</div>}
     </section>
-    <section id="ext" className="pub-sec"><h2>☀️ 분위기 확인하고 지원하는 상근 공고 <small>{ext.length}</small></h2><p className="muted" style={{ margin: "-4px 0 0", fontSize: 12.5 }}>강남 3구 먼저 · 다녀본 사람 리뷰가 모이면 초록 뱃지(정시 퇴근·원장 터치 적음…)가 붙어요</p>
+    <section id="ext" className="pub-sec"><h2>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h2><div className="pb-ex"><small>다녀본 사람 리뷰가 모이면 이런 뱃지가 붙어요 <b>(예시)</b></small><PosBadges list={["⏰ 정시 퇴근", "🙆 원장 터치 적음", "🌴 주5일 + 연차 따로"]} /></div>
       <div className="dtab">{[["", "전체", all.length] as const, ...kinds.map(x => [x, DL[x], all.filter(e => e.k === x).length] as const)].map(([x, n, cnt]) => <Link key={x} href={qs({ k: x })} className={ek === x ? "on" : ""} scroll={false}>{n} <small>{cnt}</small></Link>)}</div>
       <div className="rf-kw ex-conds">{CONDS.map(x => <Link key={x} href={qs({ c: c === x ? "" : x })} className={c === x ? "on" : ""} scroll={false}>{tagLabel(x)}</Link>)}</div>
       <div className="ex-list">{ext.map(e => <div key={e.id} className="ex">
         <div className="ex-top"><b>{e.h}</b>{isG3(e) && <span className="ex-g3">강남 3구</span>}</div>
-        <div className="ex-meta">{e.dept} · {e.area}</div>
+        <div className="ex-meta">{e.dept} · {splitArea(e.area).r}{splitArea(e.area).st && <span className="ex-sta">🚇 {splitArea(e.area).st}</span>}</div>
         <div className="ex-row"><span>⏰ {e.time}</span><span>💰 {e.pay}</span></div>
         {extTags(e.id).length > 0 && <div className="ex-tags">{extTags(e.id).map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}
         <p className="ex-note">☀️ {e.note}</p>{e.warn && <p className="ex-warn">⚠️ {e.warn}</p>}
-        <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC}에서 보고 지원 ↗</a><Link href={login("/hospitals/check")} className="btn ghost">다녀봤어요 · 리뷰</Link></div>
+        <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC}에서 보고 지원 ↗</a><Link href={EHP.get(e.h) ? `/h/${EHP.get(e.h)}` : `/?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="btn ghost">👀 이 병원 진짜 분위기 보기</Link></div>
       </div>)}</div>
       <p className="muted" style={{ fontSize: 12, margin: 0 }}>{EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 지원 전 원문을 꼭 확인하세요.</p>
     </section>
