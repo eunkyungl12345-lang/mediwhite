@@ -2199,3 +2199,7 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
   .wfab{position:fixed;right:max(16px,calc((100vw - 1320px)/2));bottom:74px;z-index:40;display:inline-flex;align-items:center;gap:7px;padding:13px 22px 13px 18px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 10px 26px rgba(0,0,0,.22)}.wfab:hover{transform:translateY(-1px)}
 }
 @media (min-width:1080px){.side-head{position:sticky;top:-18px;z-index:2;background:var(--bg);padding-top:0;margin-top:-2px;display:grid;gap:6px;padding-bottom:6px}}
+.st-chips{margin:0 -2px}.st-chips a{font-size:13.5px;padding:8px 13px}
+.st-res{display:grid}.st-res a{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}.st-res a:last-child{border:0}.st-res span{font-size:24px;flex:none}.st-res div{display:grid;gap:2px;min-width:0;flex:1}.st-res b{font-size:14.5px}.st-res small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-res em{font-style:normal;flex:none;font-size:11.5px;font-weight:700;color:#1F7A4C;background:#E6F6EE;padding:3px 8px;border-radius:6px}
+.ho-card h3 small{font-size:12px;color:#1F9D63;font-weight:700;margin-left:6px}
+@media (prefers-color-scheme:dark){.st-res em{background:#1F3530;color:#9FE0C0}}
