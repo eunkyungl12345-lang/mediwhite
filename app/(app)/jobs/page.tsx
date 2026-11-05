@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { openExtJobs } from "@/lib/extJobs";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { ago } from "@/lib/format";
@@ -46,7 +47,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   return (
     <div className="jb2">
       <div className="jb-head"><h2>💼 의료 채용</h2><Link href="/jobs/new" className="btn">📤 공고 올리기</Link></div>
-      <Link href="/jobs/day" className="day-banner"><span>☀️</span><div><b>3교대 탈출</b><small>상근·칼퇴 병원만 모아봤어요</small></div><em>›</em></Link>
+      <Link href="/jobs/day" className="day-banner"><span>☀️</span><div><b>3교대 탈출</b><small>나이트 없는 상근·낮 근무 공고 {openExtJobs().length}개 모아봤어요</small></div><em>›</em></Link>
       <form className="jb2-search" action="/jobs">{dept && <input type="hidden" name="dept" value={dept} />}{region && <input type="hidden" name="region" value={region} />}<input name="q" defaultValue={kw} placeholder="병원 이름으로 찾기 (예: 서울대, 의료원)" /><button className="btn">검색</button></form>
       <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && cnt[x] ? <small>{cnt[x]}</small> : null}</Link>)}</div>
       <div className="jb2-filters">
