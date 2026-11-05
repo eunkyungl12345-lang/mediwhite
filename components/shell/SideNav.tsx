@@ -13,9 +13,9 @@ export default function SideNav({ admin, unread, fresh = [] }: { admin: boolean;
   const tog = (i: number) => setOpen(o => { const n = new Set(o); n.has(i) ? n.delete(i) : n.add(i); return n; });
   const New = ({ k }: { k?: string }) => k && F.has(k) ? <em className="side-new">N</em> : null;
   return <aside className="side">
-    <Link href="/home" className="side-logo">메디화이트웹</Link>
+    <div className="side-head"><Link href="/home" className="side-logo">메디화이트웹</Link>
     <nav className="side-top"><Link href="/home" className={p === "/home" ? "on" : ""}>🏠 홈</Link><Link href="/noti" className={p === "/noti" ? "on" : ""}>🔔 알림{unread > 0 && <b className="side-n">{unread > 99 ? "99+" : unread}</b>}</Link></nav>
-    <Link href="/board/new" className="side-write"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>글쓰기</Link>
+    <Link href="/board/new" className="side-write"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>글쓰기</Link></div>
     {MENU_GROUPS.map((g, i) => <section key={g.title} className={"side-g" + (open.has(i) ? " open" : "")}>
       <button type="button" className="side-gh" onClick={() => tog(i)} aria-expanded={open.has(i)}><span>{g.icon}</span>{g.title}{!open.has(i) && g.items.some(it => it.k && F.has(it.k)) && <em className="side-dot" />}<i>⌄</i></button>
       {open.has(i) && <div className="side-gl">{g.items.map(it => <div key={it.href}>

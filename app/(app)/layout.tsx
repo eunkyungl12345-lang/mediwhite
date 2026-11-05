@@ -65,7 +65,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {pub && <PushSetup vapidPublic={pub} />}
       <main><CommTabs />{children}</main>
       <BottomNav />
-      <WriteFab />
+      <Suspense fallback={null}><WriteFab /></Suspense>
       <PromoToast />
       <Onboarding show={!!me && !me.onboarded} />
       </div>

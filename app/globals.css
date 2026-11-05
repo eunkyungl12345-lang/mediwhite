@@ -2194,3 +2194,8 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .xg2-up{border:1px dashed var(--line);border-radius:12px;padding:10px 12px}.xg2-up summary{cursor:pointer;font-size:13.5px;font-weight:700}.xg2-up summary small{color:var(--muted);font-weight:500;margin-left:4px}.xg2-up form{margin-top:10px}
 .xg2-agree{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.5}.xg2-agree input{width:auto;margin-top:3px}
 .xg2-adm{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}.xg2-adm div{display:grid;gap:4px}.xg2-adm img{width:100%;height:120px;object-fit:cover;border-radius:8px}.xg2-adm small{font-size:12px;color:var(--muted)}.xg2-adm span{display:flex;gap:6px}
+/* PC에서도 글쓰기 버튼 (채팅 버튼 위) · 사이드바 글쓰기 상단 고정 */
+@media (min-width:720px){
+  .wfab{position:fixed;right:max(16px,calc((100vw - 1320px)/2));bottom:74px;z-index:40;display:inline-flex;align-items:center;gap:7px;padding:13px 22px 13px 18px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 10px 26px rgba(0,0,0,.22)}.wfab:hover{transform:translateY(-1px)}
+}
+@media (min-width:1080px){.side-head{position:sticky;top:-18px;z-index:2;background:var(--bg);padding-top:0;margin-top:-2px;display:grid;gap:6px;padding-bottom:6px}}
