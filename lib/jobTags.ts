@@ -1,7 +1,7 @@
 /** 🏷️ 공고 '현장 정보' 태그 — 구인사이트엔 잘 없는, 의료직이 진짜 궁금한 것 (교대·신규·교육·기숙사)
  *  DB 컬럼 추가 없이 본문 첫 줄에 "#3교대 #신규가능" 형태로 저장해요. */
 export const JOB_TAGS = [
-  { id: "야간진료없음", g: "조건", label: "🌆 야간진료 없음" }, { id: "토요휴무", g: "조건", label: "📅 주5일(토요 휴무)" }, { id: "조기퇴근", g: "조건", label: "🌇 조기퇴근(5시 전)" }, { id: "OT0분", g: "조건", label: "⏱️ 오버타임 0분" },
+  { id: "야간진료없음", g: "조건", label: "🌆 야간진료 없음" }, { id: "토요휴무", g: "조건", label: "📅 토요 휴무" }, { id: "연차별도", g: "조건", label: "🌴 연차 따로 보장" }, { id: "연차대체", g: "조건", label: "⚠️ 연차로 만든 주5일" }, { id: "조기퇴근", g: "조건", label: "🌇 조기퇴근(5시 전)" }, { id: "OT0분", g: "조건", label: "⏱️ 오버타임 0분" },
   { id: "인센티브", g: "조건", label: "💸 인센티브 있음" }, { id: "잡무없음", g: "조건", label: "🧹 본업만(잡무 없음)" }, { id: "OT수당", g: "조건", label: "💵 OT 수당 지급" }, { id: "나이트없음", g: "근무", label: "🌙 나이트 없음" },
   { id: "총괄5000", g: "총괄", label: "👔 총괄 연봉 5,000+" }, { id: "상담인센공개", g: "총괄", label: "📊 상담 인센 투명 공개" }, { id: "원장터치최소", g: "총괄", label: "🙆 원장 터치 최소" }, { id: "근속2년", g: "총괄", label: "🧑‍🤝‍🧑 직원 근속 2년+" },
   { id: "3교대", g: "근무" }, { id: "2교대", g: "근무" }, { id: "상근", g: "근무", label: "상근(데이)" }, { id: "나이트전담", g: "근무" }, { id: "주4일", g: "근무" },
@@ -27,12 +27,12 @@ export function guessTags(text: string): string[] {
   return t;
 }
 /** 리스트 상단 빠른 필터 */
-export const QUICK = [{ id: "야간진료없음", label: "🌆 야간진료 없음" }, { id: "토요휴무", label: "📅 토요 휴무" }, { id: "조기퇴근", label: "🌇 조기퇴근" }, { id: "OT0분", label: "⏱️ OT 0분" }, { id: "인센티브", label: "💸 인센티브" }, { id: "잡무없음", label: "🧹 잡무 없음" }, { id: "신규가능", label: "🐣 신규 가능" }, { id: "상근", label: "☀️ 상근" }, { id: "3교대", label: "🌙 3교대" }] as const;
+export const QUICK = [{ id: "야간진료없음", label: "🌆 야간진료 없음" }, { id: "토요휴무", label: "📅 토요 휴무" }, { id: "연차별도", label: "🌴 연차 보장" }, { id: "조기퇴근", label: "🌇 조기퇴근" }, { id: "OT0분", label: "⏱️ OT 0분" }, { id: "인센티브", label: "💸 인센티브" }, { id: "잡무없음", label: "🧹 잡무 없음" }, { id: "신규가능", label: "🐣 신규 가능" }, { id: "상근", label: "☀️ 상근" }, { id: "3교대", label: "🌙 3교대" }] as const;
 /** 💰 공고 '팩트' 줄 — 본문 맨 앞에 "실수령: …" 형식으로 저장 (실수령·인센·실제 퇴근·잡무) */
-export const META = [{ k: "실수령", icon: "💰", label: "통장 실수령(월)" }, { k: "인센", icon: "💸", label: "인센티브 조건" }, { k: "실제퇴근", icon: "🕕", label: "실제 퇴근" }, { k: "잡무", icon: "🧹", label: "본업 외 업무" }] as const;
+export const META = [{ k: "실수령", icon: "💰", label: "통장 실수령(월)" }, { k: "인센", icon: "💸", label: "인센티브 조건" }, { k: "실제퇴근", icon: "🕕", label: "실제 퇴근" }, { k: "잡무", icon: "🧹", label: "본업 외 업무" }, { k: "연차", icon: "🌴", label: "주5일·연차 방식" }] as const;
 export function splitMeta(rest: string): { meta: Record<string, string>; text: string } {
   const meta: Record<string, string> = {}; const lines = rest.split("\n"); let i = 0;
-  for (; i < lines.length; i++) { const m = lines[i].match(/^\[(실수령|인센|실제퇴근|잡무)\]\s*(.+)$/); if (!m) break; meta[m[1]] = m[2].trim(); }
+  for (; i < lines.length; i++) { const m = lines[i].match(/^\[(실수령|인센|실제퇴근|잡무|연차)\]\s*(.+)$/); if (!m) break; meta[m[1]] = m[2].trim(); }
   return { meta, text: lines.slice(i).join("\n").replace(/^\n+/, "") };
 }
 export const joinMeta = (meta: Record<string, string>, text: string) => { const ls = META.filter(m => meta[m.k]).map(m => `[${m.k}] ${meta[m.k]}`); return ls.length ? `${ls.join("\n")}\n${text}` : text; };

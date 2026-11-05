@@ -66,7 +66,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     <div style={show("field")} className="wz-step"><h3>🏥 현장은 어때요?</h3><p>공고엔 절대 안 나오는, 의료계만의 진짜 근무 조건이에요.</p>
       {MOOD.filter(isField).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={[0, 1, 2]} def={(mine as any)?.[m.k]} big /></div>)}</div>
 
-    <div style={show("real")} className="wz-step"><h3>💼 공고랑 현실, 얼마나 달라요?</h3><p>다음 지원자가 제일 궁금해하는 것들이에요. 실제 퇴근, 잡무, 인센티브, 원장 스타일.</p>
+    <div style={show("real")} className="wz-step"><h3>💼 공고랑 현실, 얼마나 달라요?</h3><p>다음 지원자가 제일 궁금해하는 것들이에요. 실제 퇴근, 잡무, 인센티브, 연차 방식, 원장 스타일.</p>
       {MOOD.filter(isReal).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={[0, 1, 2]} def={(mine as any)?.[m.k]} big /></div>)}</div>
 
     <div style={show("star")} className="wz-step"><h3>⭐ 별점을 매겨주세요</h3>

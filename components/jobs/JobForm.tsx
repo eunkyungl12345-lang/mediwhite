@@ -24,10 +24,11 @@ export default function JobForm({ dept, tip }: { dept?: string; tip?: boolean })
       <label className="jb-lab">근무 시간<input name="hours" maxLength={60} placeholder="예: 평일 9-18, 토 격주 / 3교대" /></label>
       <label className="jb-lab">마감일<input name="deadline" type="date" /></label>
     </div>
-    <fieldset className="jb-facts"><legend>💡 구직자가 제일 궁금한 4가지 <small>채우면 공고 맨 위에 크게 보여요</small></legend>
+    <fieldset className="jb-facts"><legend>💡 구직자가 제일 궁금한 5가지 <small>채우면 공고 맨 위에 크게 보여요</small></legend>
       <label className="jb-lab">통장 실수령(월)<input name="m_실수령" maxLength={50} placeholder="예: 280~300 (세후, 식대 포함)" /></label>
       <label className="jb-lab">인센티브 조건<input name="m_인센" maxLength={60} placeholder="예: C-arm 1건 1,500원 / 도수 12% / 상담 성과급" /></label>
       <label className="jb-lab">실제 퇴근 시간<input name="m_실제퇴근" maxLength={50} placeholder="예: 진료 18시 마감 → 보통 18시 20분 퇴근" /></label>
+      <label className="jb-lab">주5일·연차 방식<select name="m_연차" defaultValue=""><option value="">선택</option><option>주5일 + 법정 연차 따로</option><option>주5일 (평일 휴무가 연차에서 빠짐)</option><option>주6일·토요 격주</option><option>교대 근무 (연차 따로)</option></select></label>
       <label className="jb-lab">본업 외 업무<input name="m_잡무" maxLength={60} placeholder="예: 없음(청소 용역 따로) / 접수 가끔 도움" /></label>
     </fieldset>
     <fieldset className="jb-tagpick"><legend>현장 정보 <small>다른 구인사이트엔 잘 없는 정보 — 아는 것만 체크</small></legend>
