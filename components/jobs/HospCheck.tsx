@@ -27,7 +27,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     if (cur === "hosp") return picked || (isNew && q.trim()) ? "" : "병원을 고르거나 새로 등록해주세요";
     if (cur === "me") return !has("shift") ? "근무 형태를 골라주세요" : has("years") ? "" : "연차를 골라주세요";
     if (cur === "pay") return has("pay") ? "" : "실수령 구간을 골라주세요 (대략이면 돼요)";
-    if (cur === "mood" || cur === "field" || cur === "real") return MOOD.filter(m => cur === "real" ? isReal(m) : !isReal(m) && isField(m) === (cur === "field")).every(m => has(m.k)) ? "" : "세 가지 모두 골라주세요";
+    if (cur === "mood" || cur === "field" || cur === "real") return MOOD.filter(m => cur === "real" ? isReal(m) : !isReal(m) && isField(m) === (cur === "field")).every(m => has(m.k)) ? "" : "모두 골라주세요";
     if (cur === "star") return has("st_overall") && EXIT_STARS.every(s => has("st_" + s.k)) ? "" : "총평점과 항목별 별점을 모두 매겨주세요";
     if (cur === "rec") return has("rec") && has("future") ? "" : "두 질문 모두 골라주세요";
     if (cur === "risk") return risk.length || good ? "" : "해당하는 걸 고르거나 '딱히 없어요'를 눌러주세요";
@@ -66,7 +66,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     <div style={show("field")} className="wz-step"><h3>🏥 현장은 어때요?</h3><p>공고엔 절대 안 나오는, 의료계만의 진짜 근무 조건이에요.</p>
       {MOOD.filter(isField).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={[0, 1, 2]} def={(mine as any)?.[m.k]} big /></div>)}</div>
 
-    <div style={show("real")} className="wz-step"><h3>💼 공고랑 현실, 얼마나 달라요?</h3><p>다음 지원자가 제일 궁금해하는 세 가지예요. 실제 퇴근, 잡무, 인센티브.</p>
+    <div style={show("real")} className="wz-step"><h3>💼 공고랑 현실, 얼마나 달라요?</h3><p>다음 지원자가 제일 궁금해하는 것들이에요. 실제 퇴근, 잡무, 인센티브, 원장 스타일.</p>
       {MOOD.filter(isReal).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={[0, 1, 2]} def={(mine as any)?.[m.k]} big /></div>)}</div>
 
     <div style={show("star")} className="wz-step"><h3>⭐ 별점을 매겨주세요</h3>

@@ -7,11 +7,11 @@ import { loadFacts, hasContributed, shiftCompare } from "@/lib/hospFactsDb";
 import { loadDistricts } from "@/lib/districtDb";
 import { getFocus } from "@/lib/focus";
 import JobCard from "@/components/jobs/JobCard";
-import { openExtJobs, EXT_SRC, extTags } from "@/lib/extJobs";
+import { openExtJobs, EXT_SRC, extTags, isG3 } from "@/lib/extJobs";
 import { QUICK, tagLabel } from "@/lib/jobTags";
 export const dynamic = "force-dynamic";
 /** ☀️ 3교대 탈출 — 나이트 없는 삶, 실수령은 얼마나 줄까? (교대 vs 상근 비교 · 상근 공고 · 상근 병원) */
-export default async function DayPage({ searchParams }: { searchParams: { k?: string; c?: string } }) {
+export default async function DayPage({ searchParams }: { searchParams: { k?: string; c?: string; g3?: string } }) {
   const s = (await getSession())!; const d = db();
   const [cmp, contributed, focus, { data: jobs }] = await Promise.all([shiftCompare(), hasContributed(s.id, s.role), getFocus(),
     d.from("jobs").select("id,hospital,region,dept,emp_type,pay,hours,welfare,deadline,views,closed,created_at,contact,body,author:users!jobs_author_id_fkey(nickname,dept,username)").eq("hidden", false).eq("closed", false).or("body.ilike.%#상근%,body.ilike.%#주4일%,hours.ilike.%상근%,hours.ilike.%평일%").order("created_at", { ascending: false }).limit(60)]);
@@ -20,8 +20,8 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
   const [facts, dist] = await Promise.all([loadFacts((hs ?? []).map(h => h.id)), loadDistricts((hs ?? []).map(h => h.id))]);
   const inFocus = (h: any) => !!focus && h.region === focus.region && (!focus.gus.length || focus.gus.includes(dist[h.id]));
   const hlist = [...(hs ?? [])].sort((a, b) => Number(inFocus(b)) - Number(inFocus(a)) || (facts[b.id]?.n ?? 0) - (facts[a.id]?.n ?? 0));
-  const ext0 = openExtJobs(), kinds = Array.from(new Set(ext0.map(e => e.k))), ek = kinds.includes(searchParams.k as any) ? searchParams.k! : "", CONDS = ["5시퇴근", "나이트없음", "토요휴무", "인센티브", "잡무없음"], ec = CONDS.includes(searchParams.c ?? "") ? searchParams.c! : "", ext = ext0.filter(e => (!ek || e.k === ek) && (!ec || extTags(e.id).includes(ec)));
-  const dl = (p: Record<string, string>) => { const q = new URLSearchParams(Object.entries({ k: ek, c: ec, ...p }).filter(([, v]) => v)); return `/jobs/day${q.toString() ? "?" + q : ""}#ext`; };
+  const ext0 = openExtJobs(), kinds = Array.from(new Set(ext0.map(e => e.k))), ek = kinds.includes(searchParams.k as any) ? searchParams.k! : "", CONDS = ["야간진료없음", "토요휴무", "조기퇴근", "OT0분", "인센티브", "잡무없음"].filter(c => ext0.some(e => extTags(e.id).includes(c))), ec = CONDS.includes(searchParams.c ?? "") ? searchParams.c! : "", g3 = searchParams.g3 === "1", ext = ext0.filter(e => (!ek || e.k === ek) && (!ec || extTags(e.id).includes(ec)) && (!g3 || isG3(e))).sort((a, b) => Number(isG3(b)) - Number(isG3(a)));
+  const dl = (p: Record<string, string>) => { const q = new URLSearchParams(Object.entries({ k: ek, c: ec, g3: g3 ? "1" : "", ...p }).filter(([, v]) => v)); return `/jobs/day${q.toString() ? "?" + q : ""}#ext`; };
   const { data: eh } = await d.from("hospitals").select("id,name").in("name", Array.from(new Set(ext0.map(e => e.h)))); const EH = new Map((eh ?? []).map(h => [h.name, h.id]));
   const ready = cmp.shift.n >= MIN_N && cmp.day.n >= MIN_N, show = ready && contributed;
   const Col = ({ t, g, icon }: { t: string; g: typeof cmp.day; icon: string }) => <div className="dy-col"><small>{icon} {t}</small>
@@ -34,7 +34,7 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
     <div className="dy-hero"><span>☀️</span><h2>3교대 탈출</h2><p>나이트 없는 삶, 실수령은 얼마나 줄까?<br />대학·종합병원(대부분 3교대)과 로컬(대부분 상근)을 직접 다녀본 사람들의 숫자로 비교해요.</p></div>
     <h3 className="dy-h" id="ext">☀️ 지금 뽑는 상근·낮 근무 공고 <small>{ext0.length}</small></h3>
     <p className="muted" style={{ fontSize: 12.5, margin: "-4px 0 0", lineHeight: 1.55 }}>{EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 조건은 바뀔 수 있으니 <b>지원 전 원문을 꼭 확인</b>하세요.</p>
-    <div className="rf-kw ex-conds">{CONDS.map(c => <Link key={c} href={dl({ c: ec === c ? "" : c })} className={ec === c ? "on" : ""} scroll={false}>{QUICK.find(q => q.id === c)?.label ?? c}</Link>)}</div>
+    <div className="rf-kw ex-conds"><Link href={dl({ g3: g3 ? "" : "1" })} className={"g3" + (g3 ? " on" : "")} scroll={false}>📍 강남 3구 {ext0.filter(isG3).length}</Link>{CONDS.map(c => <Link key={c} href={dl({ c: ec === c ? "" : c })} className={ec === c ? "on" : ""} scroll={false}>{QUICK.find(q => q.id === c)?.label ?? c}</Link>)}</div>
     {kinds.length > 1 && <div className="rf-kw">{[["", "전체 직종"], ...kinds.map(k => [k, k])].map(([k, n]) => <Link key={k} href={dl({ k })} className={ek === k ? "on" : ""} scroll={false}>{n}</Link>)}</div>}
     {!ext.length && <p className="muted" style={{ fontSize: 13 }}>이 조건에 맞는 공고가 지금은 없어요.</p>}
     <div className="ex-list">{ext.map(e => <div key={e.id} className="ex">

@@ -31,7 +31,8 @@ export default function JobForm({ dept, tip }: { dept?: string; tip?: boolean })
       <label className="jb-lab">본업 외 업무<input name="m_잡무" maxLength={60} placeholder="예: 없음(청소 용역 따로) / 접수 가끔 도움" /></label>
     </fieldset>
     <fieldset className="jb-tagpick"><legend>현장 정보 <small>다른 구인사이트엔 잘 없는 정보 — 아는 것만 체크</small></legend>
-      {JOB_TAGS.map(t => <label key={t.id}><input type="checkbox" name="tag" value={t.id} /><span>{(t as any).label ?? t.id}</span></label>)}
+      {JOB_TAGS.filter(t => t.g !== "총괄").map(t => <label key={t.id}><input type="checkbox" name="tag" value={t.id} /><span>{(t as any).label ?? t.id}</span></label>)}
+      <small className="jb-tagsub">👔 총괄실장 공고라면</small>{JOB_TAGS.filter(t => t.g === "총괄").map(t => <label key={t.id}><input type="checkbox" name="tag" value={t.id} /><span>{(t as any).label ?? t.id}</span></label>)}
     </fieldset>
     <label className="jb-lab">복지·혜택<input name="welfare" maxLength={200} placeholder="예: 식대·명절 보너스·연차 15일·기숙사·학자금" /></label>
     <label className="jb-lab">업무 내용 · 자격 요건 *<textarea name="body" maxLength={2000} rows={6} required placeholder={share ? "받은 공고 내용을 그대로 붙여넣어 주세요 (업무·자격·근무조건·지원방법 등)" : "담당 업무, 필요한 자격·경력, 우대사항, 병원 소개 등\n예) 외래 간호 / 신규 가능 / 정형외과 경력 우대 / 주사·드레싱·수술 보조"} /></label>
