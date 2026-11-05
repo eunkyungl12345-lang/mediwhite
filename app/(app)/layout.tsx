@@ -44,19 +44,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     memo("chat_rooms", 60_000, async () => { const { data } = await d.from("settings").select("value").eq("key", "chat_rooms").maybeSingle(); return data?.value === "on"; }),
   ]);
   const { count: unread } = await d.from("notis").select("id", { count: "exact", head: true }).eq("user_id", s.id).eq("read", false);
+  const fresh = await menuFresh();
   const official = Object.fromEntries((offs ?? []).map(o => [o.id, OFFICIAL[o.username]]));
   // 참모총장 후보일 때만 파트 1위 확인 (추가 조회 1번)
   const rank = me && me.xp >= RANKS[GENERAL][1] ? rankFor(me, await deptLeaders()) : rankOf(me?.xp ?? 0);
   return (
     <div className="shell">
-    <SideNav admin={s.role === "admin"} unread={unread ?? 0} />
+    <Suspense fallback={<aside className="side" />}><SideNav admin={s.role === "admin"} unread={unread ?? 0} fresh={fresh} /></Suspense>
     <div className="app">
       <header>
         <div className="brand"><h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트웹</Link></h1></div>
         <div className="hd-r">
           <span className="hd-desk"><TourButton /></span><Bell initial={unread ?? 0} />
           <div className="me hd-desk"><Link href="/rank" className="me-rank" title="내 계급"><Name r={rank} dept={s.dept} nickname={s.nickname} /></Link>{s.role === "admin" && <Link href="/admin" className="tag" style={{ textDecoration: "none" }}>관리자</Link>}<form action={logout}><button>나가기</button></form></div>
-          <HeaderMenu fresh={await menuFresh()} admin={s.role === "admin"} logout={logout} name={<Name r={rank} dept={s.dept} nickname={s.nickname} />} />
+          <HeaderMenu fresh={fresh} admin={s.role === "admin"} logout={logout} name={<Name r={rank} dept={s.dept} nickname={s.nickname} />} />
         </div>
       </header>
       <Tabs admin={s.role === "admin"} />

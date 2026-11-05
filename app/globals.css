@@ -2166,3 +2166,12 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .tm{display:grid;gap:12px}.tm-q{width:100%;position:sticky;top:6px;z-index:2}.tm-sec{display:grid}.tm-sec h3{margin:6px 0;font-size:16px}
 .tm-row{display:grid;grid-template-columns:100px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}.tm-row b{color:#1F7A4C}.tm-row div{display:grid;gap:2px}.tm-row small{color:var(--muted);font-size:12px}
 @media (prefers-color-scheme:dark){.tm-row b{color:#9FE0C0}}
+@media (min-width:1080px){
+  .side-top{display:grid;gap:2px}.side-top a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:var(--ink);text-decoration:none;font-size:15.5px;font-weight:700}.side-top a:hover,.side-top a.on{background:var(--surface)}
+  .side-g{border-top:1px solid var(--line);padding:4px 0}.side-gh{all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:9px;padding:10px 12px;font-size:15px;font-weight:800;color:var(--ink);border-radius:10px}.side-gh:hover{background:var(--surface)}.side-gh span{font-size:17px}.side-gh i{font-style:normal;margin-left:auto;color:var(--muted);transition:transform .15s}.side-g.open .side-gh i{transform:rotate(180deg)}
+  .side-dot{width:7px;height:7px;border-radius:50%;background:#F5A100;margin-left:2px}
+  .side-gl{display:grid;padding:0 0 4px}.side-gl a{display:flex;align-items:center;gap:6px;padding:8px 12px 8px 40px;border-radius:9px;font-size:14px;color:var(--ink);text-decoration:none}.side-gl a:hover{background:var(--surface)}.side-gl a.on{font-weight:800;background:var(--surface)}
+  .side-new{font-style:normal;margin-left:auto;font-size:10px;font-weight:900;color:#fff;background:#F5A100;border-radius:4px;padding:1px 5px}
+  .side-sub{display:grid;margin:0 0 4px 40px;border-left:2px solid var(--line)}.side-sub a{padding:6px 10px 6px 12px;font-size:13px}
+  .side-foot{display:grid;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}.side-foot a{padding:7px 12px;font-size:13px;color:var(--muted);text-decoration:none}
+}
