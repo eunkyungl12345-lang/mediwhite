@@ -8,7 +8,7 @@ import { personMention } from "./safety";
 import { awardXp } from "./xp";
 import { JOB_REGIONS, JOB_DEPTS, EMP_TYPES, HOSP_KINDS, RATING_KEYS } from "./jobs";
 import { pushToUsers } from "./push";
-import { JOB_TAGS, SHARE_TAG, joinTags } from "./jobTags";
+import { JOB_TAGS, SHARE_TAG, joinTags, META, joinMeta } from "./jobTags";
 import { VOICE_OPTS } from "./jobVoice";
 import { PAY, YEARS, MOOD, RISKS, EXIT_STARS, EXIT_REASONS, factKey } from "./hospFacts";
 import { textProblem } from "./textQuality";
@@ -34,7 +34,8 @@ export async function createJob(_: R, fd: FormData): Promise<R> {
   if ((count ?? 0) >= 5) return { error: "채용공고는 하루 5개까지만 올릴 수 있어요" };
   const tags = fd.getAll("tag").map(String).filter(t => JOB_TAGS.some(x => x.id === t)).slice(0, 8);
   const shared = fd.get("who") === "share"; if (shared) tags.unshift(SHARE_TAG);
-  const { data, error } = await s.from("jobs").insert({ author_id: u.id, hospital, region, dept, emp_type: emp, pay: pay || null, hours: hours || null, welfare: welfare || null, deadline: deadline || null, contact: contact || null, body: joinTags(tags, body) }).select("id").single();
+  const meta: Record<string, string> = {}; for (const m of META) { const v = String(fd.get("m_" + m.k) ?? "").replace(/\s+/g, " ").trim().slice(0, 60); if (v) meta[m.k] = v; }
+  const { data, error } = await s.from("jobs").insert({ author_id: u.id, hospital, region, dept, emp_type: emp, pay: pay || null, hours: hours || null, welfare: welfare || null, deadline: deadline || null, contact: contact || null, body: joinTags(tags, joinMeta(meta, body)) }).select("id").single();
   if (error || !data) return { error: "잠시 후 다시 시도해주세요" };
   await awardXp(u.id, shared ? 30 : 20, `job:${data.id}`, "quest");
   revalidatePath("/jobs"); redirect(`/jobs/${data.id}`);

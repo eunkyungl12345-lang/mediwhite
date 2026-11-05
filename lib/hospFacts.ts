@@ -16,8 +16,13 @@ export const MOOD = [
   { k: "early", q: "인계 때문에 일찍 출근", opts: ["안 해요", "15~30분", "30분 넘게"], field: true },
   { k: "ot", q: "오버타임 수당", opts: ["다 달아줘요", "눈치 보여요", "거의 못 달아요"], field: true },
   { k: "newquit", q: "신규가 1년 안에 그만두는 편", opts: ["드물어요", "반쯤", "대부분"], field: true },
+  // 💼 공고와 현실 (공고엔 절대 안 나오는 것)
+  { k: "late", q: "공고 퇴근 시간보다 실제로 늦게 끝나는 편", opts: ["정시에 끝나요", "30분 안팎", "1시간 이상"], real: true },
+  { k: "chores", q: "본업 말고 다른 일(접수·청소·소독·처치 보조)", opts: ["거의 없어요", "가끔 해요", "자주·당연하게"], real: true },
+  { k: "incent", q: "인센티브·성과급", opts: ["약속대로 줘요", "말과 달라요", "따로 없어요"], real: true },
 ] as const;
 export const isField = (m: { k: string }) => ["early", "ot", "newquit"].includes(m.k);
+export const isReal = (m: { k: string }) => ["late", "chores", "incent"].includes(m.k);
 export const RISKS = [
   { k: "parental", s: "육아휴직 불이익", label: "육아휴직 쓰기 어렵거나 쓰면 불이익" },
   { k: "pregnant", s: "임신 불이익", label: "임신하면 눈치·불이익" },
@@ -61,6 +66,8 @@ export function factLine(a?: FactAgg, locked?: boolean): string[] {
   const out: string[] = []; if (a.payMid) out.push(`💰 실수령 ${a.payMid}만`); if (a.starN >= M) out.push(`⭐ ${a.overallAvg.toFixed(1)}`); if (a.recN >= M) out.push(`👍 추천 ${a.recPct}%`);
   const t = a.mood.find(m => m.k === "taeum"); if (t && t.counts[2] > 0) out.push(`😣 태움 심함 ${t.counts[2]}/${a.n}`);
   const ot = a.mood.find(m => m.k === "ot"); if (ot && ot.counts[1] + ot.counts[2] > 0 && ot.counts[1] + ot.counts[2] >= ot.counts[0]) out.push(`⏱️ OT 수당 눈치 ${ot.counts[1] + ot.counts[2]}/${a.n}`);
+  const lt = a.mood.find(m => m.k === "late"); if (lt && lt.counts[2] > 0 && lt.counts[2] * 2 >= lt.counts.reduce((x, y) => x + y, 0)) out.push(`🕖 실제 퇴근 1시간+ ${lt.counts[2]}/${a.n}`);
+  const ch = a.mood.find(m => m.k === "chores"); if (ch && ch.counts[2] > 0 && ch.counts[2] * 2 >= ch.counts.reduce((x, y) => x + y, 0)) out.push(`🧹 잡무 많음 ${ch.counts[2]}/${a.n}`);
   if (a.risks[0]) out.push(`⚠️ ${a.risks[0].s} ${a.risks[0].n}/${a.n}`);
   return out;
 }

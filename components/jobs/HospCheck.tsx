@@ -4,7 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useRef, useState } from "react";
 import { submitHospFact, searchHospitals } from "@/lib/jobActions";
 import { JOB_DEPTS, HOSP_KINDS } from "@/lib/jobs";
-import { isField, SHIFT, PAY, YEARS, MOOD, RISKS, EXIT_STARS, EXIT_REASONS, FUTURE, type HFact } from "@/lib/hospFacts";
+import { isField, isReal, SHIFT, PAY, YEARS, MOOD, RISKS, EXIT_STARS, EXIT_REASONS, FUTURE, type HFact } from "@/lib/hospFacts";
 import { textProblem } from "@/lib/textQuality";
 function Send({ edit }: { edit: boolean }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : edit ? "✏️ 수정 완료" : "🔎 익명으로 체크 완료 (+50 XP)"}</button>; }
 const Chips = ({ name, opts, def, values, big }: { name: string; opts: readonly string[]; def?: string | number; values?: (string | number)[]; big?: boolean }) =>
@@ -19,7 +19,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
   const [st, act] = useFormState(submitHospFact, undefined); const form = useRef<HTMLFormElement>(null);
   const [q, setQ] = useState(""), [hits, setHits] = useState<any[]>([]), [picked, setPicked] = useState(hospital ?? null), [isNew, setIsNew] = useState(false);
   const [risk, setRisk] = useState<string[]>(mine?.risks ?? []), [good, setGood] = useState(mine?.good ?? false), [status, setStatus] = useState(mine?.status ?? "재직"), [txt, setTxt] = useState(mine?.last ?? ""), [pros, setPros] = useState((mine as any)?.pros ?? ""), [cons, setCons] = useState((mine as any)?.cons ?? "");
-  const steps = [...(hospital ? [] : ["hosp"]), "me", "pay", "mood", "field", "star", "rec", "risk", "pc", "word"] as const;
+  const steps = [...(hospital ? [] : ["hosp"]), "me", "pay", "mood", "field", "real", "star", "rec", "risk", "pc", "word"] as const;
   const [i, setI] = useState(0), [err, setErr] = useState(""); const cur = steps[i], last = i === steps.length - 1;
   const search = async (v: string) => { setQ(v); setPicked(null); setIsNew(false); setHits(v.trim() ? await searchHospitals(v) : []); };
   const check = (): string => {
@@ -27,7 +27,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     if (cur === "hosp") return picked || (isNew && q.trim()) ? "" : "병원을 고르거나 새로 등록해주세요";
     if (cur === "me") return !has("shift") ? "근무 형태를 골라주세요" : has("years") ? "" : "연차를 골라주세요";
     if (cur === "pay") return has("pay") ? "" : "실수령 구간을 골라주세요 (대략이면 돼요)";
-    if (cur === "mood" || cur === "field") return MOOD.filter(m => isField(m) === (cur === "field")).every(m => has(m.k)) ? "" : "세 가지 모두 골라주세요";
+    if (cur === "mood" || cur === "field" || cur === "real") return MOOD.filter(m => cur === "real" ? isReal(m) : !isReal(m) && isField(m) === (cur === "field")).every(m => has(m.k)) ? "" : "세 가지 모두 골라주세요";
     if (cur === "star") return has("st_overall") && EXIT_STARS.every(s => has("st_" + s.k)) ? "" : "총평점과 항목별 별점을 모두 매겨주세요";
     if (cur === "rec") return has("rec") && has("future") ? "" : "두 질문 모두 골라주세요";
     if (cur === "risk") return risk.length || good ? "" : "해당하는 걸 고르거나 '딱히 없어요'를 눌러주세요";
@@ -61,10 +61,13 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     <div style={show("pay")} className="wz-step"><h3>💰 세후 실수령은 얼마쯤이에요?</h3><p>수당 포함 월 평균, 만원 단위. 정확하지 않아도 돼요. 동료 급여를 아는 범위로 골라도 좋아요.</p><Chips name="pay" opts={PAY} def={mine?.pay} big /></div>
 
     <div style={show("mood")} className="wz-step"><h3>😶 내부 분위기는 어때요?</h3>
-      {MOOD.filter(m => !isField(m)).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={[0, 1, 2]} def={(mine as any)?.[m.k]} big /></div>)}</div>
+      {MOOD.filter(m => !isField(m) && !isReal(m)).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={[0, 1, 2]} def={(mine as any)?.[m.k]} big /></div>)}</div>
 
     <div style={show("field")} className="wz-step"><h3>🏥 현장은 어때요?</h3><p>공고엔 절대 안 나오는, 의료계만의 진짜 근무 조건이에요.</p>
       {MOOD.filter(isField).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={[0, 1, 2]} def={(mine as any)?.[m.k]} big /></div>)}</div>
+
+    <div style={show("real")} className="wz-step"><h3>💼 공고랑 현실, 얼마나 달라요?</h3><p>다음 지원자가 제일 궁금해하는 세 가지예요. 실제 퇴근, 잡무, 인센티브.</p>
+      {MOOD.filter(isReal).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={[0, 1, 2]} def={(mine as any)?.[m.k]} big /></div>)}</div>
 
     <div style={show("star")} className="wz-step"><h3>⭐ 별점을 매겨주세요</h3>
       <div className="hc-q"><b>총평점</b><Star5 name="st_overall" def={mine?.overall} big /></div>

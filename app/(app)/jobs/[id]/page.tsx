@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { fmt } from "@/lib/format";
 import { dday, overall } from "@/lib/jobs";
 import { memoOnce } from "@/lib/memo";
-import { splitTags, tagLabel, SHARE_TAG } from "@/lib/jobTags";
+import { splitTags, tagLabel, SHARE_TAG, splitMeta, META } from "@/lib/jobTags";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
 import FactBox from "@/components/jobs/FactBox";
 import { aggregate } from "@/lib/hospFacts";
@@ -25,7 +25,8 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const { data: revs } = hosp ? await d.from("hospital_reviews").select("r_welfare,r_balance,r_pay,r_culture,r_growth").eq("hospital_id", hosp.id).eq("hidden", false) : { data: [] as any[] };
   const [facts, contributed] = await Promise.all([hosp ? loadFacts([hosp.id]) : Promise.resolve({} as Record<number, any>), hasContributed(s.id, s.role, hosp?.id)]);
   const dd = dday(j.deadline), mine = j.author_id === s.id || s.role === "admin";
-  const bodyText = pub ? rest.split("\n").filter(l => !/^🏛️ 공공기관 채용정보|^📌 /.test(l.trim())).join("\n").trim() : rest;
+  const { meta, text: rest2 } = splitMeta(rest);
+  const bodyText = pub ? rest2.split("\n").filter(l => !/^🏛️ 공공기관 채용정보|^📌 /.test(l.trim())).join("\n").trim() : rest2;
   const ftags = tags.filter(t => t !== SHARE_TAG), career = ftags.includes("신규가능") ? "신규 가능" : ftags.includes("경력만") ? "경력만" : null;
   const title = pub ? (j.welfare || `${deptLabel(j.dept)} 채용`) : `${deptLabel(j.dept)} ${j.emp_type} 모집`, fa = hosp ? facts[hosp.id] ?? aggregate([]) : null;
   const score = fa && fa.starN >= (fa.need ?? 3) ? fa.overallAvg : revs?.length ? Number(overall(revs)) : 0;
@@ -41,6 +42,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       <Link className="jd-back" href="/jobs" aria-label="채용 목록">‹</Link>
       <header className="jd-h"><Avatar name={j.hospital} size={52} /><div><h2>{title}</h2>
         <div className="jd-sub">{hosp ? <Link href={`/hospitals/${hosp.id}`}>{j.hospital}</Link> : <span>{j.hospital}</span>}<i>|</i><span>{j.region}</span>{score > 0 && <><i>|</i><b>★ {score.toFixed(1)}</b></>}</div></div></header>
+      {Object.keys(meta).length > 0 && <section className="jd-facts">{META.filter(m => meta[m.k]).map(m => <div key={m.k}><span>{m.icon} {m.label}</span><b>{meta[m.k]}</b></div>)}</section>}
       <section className="jd-sum"><h3>요약</h3>{rows.filter(r => r[2]).map(([d, k, v]) => <div key={k} className="jd-row">{I(d)}<span>{k}</span><div>{v}</div></div>)}
         {ftags.filter(t => t !== "신규가능" && t !== "경력만").length > 0 && <div className="jd-tags">{ftags.filter(t => t !== "신규가능" && t !== "경력만").map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}</section>
       {bodyText.trim() && <section className="jd-body"><h3>상세 내용</h3><div style={{ whiteSpace: "pre-wrap" }}>{bodyText}</div></section>}
