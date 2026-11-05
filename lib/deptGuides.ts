@@ -187,6 +187,6 @@ export const guideBySlug = (s: string) => GUIDES.find(g => g.slug === s);
 /** 라운지(cat) → 보여줄 가이드 배너 */
 export function guidesForDept(cat: string): { href: string; icon: string; title: string; blurb: string }[] {
   const out = GUIDES.filter(g => g.depts.includes(cat)).map(g => ({ href: `/guide/${g.slug}`, icon: g.icon, title: g.title, blurb: g.blurb }));
-  if (cat === "방사선") out.unshift({ href: "/guide/xray", icon: "📖", title: "일반촬영 포지셔닝 가이드", blurb: "두부·척추·상지·하지·전척추 36개 검사 · 뷰별 자세·CR · 포지셔닝 그림" });
+  if (cat === "방사선") out.unshift({ href: "/study/xray", icon: "🩻", title: "방사선 촬영법 폼", blurb: "37개 검사 · 97개 뷰 · 부위·병변·중심선·포지셔닝·평가·팁" });
   return out;
 }

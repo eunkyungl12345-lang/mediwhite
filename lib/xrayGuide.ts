@@ -1,5 +1,7 @@
 /** 방사선사 라운지 · 일반촬영 검사별 촬영법 (교과서 표준 요약. 병원 프로토콜·장비 설정이 우선이에요) */
-export type XrayView = { v: string; pos: string; cr: string; fig?: string };
+export type XrayView = { v: string; pos: string; cr: string; fig?: string; d?: XDetail };
+/** 뷰 상세 (촬영법 폼): 제목·영문 투사명·참고 kVp·부위·주요 병변·콜리메이션·포지셔닝 순서·평가·팁 */
+export type XDetail = { title: string; proj: string; kvp?: string; region: string; path: string; coll: string; steps: string[]; eval: string[]; tips?: string[]; breath?: string; sid?: string; cr?: string };
 export type XrayExam = { part: string; name: string; en: string; views: XrayView[]; sid?: string; breath?: string; check?: string[]; tip?: string };
 export const XRAY_PARTS = ["두부·안면", "척추", "흉곽", "상지", "골반·하지", "전척추·스캐노", "흉부·복부"] as const;
 

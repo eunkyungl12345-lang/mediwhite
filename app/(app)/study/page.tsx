@@ -16,10 +16,10 @@ export default async function Study() {
     <Link href={`/board/new?topic=${t}`} className="hn-add">＋ 글쓰기</Link></section>;
   return <div className="ho">
     <div className="ho-hero"><h2>📚 공부방·자료실</h2><p>서식·양식 나누고, 필요한 자료 부탁하고, 면접·국시·실무 공부까지.</p></div>
-    <div className="st-tiles"><Link href="/study/terms"><span>📖</span><b>의료 약어 사전</b><small>{termN}개 · NPO, PRN, I/O…</small></Link><Link href="/study/interview"><span>🎤</span><b>면접 질문 모음</b><small>{ivN ? `면접 후기 ${ivN}개` : "병원별 받은 질문"}</small></Link><Link href="/handover#cal"><span>🗓️</span><b>근무표 도우미</b><small>2027 공휴일</small></Link></div>
+    <div className="st-tiles"><Link href="/study/terms"><span>📖</span><b>의료 약어 사전</b><small>{termN}개 · NPO, PRN, I/O…</small></Link><Link href="/study/interview"><span>🎤</span><b>면접 질문 모음</b><small>{ivN ? `면접 후기 ${ivN}개` : "병원별 받은 질문"}</small></Link><Link href="/study/xray"><span>🩻</span><b>방사선 촬영법 폼</b><small>97개 뷰 · 포지셔닝·평가</small></Link><Link href="/handover#cal"><span>🗓️</span><b>근무표 도우미</b><small>2027 공휴일</small></Link></div>
     <Box t="data" icon="🗂️" name="자료실" hint="인계장 양식, 투약 계산 정리, 이력서·자소서 양식처럼 직접 만든 자료를 나눠주세요. 교재 스캔이나 유료 자료는 안 돼요." />
     <Box t="req" icon="🙋" name="자료 요청" hint="구하는 자료나 양식이 있으면 부탁해보세요." />
     <Box t="study" icon="✏️" name="공부·시험" hint="국시·자격시험·실무 공부 이야기를 나눠요." />
-    <section className="ho-card"><h3>🩺 직종별 실무 가이드</h3><div className="st-list">{GUIDES.map(g => <Link key={g.slug} href={`/guide/${g.slug}`}><span>{g.icon} {g.title}</span><small>{g.depts.join("·")}</small></Link>)}<Link href="/guide/xray"><span>📖 일반촬영 포지셔닝 가이드</span><small>방사선</small></Link></div></section>
+    <section className="ho-card"><h3>🩺 직종별 실무 가이드</h3><div className="st-list">{GUIDES.map(g => <Link key={g.slug} href={`/guide/${g.slug}`}><span>{g.icon} {g.title}</span><small>{g.depts.join("·")}</small></Link>)}<Link href="/study/xray"><span>🩻 방사선 촬영법 폼</span><small>방사선</small></Link></div></section>
   </div>;
 }
