@@ -3,7 +3,8 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { JOB_REGIONS, overall } from "@/lib/jobs";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
-import { MIN_N, factLine } from "@/lib/hospFacts";
+import { MIN_N, factLine, posBadges } from "@/lib/hospFacts";
+import PosBadges from "@/components/jobs/PosBadges";
 import { loadDistricts } from "@/lib/districtDb";
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
       <nav className="rf-tabs"><Link href={link({ tab: "" })} className={tab === "all" ? "on" : ""}>전체</Link><Link href={link({ tab: "mine" })} className={tab === "mine" ? "on" : ""}>내 직종</Link><Link href={link({ tab: "my" })} className={tab === "my" ? "on" : ""}>내 병원</Link><Link href={link({ tab: "rank" })} className={tab === "rank" ? "on" : ""}>병원 순위</Link></nav>
 
       {tab === "rank" ? <div className="sal-list">{rank.length ? rank.slice(0, 50).map((x, i) => <Link key={x.h.id} href={`/hospitals/${x.h.id}`} className="sal-row"><b>{i + 1}</b><div><strong>{x.h.name}</strong><small>{x.h.kind} · {x.h.region}{dist[x.h.id] ? ` ${dist[x.h.id]}` : ""} · 평가 {x.n}</small>
-          {factLine(facts[x.h.id], !contributed).length > 0 && <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[x.h.id], !contributed).map(t => <span key={t}>{t}</span>)}</div>}</div><em>{x.score ? `★ ${x.score.toFixed(1)}` : "-"}</em></Link>) : <p className="muted" style={{ padding: 14, margin: 0 }}>아직 평가된 병원이 없어요.</p>}</div>
+          <PosBadges list={posBadges(facts[x.h.id])} max={3} />{factLine(facts[x.h.id], !contributed).length > 0 && <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[x.h.id], !contributed).map(t => <span key={t}>{t}</span>)}</div>}</div><em>{x.score ? `★ ${x.score.toFixed(1)}` : "-"}</em></Link>) : <p className="muted" style={{ padding: 14, margin: 0 }}>아직 평가된 병원이 없어요.</p>}</div>
       : <>
         <div className="rf-filters">
           <Link href={link({ sort: sort === "new" ? "top" : sort === "top" ? "low" : "" })} className="on">{sort === "new" ? "최신순" : sort === "top" ? "별점 높은순" : "별점 낮은순"} ⇅</Link>
@@ -71,6 +72,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
         {!feed.length ? <div className="fb fb-wait"><b>{tab === "my" ? "내가 체크·리뷰한 병원이 아직 없어요" : "아직 리뷰가 없어요"}</b><p>다니는(다녔던) 병원 하나만 체크하면 6개월간 모든 리뷰가 열려요.</p><Link href="/hospitals/check" className="btn">🔎 병원 체크하기 +50</Link></div>
           : <div className="rf-list">{feed.map(x => { const h = H.get(x.hid)!; return <article key={x.key} className="rf-item">
             <Link href={`/hospitals/${x.hid}`} className="rf-h"><span className="rf-logo">🏥</span><b>{h.name}</b></Link>
+            <PosBadges list={posBadges(facts[x.hid])} max={3} />
             <div className="rf-meta">{[...x.meta, `${h.region}${dist[x.hid] ? " " + dist[x.hid] : ""}`, ym(x.at)].join("  |  ")}{x.v ? <em>✅ 인증</em> : null}</div>
             {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><Stars n={x.star} /></div>}
             <h3 className="rf-title">{x.title}</h3>

@@ -27,6 +27,8 @@ import { welAgg, welKey, type Welfare } from "@/lib/welfare";
 import { factPubKey } from "@/lib/helpKey";
 import { HelpBtn, More } from "@/components/jobs/RvBits";
 import NoteBoard from "@/components/jobs/NoteBoard";
+import PosBadges from "@/components/jobs/PosBadges";
+import { posBadges } from "@/lib/hospFacts";
 export const dynamic = "force-dynamic";
 
 export default async function HospitalPage({ params, searchParams }: { params: { id: string }; searchParams: { write?: string; checked?: string; t?: string; done?: string } }) {
@@ -70,6 +72,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <div className="hh-top"><Link href="/hospitals" className="hh-back" aria-label="뒤로">‹</Link><ShareHosp hid={id} name={h.name} /></div>
         <div className="hh-badges">{!!myJobs?.length && <a href={tabHref("jobs")} className="hh-b job">💼 채용 중 {myJobs.length}</a>}{(fa.verified + vN) > 0 && <span className="hh-b vf">✅ 인증 {fa.verified + vN}</span>}</div>
         <div className="hh-name"><span className="hh-logo">🏥</span><div><h2>{h.name}</h2><small>{h.region}{gu ? ` ${gu}` : ""} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></small></div></div>
+        <PosBadges list={posBadges(fa)} max={6} />
         <div className="hh-score">★ <b>{score ? score.toFixed(1) : "-"}</b><small>{fa.n ? `실체 체크 ${fa.n}` : ""}{fa.n && rs.length ? " · " : ""}{rs.length ? `리뷰 ${rs.length}` : ""}{!fa.n && !rs.length ? "아직 평가 없음" : ""}</small></div>
       </div>
       <nav className="hh-tabs">{([["rev", `리뷰 ${rs.length + fa.n || ""}`], ["pay", "급여"], ["intv", `면접 ${ivs.length || ""}`], ["welfare", "복지"], ["note", "인계장"], ["jobs", `채용 ${myJobs?.length || ""}`]] as [string, string][]).map(([k, n]) => <Link key={k} href={tabHref(k)} className={t === k ? "on" : ""} scroll={false}>{n}</Link>)}</nav>

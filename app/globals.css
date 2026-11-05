@@ -2219,3 +2219,8 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .jb2-quick a.g3,.ex-conds a.g3{background:#E8F0FF;border-color:#BCD0F5;color:#2F5BB5;font-weight:800}.jb2-quick a.g3.on,.ex-conds a.g3.on{background:#2F5BB5;color:#fff;border-color:#2F5BB5}
 .jb-tagsub{flex-basis:100%;font-size:12px;color:var(--muted);margin-top:4px}
 @media (prefers-color-scheme:dark){.jb2-quick a.g3,.ex-conds a.g3{background:#1E2A44;border-color:#2F4A7A;color:#9CC0FF}}
+/* 🌿 긍정 뱃지 */
+.pb{display:flex;flex-wrap:wrap;gap:5px}.pb span{font-size:12px;font-weight:800;padding:4px 9px;border-radius:999px;background:#E3F7EC;color:#17784A;border:1px solid #BFE8D2}.pb em{font-style:normal;font-size:12px;color:#17784A;font-weight:700;align-self:center}
+.pb.big span{font-size:13px;padding:6px 11px}
+.hh .pb span{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);color:#fff}
+@media (prefers-color-scheme:dark){.pb span{background:#173A2A;color:#8FE3B8;border-color:#245A41}}

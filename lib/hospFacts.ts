@@ -69,8 +69,20 @@ export function factLine(a?: FactAgg, locked?: boolean): string[] {
   const ot = a.mood.find(m => m.k === "ot"); if (ot && ot.counts[1] + ot.counts[2] > 0 && ot.counts[1] + ot.counts[2] >= ot.counts[0]) out.push(`⏱️ OT 수당 눈치 ${ot.counts[1] + ot.counts[2]}/${a.n}`);
   const lt = a.mood.find(m => m.k === "late"); if (lt && lt.counts[2] > 0 && lt.counts[2] * 2 >= lt.counts.reduce((x, y) => x + y, 0)) out.push(`🕖 실제 퇴근 1시간+ ${lt.counts[2]}/${a.n}`);
   const ch = a.mood.find(m => m.k === "chores"); if (ch && ch.counts[2] > 0 && ch.counts[2] * 2 >= ch.counts.reduce((x, y) => x + y, 0)) out.push(`🧹 잡무 많음 ${ch.counts[2]}/${a.n}`);
-  const maj = (k: string, i: number) => { const m = a.mood.find(x => x.k === k); const tot = m ? m.counts.reduce((x, y) => x + y, 0) : 0; return !!m && tot >= M && m.counts[i] * 2 > tot; };
-  if (maj("late", 0)) out.push("⏰ 정시 퇴근 다수"); if (maj("boss", 0)) out.push("🙆 원장 터치 적음"); if (maj("quit", 0)) out.push("🧑‍🤝‍🧑 오래 다니는 곳"); if (maj("incent", 0)) out.push("💸 인센 약속 지킴");
   if (a.risks[0]) out.push(`⚠️ ${a.risks[0].s} ${a.risks[0].n}/${a.n}`);
+  return out;
+}
+
+/** 🌿 긍정 뱃지 — 좋은 점만 사실처럼 짧게 (응답 과반이 그렇다고 할 때만, 공개 기준 넘은 병원만). 잠금 상태에도 보여줘요 */
+export function posBadges(a?: FactAgg): string[] {
+  const M = a?.need ?? MIN_N; if (!a || a.n < M) return [];
+  const maj = (k: string, i: number) => { const m = a.mood.find(x => x.k === k); const tot = m ? m.counts.reduce((x, y) => x + y, 0) : 0; return !!m && tot >= M && m.counts[i] * 2 > tot; };
+  const out: string[] = [];
+  if (maj("late", 0)) out.push("⏰ 정시 퇴근"); if (!maj("late", 0) && maj("off", 0)) out.push("🏃 대부분 칼퇴"); if (maj("taeum", 0)) out.push("😊 태움 거의 없음");
+  if (maj("boss", 0)) out.push("🙆 원장 터치 적음"); if (maj("quit", 0)) out.push("🧑‍🤝‍🧑 오래 다니는 곳"); if (maj("incent", 0)) out.push("💸 인센 약속 지킴");
+  if (maj("ot", 0)) out.push("💵 OT 수당 챙겨줌"); if (maj("chores", 0)) out.push("🧹 본업만 해요"); if (maj("early", 0)) out.push("🌅 일찍 출근 없음");
+  const w = a.stars.find(x => x.k === "welfare"); if (a.starN >= M && w && w.avg >= 4) out.push("🎁 복지 좋음");
+  if (a.verified >= 2) out.push(`✅ 인증 ${a.verified}명`);
+  if (!a.risks.length && a.good >= M) out.push("🛡️ 리스크 신고 없음");
   return out;
 }

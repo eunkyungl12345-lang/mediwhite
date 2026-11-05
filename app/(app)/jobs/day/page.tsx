@@ -2,7 +2,8 @@ import Link from "next/link";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { dday } from "@/lib/jobs";
-import { MIN_N, factLine } from "@/lib/hospFacts";
+import { MIN_N, factLine, posBadges } from "@/lib/hospFacts";
+import PosBadges from "@/components/jobs/PosBadges";
 import { loadFacts, hasContributed, shiftCompare } from "@/lib/hospFactsDb";
 import { loadDistricts } from "@/lib/districtDb";
 import { getFocus } from "@/lib/focus";
@@ -55,7 +56,7 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
 
     <h3 className="dy-h">🏠 로컬 병원·의원 {focus && <small>{focus.label} 먼저</small>}</h3>
     {hlist.length ? <div className="jb2-list">{hlist.map(h => <Link key={h.id} href={`/hospitals/${h.id}`} className="jb2-card"><div className="jb2-h"><div className="jb2-hn"><b>{h.name}</b><small>{h.region}{dist[h.id] ? ` ${dist[h.id]}` : ""} · {h.kind}{inFocus(h) ? " · 📍" : ""}</small></div></div>
-      {factLine(facts[h.id], !contributed).length > 0 ? <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[h.id], !contributed).map(x => <span key={x}>{x}</span>)}</div> : <div className="jb2-facts none">🔎 {facts[h.id]?.n ?? 0}명 체크 · {MIN_N}명 모이면 공개</div>}</Link>)}</div>
+      <PosBadges list={posBadges(facts[h.id])} max={3} />{factLine(facts[h.id], !contributed).length > 0 ? <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[h.id], !contributed).map(x => <span key={x}>{x}</span>)}</div> : <div className="jb2-facts none">🔎 {facts[h.id]?.n ?? 0}명 체크 · {MIN_N}명 모이면 공개</div>}</Link>)}</div>
       : <p className="muted" style={{ fontSize: 13 }}>상근으로 일하는 병원을 체크하면 여기에 모여요.</p>}
 
     <Link href="/hospitals/check" className="dy-cta"><b>🙋 3교대에서 탈출해봤어요</b><span>예전 병원과 지금 병원을 각각 체크해주면, 다음 사람이 "탈출하면 얼마나 달라지는지" 알 수 있어요</span></Link>

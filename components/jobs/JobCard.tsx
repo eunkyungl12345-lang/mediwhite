@@ -4,7 +4,8 @@ import { dday } from "@/lib/jobs";
 import { deptLabel } from "@/lib/depts";
 import Avatar from "@/components/Avatar";
 import { splitTags, tagLabel, SHARE_TAG, splitMeta } from "@/lib/jobTags";
-import { factLine, type FactAgg } from "@/lib/hospFacts";
+import { factLine, posBadges, type FactAgg } from "@/lib/hospFacts";
+import PosBadges from "@/components/jobs/PosBadges";
 /** 💼 공고 카드 (채용 목록·3교대 탈출 공용) */
 export default function JobCard({ j, pub, rv, fa, locked }: { j: any; pub: boolean; rv?: { id: number; avg: number; n: number }; fa?: FactAgg; locked?: boolean }) {
   const dd = j.closed ? "마감" : dday(j.deadline), hot = dd === "오늘 마감" || (dd.startsWith("D-") && Number(dd.slice(2)) <= 3), isNew = Date.now() - Date.parse(j.created_at) < 2 * 86400000;
@@ -18,6 +19,7 @@ export default function JobCard({ j, pub, rv, fa, locked }: { j: any; pub: boole
       <span className={"jb2-dd" + (hot ? " hot" : "") + (dd === "마감" ? " end" : "")}>{dd}</span></div>
     <div className="jb3-meta">{meta}</div>
     {(ft.length > 0 || (!pub && j.welfare)) && <div className="jb3-tags">{ft.map(t => <span key={t}>{tagLabel(t)}</span>)}{!pub && j.welfare && <span>🎁 {j.welfare}</span>}</div>}
+    <PosBadges list={posBadges(fa)} max={3} />
     {facts.length > 0 && <div className={"jb2-facts" + (locked ? " lock" : "")}>{facts.map(x => <span key={x}>{x}</span>)}</div>}
     <div className="jb3-f">{pub ? "공공 채용" : share ? "📢 회원 제보" : "🏥 병원 직접 등록"} · {ago(j.created_at)}</div>
   </Link>;
