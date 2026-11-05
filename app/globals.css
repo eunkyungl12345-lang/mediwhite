@@ -2203,3 +2203,10 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .st-res{display:grid}.st-res a{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}.st-res a:last-child{border:0}.st-res span{font-size:24px;flex:none}.st-res div{display:grid;gap:2px;min-width:0;flex:1}.st-res b{font-size:14.5px}.st-res small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-res em{font-style:normal;flex:none;font-size:11.5px;font-weight:700;color:#1F7A4C;background:#E6F6EE;padding:3px 8px;border-radius:6px}
 .ho-card h3 small{font-size:12px;color:#1F9D63;font-weight:700;margin-left:6px}
 @media (prefers-color-scheme:dark){.st-res em{background:#1F3530;color:#9FE0C0}}
+/* 🔗 외부 상근 공고 */
+.ex-list{display:grid;gap:10px}.ex{display:grid;gap:6px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.ex-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.ex-top b{font-size:16px}.ex-dd{flex:none;font-size:12px;font-weight:800;color:#C62828;background:#FDECEA;border-radius:999px;padding:3px 9px}
+.ex-meta{font-size:13px;color:var(--muted)}.ex-row{display:flex;flex-wrap:wrap;gap:6px}.ex-row span{font-size:12.5px;padding:4px 9px;border-radius:7px;background:var(--bg)}
+.ex-note{margin:0;font-size:14px;line-height:1.55}.ex-warn{margin:0;font-size:12.5px;color:#B26A00}
+.ex-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}.ex-acts .btn{font-size:13px;padding:9px 14px}
+@media (prefers-color-scheme:dark){.ex-dd{background:#3A1F1F;color:#FF9C9C}.ex-warn{color:#F2C46B}}

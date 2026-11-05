@@ -7,9 +7,10 @@ import { loadFacts, hasContributed, shiftCompare } from "@/lib/hospFactsDb";
 import { loadDistricts } from "@/lib/districtDb";
 import { getFocus } from "@/lib/focus";
 import JobCard from "@/components/jobs/JobCard";
+import { openExtJobs, EXT_SRC } from "@/lib/extJobs";
 export const dynamic = "force-dynamic";
 /** ☀️ 3교대 탈출 — 나이트 없는 삶, 실수령은 얼마나 줄까? (교대 vs 상근 비교 · 상근 공고 · 상근 병원) */
-export default async function DayPage() {
+export default async function DayPage({ searchParams }: { searchParams: { k?: string } }) {
   const s = (await getSession())!; const d = db();
   const [cmp, contributed, focus, { data: jobs }] = await Promise.all([shiftCompare(), hasContributed(s.id, s.role), getFocus(),
     d.from("jobs").select("id,hospital,region,dept,emp_type,pay,hours,welfare,deadline,views,closed,created_at,contact,body,author:users!jobs_author_id_fkey(nickname,dept,username)").eq("hidden", false).eq("closed", false).or("body.ilike.%#상근%,body.ilike.%#주4일%,hours.ilike.%상근%,hours.ilike.%평일%").order("created_at", { ascending: false }).limit(60)]);
@@ -18,6 +19,8 @@ export default async function DayPage() {
   const [facts, dist] = await Promise.all([loadFacts((hs ?? []).map(h => h.id)), loadDistricts((hs ?? []).map(h => h.id))]);
   const inFocus = (h: any) => !!focus && h.region === focus.region && (!focus.gus.length || focus.gus.includes(dist[h.id]));
   const hlist = [...(hs ?? [])].sort((a, b) => Number(inFocus(b)) - Number(inFocus(a)) || (facts[b.id]?.n ?? 0) - (facts[a.id]?.n ?? 0));
+  const ext0 = openExtJobs(), kinds = Array.from(new Set(ext0.map(e => e.k))), ek = kinds.includes(searchParams.k as any) ? searchParams.k! : "", ext = ext0.filter(e => !ek || e.k === ek);
+  const { data: eh } = await d.from("hospitals").select("id,name").in("name", Array.from(new Set(ext0.map(e => e.h)))); const EH = new Map((eh ?? []).map(h => [h.name, h.id]));
   const ready = cmp.shift.n >= MIN_N && cmp.day.n >= MIN_N, show = ready && contributed;
   const Col = ({ t, g, icon }: { t: string; g: typeof cmp.day; icon: string }) => <div className="dy-col"><small>{icon} {t}</small>
     <div><span>세후 실수령</span><b className={show ? "" : "dy-blur"}>{show ? (g.a.payMid ? `${g.a.payMid}만` : "-") : "300~350만"}</b></div>
@@ -34,6 +37,17 @@ export default async function DayPage() {
     <h3 className="dy-h">☀️ 상근·칼퇴 공고 <small>{open.length}</small></h3>
     {open.length ? <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={(j.author as any)?.username === "mw_bot"} locked={!contributed} />)}</div>
       : <div className="jb2-empty"><span>☀️</span><b>아직 상근 공고가 없어요</b><p>단톡방에서 상근·평일 근무 공고 봤다면 제보해주세요. 공고 올릴 때 '상근(데이)'·'주4일' 태그를 고르면 여기에 모여요.</p><Link href="/jobs/new?tip=1" className="btn">🤫 상근 공고 제보</Link></div>}
+
+    <h3 className="dy-h">🔗 다른 곳에 올라온 상근 공고 <small>{ext0.length}</small></h3>
+    <p className="muted" style={{ fontSize: 12.5, margin: "-4px 0 0", lineHeight: 1.55 }}>{EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 조건은 바뀔 수 있으니 <b>지원 전 원문을 꼭 확인</b>하세요.</p>
+    {kinds.length > 1 && <div className="rf-kw">{[["", "전체"], ...kinds.map(k => [k, k])].map(([k, n]) => <Link key={k} href={k ? `/jobs/day?k=${encodeURIComponent(k)}` : "/jobs/day"} className={ek === k ? "on" : ""} scroll={false}>{n}</Link>)}</div>}
+    <div className="ex-list">{ext.map(e => <div key={e.id} className="ex">
+      <div className="ex-top"><b>{e.h}</b>{e.until && <span className="ex-dd">~{e.until.slice(5).replace("-", "/")}</span>}</div>
+      <div className="ex-meta">{e.dept} · {e.area}</div>
+      <div className="ex-row"><span>⏰ {e.time}</span><span>💰 {e.pay}</span></div>
+      <p className="ex-note">☀️ {e.note}</p>{e.warn && <p className="ex-warn">⚠️ {e.warn}</p>}
+      <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC}에서 보고 지원 ↗</a>{EH.get(e.h) ? <Link href={`/hospitals/${EH.get(e.h)}`} className="btn ghost">이 병원 리뷰</Link> : <Link href={`/hospitals/check`} className="btn ghost">다녀봤어요 · 리뷰</Link>}</div>
+    </div>)}</div>
 
     <h3 className="dy-h">🏠 로컬 병원·의원 {focus && <small>{focus.label} 먼저</small>}</h3>
     {hlist.length ? <div className="jb2-list">{hlist.map(h => <Link key={h.id} href={`/hospitals/${h.id}`} className="jb2-card"><div className="jb2-h"><div className="jb2-hn"><b>{h.name}</b><small>{h.region}{dist[h.id] ? ` ${dist[h.id]}` : ""} · {h.kind}{inFocus(h) ? " · 📍" : ""}</small></div></div>
