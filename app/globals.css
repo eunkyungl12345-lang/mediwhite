@@ -2286,3 +2286,18 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .r3-heat{position:absolute;top:96px;left:12px;z-index:3;display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(40,20,10,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;font-size:11.5px;font-weight:700;pointer-events:none}.r3-heat i{width:70px;height:6px;border-radius:9px;background:rgba(255,255,255,.2);overflow:hidden}.r3-heat em{display:block;height:100%;background:linear-gradient(90deg,#ffd36e,#ff6f3c);transition:width .8s}.r3-heat b{font-weight:800;color:#ffd9b0}
 .r3-acts button.r3-jj{background:rgba(160,72,28,.62)}.r3-acts button.r3-jj.ice{background:rgba(40,120,180,.6)}.r3-acts button.r3-jj.ready{background:linear-gradient(90deg,#ff9f5a,#ff6f61);animation:r3ready 1s ease-in-out infinite}
 @keyframes r3ready{50%{transform:scale(1.06)}}
+.r3-eat{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;animation:r3eatIn .25s ease-out}
+.r3-eat-food{position:relative;width:132px;height:132px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff8ec,#f6e2c6);box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 -6px 0 rgba(0,0,0,.06);display:grid;place-items:center;overflow:hidden}
+.r3-eat-food>span{font-size:76px;line-height:1;animation:r3chew .32s ease-in-out infinite alternate}
+.r3-eat.cup .r3-eat-food>span{animation:r3sip .65s ease-in-out infinite alternate}
+.r3-eat-food .bite{position:absolute;width:40px;height:40px;border-radius:50%;background:#fbefdc;box-shadow:inset 0 0 0 2px rgba(0,0,0,.03)}
+.r3-eat-food .b0{top:26px;right:30px}.r3-eat-food .b1{top:46px;right:20px;width:34px;height:34px}.r3-eat-food .b2{top:20px;right:52px;width:30px;height:30px}
+.r3-eat.egg .b0{top:22px;right:40px}.r3-eat.egg .b1{top:34px;right:28px}.r3-eat.egg .b2{top:16px;right:56px}
+.r3-eat-food .lvl{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(232,201,138,.55),rgba(214,176,102,.65));transition:height .5s}
+.r3-eat-food .steam{position:absolute;top:6px;font-size:22px;animation:r3steam 1.2s ease-out infinite;font-weight:400}
+.r3-eat-say{font-size:22px;font-weight:900;color:#fff;background:rgba(160,72,28,.85);padding:4px 16px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.3);animation:r3pop .3s ease-out}
+@keyframes r3eatIn{from{opacity:0;transform:translate(-50%,-40%) scale(.8)}}
+@keyframes r3chew{from{transform:scale(1) rotate(-4deg)}to{transform:scale(.9,1.06) rotate(4deg)}}
+@keyframes r3sip{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-6px) rotate(6deg)}}
+@keyframes r3steam{from{opacity:.9;transform:translateY(6px)}to{opacity:0;transform:translateY(-14px)}}
+@keyframes r3pop{from{transform:scale(.6)}}

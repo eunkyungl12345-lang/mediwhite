@@ -249,7 +249,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const amb = useRef<Ambience | null>(null); const sndRef = useRef(snd); sndRef.current = snd;
   const [fwOpen, setFwOpen] = useState(false); const [burning, setBurning] = useState<string | null>(null); const fwCd = useRef(0);
   const [mode, setMode] = useState<"normal" | "zen">("normal"), [say, setSay] = useState(""), [burn, setBurn] = useState<string | null>(null), [busy, setBusy] = useState(false), [sitting, setSitting] = useState(false);
-  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
+  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number; hold?: { m: THREE.Object3D; t: number; dur: number; kind: string } }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
   const peopleRef = useRef(people), breathRef = useRef(breathK), sceneRef = useRef(scene), modeRef = useRef(mode);
   peopleRef.current = people; breathRef.current = breathK; sceneRef.current = scene; modeRef.current = mode;
   const moveTimer = useRef<any>(null);
@@ -318,6 +318,10 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       };
       if (S.me) anim(S.me, true); S.others.forEach(a => anim(a, false)); S.npcs?.forEach(n => anim(n.a, false));
       // 이모지·종이
+      if (S.hold && S.me) { const H = S.hold, a = S.me; H.t += dt; const sit = a.pose === "sit"; const hy = (sit ? 1.22 : 1.42) - .28; const k = Math.min(1, H.t / .35); const bob = H.kind === "cup" ? 0 : Math.max(0, Math.sin(H.t * 7)) * .08;
+        H.m.position.set(.28 * (1 - k) + .02, (sit ? .7 : .9) * (1 - k) + (hy + bob) * k, .3 + k * .2 - bob); H.m.rotation.x = H.kind === "cup" ? -k * .9 : 0; H.m.rotation.z = H.kind === "potato" ? .3 : 0;
+        if (H.kind !== "cup") { const s = 1 - Math.min(.7, H.t / H.dur * .7); H.m.scale.setScalar(s); }
+        if (H.t > H.dur) { a.g.remove(H.m); S.hold = undefined; } }
       for (const e of S.emo) { e.t += dt; e.sp.position.y += dt * .9; (e.sp.material as THREE.SpriteMaterial).opacity = Math.max(0, 1 - e.t / 1.8); } S.emo = S.emo.filter(e => { if (e.t > 1.8) { sc.remove(e.sp); return false; } return true; });
       if (S.paper) { const p = S.paper; p.t += dt; const fp = FIRE[sceneRef.current].clone().add(new THREE.Vector3(0, .9, 0)); p.sp.position.lerpVectors(p.from, fp, Math.min(1, p.t / 1.4)); p.sp.position.y += Math.sin(Math.min(1, p.t / 1.4) * Math.PI) * 1.2; p.sp.material.rotation += dt * 4; if (p.t > 1.4) { p.sp.material.opacity -= dt * 2.5; if (p.sp.material.opacity <= 0) { sc.remove(p.sp); S.paper = undefined; } } }
       // 카메라
@@ -367,16 +371,35 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const goTo = (k: keyof typeof SAUNA_SPOTS) => { const S = st.current; const a = S.me; if (!a) return; const sp = SAUNA_SPOTS[k]; a.tx = sp.x + (Math.random() - .5) * .6; a.tz = sp.z + (Math.random() - .5) * .4; a.pose = "stand"; S.seat = -1; setSitting(false); emitMove("stand"); };
   const announce = (t: string) => { restSay(t).catch(() => {}); const a = st.current.me; if (a) { setBubble(a, t); setTimeout(() => { if (a.bubbleText === t) setBubble(a, null); }, 8000); } };
   const reward = async () => { const J = jj.current; if (J.done || Date.now() - J.at < 60000) return; J.done = true; const x = await restDone("sauna").catch(() => 0); onXp(x ? `🧖 오늘 찜질 완료 +${x} XP` : "🧖 오늘 찜질 완료"); };
-  const potato = () => {
-    if (pot < 0) { goTo("coal"); setPot(Date.now()); onToast("🍠 숯불에 고구마를 묻었어요 · 40초면 익어요"); return; }
-    if (potPct < 100) { onToast(`🍠 아직 익는 중이에요 (${potPct}%)`); return; }
-    setPot(-1); if (potPct >= 170) { emo("⚫"); onToast("🥲 숯이 됐어요… 다음엔 일찍 꺼내요"); return; }
-    emo("😋"); announce("🍠 군고구마 다 익었다~ 호호 불어서 냠"); reward(); };
-  const eggTap = () => {
-    if (egg === 0) { goTo("shop"); setEgg(1); onToast("🥚 맥반석 달걀 하나 집었어요 · 한 번 더 누르면 이마로 톡!"); return; }
-    if (egg === 1) { st.current.bump = performance.now(); emo("💥"); try { navigator.vibrate?.(35); } catch {} setEgg(2); onToast("🐑 양머리 이마에 톡! 쩍 갈라졌어요"); return; }
-    setEgg(0); emo("😋"); announce("🥚 맥반석 달걀 이마로 깨먹기 성공!"); reward(); };
-  const sikhye = () => { if (sip === 0) goTo("shop"); const n = sip + 1; emo("🥤"); if (n >= 3) { setSip(0); announce("🥤 캬~ 살얼음 식혜 원샷!"); reward(); } else { setSip(n); onToast("🥤 쭈욱… 살얼음이 사각사각"); } };
+  const sfx = async () => { if (sndRef.current !== "on" && sndRef.current !== "off") { await soundOn(); sndRef.current = "on"; } return sndRef.current === "on" ? amb.current : null; };
+  /** 앞에 놓는 작은 숯불 화로 + 고구마 */
+  const [eat, setEat] = useState<{ kind: "potato" | "egg" | "cup"; step: number; key: number; last: boolean } | null>(null);
+  const grill = useRef<{ g: THREE.Group; pot: THREE.Mesh; stop?: () => void } | null>(null);
+  const dropGrill = () => { const G = grill.current; if (!G) return; G.stop?.(); st.current.sc?.remove(G.g); grill.current = null; };
+  const placeGrill = async () => { const S = st.current; const a = S.me; if (!a || !S.sc) return; dropGrill(); const g = new THREE.Group();
+    g.add(boxMesh(.7, .16, .5, M(0x2c2c30, .5), 0, .08, 0)); const coal = M(0x2a1a14, .9, 0xff4a10, 1.1); for (let i = 0; i < 8; i++) { const c = new THREE.Mesh(new THREE.DodecahedronGeometry(.07, 0), coal); c.position.set(-.24 + (i % 4) * .16, .2, -.08 + Math.floor(i / 4) * .16); g.add(c); }
+    const pot = new THREE.Mesh(new THREE.CapsuleGeometry(.09, .26, 4, 10), M(0x7a3352, .8)); pot.rotation.z = Math.PI / 2; pot.position.set(0, .3, 0); g.add(pot); const l = new THREE.PointLight(0xff5a1a, 1.4, 2.5, 2); l.position.y = .5; g.add(l);
+    const ry = a.g.rotation.y; g.position.set(a.g.position.x + Math.cos(ry) * .9 + Math.sin(ry) * .3, 0, a.g.position.z - Math.sin(ry) * .9 + Math.cos(ry) * .3); S.sc.add(g); grill.current = { g, pot }; const au = await sfx(); if (au && grill.current?.g === g) grill.current.stop = au.sizzle(); };
+  useEffect(() => { if (pot < 0 || !grill.current) return; const k = Math.min(1, potPct / 100), m = grill.current.pot.material as THREE.MeshStandardMaterial; m.color.setHex(potPct >= 170 ? 0x1a1414 : 0x7a3352).lerp(new THREE.Color(potPct >= 170 ? 0x1a1414 : 0xa0522d), potPct >= 170 ? 0 : k); if (potPct % 6 === 0) { const S = st.current; const G = grill.current; if (S.sc && G) { const sp = textSprite(potPct >= 100 ? "♨️" : "💨", { bg: "rgba(0,0,0,0)", size: 30, pad: 2 }); sp.position.set(G.g.position.x, .6, G.g.position.z); S.sc.add(sp); S.emo.push({ sp, t: 0 }); } } }); // eslint-disable-line
+  useEffect(() => { if (scene !== "sauna") { dropGrill(); setPot(-1); } }, [scene]); // eslint-disable-line
+  /** 먹는 모션: 손에 든 음식이 입으로 왔다 갔다 + 냠 */
+  const eatItem = async (kind: "potato" | "egg" | "cup", sec = 2.4) => { const S = st.current; const a = S.me; if (!a) return; S.hold && a.g.remove(S.hold.m);
+    const m = kind === "potato" ? (() => { const g = new THREE.Group(); const skin = new THREE.Mesh(new THREE.CapsuleGeometry(.09, .22, 4, 10), M(0x7a3352, .8)); const in_ = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 8), M(0xf2b23a, .6, 0xf2a020, .25)); in_.position.y = .16; skin.add(in_); g.add(skin); return g; })()
+      : kind === "egg" ? (() => { const e = new THREE.Mesh(new THREE.SphereGeometry(.09, 12, 10), M(0xfaf6ee, .5)); e.scale.set(1, 1.25, 1); const y = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 8), M(0xf2b23a, .6)); y.position.z = .07; e.add(y); return e; })()
+      : (() => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(.1, .08, .2, 12), M(0xf5e6c8, .4)); const d = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .02, 12), M(0xe8cf98, .6)); d.position.y = .08; g.add(c, d); return g; })();
+    a.g.add(m); S.hold = { m, t: 0, dur: sec, kind }; const au = await sfx();
+    const key = Date.now(); setEat({ kind, step: 0, key, last: kind === "cup" && sip + 1 >= 3 }); for (let i = 1; i <= 3; i++) setTimeout(() => setEat(e => e && e.key === key ? { ...e, step: i } : e), i * sec * 1000 / 4); setTimeout(() => setEat(e => e && e.key === key ? null : e), sec * 1000 + 500);
+    if (kind === "cup") { au?.slurp(); setTimeout(() => au?.slurp(), 650); } else au?.chew(Math.round(sec * 1.6)); };
+  const potato = async () => { const potPct = pot < 0 ? 0 : Math.floor((Date.now() - pot) / 400);
+    if (pot < 0) { setPot(Date.now()); placeGrill(); onToast("🍠 내 앞 숯불에 고구마를 올렸어요 · 치지직… 40초면 익어요"); return; }
+    if (potPct < 100) { onToast(`🍠 아직 익는 중이에요 (${potPct}%) · 치지직`); return; }
+    setPot(-1); dropGrill(); if (potPct >= 170) { emo("⚫"); onToast("🥲 숯이 됐어요… 다음엔 일찍 꺼내요"); return; }
+    eatItem("potato", 2.6); onToast("😋 후후 불어서 한 입… 꿀고구마!"); setTimeout(() => announce("🍠 군고구마 꿀맛~ 호호"), 1800); reward(); };
+  const eggTap = async () => {
+    if (egg === 0) { setEgg(1); onToast("🥚 맥반석 달걀 하나 받았어요 · 한 번 더 누르면 이마로 톡!"); return; }
+    if (egg === 1) { st.current.bump = performance.now(); emo("💥"); try { navigator.vibrate?.(35); } catch {} (await sfx())?.crack(); setEgg(2); onToast("🐑 양머리 이마에 톡! 쩍 갈라졌어요 · 까서 먹어요"); return; }
+    setEgg(0); eatItem("egg", 2); onToast("😋 소금 콕 찍어서 한 입에 꿀꺽"); setTimeout(() => announce("🥚 맥반석 달걀 이마로 깨먹기 성공!"), 1500); reward(); };
+  const sikhye = async () => { const n = sip + 1; eatItem("cup", 1.3); if (n >= 3) { setSip(0); setTimeout(async () => { (await sfx())?.iceClink(); emo("😮‍💨"); }, 1200); onToast("🥤 캬~ 살얼음 식혜 원샷!"); setTimeout(() => announce("🥤 캬~ 살얼음 식혜 원샷!"), 1300); reward(); } else { setSip(n); onToast("🥤 후루룩… 살얼음이 사각사각"); } };
 
   return (
     <div className={"r3" + (mode === "zen" ? " zen" : "") + (full ? " full" : "")}>
@@ -386,12 +409,15 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
         <span className="r3-right"><button type="button" className={"r3-snd" + (snd === "on" ? " on" : "")} onClick={() => snd === "on" ? soundOff() : soundOn()} aria-label="소리">{snd === "on" ? "🔊" : "🔇"}</button><span className="r3-count">👥 {here}명</span></span>
       </div>
       {mode === "zen" ? <><button type="button" className="r3-zen-exit" onClick={() => setMode("normal")}>{scene === "zen" ? "명상 끝내기" : "불멍 끝내기"}</button>{scene === "zen" && <div className="r3-breath" aria-hidden><div className="r3-breath-c" /><div className="r3-breath-t"><span>들이쉬기 4</span><span>멈추기 7</span><span>내쉬기 8</span></div></div>}</> : <>
+        {scene === "sauna" && eat && <div className={"r3-eat " + eat.kind} key={eat.key}>
+          <div className="r3-eat-food"><span>{eat.kind === "potato" ? "🍠" : eat.kind === "egg" ? "🥚" : "🥤"}</span>{eat.kind !== "cup" ? [0, 1, 2].filter(i => i < eat.step).map(i => <i key={i} className={"bite b" + i} />) : <em className="lvl" style={{ height: `${Math.max(0, 70 - eat.step * 22)}%` }} />}{eat.kind === "potato" && <b className="steam">♨️</b>}</div>
+          <div className="r3-eat-say" key={eat.step}>{(eat.kind === "potato" ? ["후후~", "냠", "냠냠", "꿀맛!"] : eat.kind === "egg" ? ["톡", "냠", "냠냠", "꿀꺽"] : ["후루룩", "쭈욱", "사각사각", eat.last ? "캬~!" : "시원해"])[eat.step]}</div></div>}
         {scene === "sauna" && <div className="r3-heat"><span>🌡️ 땀</span><i><em style={{ width: `${heat}%` }} /></i><b>{heat > 85 ? "얼음방 가요!" : heat > 50 ? "개운해요" : "데워지는 중"}</b></div>}<div className="r3-hint">{snd === "wait" ? "🔊 화면을 한 번 탭하면 소리가 켜져요" : "바닥을 탭하면 걸어가요 · 좌우로 끌면 둘러보기"}</div>
         {snd === "on" && <input type="range" className="r3-vol" min={0} max={1} step={.05} value={vol} onChange={e => setVol(Number(e.target.value))} aria-label="볼륨" />}
         <div className="r3-acts">
           {scene === "sauna" && <>            <button type="button" className={"r3-jj" + (potPct >= 100 && potPct < 170 ? " ready" : "")} onClick={potato}><span>{potPct >= 170 ? "⚫" : "🍠"}</span>{pot < 0 ? "고구마 굽기" : potPct < 100 ? `굽는 중 ${potPct}%` : potPct < 170 ? "꺼내 먹기!" : "타버렸어요"}</button>
             <button type="button" className="r3-jj" onClick={eggTap}><span>{egg === 2 ? "🍳" : "🥚"}</span>{egg === 0 ? "맥반석 달걀" : egg === 1 ? "이마로 톡!" : "까서 먹기"}</button>
-            <button type="button" className="r3-jj" onClick={sikhye}><span>🥤</span>{sip === 0 ? "살얼음 식혜" : `쭈욱 ${sip}/3`}</button>
+            <button type="button" className="r3-jj" onClick={sikhye}><span>🥤</span>{sip === 0 ? "살얼음 식혜" : `후루룩 ${sip}/3`}</button>
             <button type="button" className="r3-jj ice" onClick={() => { goTo("ice"); onToast("🧊 얼음방으로 가요 · 땀 식히기"); }}><span>🧊</span>얼음방</button></>}
           <button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
           <button type="button" onClick={() => setBurn(b => b === null ? "" : null)}><span>🔥</span>걱정 태우기</button>
