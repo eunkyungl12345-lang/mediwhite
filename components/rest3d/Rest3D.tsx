@@ -357,7 +357,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
         <div className="r3-hint">{snd === "wait" ? "🔊 화면을 한 번 탭하면 소리가 켜져요" : "바닥을 탭하면 걸어가요 · 좌우로 끌면 둘러보기"}</div>
         {snd === "on" && <input type="range" className="r3-vol" min={0} max={1} step={.05} value={vol} onChange={e => setVol(Number(e.target.value))} aria-label="볼륨" />}
         <div className="r3-acts">
-          <button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
+          <a href="/rest/sauna" className="r3-sauna"><span>🧖</span>찜질방</a><button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
           <button type="button" onClick={() => setBurn(b => b === null ? "" : null)}><span>🔥</span>걱정 태우기</button>
           {scene === "zen" ? <><button type="button" onClick={strikeBowl}><span>🔔</span>싱잉볼</button><button type="button" onClick={() => setMode("zen")}><span>🧘</span>명상 모드</button></> : <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불멍 모드</button>}{scene === "roof" && <button type="button" className={fwOpen ? "on" : ""} onClick={() => setFwOpen(o => !o)}><span>🎆</span>불꽃놀이</button>}{extra}
         </div>

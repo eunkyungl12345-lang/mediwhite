@@ -2282,3 +2282,5 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .sn-o small{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;font-weight:700;background:rgba(255,255,255,.88);color:#3A2A1A;border-left:3px solid var(--dc);padding:1px 6px;border-radius:8px}
 @keyframes snfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @media(max-width:480px){.sn-of{font-size:24px}.sn-o small{max-width:72px;font-size:9.5px}}
+
+.r3-acts .r3-sauna{flex:none;display:flex;align-items:center;gap:4px;white-space:nowrap;border-radius:999px;padding:9px 13px;font-size:12.5px;font-weight:800;color:#fff;text-decoration:none;background:linear-gradient(90deg,#FF9F5A,#FF6F61);border:1px solid rgba(255,255,255,.3);box-shadow:0 4px 14px rgba(255,111,97,.35)}
