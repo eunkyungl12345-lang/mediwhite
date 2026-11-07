@@ -19,7 +19,7 @@ export default async function Handover() {
   const top = Array.from(vc.entries()).sort((x, y) => y[1] - x[1]).slice(0, 5), nh = (notes ?? []).map(n => Number(String(n.game).split(":")[1]));
   const ids = Array.from(new Set([...top.map(t => t[0]), ...nh])); const { data: hs } = ids.length ? await d.from("hospitals").select("id,name,region").in("id", ids) : { data: [] as any[] };
   const H = new Map((hs ?? []).map(h => [h.id, h]));
-  const stat = [["🔎 실체 체크", a.count], ["⭐ 리뷰", rv], ["🎁 복지 평가", b.count], ["🎤 면접 후기", c.count], ["📋 인계 노트", e.count], ["💼 새 공고", jb]] as [string, number | null][];
+  const stat = [["⭐ 병원 리뷰", (a.count ?? 0) + (rv ?? 0)], ["🎁 복지 평가", b.count], ["🎤 면접 후기", c.count], ["📋 인계 노트", e.count], ["💼 새 공고", jb]] as [string, number | null][];
   const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10), next = HOLIDAYS_2027.find(h => h[0] >= today);
   const months = Array.from({ length: 12 }, (_, m) => HOLIDAYS_2027.filter(h => Number(h[0].slice(5, 7)) === m + 1));
   return <div className="ho">

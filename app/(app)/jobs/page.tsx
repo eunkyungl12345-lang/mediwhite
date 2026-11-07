@@ -48,18 +48,20 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const exReg = (a: string) => a.startsWith("서울") ? "서울" : /고양|파주|의정부|남양주|구리|양주|동두천|포천|연천|김포/.test(a) ? "경기 북부" : a.startsWith("경기") ? "경기 남부" : "";
   const ext = (!src || src === "ext") && !soonOnly ? openExtJobs().filter(e => (!dept || EXK[e.k] === dept) && (!region || exReg(e.area) === region) && (!kw || e.h.includes(kw)) && (!tg || extTags(e.id).includes(tg)) && (searchParams.g3 !== "1" || isG3(e))).sort((a, b) => Number(isG3(b)) - Number(isG3(a))) : [];
   const { data: exH } = ext.length ? await d.from("hospitals").select("id,name").in("name", Array.from(new Set(ext.map(e => e.h)))) : { data: [] as any[] }; const EXH = new Map((exH ?? []).map(h => [h.name, h.id])); const exF = EXH.size ? await loadFacts(Array.from(EXH.values())) : {};
+  const exCnt: Record<string, number> = {}; for (const e of openExtJobs()) { const k = EXK[e.k]; if (k) exCnt[k] = (exCnt[k] ?? 0) + 1; }
   const soon = open.filter(j => { const x = dday(j.deadline); return x === "오늘 마감" || (x.startsWith("D-") && Number(x.slice(2)) <= 3); }).length;
   return (
     <div className="jb2">
       <div className="jb-head"><h2>💼 의료 채용</h2><Link href="/jobs/new" className="btn">📤 공고 올리기</Link></div>
-      <Link href="/jobs/day" className="day-banner"><span>☀️</span><div><b>🌙 저녁 약속 잡을 수 있는 알짜 병원</b><small>나이트 없는 상근·낮 근무 {openExtJobs().length}곳 · 3교대 탈출관</small></div><em>›</em></Link>
+      <Link href="/jobs/day" className="day-banner"><span>🌙</span><div><b>저녁 약속 잡을 수 있는 알짜 병원</b><small>나이트 없는 상근·낮 근무 {openExtJobs().length}곳 · 3교대 탈출관</small></div><em>›</em></Link>
       <form className="jb2-search" action="/jobs">{dept && <input type="hidden" name="dept" value={dept} />}{region && <input type="hidden" name="region" value={region} />}<input name="q" defaultValue={kw} placeholder="병원 이름으로 찾기 (예: 서울대, 의료원)" /><button className="btn">검색</button></form>
-      <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && cnt[x] ? <small>{cnt[x]}</small> : null}</Link>)}</div>
+      <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].filter(x => !x || x === dept || (cnt[x] ?? 0) + (exCnt[x] ?? 0) > 0).map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && (cnt[x] ?? 0) + (exCnt[x] ?? 0) ? <small>{(cnt[x] ?? 0) + (exCnt[x] ?? 0)}</small> : null}</Link>)}</div>
       <div className="jb2-filters">
         <Link href={link({ src: "" })} className={!src ? "on" : ""}>전체</Link><Link href={link({ src: "public" })} className={src === "public" ? "on" : ""}>🏛️ 대학·공공병원</Link><Link href={link({ src: "member" })} className={src === "member" ? "on" : ""}>👤 회원 공고</Link><Link href={link({ src: "share" })} className={src === "share" ? "on" : ""}>🤫 히든 공고</Link><Link href={link({ src: "ext" })} className={src === "ext" ? "on" : ""}>☀️ 상근 공고(외부)</Link>
         <RegionSelect value={region} />
       </div>
-      <div className="jb2-quick"><Link href={link({ g3: searchParams.g3 === "1" ? "" : "1" })} className={"g3" + (searchParams.g3 === "1" ? " on" : "")}>📍 강남 3구</Link>{QUICK.map(x => <Link key={x.id} href={link({ t: tg === x.id ? "" : x.id })} className={tg === x.id ? "on" : ""}>{x.label}</Link>)}</div>
+      <details className="jb2-fold" open={!!tg || searchParams.g3 === "1"}><summary>⚙️ 조건으로 거르기{tg || searchParams.g3 === "1" ? <b> · {[searchParams.g3 === "1" ? "강남 3구" : "", tg ? QUICK.find(q => q.id === tg)?.label.replace(/^\S+\s/, "") ?? tg : ""].filter(Boolean).join(" · ")}</b> : <small>야간진료 없음 · 토요 휴무 · 연차 보장 · 강남 3구…</small>}</summary>
+        <div className="jb2-quick"><Link href={link({ g3: searchParams.g3 === "1" ? "" : "1" })} className={"g3" + (searchParams.g3 === "1" ? " on" : "")}>📍 강남 3구</Link>{QUICK.map(x => <Link key={x.id} href={link({ t: tg === x.id ? "" : x.id })} className={tg === x.id ? "on" : ""}>{x.label}</Link>)}</div></details>
       <div className="jb2-sum"><span>모집 중 <b>{(src === "ext" ? 0 : open.length) + ext.length}</b></span>{soon > 0 && <span className="hot">⏰ 3일 안에 마감 {soon}</span>}{kw && <span>‘{kw}’ 검색 · <Link href={link({ q: "" })}>해제</Link></span>}</div>
       {s.role === "admin" && <ImportButton />}
       {ext.length > 0 && <><h3 className="dy-h" style={{ margin: "4px 0 0" }}>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h3><div className="jb2-list">{ext.map(e => <ExtCard key={e.id} e={e} hid={EXH.get(e.h)} fa={EXH.get(e.h) ? exF[EXH.get(e.h)!] : undefined} />)}</div></>}

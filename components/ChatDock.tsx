@@ -24,6 +24,9 @@ export default function ChatDock({ me, initial, online, myRank, official, roomsO
     return () => ro.disconnect();
   }, []);
   const setOpenPersist = (v: boolean) => { setOpen(v); try { localStorage.setItem("mw-chat-open", v ? "1" : "0"); } catch {} if (v) setUnread(0); };
+  // 📱 휴대폰은 떠 있는 채팅 버튼 대신 상단 💬 아이콘에서 열어요
+  useEffect(() => { const f = () => setOpenPersist(true); window.addEventListener("mw-chat", f); return () => window.removeEventListener("mw-chat", f); });
+  useEffect(() => { window.dispatchEvent(new CustomEvent("mw-chat-unread", { detail: unread })); }, [unread]);
 
   // 손가락 따라오는 스와이프: 바를 잡고 위/아래로 끌면 그만큼 열리고, 놓을 때 속도/거리로 판정
   const onDown = (e: React.PointerEvent) => {

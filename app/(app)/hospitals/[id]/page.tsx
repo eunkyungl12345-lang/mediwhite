@@ -61,7 +61,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   type LI = { key: string; rid?: number; meta: string[]; star: number; title?: string; pros?: string; cons?: string; tip?: string; v?: boolean; mine: boolean; at: string };
   const list: LI[] = [
     ...rs.map(r => ({ key: "r" + r.id, rid: r.id, meta: [r.dept, r.status === "재직" ? "현직원" : "전직원", h.region, ym(r.created_at)], star: overall([r]), pros: r.pros, cons: r.cons, tip: r.tip, v: r.verified, mine: r.user_id === s.id, at: r.created_at })),
-    ...(fa.n >= need ? (hfFull ?? []).filter(r => { const x = r.state as any; return x?.last || x?.pros || x?.cons; }).map(r => { const x = r.state as any; return { key: factPubKey(r.user_id, id), meta: ["실체 체크", x.status === "퇴사" ? "전직원" : "현직원", ym(x.at)], star: x.overall ?? 0, title: x.last, pros: x.pros, cons: x.cons, v: x.v, mine: r.user_id === s.id, at: x.at ?? "" }; }) : []),
+    ...(fa.n >= need ? (hfFull ?? []).filter(r => { const x = r.state as any; return x?.last || x?.pros || x?.cons; }).map(r => { const x = r.state as any; return { key: factPubKey(r.user_id, id), meta: [x.status === "퇴사" ? "전직원" : "현직원", ym(x.at)], star: x.overall ?? 0, title: x.last, pros: x.pros, cons: x.cons, v: x.v, mine: r.user_id === s.id, at: x.at ?? "" }; }) : []),
   ].sort((a, b) => Number(!!b.v) - Number(!!a.v) || b.at.localeCompare(a.at));
   const recOk = fa.recN >= need, statBars = fa.starN >= need ? fa.stars.map(x => ({ name: x.name, avg: x.avg })) : rs.length ? RATING_KEYS.map(k => ({ name: k.name, avg: avg(rs, k.key) })).sort((a, b) => Number(/분위기/.test(b.name)) - Number(/분위기/.test(a.name))) : [];
   const tabHref = (k: string) => `/hospitals/${id}${k === "rev" ? "" : `?t=${k}`}`;
@@ -73,7 +73,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <div className="hh-badges">{!!myJobs?.length && <a href={tabHref("jobs")} className="hh-b job">💼 채용 중 {myJobs.length}</a>}{(fa.verified + vN) > 0 && <span className="hh-b vf">✅ 인증 {fa.verified + vN}</span>}</div>
         <div className="hh-name"><span className="hh-logo">🏥</span><div><h2>{h.name}</h2><small>{h.region}{gu ? ` ${gu}` : ""} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></small></div></div>
         <PosBadges list={posBadges(fa)} max={6} />
-        <div className="hh-score">★ <b>{score ? score.toFixed(1) : "-"}</b><small>{fa.n ? `실체 체크 ${fa.n}` : ""}{fa.n && rs.length ? " · " : ""}{rs.length ? `리뷰 ${rs.length}` : ""}{!fa.n && !rs.length ? "아직 평가 없음" : ""}</small></div>
+        <div className="hh-score">★ <b>{score ? score.toFixed(1) : "-"}</b><small>{fa.n + rs.length ? `리뷰 ${fa.n + rs.length}` : "아직 평가 없음"}</small></div>
       </div>
       <nav className="hh-tabs">{([["rev", `리뷰 ${rs.length + fa.n || ""}`], ["pay", "급여"], ["intv", `면접 ${ivs.length || ""}`], ["welfare", "복지"], ["note", "인계장"], ["jobs", `채용 ${myJobs?.length || ""}`]] as [string, string][]).map(([k, n]) => <Link key={k} href={tabHref(k)} className={t === k ? "on" : ""} scroll={false}>{n}</Link>)}</nav>
       {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요. <b>+50 XP</b>{vstat !== "approved" && <> · <Link href={`/hospitals/verify?id=${id}`} className="link"><b>✅ 명찰/서류로 인증하면 더 믿을 만해져요 →</b></Link></>}</div>}
@@ -92,7 +92,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       {mine && !myHidden && <details className="card ss-details" open={!!searchParams.write}><summary><b>✏️ 예전에 쓴 내 리뷰 수정</b></summary><ReviewForm hospital={{ id: h.id, name: h.name, region: h.region }} dept={s.dept} mine={mine} proofState={proofState as any} /></details>}
       {(blindN ?? 0) > 0 && <div className="rv-blind">🔒 신고·권리침해 요청으로 <b>{blindN}개</b> 리뷰가 운영팀 검토 중이라 잠시 가려져 있어요 (최대 30일). 검토 후 다시 보이거나 삭제돼요.</div>}
       <div className="rv2-head"><b>리뷰 <em>{list.length}</em></b>{vN + fa.verified > 0 && <small>✅ 인증 {vN + fa.verified}</small>}</div>
-      {!list.length ? <div className="fb fb-wait"><b>아직 공개된 리뷰가 없어요</b><p>{fa.n ? `실체 체크 ${fa.n}명 — ${need}명이 모이면 한줄평·장단점이 공개돼요.` : "이 병원을 다녀봤다면 첫 리뷰를 남겨주세요."}</p><Link href={`/hospitals/check?id=${id}`} className="btn">＋ 리뷰 작성 +50</Link></div>
+      {!list.length ? <div className="fb fb-wait"><b>아직 공개된 리뷰가 없어요</b><p>{fa.n ? `${fa.n}명이 남겼어요 — ${need}명이 모이면 한줄평·장단점이 공개돼요.` : "이 병원을 다녀봤다면 첫 리뷰를 남겨주세요. 딱 세 가지면 돼요."}</p><Link href={`/hospitals/check?id=${id}`} className="btn">＋ 리뷰 작성 +50</Link></div>
       : <div className="rv2-list">{list.map(x => <article key={x.key} className={"rv2" + (x.mine ? " mine" : "")}>
         <div className="rf-meta">{x.meta.join("  |  ")}{x.v ? <em>✅ 인증</em> : null}{x.mine ? <em className="me">내 리뷰</em> : null}</div>
         {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><span className="rf-stars">{[1, 2, 3, 4, 5].map(i => <i key={i} className={x.star >= i - .25 ? "on" : ""}>★</i>)}</span></div>}

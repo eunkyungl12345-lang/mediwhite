@@ -12,7 +12,7 @@ export async function uploadXrayPhoto(_: R, fd: FormData): Promise<R> {
   if (!xvBySlug(slug)) return { error: "잘못된 촬영법이에요" }; if (!(XP_KINDS as readonly string[]).includes(kind)) return { error: "사진 종류를 골라주세요" };
   if (fd.get("agree") !== "on") return { error: "개인정보를 지웠는지 확인에 체크해주세요" };
   const files = fd.getAll("photo").filter((f): f is File => f instanceof File && f.size > 0).slice(0, 3);
-  if (!files.length) return { error: "사진을 골라주세요" }; if (files.some(f => f.size > 6 * 1024 * 1024 || !f.type.startsWith("image/"))) return { error: "6MB 이하 사진만 올릴 수 있어요" };
+  if (!files.length) return { error: "사진을 골라주세요" }; if (files.some(f => !f.type.startsWith("image/"))) return { error: "사진 파일만 올릴 수 있어요" }; if (files.reduce((a, f) => a + f.size, 0) > 4 * 1024 * 1024) return { error: "사진이 너무 커요. 한 번에 4MB 안으로, 장수를 나눠서 올려주세요" };
   const { count } = await s.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", u.id).like("game", "xrimg:%").eq("state->>status", "pending");
   if ((count ?? 0) >= 15) return { error: "심사 중인 사진이 많아요. 승인된 뒤에 더 올려주세요" };
   for (const f of files) {

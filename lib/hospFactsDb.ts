@@ -1,7 +1,13 @@
 import { db } from "./supabase";
 import { aggregate, SMALL_N, MIN_N, type FactAgg, type HFact } from "./hospFacts";
 /** 병원 id들 → 실체 체크 집계 */
+/** 📦 전체 집계는 60초 캐시 (병원 리뷰·채용 화면이 매번 수천 줄을 읽지 않게). 리뷰 저장 시 memoDel("facts_") */
 export async function loadFacts(hids?: number[]): Promise<Record<number, FactAgg>> {
+  if (hids && !hids.length) return {};
+  const { memo } = await import("./memo"); const all = await memo("facts_all", 60_000, () => loadFactsRaw());
+  if (!hids) return all; const out: Record<number, FactAgg> = {}; for (const h of hids) if (all[h]) out[h] = all[h]; return out;
+}
+async function loadFactsRaw(hids?: number[]): Promise<Record<number, FactAgg>> {
   let q = db().from("game_state").select("user_id,game,state").like("game", "hfact:%").limit(5000);
   if (hids) { if (!hids.length) return {}; q = q.in("game", hids.map(h => `hfact:${h}`)); }
   let vq = db().from("game_state").select("user_id,game,state").like("game", "hverify:%").limit(5000); if (hids) vq = vq.in("game", hids.map(h => `hverify:${h}`));

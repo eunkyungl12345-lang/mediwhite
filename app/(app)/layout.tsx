@@ -15,6 +15,7 @@ import { runSchedulers } from "@/lib/scheduler";
 import { memo, memoOnce } from "@/lib/memo";
 import Onboarding, { TourButton } from "@/components/Onboarding";
 import HeaderMenu from "@/components/HeaderMenu";
+import ChatBtn from "@/components/ChatBtn";
 import { menuFresh } from "@/lib/menuFresh";
 import WriteFab from "@/components/WriteFab";
 import SideNav from "@/components/shell/SideNav";
@@ -55,7 +56,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <header>
         <div className="brand"><h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트웹</Link></h1></div>
         <div className="hd-r">
-          <span className="hd-desk"><TourButton /></span><Bell initial={unread ?? 0} />
+          <span className="hd-desk"><TourButton /></span><span className="hd-mob"><ChatBtn /></span><Bell initial={unread ?? 0} />
           <div className="me hd-desk"><Link href="/my" className="me-rank" title="MY">[{s.dept}]{s.nickname}</Link>{s.role === "admin" && <Link href="/admin" className="tag" style={{ textDecoration: "none" }}>관리자</Link>}<form action={logout}><button>나가기</button></form></div>
           <HeaderMenu fresh={fresh} admin={s.role === "admin"} logout={logout} name={<Name r={rank} dept={s.dept} nickname={s.nickname} />} />
         </div>

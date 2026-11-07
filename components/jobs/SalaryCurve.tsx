@@ -20,6 +20,6 @@ export default function SalaryCurve({ ranges, byDept, depts, myDept, myPay, minN
       <div className="sc-me">{top != null ? <><b>내 위치: 상위 {top}%</b><span>{dept} {n}명 중 · 세후 {pay}만원</span></> : <span>아래에서 내 실수령을 고르면 위치를 보여줘요</span>}</div>
     </>}
     <div className="hc-chips">{ranges.map(r => <label key={r}><input type="radio" name="mypay" checked={pay === r} onChange={() => setPay(r)} /><span>{r}</span></label>)}</div>
-    <small className="muted">회원이 실체 체크에 남긴 세후 실수령(만원) 구간을 합친 분포예요. 내 선택은 저장되지 않아요.</small>
+    <small className="muted">회원이 병원 리뷰에 남긴 세후 실수령(만원) 구간을 합친 분포예요. 내 선택은 저장되지 않아요.</small>
   </div>;
 }

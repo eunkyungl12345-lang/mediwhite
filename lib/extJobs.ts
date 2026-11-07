@@ -2,6 +2,9 @@
  *  원문·지원은 메디잡 링크로. 마감 지나면 자동으로 숨겨요. 마지막 정리 2026-11-05 */
 export type ExtJob = { id: number; h: string; dept: string; k: "간호" | "간호조무사" | "방사선" | "물리치료" | "임상병리" | "원무"; area: string; time: string; pay: string; until?: string; note: string; warn?: string };
 export const EXT_SRC = "메디잡";
+/** 마지막으로 원문을 확인한 날. '채용 시 마감' 공고는 이 날부터 30일 지나면 자동으로 숨겨요 (새 파일로 갱신하면 날짜만 바꾸기) */
+export const EXT_CHECKED = "2026-11-05";
+export const extCheckedLabel = () => `${Number(EXT_CHECKED.slice(5, 7))}/${Number(EXT_CHECKED.slice(8))} 확인`;
 export const extUrl = (id: number) => `https://www.medijob.cc/com/cpn/com_cpn_100_view_02?recruitSeqno=${id}`;
 export const EXT_JOBS: ExtJob[] = [
   { id: 3759135, h: "평촌센트럴소아과", dept: "임상병리사", k: "임상병리", area: "경기 안양 · 평촌역 6분", time: "평일 14~20시 · 주말 없음", pay: "세전 300만", until: "2026-11-30", note: "오후 출근이라 오전이 통째로 내 시간" },
@@ -42,4 +45,4 @@ const T: Record<number, string[]> = {
 export const splitArea = (a: string) => { const [r, st] = a.split(" · "); return { r, st: st && /역/.test(st) ? st : "" }; };
 export const isG3 = (j: ExtJob) => /강남|서초|송파/.test(j.area);
 export const extTags = (id: number) => T[id] ?? [];
-export const openExtJobs = (today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10)) => EXT_JOBS.filter(j => !j.until || j.until >= today);
+export const openExtJobs = (today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10)) => { const stale = new Date(Date.parse(EXT_CHECKED) + 30 * 86400000).toISOString().slice(0, 10); return EXT_JOBS.filter(j => j.until ? j.until >= today : today <= stale); };

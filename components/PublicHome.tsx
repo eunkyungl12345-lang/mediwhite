@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/supabase";
-import { openExtJobs, isG3, extTags, EXT_SRC, splitArea } from "@/lib/extJobs";
+import { openExtJobs, isG3, extTags, EXT_SRC, splitArea, extCheckedLabel } from "@/lib/extJobs";
 import PosBadges from "@/components/jobs/PosBadges";
 import { tagLabel } from "@/lib/jobTags";
 import { dday } from "@/lib/jobs";
@@ -38,7 +38,7 @@ export default async function PublicHome({ q, c, k }: { q?: string; c?: string; 
         <p className="ex-note">☀️ {e.note}</p>{e.warn && <p className="ex-warn">⚠️ {e.warn}</p>}
         <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC}에서 보고 지원 ↗</a><Link href={EHP.get(e.h) ? `/h/${EHP.get(e.h)}` : `/?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="btn ghost">👀 이 병원 진짜 분위기 보기</Link></div>
       </div>)}</div>
-      <p className="muted" style={{ fontSize: 12, margin: 0 }}>{EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 지원 전 원문을 꼭 확인하세요.</p>
+      <p className="muted" style={{ fontSize: 12, margin: 0 }}>🔄 {extCheckedLabel()} · {EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 지원 전 원문을 꼭 확인하세요.</p>
     </section>
     {open.length > 0 && <section className="pub-sec"><h2>💼 메디화이트 채용 공고</h2>
       <div className="pub-jobs">{open.map(j => <Link key={j.id} href={login(`/jobs/${j.id}`)}><b>{(j.author as any)?.username === "mw_bot" ? (j.welfare || `${j.dept} 채용`) : `${j.dept} ${j.emp_type} 모집`}</b><small>{j.hospital} · {j.region}</small><em>{dday(j.deadline)}</em></Link>)}</div>

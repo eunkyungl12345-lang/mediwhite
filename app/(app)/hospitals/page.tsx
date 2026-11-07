@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/supabase";
+import { memo } from "@/lib/memo";
 import { getSession } from "@/lib/auth";
 import { JOB_REGIONS, overall } from "@/lib/jobs";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
@@ -23,8 +24,8 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
   const tab = ["mine", "my", "rank"].includes(searchParams.tab ?? "") ? searchParams.tab! : "all", kw = KW.find(x => x.k === searchParams.kw) ?? KW[0];
   const sort = searchParams.sort === "top" ? "top" : searchParams.sort === "low" ? "low" : "new", region = JOB_REGIONS.includes(searchParams.region as any) ? searchParams.region! : "", st = ["재직", "퇴사"].includes(searchParams.st ?? "") ? searchParams.st! : "";
   const [{ data: revs }, { data: hfs }, contributed] = await Promise.all([
-    d.from("hospital_reviews").select("id,hospital_id,user_id,dept,status,pros,cons,verified,created_at,r_welfare,r_balance,r_pay,r_culture,r_growth").eq("hidden", false).order("created_at", { ascending: false }).limit(400),
-    d.from("game_state").select("user_id,game,state,updated_at").like("game", "hfact:%").order("updated_at", { ascending: false }).limit(2000),
+    memo("hosp_feed_r", 60_000, async () => await d.from("hospital_reviews").select("id,hospital_id,user_id,dept,status,pros,cons,verified,created_at,r_welfare,r_balance,r_pay,r_culture,r_growth").eq("hidden", false).order("created_at", { ascending: false }).limit(400).then(r => ({ data: r.data }))),
+    memo("hosp_feed_f", 60_000, async () => await d.from("game_state").select("user_id,game,state,updated_at").like("game", "hfact:%").order("updated_at", { ascending: false }).limit(2000).then(r => ({ data: r.data }))),
     hasContributed(s.id, s.role)]);
   const hidsAll = Array.from(new Set([...(revs ?? []).map(r => r.hospital_id), ...(hfs ?? []).map(f => Number(String(f.game).slice(6)))]));
   const [{ data: hs }, facts, dist] = await Promise.all([hidsAll.length ? d.from("hospitals").select("id,name,region,kind").in("id", hidsAll) : Promise.resolve({ data: [] as any[] }), loadFacts(hidsAll), loadDistricts(hidsAll)]);
@@ -34,8 +35,8 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
   // 피드: 병원 리뷰(개별 공개) + 실체 체크 한줄평(그 병원 공개 기준을 넘은 경우만, 직종·연차 없이)
   const items: Item[] = [
     ...(revs ?? []).map(r => ({ key: "r" + r.id, hid: r.hospital_id, title: r.pros.split(/[.!?\n]/)[0].slice(0, 60), pros: r.pros, cons: r.cons, star: overall([r]), meta: [r.dept, r.status === "재직" ? "현직원" : "전직원"], at: r.created_at, v: r.verified, uid: r.user_id, status: r.status })),
-    ...(hfs ?? []).map(f => ({ f, hid: Number(String(f.game).slice(6)) })).filter(({ f, hid }) => (f.state as any)?.last && (facts[hid]?.n ?? 0) >= (facts[hid]?.need ?? MIN_N))
-      .map(({ f, hid }) => ({ key: "f" + f.user_id + hid, hid, title: (f.state as any).last, pros: (f.state as any).pros, cons: (f.state as any).cons, star: (f.state as any).overall ?? 0, meta: ["실체 체크 한줄평"], at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
+    ...(hfs ?? []).map(f => ({ f, hid: Number(String(f.game).slice(6)) })).filter(({ f, hid }) => ((f.state as any)?.last || (f.state as any)?.pros) && (facts[hid]?.n ?? 0) >= (facts[hid]?.need ?? MIN_N))
+      .map(({ f, hid }) => ({ key: "f" + f.user_id + hid, hid, title: (f.state as any).last ?? "", pros: (f.state as any).pros, cons: (f.state as any).cons, star: (f.state as any).overall ?? 0, meta: [(f.state as any).status === "퇴사" ? "전직원" : "현직원"], at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
   ].filter(x => H.has(x.hid)) as any[];
   let feed = items.filter((x: any) => (tab !== "mine" || x.meta[0] === s.dept) && (tab !== "my" || myH.has(x.hid)) && (!region || H.get(x.hid)!.region === region) && (!st || x.status === st));
   feed.sort((a, b) => sort === "top" ? b.star - a.star : sort === "low" ? a.star - b.star : b.at.localeCompare(a.at)); feed = feed.slice(0, 60);

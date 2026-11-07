@@ -2250,3 +2250,12 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .ex-acts .btn:not(.ghost){background:#1F9D63;border-color:#1F9D63;color:#fff}.ex-acts .btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
 .pb-ex{display:grid;gap:6px;padding:10px 12px;border:1px dashed #BFE8D2;border-radius:12px;background:#F6FCF8}.pb-ex small{font-size:12px;color:var(--muted)}.pb-ex b{color:#17784A}
 @media (prefers-color-scheme:dark){.ex-sta{background:#163A34;color:#7FE0CF}.pb-ex{background:#132A20;border-color:#245A41}}
+.wz-fork{text-align:center;justify-items:center}.wz-fork .btn{width:100%}.wz-more{display:grid;gap:2px;padding:13px}.wz-more small{font-weight:600;color:#1F9D63}
+/* 📱 떠 있는 버튼은 하나만: 채팅은 상단 아이콘으로 */
+.hd-mob{display:none}.hd-chat{position:relative}.hd-dot{position:absolute;top:2px;right:0;min-width:16px;height:16px;border-radius:8px;background:#E5484D;color:#fff;font-size:10px;font-style:normal;font-weight:800;display:grid;place-items:center;padding:0 3px}
+@media (max-width:719px){.hd-mob{display:inline-flex}.chat-fab{display:none!important}}
+.jb2-fold{border:1px solid var(--line);border-radius:12px;background:var(--surface)}.jb2-fold summary{cursor:pointer;list-style:none;padding:10px 14px;font-size:14px;font-weight:800}.jb2-fold summary::-webkit-details-marker{display:none}.jb2-fold summary small{font-weight:500;color:var(--muted);margin-left:6px}.jb2-fold summary b{color:#1F9D63}.jb2-fold .jb2-quick{padding:0 12px 12px}
+.jb2-tabs{scrollbar-width:none}.jb2-tabs::-webkit-scrollbar{display:none}
+/* 색 역할 정리: 초록=좋음·주요 행동, 파랑=위치(강남 3구·역), 주황=오픈 기념만 */
+.ex-sta{background:#E8F0FF;color:#2F5BB5}
+@media (prefers-color-scheme:dark){.ex-sta{background:#1E2A44;color:#9CC0FF}}

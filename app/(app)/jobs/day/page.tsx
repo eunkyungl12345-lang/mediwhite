@@ -8,7 +8,7 @@ import { loadFacts, hasContributed, shiftCompare } from "@/lib/hospFactsDb";
 import { loadDistricts } from "@/lib/districtDb";
 import { getFocus } from "@/lib/focus";
 import JobCard from "@/components/jobs/JobCard";
-import { openExtJobs, EXT_SRC, extTags, isG3, splitArea } from "@/lib/extJobs";
+import { openExtJobs, EXT_SRC, extTags, isG3, splitArea, extCheckedLabel } from "@/lib/extJobs";
 import { QUICK, tagLabel } from "@/lib/jobTags";
 export const dynamic = "force-dynamic";
 /** ☀️ 3교대 탈출 — 나이트 없는 삶, 실수령은 얼마나 줄까? (교대 vs 상근 비교 · 상근 공고 · 상근 병원) */
@@ -34,7 +34,7 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
   return <div className="jb2 dy">
     <div className="dy-hero"><span>🌙</span><h2>저녁 약속 잡을 수 있는 알짜 병원</h2><p>나이트 없는 상근·낮 근무만 모았어요. 실수령은 얼마나 달라질까?<br />대학·종합병원(대부분 3교대)과 로컬(대부분 상근)을 직접 다녀본 사람들의 숫자로 비교해요.</p></div>
     <h3 className="dy-h" id="ext">🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext0.length}</small></h3>
-    <p className="muted" style={{ fontSize: 12.5, margin: "-4px 0 0", lineHeight: 1.55 }}>{EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 조건은 바뀔 수 있으니 <b>지원 전 원문을 꼭 확인</b>하세요.</p>
+    <p className="muted" style={{ fontSize: 12.5, margin: "-4px 0 0", lineHeight: 1.55 }}>🔄 {extCheckedLabel()} · {EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 조건은 바뀔 수 있으니 <b>지원 전 원문을 꼭 확인</b>하세요.</p>
     <div className="dtab">{[["", "전체", ext0.length] as const, ...["간호", "간호조무사", "방사선", "물리치료", "임상병리", "원무"].filter(k => kinds.includes(k as any)).map(k => [k, ({ 간호: "간호사", 방사선: "방사선사", 물리치료: "물리치료사", 임상병리: "임상병리사" } as Record<string, string>)[k] ?? k, ext0.filter(e => e.k === k).length] as const)].map(([k, n, cnt]) => <Link key={k} href={dl({ k })} className={ek === k ? "on" : ""} scroll={false}>{n} <small>{cnt}</small></Link>)}</div>
     <div className="rf-kw ex-conds"><Link href={dl({ g3: g3 ? "" : "1" })} className={"g3" + (g3 ? " on" : "")} scroll={false}>📍 강남 3구 {ext0.filter(isG3).length}</Link>{CONDS.map(c => <Link key={c} href={dl({ c: ec === c ? "" : c })} className={ec === c ? "on" : ""} scroll={false}>{QUICK.find(q => q.id === c)?.label ?? c}</Link>)}</div>
     {!ext.length && <p className="muted" style={{ fontSize: 13 }}>이 조건에 맞는 공고가 지금은 없어요.</p>}
