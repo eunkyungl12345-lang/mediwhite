@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import type { RestPerson, RestPos } from "@/lib/rest.actions";
 import { restSay, restBurn, restDone } from "@/lib/rest.actions";
-import { buildSauna, SAUNA_SEATS, SAUNA_SPOTS, SAUNA_FIRE } from "./scenes3";
+import { buildSauna, SAUNA_SEATS, SAUNA_BEDS, SAUNA_ROUTE, SAUNA_SPOTS, SAUNA_FIRE } from "./scenes3";
 import { Ambience, unlockAudio } from "./ambience";
 import { Fireworks, FW_TYPES } from "./fireworks";
 import BurnPaper from "./BurnPaper";
@@ -26,6 +26,7 @@ const SEATS: Record<Scene, Seat[]> = {
   mars: MARS_SEATS,
   sauna: SAUNA_SEATS,
 };
+const BEDS: Partial<Record<Scene, Seat[]>> = { sauna: SAUNA_BEDS };
 const FIRE: Record<Scene, THREE.Vector3> = { roof: new THREE.Vector3(0, 0, 0), pocha: new THREE.Vector3(0, 0.9, -2.4), zen: new THREE.Vector3(0, .8, -6.6), mars: new THREE.Vector3(0, .3, 0), sauna: SAUNA_FIRE };
 
 /* ---------- 텍스트 스프라이트 (이름표·말풍선) ---------- */
@@ -41,7 +42,7 @@ function textSprite(text: string, opt: { bg?: string; fg?: string; size?: number
 }
 
 /* ---------- 아바타 ---------- */
-type Avatar = { g: THREE.Group; body: THREE.Mesh; legs: THREE.Group; arms: THREE.Group; head: THREE.Group; name: THREE.Sprite; bubble: THREE.Sprite | null; bubbleText: string; tx: number; tz: number; pose: string; ry: number; walkT: number };
+type Avatar = { g: THREE.Group; body: THREE.Mesh; legs: THREE.Group; arms: THREE.Group; head: THREE.Group; name: THREE.Sprite; bubble: THREE.Sprite | null; bubbleText: string; tx: number; tz: number; pose: string; ry: number; walkT: number; v?: number; sk?: number; lk?: number; seed?: number; spd?: number };
 function makeAvatar(nick: string, dept: string | null, me: boolean): Avatar {
   const g = new THREE.Group(); const col = DCOL[dept ?? ""] ?? 0x8e95ae;
   const mat = (c: number, r = .9) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0 });
@@ -61,7 +62,8 @@ function makeAvatar(nick: string, dept: string | null, me: boolean): Avatar {
   const name = textSprite(me ? (nick === "나" ? "나" : "나 · " + nick) : nick, { bg: me ? "rgba(31,94,60,.9)" : "rgba(20,24,34,.72)", size: 26 }); name.position.y = 2.05; g.add(name);
   const sh = new THREE.Mesh(new THREE.CircleGeometry(.36, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .28 })); sh.rotation.x = -Math.PI / 2; sh.position.y = .012; g.add(sh);
   g.traverse(o => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; } });
-  return { g, body, legs, arms, head, name, bubble: null, bubbleText: "", tx: 0, tz: 0, pose: "stand", ry: 0, walkT: 0 };
+  g.rotation.order = "YXZ";
+  return { g, body, legs, arms, head, name, bubble: null, bubbleText: "", tx: 0, tz: 0, pose: "stand", ry: 0, walkT: 0, v: 0, sk: 0, lk: 0, seed: Math.random() * 10 };
 }
 function setBubble(a: Avatar, text: string | null) {
   if (a.bubble) { a.g.remove(a.bubble); a.bubble.material.map?.dispose(); a.bubble.material.dispose(); a.bubble = null; }
@@ -235,11 +237,15 @@ function jjim(a: Avatar) {
   const band = new THREE.Mesh(new THREE.TorusGeometry(.31, .045, 8, 24), tw); band.rotation.x = Math.PI / 2; band.position.y = .07; a.head.add(band);
 }
 function spawnNPCs(scene: Scene, sc: THREE.Scene) {
-  const seats = SEATS[scene], rate = scene === "zen" ? .72 : scene === "sauna" ? .85 : scene === "mars" ? .5 : .55, out: { a: Avatar; seat: number; stand?: boolean }[] = [];
+  const seats = SEATS[scene], rate = scene === "zen" ? .72 : scene === "sauna" ? .6 : scene === "mars" ? .5 : .55, out: { a: Avatar; seat: number; stand?: boolean; walk?: { wait: number } }[] = [];
   const rnd = (i: number) => { const v = Math.sin(i * 12.9898 + seats.length * 78.233) * 43758.5453; return v - Math.floor(v); };
   seats.forEach((st, i) => { if (rnd(i) > rate || (scene === "zen" && (i === 20 || i === 21))) return; const a = makeAvatar("", NPC_DEPTS[i % NPC_DEPTS.length], false); a.g.remove(a.name); if (scene === "mars") suit(a); if (scene === "sauna") jjim(a); a.g.position.set(st.x, 0, st.z); a.tx = st.x; a.tz = st.z; a.pose = "sit"; a.g.rotation.y = st.ry; sc.add(a.g); out.push({ a, seat: i }); });
-  const extra: [number, number, number][] = scene === "roof" ? [[-6.5, -6, .4], [6.6, 5.8, -2.4], [4.8, -6.4, 0]] : scene === "pocha" ? [[6.4, -1.6, -1.2], [-5.6, 3.8, 1.6]] : scene === "mars" ? [[-6, -8, .4], [5, -9, -.3], [8, -2, -1.2]] : scene === "sauna" ? [[-6.6, .4, -1.5], [6.9, 2.6, 1.6], [-2.6, -3.4, 2.6]] : [];
+  const extra: [number, number, number][] = scene === "roof" ? [[-6.5, -6, .4], [6.6, 5.8, -2.4], [4.8, -6.4, 0]] : scene === "pocha" ? [[6.4, -1.6, -1.2], [-5.6, 3.8, 1.6]] : scene === "mars" ? [[-6, -8, .4], [5, -9, -.3], [8, -2, -1.2]] : scene === "sauna" ? [[-6.6, .4, -1.5]] : [];
   extra.forEach(([x, z, ry], i) => { const a = makeAvatar("", NPC_DEPTS[(i + 3) % NPC_DEPTS.length], false); a.g.remove(a.name); if (scene === "mars") suit(a); if (scene === "sauna") jjim(a); a.g.position.set(x, 0, z); a.tx = x; a.tz = z; a.pose = "stand"; a.g.rotation.y = ry; sc.add(a.g); out.push({ a, seat: -1, stand: true }); });
+  if (scene === "sauna") {
+    (BEDS.sauna ?? []).forEach((st, i) => { if (rnd(i + 40) > .72) return; const a = makeAvatar("", NPC_DEPTS[(i + 5) % NPC_DEPTS.length], false); a.g.remove(a.name); jjim(a); a.g.position.set(st.x, .38, st.z); a.tx = st.x; a.tz = st.z; a.pose = "lie"; a.lk = 1; a.g.rotation.y = st.ry; a.g.rotation.x = -Math.PI / 2; sc.add(a.g); out.push({ a, seat: -10 - i }); });
+    for (let i = 0; i < 3; i++) { const p = SAUNA_ROUTE[i * 2]; const a = makeAvatar("", NPC_DEPTS[(i + 7) % NPC_DEPTS.length], false); a.g.remove(a.name); jjim(a); a.spd = 1.05 + i * .12; a.g.position.set(p.x, 0, p.z); a.tx = p.x; a.tz = p.z; sc.add(a.g); out.push({ a, seat: -1, stand: true, walk: { wait: 1 + i * 2 } }); }
+  }
   return out;
 }
 export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, onXp, actPulse, extra, full, onFirework }: Props) {
@@ -249,7 +255,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const amb = useRef<Ambience | null>(null); const sndRef = useRef(snd); sndRef.current = snd;
   const [fwOpen, setFwOpen] = useState(false); const [burning, setBurning] = useState<string | null>(null); const fwCd = useRef(0);
   const [mode, setMode] = useState<"normal" | "zen">("normal"), [say, setSay] = useState(""), [burn, setBurn] = useState<string | null>(null), [busy, setBusy] = useState(false), [sitting, setSitting] = useState(false);
-  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number; hold?: { m: THREE.Object3D; t: number; dur: number; kind: string } }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
+  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean; walk?: { wait: number } }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number; hold?: { m: THREE.Object3D; t: number; dur: number; kind: string } }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
   const peopleRef = useRef(people), breathRef = useRef(breathK), sceneRef = useRef(scene), modeRef = useRef(mode);
   peopleRef.current = people; breathRef.current = breathK; sceneRef.current = scene; modeRef.current = mode;
   const moveTimer = useRef<any>(null);
@@ -288,7 +294,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       if (Math.hypot(dx, dy) > 8 || dt > 400 || modeRef.current === "zen") return;
       const rc = S.renderer!.domElement.getBoundingClientRect(); ndc.set(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1);
       ray.setFromCamera(ndc, S.cam!); const hit = ray.intersectObject(S.ground!, false)[0]; if (!hit) return;
-      const a = S.me!; const sN = sceneRef.current; a.tx = Math.max(sN === "mars" ? -12 : sN === "sauna" ? -7 : -7.4, Math.min(sN === "mars" ? 12 : 7.4, hit.point.x)); a.tz = Math.max(sN === "zen" ? -5.4 : sN === "sauna" ? -3.2 : sN === "mars" ? -10 : -7.4, Math.min(sN === "roof" ? 7.4 : sN === "zen" || sN === "sauna" ? 9 : sN === "mars" ? 9 : 5.6, hit.point.z)); a.pose = "stand"; S.seat = -1; setSitting(false); emitMove("stand");
+      const a = S.me!; const sN = sceneRef.current; a.tx = Math.max(sN === "mars" ? -12 : sN === "sauna" ? -7 : -7.4, Math.min(sN === "mars" ? 12 : 7.4, hit.point.x)); a.tz = Math.max(sN === "zen" ? -5.4 : sN === "sauna" ? -3.2 : sN === "mars" ? -10 : -7.4, Math.min(sN === "roof" ? 7.4 : sN === "zen" || sN === "sauna" ? 9 : sN === "mars" ? 9 : 5.6, hit.point.z)); a.pose = "stand"; S.seat = -1; setSitting(false); setLying(false); emitMove("stand");
     };
     const dom = S.renderer!.domElement; dom.addEventListener("pointerdown", onDown); addEventListener("pointermove", onMoveP); addEventListener("pointerup", onUp);
 
@@ -305,17 +311,25 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       // 아바타 이동/애니메이션
       const anim = (a: Avatar, isMe: boolean) => {
         const dx = a.tx - a.g.position.x, dz = a.tz - a.g.position.z, d = Math.hypot(dx, dz);
-        if (d > .04) { const sp = Math.min(d, 2.6 * dt); a.g.position.x += dx / d * sp; a.g.position.z += dz / d * sp; const ty = Math.atan2(dx, dz); let dr = ty - a.g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); a.g.rotation.y += dr * Math.min(1, dt * 10); a.walkT += dt * 9; }
-        else { a.walkT += (0 - (a.walkT % (Math.PI * 2))) * .2; if (a.pose === "sit") { const seat = SEATS[sceneRef.current].find(s => Math.hypot(s.x - a.tx, s.z - a.tz) < .3); if (seat) { let dr = seat.ry - a.g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); a.g.rotation.y += dr * Math.min(1, dt * 8); } } }
-        const walking = d > .04, swing = walking ? Math.sin(a.walkT) * .55 : 0;
+        // 부드럽게 출발·감속: 목표 속도로 천천히 붙고, 도착 직전엔 느려져요
+        const want = d > .03 ? Math.min(a.spd ?? 2.1, .5 + d * 1.8) : 0; a.v = (a.v ?? 0) + (want - (a.v ?? 0)) * Math.min(1, dt * 4);
+        if (d > .02 && a.v > .02) { const sp = Math.min(d, a.v * dt); a.g.position.x += dx / d * sp; a.g.position.z += dz / d * sp; if (d > .15) { const ty = Math.atan2(dx, dz); let dr = ty - a.g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); a.g.rotation.y += dr * Math.min(1, dt * 6); } a.walkT += dt * (3 + a.v * 3.2); }
+        else { a.v = 0; a.walkT += (0 - (a.walkT % (Math.PI * 2))) * .15; if (a.pose === "sit" || a.pose === "lie") { const list = a.pose === "lie" ? BEDS[sceneRef.current] ?? [] : SEATS[sceneRef.current]; const seat = list.find(s => Math.hypot(s.x - a.tx, s.z - a.tz) < .3); if (seat) { let dr = seat.ry - a.g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); a.g.rotation.y += dr * Math.min(1, dt * 5); } } }
+        const walking = (a.v ?? 0) > .12, amp = Math.min(1, (a.v ?? 0) / 1.6), swing = Math.sin(a.walkT) * .5 * amp;
         a.legs.children[0].rotation.x = swing; a.legs.children[1].rotation.x = swing; a.legs.children[2].rotation.x = -swing; a.legs.children[3].rotation.x = -swing;
-        a.arms.children[0].rotation.x = -swing * .8; a.arms.children[1].rotation.x = -swing * .8; a.arms.children[2].rotation.x = swing * .8; a.arms.children[3].rotation.x = swing * .8;
-        const sit = a.pose === "sit" && !walking; const k = isMe ? breathRef.current : 0;
-        a.body.position.y = (sit ? .62 : .82) + (walking ? Math.abs(Math.sin(a.walkT)) * .05 : Math.sin(t * 2 + a.tx) * .012) + k * .03; a.head.position.y = (sit ? 1.22 : 1.42) + (walking ? Math.abs(Math.sin(a.walkT)) * .05 : 0) + k * .04; a.arms.position.y = sit ? -.2 : 0; a.name.position.y = sit ? 1.85 : 2.05; if (a.bubble) a.bubble.position.y = sit ? 2.3 : 2.5;
-        a.legs.rotation.x = sit ? -Math.PI / 2 : 0; a.legs.position.y = sit ? .4 : 0; a.legs.position.z = sit ? .2 : 0;
+        a.arms.children[0].rotation.x = -swing * .7; a.arms.children[1].rotation.x = -swing * .7; a.arms.children[2].rotation.x = swing * .7; a.arms.children[3].rotation.x = swing * .7;
+        a.sk = (a.sk ?? 0) + ((a.pose === "sit" && !walking ? 1 : 0) - (a.sk ?? 0)) * Math.min(1, dt * 5); a.lk = (a.lk ?? 0) + ((a.pose === "lie" && !walking ? 1 : 0) - (a.lk ?? 0)) * Math.min(1, dt * 3);
+        const sk = a.sk, lk = a.lk, k = isMe ? breathRef.current : 0, sd = a.seed ?? 0;
+        const bob = walking ? Math.abs(Math.sin(a.walkT)) * .05 * amp : Math.sin(t * (lk > .5 ? 1.2 : 2) + sd) * (lk > .5 ? .02 : .012);
+        a.body.position.y = .82 - .2 * sk + bob + k * .03; a.head.position.y = 1.42 - .2 * sk + bob * .8 + k * .04; a.arms.position.y = -.2 * sk; a.body.rotation.x = .1 * amp;
+        a.legs.rotation.x = -Math.PI / 2 * sk; a.legs.position.y = .4 * sk; a.legs.position.z = .2 * sk;
+        a.g.rotation.x = -Math.PI / 2 * lk; a.g.position.y = .38 * lk;
+        a.name.position.set(0, (2.05 - .2 * sk) * (1 - lk) + 1.45 * lk, 1.15 * lk); if (a.bubble) a.bubble.position.set(0, (2.5 - .2 * sk) * (1 - lk) + 1.45 * lk, 1.7 * lk);
         a.body.scale.setScalar(1 + k * .05);
+        a.head.rotation.y = !isMe && !walking && lk < .5 ? Math.sin(t * .23 + sd) * .35 * Math.max(0, Math.sin(t * .11 + sd * 2)) : a.head.rotation.y * .9;
         if (isMe) a.head.rotation.x = S.bump && now - S.bump < 500 ? Math.sin((now - S.bump) / 500 * Math.PI) * .7 : 0;
       };
+      S.npcs?.forEach(n => { if (!n.walk) return; const a = n.a; if (Math.hypot(a.tx - a.g.position.x, a.tz - a.g.position.z) < .1) { n.walk.wait -= dt; if (n.walk.wait <= 0) { const p = SAUNA_ROUTE[Math.floor(Math.random() * SAUNA_ROUTE.length)]; a.tx = p.x + (Math.random() - .5) * 1.2; a.tz = p.z + (Math.random() - .5) * 1.2; n.walk.wait = 2 + Math.random() * 6; } } });
       if (S.me) anim(S.me, true); S.others.forEach(a => anim(a, false)); S.npcs?.forEach(n => anim(n.a, false));
       // 이모지·종이
       if (S.hold && S.me) { const H = S.hold, a = S.me; H.t += dt; const sit = a.pose === "sit"; const hy = (sit ? 1.22 : 1.42) - .28; const k = Math.min(1, H.t / .35); const bob = H.kind === "cup" ? 0 : Math.max(0, Math.sin(H.t * 7)) * .08;
@@ -342,7 +356,13 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   /* ---- 액션 이모지 (건배·토닥·수고) ---- */
   useEffect(() => { if (!actPulse) return; const S = st.current; const a = S.me; if (!a || !S.sc) return; const sp = textSprite(actPulse.a, { bg: "rgba(0,0,0,0)", size: 44, pad: 4 }); sp.position.set(a.g.position.x + .4, 2.2, a.g.position.z); S.sc.add(sp); S.emo.push({ sp, t: 0 }); }, [actPulse]);
 
-  const sit = () => { const S = st.current; const a = S.me; if (!a) return; if (a.pose === "sit") { a.pose = "stand"; a.tz += .6; S.seat = -1; setSitting(false); emitMove("stand"); return; }
+  const [lying, setLying] = useState(false);
+  const lie = () => { const S = st.current; const a = S.me; if (!a) return; if (a.pose === "lie") { a.pose = "stand"; a.tz -= .3; setLying(false); emitMove("stand"); return; }
+    const beds = BEDS[scene] ?? []; const taken = new Set([...peopleRef.current.filter(p => !p.me && p.scene === scene && p.pose === "lie").map(p => beds.findIndex(s => Math.hypot(s.x - p.x, s.z - p.z) < .3)), ...(S.npcs ?? []).filter(n => n.seat <= -10).map(n => -10 - n.seat)]);
+    const free = beds.map((s, i) => ({ s, i, d: Math.hypot(s.x - a.g.position.x, s.z - a.g.position.z) })).filter(o => !taken.has(o.i)).sort((x, y) => x.d - y.d)[0];
+    if (!free) { onToast("누울 자리가 다 찼어요 🙈"); return; }
+    a.tx = free.s.x; a.tz = free.s.z; a.pose = "lie"; S.seat = -1; setSitting(false); setLying(true); emitMove("lie"); onToast("🛌 목침 베고 누웠어요… 스르르"); };
+  const sit = () => { if (st.current.me?.pose === "lie") setLying(false); const S = st.current; const a = S.me; if (!a) return; if (a.pose === "sit") { a.pose = "stand"; a.tz += .6; S.seat = -1; setSitting(false); emitMove("stand"); return; }
     const taken = new Set([...peopleRef.current.filter(p => !p.me && p.scene === scene && p.pose === "sit").map(p => SEATS[scene].findIndex(s => Math.hypot(s.x - p.x, s.z - p.z) < .3)), ...(S.npcs ?? []).filter(n => n.seat >= 0).map(n => n.seat)]);
     const free = SEATS[scene].map((s, i) => ({ s, i, d: Math.hypot(s.x - a.g.position.x, s.z - a.g.position.z) })).filter(o => !taken.has(o.i)).sort((x, y) => x.d - y.d)[0];
     if (!free) { onToast("자리가 다 찼어요 🙈"); return; }
@@ -368,7 +388,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     setHeat(h => { const n = Math.max(0, Math.min(100, h + (dIce < 2.4 ? -8 : dDome < 4.5 ? 3 : .7))); if (n >= 95 && !jj.current.hot) { jj.current.hot = true; onToast("🥵 너무 뜨거워요! 얼음방에서 땀 식혀요"); } if (n < 60) jj.current.hot = false;
       if (n > 65 && Date.now() - jj.current.sweat > 5000) { jj.current.sweat = Date.now(); emo("💦"); } return n; }); }, 1000); return () => clearInterval(id); }, [scene]); // eslint-disable-line
   const emo = (t: string) => { const S = st.current; const a = S.me; if (!a || !S.sc) return; const sp = textSprite(t, { bg: "rgba(0,0,0,0)", size: 44, pad: 4 }); sp.position.set(a.g.position.x + .4, 2.2, a.g.position.z); S.sc.add(sp); S.emo.push({ sp, t: 0 }); };
-  const goTo = (k: keyof typeof SAUNA_SPOTS) => { const S = st.current; const a = S.me; if (!a) return; const sp = SAUNA_SPOTS[k]; a.tx = sp.x + (Math.random() - .5) * .6; a.tz = sp.z + (Math.random() - .5) * .4; a.pose = "stand"; S.seat = -1; setSitting(false); emitMove("stand"); };
+  const goTo = (k: keyof typeof SAUNA_SPOTS) => { const S = st.current; const a = S.me; if (!a) return; const sp = SAUNA_SPOTS[k]; a.tx = sp.x + (Math.random() - .5) * .6; a.tz = sp.z + (Math.random() - .5) * .4; a.pose = "stand"; S.seat = -1; setSitting(false); setLying(false); emitMove("stand"); };
   const announce = (t: string) => { restSay(t).catch(() => {}); const a = st.current.me; if (a) { setBubble(a, t); setTimeout(() => { if (a.bubbleText === t) setBubble(a, null); }, 8000); } };
   const reward = async () => { const J = jj.current; if (J.done || Date.now() - J.at < 60000) return; J.done = true; const x = await restDone("sauna").catch(() => 0); onXp(x ? `🧖 오늘 찜질 완료 +${x} XP` : "🧖 오늘 찜질 완료"); };
   const sfx = async () => { if (sndRef.current !== "on" && sndRef.current !== "off") { await soundOn(); sndRef.current = "on"; } return sndRef.current === "on" ? amb.current : null; };
@@ -419,7 +439,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
             <button type="button" className="r3-jj" onClick={eggTap}><span>{egg === 2 ? "🍳" : "🥚"}</span>{egg === 0 ? "맥반석 달걀" : egg === 1 ? "이마로 톡!" : "까서 먹기"}</button>
             <button type="button" className="r3-jj" onClick={sikhye}><span>🥤</span>{sip === 0 ? "살얼음 식혜" : `후루룩 ${sip}/3`}</button>
             <button type="button" className="r3-jj ice" onClick={() => { goTo("ice"); onToast("🧊 얼음방으로 가요 · 땀 식히기"); }}><span>🧊</span>얼음방</button></>}
-          <button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
+          {scene === "sauna" && <button type="button" className="r3-jj" onClick={lie}><span>{lying ? "🧍" : "🛌"}</span>{lying ? "일어나기" : "눕기"}</button>}<button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
           <button type="button" onClick={() => setBurn(b => b === null ? "" : null)}><span>🔥</span>걱정 태우기</button>
           {scene === "sauna" ? <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불가마 멍</button> : scene === "zen" ? <><button type="button" onClick={strikeBowl}><span>🔔</span>싱잉볼</button><button type="button" onClick={() => setMode("zen")}><span>🧘</span>명상 모드</button></> : <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불멍 모드</button>}{scene === "roof" && <button type="button" className={fwOpen ? "on" : ""} onClick={() => setFwOpen(o => !o)}><span>🎆</span>불꽃놀이</button>}{extra}
         </div>

@@ -4,7 +4,16 @@ type Seat = { x: number; z: number; ry: number };
 type Fire = { pts: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>; light: THREE.PointLight; update: (dt: number) => void };
 type Helpers = { M: (c: number, r?: number, e?: number, ei?: number) => THREE.MeshStandardMaterial; box: (w: number, h: number, d: number, m: THREE.Material, x?: number, y?: number, z?: number) => THREE.Mesh; makeFire: (pos: THREE.Vector3, scale?: number) => Fire; textSprite: (t: string, o?: any) => THREE.Sprite };
 
-export const SAUNA_SEATS: Seat[] = [-.5, 2, 4.5].flatMap(z => [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z, ry: Math.PI })));
+const face = (x: number, z: number, tx: number, tz: number) => Math.atan2(tx - x, tz - z);
+/** 앉는 방석: 불가마 앞 · TV 앞 · 매점 옆 */
+export const SAUNA_SEATS: Seat[] = [
+  ...[[-2.6, -1.3], [-.9, -.9], [.9, -.9], [2.6, -1.3]].map(([x, z]) => ({ x, z, ry: face(x, z, 0, -6.4) })),
+  ...[[5.2, -6.5], [5.2, -4.3], [6.5, -5.4], [4.2, -5.4]].map(([x, z]) => ({ x, z, ry: face(x, z, 8.8, -5.4) })),
+  { x: -5.4, z: 1.4, ry: face(-5.4, 1.4, -8, -1) }];
+/** 눕는 매트(머리는 앞쪽 -z, 목침 있음): 앞쪽 왼편 · 오른편 */
+export const SAUNA_BEDS: Seat[] = [...[3.4, 5, 6.6, 8.2].map(z => ({ x: -6.2, z, ry: Math.PI / 2 })), ...[3.8, 5.4, 7, 8.6].map(z => ({ x: 6.2, z, ry: -Math.PI / 2 }))];
+/** 돌아다니는 사람이 들르는 곳 */
+export const SAUNA_ROUTE = [{ x: -6.5, z: -.4 }, { x: 7.2, z: 1 }, { x: 0, z: -2.4 }, { x: 3.6, z: -3 }, { x: 0, z: 2.6 }, { x: -3.2, z: -3.4 }, { x: -2.4, z: 5 }, { x: 2.6, z: 5.5 }];
 /** 걸어가는 곳: 숯불(고구마) · 매점(달걀·식혜) · 얼음방 */
 export const SAUNA_SPOTS = { coal: { x: -3.2, z: -3.2 }, shop: { x: -6.4, z: -1 }, ice: { x: 7.4, z: 1 }, dome: { x: 0, z: -3 } };
 export const SAUNA_FIRE = new THREE.Vector3(0, .5, -4);
@@ -68,9 +77,12 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const tv = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.56), new THREE.MeshStandardMaterial({ map: tvTex, emissive: 0xffffff, emissiveMap: tvTex, emissiveIntensity: .5 })); tvTex.repeat.set(1, 1 / .6); tvTex.offset.set(0, -.67);
   tv.position.set(8.82, 2.6, -5.4); tv.rotation.y = -Math.PI / 2; scene.add(tv, box(.12, 1.7, 2.8, M(0x1a1a1a, .4), 8.88, 2.6, -5.4));
 
-  // 매트 + 목침
-  const matCols = [0xe9b44c, 0xe58b4e, 0xd8a25a, 0xef9f6a], pillow = M(0x8a5a32, .8);
-  SAUNA_SEATS.forEach((st, i) => { const mt = box(1.15, .05, 1.9, M(matCols[i % matCols.length], .95), st.x, .025, st.z + .2); mt.castShadow = false; scene.add(mt, box(.5, .16, .22, pillow, st.x, .1, st.z + 1)); });
+  // 방석(앉는 곳) + 매트·목침(눕는 곳)
+  const matCols = [0xe9b44c, 0xe58b4e, 0xd8a25a, 0xef9f6a], pillow = M(0x8a5a32, .8), cush = [M(0xc0563a, .95), M(0xd88a3a, .95)];
+  SAUNA_SEATS.forEach((st, i) => { const c = box(.85, .1, .85, cush[i % 2], st.x, .05, st.z); c.rotation.y = st.ry; c.castShadow = false; scene.add(c); });
+  SAUNA_BEDS.forEach((st, i) => { const hx = -Math.sin(st.ry), hz = -Math.cos(st.ry); const mt = box(1.15, .05, 2.3, M(matCols[i % matCols.length], .95), st.x + hx * .95, .025, st.z + hz * .95); mt.rotation.y = st.ry; mt.castShadow = false; const pl = box(.5, .16, .24, pillow, st.x + hx * 1.85, .08, st.z + hz * 1.85); pl.rotation.y = st.ry; scene.add(mt, pl); });
+  const lieSign = textSprite("🛌 누워서 쉬는 곳", { bg: "rgba(120,70,30,.85)", size: 22 }); lieSign.position.set(-6.4, 1.5, 5.8); const lieSign2 = textSprite("🛌 누워서 쉬는 곳", { bg: "rgba(120,70,30,.85)", size: 22 }); lieSign2.position.set(6.4, 1.5, 6.2); scene.add(lieSign2); scene.add(lieSign);
+  const tvSign = textSprite("📺 TV 보는 곳", { bg: "rgba(40,60,110,.85)", size: 22 }); tvSign.position.set(5.4, 1.5, -5.4); scene.add(tvSign);
 
   // 천장 등 + 김(수증기)
   for (const [x, z] of [[-4, 0], [4, 0], [0, 4.5], [-4, 6], [4, 6]]) { const l = new THREE.PointLight(0xffc888, .55, 9, 1.8); l.position.set(x, 3.7, z); scene.add(l); }
