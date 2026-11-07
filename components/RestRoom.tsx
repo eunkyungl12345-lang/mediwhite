@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { restBeat, restLeave, restDone, type RestView, type RestPos } from "@/lib/rest.actions";
@@ -136,6 +137,7 @@ export default function RestRoom() {
         <button type="button" onClick={() => act("bow")}><span>🙇</span>수고했어요</button>
       </div>
 
+      <Link href="/rest/sauna" className="sn-door"><span>🧖</span><div><b>찜질방 가기</b><small>불가마에 고구마 굽고, 맥반석 달걀 이마로 톡, 살얼음 식혜까지</small></div><em>›</em></Link>
       <div className="rs-tools">
         <button type="button" className={tool === "breath" ? "on" : ""} onClick={() => tool === "breath" ? stopBreath() : startBreath()}><span>🫁</span><b>같이 숨쉬기 1분</b><small>{tool === "breath" ? "그만하기" : "접속한 모두와 같은 박자로"}</small></button>
         <button type="button" className={tool === "stretch" ? "on" : ""} onClick={() => { if (breathing.current) stopBreath(); setTool("stretch"); setSIdx(0); setSLeft(STRETCH[0].s); }}><span>🙆</span><b>3분 스트레칭</b><small>목·어깨·손목·허리·종아리</small></button>

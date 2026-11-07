@@ -36,7 +36,7 @@ export async function restBeat(act?: string | null, breathing?: boolean, pos?: R
 }
 export async function restLeave() { const s = await getSession(); if (!s) return; await db().from("rest_presence").update({ last_seen: new Date(Date.now() - 60000).toISOString(), breathing: false }).eq("user_id", s.id); }
 /** 쉼 완료(숨쉬기·스트레칭·체크인) 하루 1번 +20 XP */
-export async function restDone(kind: "breath" | "stretch" | "mood") { const s = await getSession(); if (!s) return 0; return awardXp(s.id, 20, `rest:${kind}:${kday()}`, "daily"); }
+export async function restDone(kind: "breath" | "stretch" | "mood" | "sauna") { const s = await getSession(); if (!s) return 0; return awardXp(s.id, 20, `rest:${kind}:${kday()}`, "daily"); }
 
 import { personMention, placeMention } from "./safety";
 const CONTACT = /(01[016789][-\s.]?\d{3,4}[-\s.]?\d{4})|([\w.+-]+@[\w-]+\.[\w.]+)|(카톡|카카오톡|오픈채팅|인스타|@[a-z0-9_.]{3,})/i;
