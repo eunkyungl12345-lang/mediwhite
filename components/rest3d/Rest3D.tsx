@@ -269,7 +269,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     const el = box.current; if (!el) return;
     const S = st.current;
     if (!S.renderer) {
-      const r = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" }); r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.35;
+      const r = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" }); r.setPixelRatio(Math.min(innerWidth < 720 ? 1.5 : 2, devicePixelRatio || 1)); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.35;
       el.appendChild(r.domElement); S.renderer = r;
       S.cam = new THREE.PerspectiveCamera(50, 1, .1, 300);
     }
@@ -287,13 +287,14 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     // 입력: 탭 → 이동, 드래그 → 카메라 회전
     let down: { x: number; y: number; t: number; yaw: number } | null = null;
     const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-    const onDown = (e: PointerEvent) => { down = { x: e.clientX, y: e.clientY, t: performance.now(), yaw: S.yaw }; };
+    const onDown = (e: PointerEvent) => { down = { x: e.clientX, y: e.clientY, t: e.timeStamp, yaw: S.yaw }; };
     const onMoveP = (e: PointerEvent) => { if (!down) return; const dx = e.clientX - down.x; if (Math.abs(dx) > 6) S.yaw = down.yaw - dx * .006; };
     const onUp = (e: PointerEvent) => {
-      if (!down) return; const dx = e.clientX - down.x, dy = e.clientY - down.y, dt = performance.now() - down.t; down = null;
-      if (Math.hypot(dx, dy) > 8 || dt > 400 || modeRef.current === "zen") return;
+      if (!down) return; const dx = e.clientX - down.x, dy = e.clientY - down.y, dt = e.timeStamp - down.t; down = null;
+      if (Math.hypot(dx, dy) > 12 || dt > 650 || modeRef.current === "zen") return;
       const rc = S.renderer!.domElement.getBoundingClientRect(); ndc.set(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1);
-      ray.setFromCamera(ndc, S.cam!); const hit = ray.intersectObject(S.ground!, false)[0]; if (!hit) return;
+      ray.setFromCamera(ndc, S.cam!); // 바닥 메시 대신 무한 바닥면과 교차: 멀리(벽 너머)를 눌러도 그쪽 끝까지 걸어가요
+      const pt = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3()); if (!pt) return; const hit = { point: pt };
       const a = S.me!; const sN = sceneRef.current; a.tx = Math.max(sN === "mars" ? -12 : sN === "sauna" ? -7 : -7.4, Math.min(sN === "mars" ? 12 : 7.4, hit.point.x)); a.tz = Math.max(sN === "zen" ? -5.4 : sN === "sauna" ? -3.2 : sN === "mars" ? -10 : -7.4, Math.min(sN === "roof" ? 7.4 : sN === "zen" || sN === "sauna" ? 9 : sN === "mars" ? 9 : 5.6, hit.point.z)); a.pose = "stand"; S.seat = -1; setSitting(false); setLying(false); emitMove("stand");
     };
     const dom = S.renderer!.domElement; dom.addEventListener("pointerdown", onDown); addEventListener("pointermove", onMoveP); addEventListener("pointerup", onUp);
@@ -398,7 +399,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const dropGrill = () => { const G = grill.current; if (!G) return; G.stop?.(); st.current.sc?.remove(G.g); grill.current = null; };
   const placeGrill = async () => { const S = st.current; const a = S.me; if (!a || !S.sc) return; dropGrill(); const g = new THREE.Group();
     g.add(boxMesh(.7, .16, .5, M(0x2c2c30, .5), 0, .08, 0)); const coal = M(0x2a1a14, .9, 0xff4a10, 1.1); for (let i = 0; i < 8; i++) { const c = new THREE.Mesh(new THREE.DodecahedronGeometry(.07, 0), coal); c.position.set(-.24 + (i % 4) * .16, .2, -.08 + Math.floor(i / 4) * .16); g.add(c); }
-    const pot = new THREE.Mesh(new THREE.CapsuleGeometry(.09, .26, 4, 10), M(0x7a3352, .8)); pot.rotation.z = Math.PI / 2; pot.position.set(0, .3, 0); g.add(pot); const l = new THREE.PointLight(0xff5a1a, 1.4, 2.5, 2); l.position.y = .5; g.add(l);
+    const pot = new THREE.Mesh(new THREE.CapsuleGeometry(.09, .26, 4, 10), M(0x7a3352, .8)); pot.rotation.z = Math.PI / 2; pot.position.set(0, .3, 0); g.add(pot);
     const ry = a.g.rotation.y; g.position.set(a.g.position.x + Math.cos(ry) * .9 + Math.sin(ry) * .3, 0, a.g.position.z - Math.sin(ry) * .9 + Math.cos(ry) * .3); S.sc.add(g); grill.current = { g, pot }; const au = await sfx(); if (au && grill.current?.g === g) grill.current.stop = au.sizzle(); };
   useEffect(() => { if (pot < 0 || !grill.current) return; const k = Math.min(1, potPct / 100), m = grill.current.pot.material as THREE.MeshStandardMaterial; m.color.setHex(potPct >= 170 ? 0x1a1414 : 0x7a3352).lerp(new THREE.Color(potPct >= 170 ? 0x1a1414 : 0xa0522d), potPct >= 170 ? 0 : k); if (potPct % 6 === 0) { const S = st.current; const G = grill.current; if (S.sc && G) { const sp = textSprite(potPct >= 100 ? "♨️" : "💨", { bg: "rgba(0,0,0,0)", size: 30, pad: 2 }); sp.position.set(G.g.position.x, .6, G.g.position.z); S.sc.add(sp); S.emo.push({ sp, t: 0 }); } } }); // eslint-disable-line
   useEffect(() => { if (scene !== "sauna") { dropGrill(); setPot(-1); } }, [scene]); // eslint-disable-line

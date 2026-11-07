@@ -24,7 +24,7 @@ const puff = () => { const c = document.createElement("canvas"); c.width = c.hei
 export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const { M, box, makeFire, textSprite } = h;
   scene.background = new THREE.Color(0x2a1a10); scene.fog = new THREE.Fog(0x3a2414, 22, 48);
-  scene.add(new THREE.HemisphereLight(0xffd8b0, 0x3a2010, .55));
+  scene.add(new THREE.HemisphereLight(0xffd8b0, 0x3a2010, .7));
   const key = new THREE.DirectionalLight(0xffd6a8, .35); key.position.set(-5, 11, 7); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); Object.assign(key.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12 }); scene.add(key);
 
   // 바닥: 밝은 편백 마루
@@ -53,7 +53,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   scene.add(box(1.8, .5, 1.1, M(0x3a3a3e, .6), -3.4, .25, -4.6), box(1.9, .06, 1.2, M(0x222226, .5), -3.4, .52, -4.6));
   const coalM = M(0x2a1a14, .9, 0xff4a10, .9); for (let i = 0; i < 18; i++) { const c = new THREE.Mesh(new THREE.DodecahedronGeometry(.11, 0), coalM); c.position.set(-4.1 + (i % 6) * .28, .6, -4.95 + Math.floor(i / 6) * .32); c.rotation.set(i, i * 2, 0); scene.add(c); }
   const potM = M(0x7a3352, .8); for (let i = 0; i < 4; i++) { const p = new THREE.Mesh(new THREE.CapsuleGeometry(.09, .22, 4, 8), potM); p.rotation.z = Math.PI / 2; p.rotation.y = i * .4; p.position.set(-3.9 + i * .34, .68, -4.55); scene.add(p); }
-  const coalLight = new THREE.PointLight(0xff5a1a, 1.2, 4, 2); coalLight.position.set(-3.4, 1, -4.6); scene.add(coalLight);
+  const coalLight = { intensity: 0 };
   const potSign = textSprite("🍠 고구마 굽는 곳", { bg: "rgba(90,40,70,.9)", size: 24 }); potSign.position.set(-3.4, 1.7, -4.6); scene.add(potSign);
 
   // 매점: 식혜 · 맥반석 달걀
@@ -69,7 +69,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const iceTex = tex((x, s) => { const g = x.createLinearGradient(0, 0, 0, s); g.addColorStop(0, "#dff6ff"); g.addColorStop(1, "#8fd3f4"); x.fillStyle = g; x.fillRect(0, 0, s, s); x.strokeStyle = "rgba(255,255,255,.8)"; x.lineWidth = 4; for (let i = 0; i < 14; i++) { const cx = Math.random() * s, cy = Math.random() * s, r = 10 + Math.random() * 18; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); x.stroke(); } } }, 256);
   const door = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.8), new THREE.MeshStandardMaterial({ map: iceTex, emissive: 0x9fdcff, emissiveMap: iceTex, emissiveIntensity: .7 })); door.position.set(8.83, 1.45, 1); door.rotation.y = -Math.PI / 2; scene.add(door);
   scene.add(box(.2, .2, 2.6, woodM, 8.8, 2.95, 1)); for (const dz of [-1.2, 1.2]) scene.add(box(.2, 3, .2, woodM, 8.8, 1.5, 1 + dz));
-  const iceLight = new THREE.PointLight(0x9fdcff, 1.6, 6, 1.6); iceLight.position.set(7.6, 1.6, 1); scene.add(iceLight);
+  
   const iceSign = textSprite("🧊 얼음방 4℃", { bg: "rgba(40,120,180,.92)", size: 26 }); iceSign.position.set(8.2, 3.5, 1); scene.add(iceSign);
 
   // TV (오른쪽 앞 벽)
@@ -103,7 +103,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const tvSign = textSprite("📺 TV 보는 곳", { bg: "rgba(40,60,110,.85)", size: 22 }); tvSign.position.set(5.4, 1.5, -5.4); scene.add(tvSign);
 
   // 천장 등 + 김(수증기)
-  for (const [x, z] of [[-4, 0], [4, 0], [0, 4.5], [-4, 6], [4, 6]]) { const l = new THREE.PointLight(0xffc888, .55, 9, 1.8); l.position.set(x, 3.7, z); scene.add(l); }
+  { const l = new THREE.PointLight(0xffc888, 1.2, 16, 1.4); l.position.set(0, 4, 3); scene.add(l); } // 천장 등은 하나만 (폰 성능)
   const N = 160, sg = new THREE.BufferGeometry(), sp = new Float32Array(N * 3), sv = new Float32Array(N);
   const reset = (i: number, y0 = Math.random() * 3) => { const a = Math.random() * Math.PI * 2, r = Math.random() * 3.2; sp[i * 3] = Math.cos(a) * r; sp[i * 3 + 1] = y0; sp[i * 3 + 2] = -5 + Math.sin(a) * r * .8; sv[i] = .25 + Math.random() * .4; };
   for (let i = 0; i < N; i++) reset(i); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
