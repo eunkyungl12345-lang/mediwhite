@@ -21,6 +21,8 @@ export const SAUNA_FIRE = new THREE.Vector3(0, .5, -4);
 const tex = (draw: (x: CanvasRenderingContext2D, s: number) => void, s = 512, rx = 1, ry = 1) => { const c = document.createElement("canvas"); c.width = c.height = s; draw(c.getContext("2d")!, s); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const puff = () => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d")!; const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); };
+/** 바닥 안내 글자: 절반 크기 + 반투명 (풍경을 가리지 않게) */
+const soft = (sp: THREE.Sprite) => { sp.scale.multiplyScalar(.5); const m = sp.material as THREE.SpriteMaterial; m.transparent = true; m.opacity = .6; return sp; };
 export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const { M, box, makeFire, textSprite } = h;
   scene.background = new THREE.Color(0x2a1a10); scene.fog = new THREE.Fog(0x3a2414, 22, 48);
@@ -56,7 +58,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const coalM = M(0x2a1a14, .9, 0xff4a10, .9); for (let i = 0; i < 18; i++) { const c = new THREE.Mesh(new THREE.DodecahedronGeometry(.11, 0), coalM); c.position.set(-4.1 + (i % 6) * .28, .6, -4.95 + Math.floor(i / 6) * .32); c.rotation.set(i, i * 2, 0); scene.add(c); }
   const potM = M(0x7a3352, .8); for (let i = 0; i < 4; i++) { const p = new THREE.Mesh(new THREE.CapsuleGeometry(.09, .22, 4, 8), potM); p.rotation.z = Math.PI / 2; p.rotation.y = i * .4; p.position.set(-3.9 + i * .34, .68, -4.55); scene.add(p); }
   const coalLight = { intensity: 0 };
-  const potSign = textSprite("🍠 고구마 굽는 곳", { bg: "rgba(90,40,70,.9)", size: 24 }); potSign.position.set(-3.4, 1.7, -4.6); scene.add(potSign);
+  const potSign = soft(textSprite("🍠 고구마 굽는 곳", { bg: "rgba(90,40,70,.9)", size: 24 })); potSign.position.set(-3.4, 1.7, -4.6); scene.add(potSign);
 
   // 매점: 식혜 · 맥반석 달걀
   scene.add(box(1.3, 1.05, 4.6, woodM, -8.1, .52, -1), box(1.5, .08, 4.8, M(0xd9b07a, .6), -8.05, 1.08, -1));
@@ -65,7 +67,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const basket = new THREE.Mesh(new THREE.CylinderGeometry(.42, .32, .22, 18), M(0xa8743c, .9)); basket.position.set(-8.05, 1.23, -.6); scene.add(basket);
   const eggM = M(0xb98a5e, .6); for (let i = 0; i < 9; i++) { const e = new THREE.Mesh(new THREE.SphereGeometry(.085, 10, 8), eggM); e.scale.set(1, 1.25, 1); const a = i / 9 * Math.PI * 2; e.position.set(-8.05 + Math.cos(a) * .22 * (i % 2 ? 1 : .4), 1.38, -.6 + Math.sin(a) * .22 * (i % 2 ? 1 : .4)); scene.add(e); }
   for (let i = 0; i < 4; i++) { const cup = new THREE.Mesh(new THREE.CylinderGeometry(.08, .065, .16, 10), M(0xf5e6c8, .5)); cup.position.set(-7.75, 1.2, .5 + i * .25); scene.add(cup); }
-  const shopSign = textSprite("🥤 식혜 · 🥚 맥반석 달걀", { bg: "rgba(60,110,70,.92)", size: 24 }); shopSign.position.set(-7.6, 2.75, -1); scene.add(shopSign);
+  const shopSign = soft(textSprite("🥤 식혜 · 🥚 맥반석 달걀", { bg: "rgba(60,110,70,.92)", size: 24 })); shopSign.position.set(-7.6, 2.75, -1); scene.add(shopSign);
 
   // 🧊 얼음방 문 (오른쪽 벽)
   const iceTex = tex((x, s) => { const g = x.createLinearGradient(0, 0, 0, s); g.addColorStop(0, "#dff6ff"); g.addColorStop(1, "#8fd3f4"); x.fillStyle = g; x.fillRect(0, 0, s, s); x.strokeStyle = "rgba(255,255,255,.8)"; x.lineWidth = 4; for (let i = 0; i < 14; i++) { const cx = Math.random() * s, cy = Math.random() * s, r = 10 + Math.random() * 18; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); x.stroke(); } } }, 256);
@@ -81,7 +83,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const iceLight = new THREE.PointLight(0x9fdcff, 2.2, 7, 1.5); iceLight.position.set(11.2, 2.6, 1); scene.add(iceLight);
   scene.add(box(.2, .2, 2.6, woodM, 8.8, 2.95, 1)); for (const dz of [-1.2, 1.2]) scene.add(box(.2, 3, .2, woodM, 8.8, 1.5, 1 + dz));
   
-  const iceSign = textSprite("🧊 얼음방 4℃", { bg: "rgba(40,120,180,.92)", size: 26 }); iceSign.position.set(8.2, 3.5, 1); scene.add(iceSign);
+  const iceSign = soft(textSprite("🧊 얼음방 4℃", { bg: "rgba(40,120,180,.92)", size: 26 })); iceSign.position.set(8.2, 3.5, 1); scene.add(iceSign);
 
   // TV (오른쪽 앞 벽)
   // 📺 TV: 채널이 8초마다 바뀌어요 (가끔 광고)
@@ -110,8 +112,8 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const matCols = [0xe9b44c, 0xe58b4e, 0xd8a25a, 0xef9f6a], pillow = M(0x8a5a32, .8), cush = [M(0xc0563a, .95), M(0xd88a3a, .95)];
   SAUNA_SEATS.forEach((st, i) => { const c = box(.85, .1, .85, cush[i % 2], st.x, .05, st.z); c.rotation.y = st.ry; c.castShadow = false; scene.add(c); });
   SAUNA_BEDS.forEach((st, i) => { const hx = -Math.sin(st.ry), hz = -Math.cos(st.ry); const mt = box(1.15, .05, 2.3, M(matCols[i % matCols.length], .95), st.x + hx * .95, .025, st.z + hz * .95); mt.rotation.y = st.ry; mt.castShadow = false; const pl = box(.5, .16, .24, pillow, st.x + hx * 1.85, .08, st.z + hz * 1.85); pl.rotation.y = st.ry; scene.add(mt, pl); });
-  const lieSign = textSprite("🛌 누워서 쉬는 곳", { bg: "rgba(120,70,30,.85)", size: 22 }); lieSign.position.set(-6.4, 1.5, 5.8); const lieSign2 = textSprite("🛌 누워서 쉬는 곳", { bg: "rgba(120,70,30,.85)", size: 22 }); lieSign2.position.set(6.4, 1.5, 6.2); scene.add(lieSign2); scene.add(lieSign);
-  const tvSign = textSprite("📺 TV 보는 곳", { bg: "rgba(40,60,110,.85)", size: 22 }); tvSign.position.set(5.4, 1.5, -5.4); scene.add(tvSign);
+  const lieSign = soft(textSprite("🛌 누워서 쉬는 곳", { bg: "rgba(120,70,30,.85)", size: 22 })); lieSign.position.set(-6.4, 1.5, 5.8); const lieSign2 = soft(textSprite("🛌 누워서 쉬는 곳", { bg: "rgba(120,70,30,.85)", size: 22 })); lieSign2.position.set(6.4, 1.5, 6.2); scene.add(lieSign2); scene.add(lieSign);
+  const tvSign = soft(textSprite("📺 TV 보는 곳", { bg: "rgba(40,60,110,.85)", size: 22 })); tvSign.position.set(5.4, 1.5, -5.4); scene.add(tvSign);
 
   // 천장 등 + 김(수증기)
   { const l = new THREE.PointLight(0xffc888, 1.2, 16, 1.4); l.position.set(0, 4, 3); scene.add(l); } // 천장 등은 하나만 (폰 성능)

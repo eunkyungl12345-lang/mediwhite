@@ -1,8 +1,7 @@
-/** 당직실 3D 추가 씬: 명상 홀 · 화성 기지 */
+/** 당직실 3D 추가 씬: 명상 홀 */
 import * as THREE from "three";
 type Seat = { x: number; z: number; ry: number };
 export const ZEN_SEATS: Seat[] = Array.from({ length: 24 }, (_, i) => ({ x: -5 + (i % 6) * 2, z: -3 + Math.floor(i / 6) * 2.2, ry: Math.PI }));
-export const MARS_SEATS: Seat[] = [{ x: -2, z: 1.2, ry: 2.1 }, { x: 0, z: 2.2, ry: Math.PI }, { x: 2, z: 1.2, ry: -2.1 }, { x: -2.2, z: -1, ry: 1.1 }, { x: 2.2, z: -1, ry: -1.1 }, { x: 0, z: -2.2, ry: 0 }];
 type Fire = { pts: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>; light: THREE.PointLight; update: (dt: number) => void };
 type Helpers = { M: (c: number, r?: number, e?: number, ei?: number) => THREE.MeshStandardMaterial; box: (w: number, h: number, d: number, m: THREE.Material, x?: number, y?: number, z?: number) => THREE.Mesh; makeFire: (pos: THREE.Vector3, scale?: number) => Fire; textSprite: (t: string, o?: any) => THREE.Sprite };
 
@@ -49,39 +48,4 @@ export function buildZenHall(scene: THREE.Scene, h: Helpers) {
   for (const sx of [-4.3, 0, 4.3]) for (const sz of [-3.5, 2]) { const lamp = new THREE.Mesh(new THREE.CylinderGeometry(.35, .35, .7, 16), new THREE.MeshStandardMaterial({ color: 0xfff1d6, emissive: 0xffd8a0, emissiveIntensity: .9 })); lamp.position.set(sx, 3.9, sz); scene.add(lamp); const l = new THREE.PointLight(0xffd8a0, 1.4, 9, 1.8); l.position.set(sx, 3.5, sz); scene.add(l); }
   const fire: Fire = { pts: flames[0].pts, light: flames[0].light, update: (dt: number) => { for (const f of flames) f.update(dt); const r = scene.getObjectByName("bowlring") as THREE.Mesh | undefined; if (r) { const t = (r.userData.t ?? 0) as number; if (t > 0) { r.scale.setScalar(1 + (1 - t) * 10); (r.material as THREE.MeshBasicMaterial).opacity = t * .6; r.userData.t = Math.max(0, t - dt / 5); } } } };
   return { fire, camBase: new THREE.Vector3(0, 0, 2) };
-}
-
-/** 🔴 화성 기지: 붉은 사막 · 유리 돔 거주지 · 로켓 · 탐사 로버 · 히터 · 먼지 바람 */
-export function buildMarsBase(scene: THREE.Scene, h: Helpers) {
-  const { M, box, makeFire, textSprite } = h;
-  scene.background = new THREE.Color(0x2a1410); scene.fog = new THREE.Fog(0xb8653a, 20, 95);
-  scene.add(new THREE.HemisphereLight(0xffc8a0, 0x5a2410, .9));
-  const sun = new THREE.DirectionalLight(0xffe2c4, 1.6); sun.position.set(15, 18, 10); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16 }); scene.add(sun);
-  scene.add(new THREE.Mesh(new THREE.SphereGeometry(120, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, vertexShader: "varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }", fragmentShader: "varying vec3 vP; void main(){ float h = clamp(vP.y, 0., 1.); vec3 c = mix(vec3(.85,.52,.33), vec3(.16,.07,.12), pow(h, .55)); gl_FragColor = vec4(c,1.); }" })));
-  const earth = new THREE.Mesh(new THREE.SphereGeometry(1.4, 24, 16), new THREE.MeshBasicMaterial({ color: 0x6fb4ff, fog: false })); earth.position.set(-40, 42, -70); scene.add(earth);
-  for (const [x, y, z, r] of [[30, 34, -80, 2.2], [55, 26, -60, 1.2]]) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 1), new THREE.MeshStandardMaterial({ color: 0x9a8a7a, roughness: 1, fog: false })); m.position.set(x, y, z); scene.add(m); }
-  const gg = new THREE.PlaneGeometry(160, 160, 80, 80); const pa = gg.attributes.position as THREE.BufferAttribute; for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), y = pa.getY(i), d = Math.hypot(x, y); const hh = d < 13 ? 0 : (Math.sin(x * .08) * Math.cos(y * .07) * 2.5 + Math.sin(x * .21 + y * .13) * .8) * Math.min(1, (d - 13) / 18) + (d > 40 ? (d - 40) * .25 : 0); pa.setZ(i, hh); } gg.computeVertexNormals();
-  const ground = new THREE.Mesh(gg, new THREE.MeshStandardMaterial({ color: 0xb5532c, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; ground.name = "ground"; scene.add(ground);
-  for (let i = 0; i < 70; i++) { const rk = new THREE.Mesh(new THREE.DodecahedronGeometry(.2 + Math.random() * .9, 0), new THREE.MeshStandardMaterial({ color: [0x8e3b1f, 0x6b2a16, 0xa04a28][i % 3], roughness: 1 })); const a = Math.random() * Math.PI * 2, r = 10 + Math.random() * 40; rk.position.set(Math.cos(a) * r, .1, Math.sin(a) * r); rk.rotation.set(Math.random(), Math.random(), Math.random()); rk.castShadow = true; scene.add(rk); }
-  const pad = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, .08, 48), M(0x6b6f78, .8)); pad.position.y = .04; pad.receiveShadow = true; scene.add(pad);
-  for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, b = new THREE.Mesh(new THREE.SphereGeometry(.08, 8, 6), new THREE.MeshBasicMaterial({ color: 0x7fe3ff })); b.position.set(Math.cos(a) * 7.3, .1, Math.sin(a) * 7.3); scene.add(b); }
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, roughness: .05, metalness: .1, transparent: true, opacity: .28, depthWrite: false })); dome.position.set(-4, .4, -14); scene.add(dome);
-  const domeFrame = new THREE.Mesh(new THREE.SphereGeometry(5.02, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xdfe6ee, wireframe: true, transparent: true, opacity: .35 })); domeFrame.position.copy(dome.position); scene.add(domeFrame);
-  scene.add(box(10.4, .4, 10.4, M(0x8a8f99, .6), -4, .2, -14)); for (let i = 0; i < 5; i++) { const tr = new THREE.Mesh(new THREE.SphereGeometry(.7, 10, 8), M(0x4f9e5e, 1)); tr.position.set(-6 + i * 1.1, 1.3, -14 + (i % 2) * 1.4); scene.add(tr); }
-  const domeLight = new THREE.PointLight(0xfff1d6, 3, 14); domeLight.position.set(-4, 2.8, -14); scene.add(domeLight);
-  const sign = textSprite("🔴 메디화이트 화성 1기지", { bg: "rgba(226,87,76,.95)", size: 30 }); sign.position.set(-4, 6.4, -14); scene.add(sign);
-  const tube = new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, 8, 16), M(0xdfe3e8, .5)); tube.rotation.z = Math.PI / 2; tube.position.set(4, 1.1, -14); tube.castShadow = true; scene.add(tube);
-  const mod = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 2.6, 20), M(0xeef1f5, .4)); mod.position.set(9, 1.3, -14); mod.castShadow = true; scene.add(mod); scene.add(box(1.2, .6, .1, M(0x9fe7ff, .2, 0x9fe7ff, 1.2), 9, 1.6, -11.85));
-  const rocket = new THREE.Group(); const hull = new THREE.MeshStandardMaterial({ color: 0xd8dde4, roughness: .25, metalness: .9 });
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 14, 28), hull); body.position.y = 8; const nose = new THREE.Mesh(new THREE.ConeGeometry(1.1, 3.2, 28), hull); nose.position.y = 16.6; rocket.add(body, nose);
-  for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2 + Math.PI / 4; const fin = box(.08, 3, 1.6, hull, Math.cos(a) * 1.3, 2.2, Math.sin(a) * 1.3); fin.rotation.y = -a; rocket.add(fin, box(.12, 1.8, .12, M(0x333, .5), Math.cos(a) * 1.6, .9, Math.sin(a) * 1.6)); }
-  rocket.position.set(10, 0, -4); rocket.traverse(o => { if ((o as THREE.Mesh).isMesh) o.castShadow = true; }); scene.add(rocket);
-  const rover = new THREE.Group(); rover.add(box(2, .5, 1.2, M(0xeef1f5, .4), 0, .8, 0), box(.6, .5, .6, M(0x333, .4), .6, 1.3, 0)); for (const [sx, sz] of [[-.7, -.7], [0, -.7], [.7, -.7], [-.7, .7], [0, .7], [.7, .7]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.28, .28, .25, 14), M(0x222, .9)); w.rotation.x = Math.PI / 2; w.position.set(sx, .3, sz); rover.add(w); } rover.add(box(.06, 1, .06, M(0x555), -.7, 1.5, 0), box(.3, .2, .2, M(0x111), -.7, 2.05, 0)); rover.position.set(-9, 0, -3); rover.rotation.y = .6; rover.traverse(o => { if ((o as THREE.Mesh).isMesh) o.castShadow = true; }); scene.add(rover);
-  const heater = new THREE.Mesh(new THREE.CylinderGeometry(.55, .65, .5, 16), M(0x3a3f48, .5)); heater.position.y = .25; const coil = new THREE.Mesh(new THREE.TorusGeometry(.45, .06, 8, 24), M(0xff6a2a, .3, 0xff6a2a, 2)); coil.rotation.x = Math.PI / 2; coil.position.y = .52; scene.add(heater, coil);
-  const glow = makeFire(new THREE.Vector3(0, .5, 0), .7); (glow.pts.material as THREE.PointsMaterial).color.set(0xff8a4a); scene.add(glow.pts, glow.light);
-  for (const st of MARS_SEATS) scene.add(box(.7, .45, .7, M(0xd8dde4, .5), st.x, .22, st.z), box(.72, .04, .72, M(0xe2574c, .5), st.x, .46, st.z));
-  const N = 400, dg = new THREE.BufferGeometry(), dp = new Float32Array(N * 3); for (let i = 0; i < N; i++) { dp[i * 3] = (Math.random() - .5) * 40; dp[i * 3 + 1] = Math.random() * 6; dp[i * 3 + 2] = (Math.random() - .5) * 40; } dg.setAttribute("position", new THREE.BufferAttribute(dp, 3));
-  scene.add(new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xffc8a0, size: .06, transparent: true, opacity: .6 })));
-  const fire: Fire = { pts: glow.pts, light: glow.light, update: (dt: number) => { glow.update(dt); for (let i = 0; i < N; i++) { dp[i * 3] += dt * .8; if (dp[i * 3] > 20) dp[i * 3] = -20; } dg.attributes.position.needsUpdate = true; } };
-  return { fire, camBase: new THREE.Vector3(0, 0, 0) };
 }

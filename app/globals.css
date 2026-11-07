@@ -2302,3 +2302,6 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 @keyframes r3steam{from{opacity:.9;transform:translateY(6px)}to{opacity:0;transform:translateY(-14px)}}
 @keyframes r3pop{from{transform:scale(.6)}}
 .auth-perk{padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#FFF4E5,#FFE9EE);border:1px solid #FFD3B0;color:#9A4A12;font-size:13px;font-weight:800;line-height:1.45;text-align:center}
+.r3-exit{pointer-events:auto;position:relative;z-index:30;flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(10,10,12,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;font-size:14px;font-weight:800;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer}
+.r3.full .r3-exit{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 10px);left:12px;z-index:2147483000}.r3.full .r3-top{padding-left:96px}
+@media(max-width:480px){.r3.full .r3-top{padding-left:98px;gap:4px}.r3.full .r3-tabs button{padding:6px 8px;font-size:12px}.r3.full .r3-exit{padding:0 11px;font-size:13px}}

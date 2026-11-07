@@ -8,7 +8,7 @@ export function unlockAudio() {
     w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
     const a = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" }))); a.loop = true; (a as any).playsInline = true; a.volume = .01; a.play().catch(() => { unlocked = false; }); } catch { unlocked = false; }
 }
-export type AmbScene = "roof" | "pocha" | "zen" | "mars" | "sauna";
+export type AmbScene = "roof" | "zen" | "sauna";
 
 function noiseBuffer(ctx: AudioContext, sec = 4, brown = true) {
   const len = ctx.sampleRate * sec, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0); let last = 0;
@@ -20,7 +20,7 @@ export class Ambience {
   ctx: AudioContext; master: GainNode; music: GainNode; sfx: GainNode; timers: any[] = []; nodes: AudioNode[] = []; scene: AmbScene = "roof"; running = false; padStep = 0; padTimer: any = null;
   constructor() { this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)(); this.master = this.ctx.createGain(); this.master.gain.value = 0; this.master.connect(this.ctx.destination); this.music = this.ctx.createGain(); this.music.gain.value = .55; this.music.connect(this.master); this.sfx = this.ctx.createGain(); this.sfx.gain.value = 1; this.sfx.connect(this.master); }
   setVolume(v: number) { this.master.gain.setTargetAtTime(Math.max(0, Math.min(1, v)), this.ctx.currentTime, .3); }
-  async start(scene: AmbScene) { await this.ctx.resume(); this.stopLayers(); this.scene = scene; this.running = true; if (scene === "roof") this.roof(); else if (scene === "pocha") this.pocha(); else if (scene === "zen") this.zen(); else if (scene === "sauna") this.sauna(); else this.mars(); this.pad(); }
+  async start(scene: AmbScene) { await this.ctx.resume(); this.stopLayers(); this.scene = scene; this.running = true; if (scene === "roof") this.roof(); else if (scene === "zen") this.zen(); else this.sauna(); this.pad(); }
   stop() { this.stopLayers(); this.running = false; }
   dispose() { this.stop(); try { this.ctx.close(); } catch {} }
   private stopLayers() { for (const t of this.timers) clearTimeout(t); this.timers = []; if (this.padTimer) clearInterval(this.padTimer); this.padTimer = null; for (const n of this.nodes) { try { (n as any).stop?.(); } catch {} try { n.disconnect(); } catch {} } this.nodes = []; }
@@ -45,25 +45,6 @@ export class Ambience {
     // 멀리 구급차 사이렌(아주 작게) · 차 지나가기
     this.every(18000, 40000, () => this.car());
   }
-  /* 포차: 솥 끓는 소리·지글 + 웅성웅성 + 잔 부딪히는 소리 + 도로 */
-  private pocha() {
-    const brown = noiseBuffer(this.ctx, 5, true), white = noiseBuffer(this.ctx, 4, false);
-    this.loop(brown, "lowpass", 300, .16); // 도로·밤공기
-    const siz = this.loop(white, "highpass", 5200, .035); const l2 = this.ctx.createOscillator(); l2.frequency.value = .9; const l2g = this.ctx.createGain(); l2g.gain.value = .02; l2.connect(l2g); l2g.connect(siz.g.gain); l2.start(); this.nodes.push(l2, l2g); // 지글
-    this.loop(brown, "bandpass", 180, .12, .8); // 끓는 솥 (저음 부글)
-    this.every(400, 1500, () => this.burst("bandpass", 250 + Math.random() * 200, .12, .12)); // 보글
-    const mur = this.loop(brown, "bandpass", 700, .09, .5); const ml = this.ctx.createOscillator(); ml.frequency.value = .23; const mg = this.ctx.createGain(); mg.gain.value = .05; ml.connect(mg); mg.connect(mur.g.gain); ml.start(); this.nodes.push(ml, mg); // 웅성웅성
-    this.every(6000, 18000, () => this.clink());
-    this.every(20000, 45000, () => this.car());
-  }
-  /* 화성: 낮게 우는 바람 + 가끔 무전 비프 + 먼 기계음 */
-  private mars() {
-    const brown = noiseBuffer(this.ctx, 5, true);
-    const wind = this.loop(brown, "bandpass", 380, .14, .7); const l = this.ctx.createOscillator(); l.frequency.value = .05; const lg = this.ctx.createGain(); lg.gain.value = .07; l.connect(lg); lg.connect(wind.g.gain); l.start(); this.nodes.push(l, lg);
-    const hum = this.ctx.createOscillator(); hum.type = "sine"; hum.frequency.value = 55; const hg = this.ctx.createGain(); hg.gain.value = .015; hum.connect(hg); hg.connect(this.sfx); hum.start(); this.nodes.push(hum, hg);
-    this.every(9000, 20000, () => { for (let i = 0; i < 2; i++) { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = 1320; const g = this.ctx.createGain(); const t = this.ctx.currentTime + i * .18; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.02, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .12); o.connect(g); g.connect(this.sfx); o.start(t); o.stop(t + .15); } });
-  }
-  /* 명상실: 아주 옅은 공기 소리 + 낮은 드론 + 가끔 저절로 울리는 싱잉볼 + 풍경 */
   /** 찜질방: 불가마 장작 타닥 · 낮은 웅성 · 컵 소리 */
   private sauna() {
     const brown = noiseBuffer(this.ctx, 5, true);
@@ -113,12 +94,15 @@ export class Ambience {
   /** 식혜 후루룩 */
   slurp() { this.ctx.resume(); const t = this.ctx.currentTime; const src = this.ctx.createBufferSource(); src.buffer = noiseBuffer(this.ctx, 1, false); const f = this.ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 4; f.frequency.setValueAtTime(600, t); f.frequency.linearRampToValueAtTime(1600, t + .55); const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.35, t + .08); g.gain.linearRampToValueAtTime(.2, t + .4); g.gain.linearRampToValueAtTime(0, t + .6); src.connect(f); f.connect(g); g.connect(this.sfx); src.start(t); src.stop(t + .65); }
   iceClink() { this.clink(); }
+  /** 🧊 시원한 바람: 위로 쓸어 올리는 바람 소리 + 맑은 고음 반짝임 */
+  chill() { this.ctx.resume(); const t = this.ctx.currentTime; const src = this.ctx.createBufferSource(); src.buffer = noiseBuffer(this.ctx, 2, false); const f = this.ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.2; f.frequency.setValueAtTime(500, t); f.frequency.exponentialRampToValueAtTime(4000, t + 1.1); const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.22, t + .25); g.gain.linearRampToValueAtTime(0, t + 1.3); src.connect(f); f.connect(g); g.connect(this.sfx); src.start(t); src.stop(t + 1.4);
+    [2093, 2637, 3136].forEach((fr, i) => { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = fr; const og = this.ctx.createGain(); const s0 = t + .3 + i * .12; og.gain.setValueAtTime(0, s0); og.gain.linearRampToValueAtTime(.06, s0 + .01); og.gain.exponentialRampToValueAtTime(.001, s0 + .7); o.connect(og); og.connect(this.sfx); o.start(s0); o.stop(s0 + .75); }); }
   private clink() { for (let i = 0; i < 2; i++) { const o = this.ctx.createOscillator(); o.type = "triangle"; o.frequency.value = 2400 + Math.random() * 900; const g = this.ctx.createGain(); const t = this.ctx.currentTime + i * .09; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.06, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + .5); o.connect(g); g.connect(this.sfx); o.start(t); o.stop(t + .6); } }
   private siren() { const o = this.ctx.createOscillator(); o.type = "sine"; const g = this.ctx.createGain(); const t = this.ctx.currentTime, dur = 7; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.012, t + dur * .4); g.gain.linearRampToValueAtTime(0, t + dur); for (let i = 0; i < dur * 2; i++) o.frequency.setValueAtTime(i % 2 ? 660 : 880, t + i * .5); const f = this.ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900; const p = this.ctx.createStereoPanner(); p.pan.setValueAtTime(-1, t); p.pan.linearRampToValueAtTime(1, t + dur); o.connect(f); f.connect(g); g.connect(p); p.connect(this.sfx); o.start(t); o.stop(t + dur + .1); }
   private car() { const src = this.ctx.createBufferSource(); src.buffer = noiseBuffer(this.ctx, 4, true); const f = this.ctx.createBiquadFilter(); f.type = "lowpass"; const t = this.ctx.currentTime, dur = 3.5; f.frequency.setValueAtTime(200, t); f.frequency.linearRampToValueAtTime(900, t + dur / 2); f.frequency.linearRampToValueAtTime(200, t + dur); const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.035, t + dur / 2); g.gain.linearRampToValueAtTime(0, t + dur); const p = this.ctx.createStereoPanner(); p.pan.setValueAtTime(1, t); p.pan.linearRampToValueAtTime(-1, t + dur); src.connect(f); f.connect(g); g.connect(p); p.connect(this.sfx); src.start(t); src.stop(t + dur + .1); }
   /* 잔잔한 패드: 느린 코드 진행 + 딜레이 리버브 느낌 */
   private pad() {
-    const chords = this.scene === "mars" ? [[110, 164.8, 220, 329.6], [98, 146.8, 196, 293.7], [123.5, 185, 246.9, 370], [110, 164.8, 220, 329.6]] : this.scene === "zen" ? [[130.8, 196, 261.6, 392], [174.6, 220, 261.6, 349.2], [146.8, 220, 293.7, 440], [130.8, 196, 261.6, 392]] : this.scene === "roof" ? [[261.6, 329.6, 392, 523.3], [220, 261.6, 329.6, 440], [174.6, 220, 261.6, 349.2], [196, 246.9, 293.7, 392]] : [[196, 246.9, 293.7, 392], [174.6, 220, 261.6, 349.2], [220, 261.6, 329.6, 440], [146.8, 174.6, 220, 293.7]];
+    const chords = this.scene === "zen" ? [[130.8, 196, 261.6, 392], [174.6, 220, 261.6, 349.2], [146.8, 220, 293.7, 440], [130.8, 196, 261.6, 392]] : this.scene === "roof" ? [[261.6, 329.6, 392, 523.3], [220, 261.6, 329.6, 440], [174.6, 220, 261.6, 349.2], [196, 246.9, 293.7, 392]] : [[196, 246.9, 293.7, 392], [174.6, 220, 261.6, 349.2], [220, 261.6, 329.6, 440], [146.8, 174.6, 220, 293.7]];
     const delay = this.ctx.createDelay(1.5); delay.delayTime.value = .42; const fb = this.ctx.createGain(); fb.gain.value = .45; const dl = this.ctx.createBiquadFilter(); dl.type = "lowpass"; dl.frequency.value = 1600; delay.connect(fb); fb.connect(dl); dl.connect(delay); const wet = this.ctx.createGain(); wet.gain.value = .5; delay.connect(wet); wet.connect(this.music); this.nodes.push(delay, fb, dl, wet);
     const play = () => { if (!this.running) return; const ch = chords[this.padStep % chords.length]; this.padStep++; const t = this.ctx.currentTime, dur = this.scene === "zen" ? 13 : 9;
       ch.forEach((f, i) => { for (const det of [-4, 4]) { const o = this.ctx.createOscillator(); o.type = i === 0 ? "sine" : "triangle"; o.frequency.value = f; o.detune.value = det; const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(i === 0 ? .035 : .018, t + 3); g.gain.setValueAtTime(i === 0 ? .035 : .018, t + dur - 3.5); g.gain.linearRampToValueAtTime(0, t + dur); const lp = this.ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 900; o.connect(lp); lp.connect(g); g.connect(this.music); g.connect(delay); o.start(t); o.stop(t + dur + .1); } });
