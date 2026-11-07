@@ -56,7 +56,7 @@ function makeAvatar(nick: string, dept: string | null, me: boolean): Avatar {
   const cheekM = new THREE.MeshStandardMaterial({ color: 0xf2a3a3, transparent: true, opacity: .6 }); for (const sx of [-.16, .16]) { const c = new THREE.Mesh(new THREE.SphereGeometry(.04, 6, 6), cheekM); c.position.set(sx, -.06, .24); head.add(c); }
   if (dept === "간호사" || dept === "간호조무사") { const cap = new THREE.Mesh(new THREE.CylinderGeometry(.22, .26, .1, 12), mat(0xffffff)); cap.position.y = .22; head.add(cap); }
   if (dept === "의사" || dept === "한의사") { const st = new THREE.Mesh(new THREE.TorusGeometry(.2, .02, 6, 20, Math.PI), mat(0x444)); st.position.set(0, 1.0, .22); st.rotation.z = Math.PI; g.add(st); }
-  head.position.y = 1.42;
+  head.position.y = 1.42; head.scale.setScalar(1.5); // 큰 머리 치비
   g.add(legs, body, collar, arms, head);
   const name = textSprite(me ? (nick === "나" ? "나" : "나 · " + nick) : nick, { bg: me ? "rgba(31,94,60,.9)" : "rgba(20,24,34,.72)", size: 26 }); name.position.y = 2.05; g.add(name);
   const sh = new THREE.Mesh(new THREE.CircleGeometry(.36, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .28 })); sh.rotation.x = -Math.PI / 2; sh.position.y = .012; g.add(sh);
@@ -235,7 +235,7 @@ function jjim(a: Avatar) {
   const band = new THREE.Mesh(new THREE.TorusGeometry(.31, .045, 8, 24), tw); band.rotation.x = Math.PI / 2; band.position.y = .07; a.head.add(band);
 }
 function spawnNPCs(scene: Scene, sc: THREE.Scene) {
-  const seats = SEATS[scene], rate = scene === "zen" ? .72 : scene === "mars" ? .5 : .55, out: { a: Avatar; seat: number; stand?: boolean }[] = [];
+  const seats = SEATS[scene], rate = scene === "zen" ? .72 : scene === "sauna" ? .85 : scene === "mars" ? .5 : .55, out: { a: Avatar; seat: number; stand?: boolean }[] = [];
   const rnd = (i: number) => { const v = Math.sin(i * 12.9898 + seats.length * 78.233) * 43758.5453; return v - Math.floor(v); };
   seats.forEach((st, i) => { if (rnd(i) > rate || (scene === "zen" && (i === 20 || i === 21))) return; const a = makeAvatar("", NPC_DEPTS[i % NPC_DEPTS.length], false); a.g.remove(a.name); if (scene === "mars") suit(a); if (scene === "sauna") jjim(a); a.g.position.set(st.x, 0, st.z); a.tx = st.x; a.tz = st.z; a.pose = "sit"; a.g.rotation.y = st.ry; sc.add(a.g); out.push({ a, seat: i }); });
   const extra: [number, number, number][] = scene === "roof" ? [[-6.5, -6, .4], [6.6, 5.8, -2.4], [4.8, -6.4, 0]] : scene === "pocha" ? [[6.4, -1.6, -1.2], [-5.6, 3.8, 1.6]] : scene === "mars" ? [[-6, -8, .4], [5, -9, -.3], [8, -2, -1.2]] : scene === "sauna" ? [[-6.6, .4, -1.5], [6.9, 2.6, 1.6], [-2.6, -3.4, 2.6]] : [];
@@ -271,7 +271,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     const sc = new THREE.Scene(); S.sc = sc; S.others.forEach(a => setBubble(a, null)); S.others.clear(); S.emo = []; S.paper = undefined; S.seat = -1; setSitting(false);
     const H = { M, box: boxMesh, makeFire, textSprite }; const built = scene === "roof" ? buildRoof(sc) : scene === "pocha" ? buildPocha(sc) : scene === "zen" ? buildZenHall(sc, H) : scene === "sauna" ? buildSauna(sc, H) : buildMarsBase(sc, H); S.npcs = spawnNPCs(scene, sc); S.fw?.dispose(); S.fw = undefined; S.fwSeen = S.fwSeen ?? {};
     if (scene === "roof") { S.fw = new Fireworks(sc); const pad = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, .08, 24), M(0x2a2f3a, .7)); pad.position.set(3.2, .04, -5.8); pad.receiveShadow = true; sc.add(pad); const stripe = new THREE.Mesh(new THREE.RingGeometry(1.15, 1.28, 32), new THREE.MeshBasicMaterial({ color: 0xffd36e, side: THREE.DoubleSide })); stripe.rotation.x = -Math.PI / 2; stripe.position.set(3.2, .09, -5.8); sc.add(stripe); for (let i = 0; i < 5; i++) { const tube = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .5, 10), M([0xe2574c, 0xf2a900, 0x5fa8e8, 0x7ed69b, 0xf48fb1][i], .5)); tube.position.set(2.6 + i * .3, .3, -5.8 + (i % 2) * .3); tube.rotation.x = -.2; tube.castShadow = true; sc.add(tube); } const fsign = textSprite("🎆 불꽃놀이 존", { bg: "rgba(242,169,0,.95)", fg: "#2b1a08", size: 28 }); fsign.position.set(3.2, 2.2, -5.8); sc.add(fsign); } S.fire = built.fire; S.camBase = built.camBase; S.ground = sc.getObjectByName("ground")!;
-    const meAv = makeAvatar(me, myDept, true); if (scene === "sauna") jjim(meAv); const spawn = scene === "roof" ? { x: 0, z: 5.5 } : scene === "pocha" ? { x: 0, z: 5 } : scene === "zen" || scene === "sauna" ? { x: 0, z: 7 } : { x: 0, z: 5 }; meAv.g.position.set(spawn.x, 0, spawn.z); meAv.tx = spawn.x; meAv.tz = spawn.z; meAv.ry = Math.PI; meAv.g.rotation.y = Math.PI; sc.add(meAv.g); S.me = meAv;
+    const meAv = makeAvatar(me, myDept, true); if (scene === "sauna") { jjim(meAv); meAv.name.scale.multiplyScalar(.6); } const spawn = scene === "roof" ? { x: 0, z: 5.5 } : scene === "pocha" ? { x: 0, z: 5 } : scene === "zen" ? { x: 0, z: 7 } : scene === "sauna" ? { x: 0, z: 5.6 } : { x: 0, z: 5 }; meAv.g.position.set(spawn.x, 0, spawn.z); meAv.tx = spawn.x; meAv.tz = spawn.z; meAv.ry = Math.PI; meAv.g.rotation.y = Math.PI; sc.add(meAv.g); S.me = meAv;
     try { localStorage.setItem("mw-rest-scene", scene); } catch {}
     onMove({ scene, x: spawn.x, z: spawn.z, pose: "stand" });
 
@@ -323,7 +323,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       // 카메라
       const meP = S.me ? S.me.g.position : S.camBase;
       if (modeRef.current === "zen") { const f = FIRE[sceneRef.current]; const ang = t * .12; camPos.set(f.x + Math.cos(ang) * 4.2, f.y + 1.6 + Math.sin(t * .3) * .1, f.z + Math.sin(ang) * 4.2); look.set(f.x, f.y + .9, f.z); }
-      else { const far = S.cam!.aspect < .8 ? 9.6 : 6.4; camPos.set(meP.x + Math.sin(S.yaw) * far, far * .66, meP.z + Math.cos(S.yaw) * far); look.set(meP.x, 1, meP.z - (sceneRef.current === "zen" ? 3 : 1.2)); }
+      else { const sa = sceneRef.current === "sauna", far = S.cam!.aspect < .8 ? (sa ? 9 : 9.6) : (sa ? 6.6 : 6.4), hk = sa ? .5 : .66; camPos.set(meP.x + Math.sin(S.yaw) * far, far * hk, meP.z + Math.cos(S.yaw) * far); look.set(sa ? meP.x * .5 : meP.x, sa ? 1.5 : 1, sa ? Math.min(meP.z - 4, -2) : meP.z - (sceneRef.current === "zen" ? 3 : 1.2)); }
       if (S.fw && S.fw.active > 0 && modeRef.current !== "zen") { const k = Math.min(1, S.fw.active / 1.2); const sky = new THREE.Vector3(S.fw.lastBurst.x * .5, 8, -12); look.lerp(sky, k * .8); }
       S.cam!.position.lerp(camPos, Math.min(1, dt * 4)); if (!S.lookCur) S.lookCur = look.clone(); S.lookCur.lerp(look, Math.min(1, dt * 3)); S.cam!.lookAt(S.lookCur);
       S.renderer!.render(sc, S.cam!);
@@ -334,7 +334,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   useEffect(() => () => { st.current.renderer?.dispose(); st.current.renderer?.domElement.remove(); st.current.renderer = undefined; }, []);
 
   /* ---- 내 별명이 늦게 오면 이름표 갱신 ---- */
-  useEffect(() => { const a = st.current.me; if (!a || !me || me === "나") return; a.g.remove(a.name); a.name.material.map?.dispose(); a.name.material.dispose(); a.name = textSprite("나 · " + me, { bg: "rgba(31,94,60,.9)", size: 26 }); a.name.position.y = a.pose === "sit" ? 1.85 : 2.05; a.g.add(a.name); }, [me]);
+  useEffect(() => { const a = st.current.me; if (!a || !me || me === "나") return; a.g.remove(a.name); a.name.material.map?.dispose(); a.name.material.dispose(); a.name = textSprite("나 · " + me, { bg: "rgba(31,94,60,.9)", size: 26 }); if (sceneRef.current === "sauna") a.name.scale.multiplyScalar(.6); a.name.position.y = a.pose === "sit" ? 1.85 : 2.05; a.g.add(a.name); }, [me]);
   /* ---- 액션 이모지 (건배·토닥·수고) ---- */
   useEffect(() => { if (!actPulse) return; const S = st.current; const a = S.me; if (!a || !S.sc) return; const sp = textSprite(actPulse.a, { bg: "rgba(0,0,0,0)", size: 44, pad: 4 }); sp.position.set(a.g.position.x + .4, 2.2, a.g.position.z); S.sc.add(sp); S.emo.push({ sp, t: 0 }); }, [actPulse]);
 

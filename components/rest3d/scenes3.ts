@@ -15,8 +15,8 @@ const puff = () => { const c = document.createElement("canvas"); c.width = c.hei
 export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const { M, box, makeFire, textSprite } = h;
   scene.background = new THREE.Color(0x2a1a10); scene.fog = new THREE.Fog(0x3a2414, 22, 48);
-  scene.add(new THREE.HemisphereLight(0xffe2c0, 0x5a3420, 1.05));
-  const key = new THREE.DirectionalLight(0xffd6a8, .7); key.position.set(-5, 11, 7); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); Object.assign(key.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12 }); scene.add(key);
+  scene.add(new THREE.HemisphereLight(0xffd8b0, 0x3a2010, .55));
+  const key = new THREE.DirectionalLight(0xffd6a8, .35); key.position.set(-5, 11, 7); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); Object.assign(key.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12 }); scene.add(key);
 
   // 바닥: 밝은 편백 마루
   const floorTex = tex((x, s) => { x.fillStyle = "#c99a68"; x.fillRect(0, 0, s, s); for (let i = 0; i < 16; i++) { x.fillStyle = `rgba(90,50,20,${.04 + (i % 3) * .035})`; x.fillRect(0, i * 32, s, 32); x.fillStyle = "rgba(80,45,20,.35)"; x.fillRect(0, i * 32, s, 1.5); for (let k = 0; k < 14; k++) { x.strokeStyle = `rgba(120,70,30,${Math.random() * .12})`; x.beginPath(); const y = i * 32 + Math.random() * 32; x.moveTo(0, y); x.bezierCurveTo(170, y + 3, 340, y - 3, s, y); x.stroke(); } } }, 512, 5, 6);
@@ -25,7 +25,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   // 황토벽 + 나무 기둥
   const clayTex = tex((x, s) => { x.fillStyle = "#c58a56"; x.fillRect(0, 0, s, s); for (let i = 0; i < 2600; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? "255,220,170" : "110,60,30"},${Math.random() * .12})`; x.fillRect(Math.random() * s, Math.random() * s, 2 + Math.random() * 5, 2 + Math.random() * 4); } }, 256, 4, 2);
   const wallM = new THREE.MeshStandardMaterial({ map: clayTex, roughness: 1 }), woodM = M(0x6b3f22, .7);
-  scene.add(box(18, 5, .3, wallM, 0, 2.5, -9)); for (const sx of [-9, 9]) scene.add(box(.3, 5, 20, wallM, sx, 2.5, 1));
+  scene.add(box(18, 9, .3, wallM, 0, 4.5, -9)); for (const sx of [-9, 9]) scene.add(box(.3, 9, 20, wallM, sx, 4.5, 1));
   for (const sx of [-8.7, 8.7]) for (const sz of [-8.7, -3, 3, 8.7]) scene.add(box(.35, 5, .35, woodM, sx, 2.5, sz));
   for (const sz of [-8.7]) scene.add(box(18, .35, .35, woodM, 0, 4.9, sz)); for (const sx of [-8.7, 8.7]) scene.add(box(.35, .35, 20, woodM, sx, 4.9, 1));
 
@@ -36,8 +36,8 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const hole = new THREE.Mesh(new THREE.CircleGeometry(1.05, 24, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0x1a0600, emissive: 0xff5a14, emissiveIntensity: .55 })); hole.position.set(0, 0, -3.52); scene.add(hole);
   const arch = new THREE.Mesh(new THREE.TorusGeometry(1.08, .16, 8, 24, Math.PI), M(0x4a2a18, .9)); arch.position.set(0, 0, -3.5); arch.castShadow = true; scene.add(arch);
   scene.add(box(2.5, .12, .5, M(0x4a2a18, .9), 0, .06, -3.4));
-  const flame = makeFire(SAUNA_FIRE.clone(), .85); flame.light.intensity = 2.6; flame.light.distance = 12; scene.add(flame.pts, flame.light);
-  const glow = new THREE.PointLight(0xff8a3a, 1.6, 9, 1.6); glow.position.set(0, 1.4, -2.6); scene.add(glow);
+  const flame = makeFire(SAUNA_FIRE.clone(), .85); flame.light.intensity = 3.4; flame.light.distance = 16; scene.add(flame.pts, flame.light);
+  const glow = new THREE.PointLight(0xff8a3a, 2.4, 12, 1.4); glow.position.set(0, 1.4, -2.6); scene.add(glow);
   const sign = textSprite("🔥 불가마 78℃", { bg: "rgba(170,52,18,.92)", size: 30 }); sign.position.set(0, 3.6, -6.4); scene.add(sign);
 
   // 숯불 화로 + 고구마
@@ -73,7 +73,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   SAUNA_SEATS.forEach((st, i) => { const mt = box(1.15, .05, 1.9, M(matCols[i % matCols.length], .95), st.x, .025, st.z + .2); mt.castShadow = false; scene.add(mt, box(.5, .16, .22, pillow, st.x, .1, st.z + 1)); });
 
   // 천장 등 + 김(수증기)
-  for (const [x, z] of [[-4, 0], [4, 0], [0, 4.5], [-4, 6], [4, 6]]) { const l = new THREE.PointLight(0xffc888, 1.1, 9, 1.8); l.position.set(x, 3.7, z); scene.add(l); }
+  for (const [x, z] of [[-4, 0], [4, 0], [0, 4.5], [-4, 6], [4, 6]]) { const l = new THREE.PointLight(0xffc888, .55, 9, 1.8); l.position.set(x, 3.7, z); scene.add(l); }
   const N = 160, sg = new THREE.BufferGeometry(), sp = new Float32Array(N * 3), sv = new Float32Array(N);
   const reset = (i: number, y0 = Math.random() * 3) => { const a = Math.random() * Math.PI * 2, r = Math.random() * 3.2; sp[i * 3] = Math.cos(a) * r; sp[i * 3 + 1] = y0; sp[i * 3 + 2] = -5 + Math.sin(a) * r * .8; sv[i] = .25 + Math.random() * .4; };
   for (let i = 0; i < N; i++) reset(i); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
