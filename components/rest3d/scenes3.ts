@@ -73,9 +73,27 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const iceSign = textSprite("🧊 얼음방 4℃", { bg: "rgba(40,120,180,.92)", size: 26 }); iceSign.position.set(8.2, 3.5, 1); scene.add(iceSign);
 
   // TV (오른쪽 앞 벽)
-  const tvTex = tex((x, s) => { const g = x.createLinearGradient(0, 0, s, s); g.addColorStop(0, "#3a6ea5"); g.addColorStop(1, "#f2a65a"); x.fillStyle = g; x.fillRect(0, 0, s, s * .6); x.fillStyle = "#fff"; x.font = "700 44px sans-serif"; x.fillText("주말 드라마 재방송", 40, 120); x.font = "32px sans-serif"; x.fillText("📺 오후 3시", 40, 190); }, 512);
-  const tv = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.56), new THREE.MeshStandardMaterial({ map: tvTex, emissive: 0xffffff, emissiveMap: tvTex, emissiveIntensity: .5 })); tvTex.repeat.set(1, 1 / .6); tvTex.offset.set(0, -.67);
+  // 📺 TV: 채널이 8초마다 바뀌어요 (가끔 광고)
+  const tvC = document.createElement("canvas"); tvC.width = 640; tvC.height = 384; const tx = tvC.getContext("2d")!; const tvTex = new THREE.CanvasTexture(tvC); tvTex.colorSpace = THREE.SRGBColorSpace;
+  const CH: { bg: [string, string]; t: string; s: string; e: string; ad?: boolean }[] = [
+    { bg: ["#3a6ea5", "#f2a65a"], t: "주말 드라마 재방송", s: "CH 7 · 오후 3시", e: "📺" },
+    { bg: ["#c2412d", "#f5b042"], t: "나이트 끝나고 보는 먹방", s: "CH 11 · 국밥 한 그릇", e: "🍲" },
+    { bg: ["#1f5e3c", "#8fd3a8"], t: "칼퇴의 정석", s: "CH 3 · 오늘은 6시 땡", e: "🏃" },
+    { bg: ["#ffffff", "#e8f3fb"], t: "동탄 대방튼튼재활의학과", s: "메디화이트웹 제휴 광고", e: "🏥", ad: true },
+    { bg: ["#4b3b8f", "#e58bb0"], t: "오늘의 운세 · 당직 편", s: "CH 9 · 조용한 밤이 될 거예요", e: "🔮" },
+  ];
+  const drawTv = (k: number, noise = false) => { const c = CH[k % CH.length], W = 640, Hh = 384; if (noise) { const im = tx.createImageData(W, Hh); for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } tx.putImageData(im, 0, 0); tvTex.needsUpdate = true; return; }
+    const g = tx.createLinearGradient(0, 0, W, Hh); g.addColorStop(0, c.bg[0]); g.addColorStop(1, c.bg[1]); tx.fillStyle = g; tx.fillRect(0, 0, W, Hh);
+    const ink = c.ad ? "#1E2A26" : "#fff"; tx.fillStyle = ink; tx.textBaseline = "alphabetic"; tx.font = "120px sans-serif"; tx.fillText(c.e, 40, 170);
+    tx.font = `800 ${c.t.length > 11 ? 40 : 48}px sans-serif`; tx.fillText(c.t, 40, 250, 560); tx.font = "500 30px sans-serif"; tx.globalAlpha = .85; tx.fillText(c.s, 40, 300, 560); tx.globalAlpha = 1;
+    if (c.ad) { tx.fillStyle = "#E2712B"; tx.beginPath(); (tx as any).roundRect ? (tx as any).roundRect(W - 120, 28, 88, 44, 10) : tx.rect(W - 120, 28, 88, 44); tx.fill(); tx.fillStyle = "#fff"; tx.font = "800 28px sans-serif"; tx.fillText("AD", W - 96, 61); }
+    else { tx.fillStyle = "rgba(0,0,0,.35)"; tx.fillRect(W - 140, 28, 108, 40); tx.fillStyle = "#fff"; tx.font = "700 24px sans-serif"; tx.fillText("● LIVE", W - 130, 56); }
+    tvTex.needsUpdate = true; };
+  let tvK = 0, tvT = 0, tvNoise = 0; drawTv(0);
+  const tv = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.56), new THREE.MeshStandardMaterial({ map: tvTex, emissive: 0xffffff, emissiveMap: tvTex, emissiveIntensity: .55 }));
   tv.position.set(8.82, 2.6, -5.4); tv.rotation.y = -Math.PI / 2; scene.add(tv, box(.12, 1.7, 2.8, M(0x1a1a1a, .4), 8.88, 2.6, -5.4));
+  const tvLight = new THREE.PointLight(0x9fc8ff, .8, 5, 2); tvLight.position.set(7.8, 2.4, -5.4); scene.add(tvLight);
+  const tvTick = (dt: number) => { tvT += dt; if (tvNoise > 0) { tvNoise -= dt; if (tvNoise <= 0) drawTv(tvK); else if (Math.random() < .5) drawTv(tvK, true); return; } if (tvT > 8) { tvT = 0; tvK = (tvK + 1) % CH.length; tvNoise = .35; drawTv(tvK, true); tvLight.color.set(CH[tvK].ad ? 0xffffff : 0x9fc8ff); } };
 
   // 방석(앉는 곳) + 매트·목침(눕는 곳)
   const matCols = [0xe9b44c, 0xe58b4e, 0xd8a25a, 0xef9f6a], pillow = M(0x8a5a32, .8), cush = [M(0xc0563a, .95), M(0xd88a3a, .95)];
@@ -91,6 +109,6 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   for (let i = 0; i < N; i++) reset(i); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
   scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: .7, map: puff(), transparent: true, opacity: .16, depthWrite: false })));
 
-  const fire: Fire = { pts: flame.pts, light: flame.light, update: (dt: number) => { flame.update(dt); for (let i = 0; i < N; i++) { sp[i * 3 + 1] += sv[i] * dt; sp[i * 3] += Math.sin(sp[i * 3 + 1] * 2 + i) * dt * .1; if (sp[i * 3 + 1] > 4.2) reset(i, 0); } sg.attributes.position.needsUpdate = true; coalLight.intensity = 1 + Math.sin(performance.now() / 180) * .25; } };
+  const fire: Fire = { pts: flame.pts, light: flame.light, update: (dt: number) => { flame.update(dt); tvTick(dt); for (let i = 0; i < N; i++) { sp[i * 3 + 1] += sv[i] * dt; sp[i * 3] += Math.sin(sp[i * 3 + 1] * 2 + i) * dt * .1; if (sp[i * 3 + 1] > 4.2) reset(i, 0); } sg.attributes.position.needsUpdate = true; coalLight.intensity = 1 + Math.sin(performance.now() / 180) * .25; } };
   return { fire, camBase: new THREE.Vector3(0, 0, 1) };
 }
