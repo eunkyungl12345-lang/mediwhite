@@ -9,13 +9,13 @@ const kday = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10)
 const hash = (s: string) => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const nickOf = (id: string) => { const h = hash(id + kday()); return `${ADJ[h % ADJ.length]} ${NOUN[(h >>> 5) % NOUN.length]}`; };
 const SEATS = 24;
-export type RestPos = { scene: "roof" | "pocha" | "zen" | "mars"; x: number; z: number; pose: string };
+export type RestPos = { scene: "roof" | "pocha" | "zen" | "mars" | "sauna"; x: number; z: number; pose: string };
 export type RestPerson = { nick: string; dept: string | null; seat: number; act: string | null; actAge: number; breathing: boolean; me: boolean; scene: string; x: number; z: number; pose: string; say: string | null; sayAge: number };
 export type RestView = { me: string; people: RestPerson[]; breathing: number };
 
 /** 하트비트: 15초마다. act(건배·토닥·인사)나 breathing 상태를 같이 보내요 */
 const FW = /^fw:[0-5]:-?\d{1,2}(\.\d)?:-?\d{1,2}(\.\d)?$/;
-const SCENES = ["roof", "pocha", "zen", "mars"];
+const SCENES = ["roof", "pocha", "zen", "mars", "sauna"];
 export async function restBeat(act?: string | null, breathing?: boolean, pos?: RestPos | null): Promise<RestView> {
   if (act && !["cheers", "pat", "bow"].includes(act) && !FW.test(act)) act = null;
   const s = await getSession(); if (!s) throw new Error("login");
@@ -27,7 +27,7 @@ export async function restBeat(act?: string | null, breathing?: boolean, pos?: R
     const used = new Set((taken ?? []).map(r => r.seat)); const start = hash(s.id) % SEATS;
     seat = start; for (let k = 0; k < SEATS; k++) { const c = (start + k) % SEATS; if (!used.has(c)) { seat = c; break; } }
   }
-  const row = (strict: boolean) => ({ user_id: s.id, nick: nickOf(s.id), dept: s.dept, seat, last_seen: now.toISOString(), ...(act && (!strict || !act.startsWith("fw")) ? { act, act_at: now.toISOString() } : {}), ...(breathing !== undefined ? { breathing } : {}), ...(pos ? { scene: strict ? (pos.scene === "pocha" ? "pocha" : "roof") : SCENES.includes(pos.scene) ? pos.scene : "roof", x: Math.max(-12, Math.min(12, +pos.x || 0)), z: Math.max(-12, Math.min(12, +pos.z || 0)), pose: String(pos.pose).slice(0, 10) } : {}) });
+  const row = (strict: boolean) => ({ user_id: s.id, nick: nickOf(s.id), dept: s.dept, seat, last_seen: now.toISOString(), ...(act && (!strict || !act.startsWith("fw")) ? { act, act_at: now.toISOString() } : {}), ...(breathing !== undefined ? { breathing } : {}), ...(pos && strict && pos.scene === "sauna" ? { pose: String(pos.pose).slice(0, 10) } : pos ? { scene: strict ? (pos.scene === "pocha" ? "pocha" : "roof") : SCENES.includes(pos.scene) ? pos.scene : "roof", x: Math.max(-12, Math.min(12, +pos.x || 0)), z: Math.max(-12, Math.min(12, +pos.z || 0)), pose: String(pos.pose).slice(0, 10) } : {}) });
   // 예전 DB 제약(씬 2개·act 3종)이 남아 있으면 안전하게 한 번 더
   const { error } = await d.from("rest_presence").upsert(row(false)); if (error) await d.from("rest_presence").upsert(row(true));
   const { data } = await d.from("rest_presence").select("user_id,nick,dept,seat,act,act_at,breathing,last_seen,scene,x,z,pose,say,say_at").gte("last_seen", since).order("seat").limit(60);
