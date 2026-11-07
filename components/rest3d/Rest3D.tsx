@@ -295,7 +295,8 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       const rc = S.renderer!.domElement.getBoundingClientRect(); ndc.set(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1);
       ray.setFromCamera(ndc, S.cam!); // 바닥 메시 대신 무한 바닥면과 교차: 멀리(벽 너머)를 눌러도 그쪽 끝까지 걸어가요
       const pt = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3()); if (!pt) return; const hit = { point: pt };
-      const a = S.me!; const sN = sceneRef.current; a.tx = Math.max(sN === "mars" ? -12 : sN === "sauna" ? -7 : -7.4, Math.min(sN === "mars" ? 12 : 7.4, hit.point.x)); a.tz = Math.max(sN === "zen" ? -5.4 : sN === "sauna" ? -3.2 : sN === "mars" ? -10 : -7.4, Math.min(sN === "roof" ? 7.4 : sN === "zen" || sN === "sauna" ? 9 : sN === "mars" ? 9 : 5.6, hit.point.z)); a.pose = "stand"; S.seat = -1; setSitting(false); setLying(false); emitMove("stand");
+      const a = S.me!; const sN = sceneRef.current; const inIce = sN === "sauna" && hit.point.x > 8.4 && hit.point.z > -1.2 && hit.point.z < 3.2; // 얼음방 문 안쪽
+      a.tx = Math.max(sN === "mars" ? -12 : sN === "sauna" ? -7 : -7.4, Math.min(sN === "mars" ? 12 : inIce ? 12.5 : 7.4, hit.point.x)); a.tz = Math.max(sN === "zen" ? -5.4 : sN === "sauna" ? -3.2 : sN === "mars" ? -10 : -7.4, Math.min(sN === "roof" ? 7.4 : sN === "zen" || sN === "sauna" ? 9 : sN === "mars" ? 9 : 5.6, hit.point.z)); if (inIce) a.tz = Math.max(-.8, Math.min(2.8, hit.point.z)); a.pose = "stand"; S.seat = -1; setSitting(false); setLying(false); emitMove("stand");
     };
     const dom = S.renderer!.domElement; dom.addEventListener("pointerdown", onDown); addEventListener("pointermove", onMoveP); addEventListener("pointerup", onUp);
 
@@ -342,7 +343,8 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       // 카메라
       const meP = S.me ? S.me.g.position : S.camBase;
       if (modeRef.current === "zen") { const f = FIRE[sceneRef.current]; const ang = t * .12; camPos.set(f.x + Math.cos(ang) * 4.2, f.y + 1.6 + Math.sin(t * .3) * .1, f.z + Math.sin(ang) * 4.2); look.set(f.x, f.y + .9, f.z); }
-      else { const sa = sceneRef.current === "sauna", far = S.cam!.aspect < .8 ? (sa ? 9 : 9.6) : (sa ? 6.6 : 6.4), hk = sa ? .5 : .66; camPos.set(meP.x + Math.sin(S.yaw) * far, far * hk, meP.z + Math.cos(S.yaw) * far); look.set(sa ? meP.x * .5 : meP.x, sa ? 1.5 : 1, sa ? Math.min(meP.z - 4, -2) : meP.z - (sceneRef.current === "zen" ? 3 : 1.2)); }
+      else if (sceneRef.current === "sauna") { const far = 6; camPos.set(meP.x + Math.sin(S.yaw) * far, meP.y + 3.2, meP.z + Math.cos(S.yaw) * far); look.set(meP.x, meP.y + 1.1, meP.z); } // 찜질방: 늘 내 캐릭터 중심을 정면으로
+      else { const far = S.cam!.aspect < .8 ? 9.6 : 6.4; camPos.set(meP.x + Math.sin(S.yaw) * far, far * .66, meP.z + Math.cos(S.yaw) * far); look.set(meP.x, 1, meP.z - (sceneRef.current === "zen" ? 3 : 1.2)); }
       if (S.fw && S.fw.active > 0 && modeRef.current !== "zen") { const k = Math.min(1, S.fw.active / 1.2); const sky = new THREE.Vector3(S.fw.lastBurst.x * .5, 8, -12); look.lerp(sky, k * .8); }
       S.cam!.position.lerp(camPos, Math.min(1, dt * 4)); if (!S.lookCur) S.lookCur = look.clone(); S.lookCur.lerp(look, Math.min(1, dt * 3)); S.cam!.lookAt(S.lookCur);
       S.renderer!.render(sc, S.cam!);
@@ -439,7 +441,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
           {scene === "sauna" && <>            <button type="button" className={"r3-jj" + (potPct >= 100 && potPct < 170 ? " ready" : "")} onClick={potato}><span>{potPct >= 170 ? "⚫" : "🍠"}</span>{pot < 0 ? "고구마 굽기" : potPct < 100 ? `굽는 중 ${potPct}%` : potPct < 170 ? "꺼내 먹기!" : "타버렸어요"}</button>
             <button type="button" className="r3-jj" onClick={eggTap}><span>{egg === 2 ? "🍳" : "🥚"}</span>{egg === 0 ? "맥반석 달걀" : egg === 1 ? "이마로 톡!" : "까서 먹기"}</button>
             <button type="button" className="r3-jj" onClick={sikhye}><span>🥤</span>{sip === 0 ? "살얼음 식혜" : `후루룩 ${sip}/3`}</button>
-            <button type="button" className="r3-jj ice" onClick={() => { goTo("ice"); onToast("🧊 얼음방으로 가요 · 땀 식히기"); }}><span>🧊</span>얼음방</button></>}
+            <button type="button" className="r3-jj ice" onClick={() => { goTo("ice"); onToast("🧊 4℃ 얼음방에 들어왔어요! 땀이 싹 식어요"); setTimeout(() => emo("❄️"), 1800); }}><span>🧊</span>얼음방</button></>}
           {scene === "sauna" && <button type="button" className="r3-jj" onClick={lie}><span>{lying ? "🧍" : "🛌"}</span>{lying ? "일어나기" : "눕기"}</button>}<button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
           <button type="button" onClick={() => setBurn(b => b === null ? "" : null)}><span>🔥</span>걱정 태우기</button>
           {scene === "sauna" ? <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불가마 멍</button> : scene === "zen" ? <><button type="button" onClick={strikeBowl}><span>🔔</span>싱잉볼</button><button type="button" onClick={() => setMode("zen")}><span>🧘</span>명상 모드</button></> : <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불멍 모드</button>}{scene === "roof" && <button type="button" className={fwOpen ? "on" : ""} onClick={() => setFwOpen(o => !o)}><span>🎆</span>불꽃놀이</button>}{extra}

@@ -15,7 +15,7 @@ export const SAUNA_BEDS: Seat[] = [...[3.4, 5, 6.6, 8.2].map(z => ({ x: -6.2, z,
 /** 돌아다니는 사람이 들르는 곳 */
 export const SAUNA_ROUTE = [{ x: -6.5, z: -.4 }, { x: 7.2, z: 1 }, { x: 0, z: -2.4 }, { x: 3.6, z: -3 }, { x: 0, z: 2.6 }, { x: -3.2, z: -3.4 }, { x: -2.4, z: 5 }, { x: 2.6, z: 5.5 }];
 /** 걸어가는 곳: 숯불(고구마) · 매점(달걀·식혜) · 얼음방 */
-export const SAUNA_SPOTS = { coal: { x: -3.2, z: -3.2 }, shop: { x: -6.4, z: -1 }, ice: { x: 7.4, z: 1 }, dome: { x: 0, z: -3 } };
+export const SAUNA_SPOTS = { coal: { x: -3.2, z: -3.2 }, shop: { x: -6.4, z: -1 }, ice: { x: 11, z: 1 }, dome: { x: 0, z: -3 } };
 export const SAUNA_FIRE = new THREE.Vector3(0, .5, -4);
 
 const tex = (draw: (x: CanvasRenderingContext2D, s: number) => void, s = 512, rx = 1, ry = 1) => { const c = document.createElement("canvas"); c.width = c.height = s; draw(c.getContext("2d")!, s); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.colorSpace = THREE.SRGBColorSpace; return t; };
@@ -34,7 +34,9 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   // 황토벽 + 나무 기둥
   const clayTex = tex((x, s) => { x.fillStyle = "#c58a56"; x.fillRect(0, 0, s, s); for (let i = 0; i < 2600; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? "255,220,170" : "110,60,30"},${Math.random() * .12})`; x.fillRect(Math.random() * s, Math.random() * s, 2 + Math.random() * 5, 2 + Math.random() * 4); } }, 256, 4, 2);
   const wallM = new THREE.MeshStandardMaterial({ map: clayTex, roughness: 1 }), woodM = M(0x6b3f22, .7);
-  scene.add(box(18, 9, .3, wallM, 0, 4.5, -9)); for (const sx of [-9, 9]) scene.add(box(.3, 9, 20, wallM, sx, 4.5, 1));
+  scene.add(box(18, 9, .3, wallM, 0, 4.5, -9), box(.3, 9, 20, wallM, -9, 4.5, 1));
+  // 오른쪽 벽: 얼음방 문(z -0.2 ~ 2.2) 자리만 비워 둠
+  scene.add(box(.3, 9, 8.8, wallM, 9, 4.5, -4.6), box(.3, 9, 8.8, wallM, 9, 4.5, 6.6), box(.3, 6, 2.4, wallM, 9, 6, 1));
   for (const sx of [-8.7, 8.7]) for (const sz of [-8.7, -3, 3, 8.7]) scene.add(box(.35, 5, .35, woodM, sx, 2.5, sz));
   for (const sz of [-8.7]) scene.add(box(18, .35, .35, woodM, 0, 4.9, sz)); for (const sx of [-8.7, 8.7]) scene.add(box(.35, .35, 20, woodM, sx, 4.9, 1));
 
@@ -67,7 +69,16 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
 
   // 🧊 얼음방 문 (오른쪽 벽)
   const iceTex = tex((x, s) => { const g = x.createLinearGradient(0, 0, 0, s); g.addColorStop(0, "#dff6ff"); g.addColorStop(1, "#8fd3f4"); x.fillStyle = g; x.fillRect(0, 0, s, s); x.strokeStyle = "rgba(255,255,255,.8)"; x.lineWidth = 4; for (let i = 0; i < 14; i++) { const cx = Math.random() * s, cy = Math.random() * s, r = 10 + Math.random() * 18; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); x.stroke(); } } }, 256);
-  const door = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.8), new THREE.MeshStandardMaterial({ map: iceTex, emissive: 0x9fdcff, emissiveMap: iceTex, emissiveIntensity: .7 })); door.position.set(8.83, 1.45, 1); door.rotation.y = -Math.PI / 2; scene.add(door);
+  // 🧊 실제로 들어가는 얼음방 (x 8.8 ~ 13.5, z -1.2 ~ 3.2)
+  const iceFloor = new THREE.Mesh(new THREE.PlaneGeometry(4.7, 4.4), new THREE.MeshStandardMaterial({ map: iceTex, color: 0xcfefff, roughness: .15, metalness: .1 })); iceFloor.rotation.x = -Math.PI / 2; iceFloor.position.set(11.15, .01, 1); scene.add(iceFloor);
+  const iceWallM = new THREE.MeshStandardMaterial({ map: iceTex, color: 0xbfe8ff, emissive: 0x6fb8e8, emissiveIntensity: .35, roughness: .1, transparent: true, opacity: .55 });
+  scene.add(box(.25, 3.2, 4.4, iceWallM, 13.5, 1.6, 1), box(4.7, 3.2, .25, iceWallM, 11.15, 1.6, -1.2), box(4.7, 3.2, .25, iceWallM, 11.15, 1.6, 3.2));
+  const iceRoof = new THREE.Mesh(new THREE.PlaneGeometry(4.7, 4.4), new THREE.MeshStandardMaterial({ color: 0xdff4ff, transparent: true, opacity: .25, side: THREE.DoubleSide })); iceRoof.rotation.x = Math.PI / 2; iceRoof.position.set(11.15, 3.2, 1); scene.add(iceRoof);
+  const benchM = new THREE.MeshStandardMaterial({ color: 0xe8f8ff, emissive: 0x9fdcff, emissiveIntensity: .3, roughness: .1, transparent: true, opacity: .85 });
+  scene.add(box(.7, .45, 2.8, benchM, 12.8, .22, 1));
+  for (let i = 0; i < 7; i++) { const c = new THREE.Mesh(new THREE.ConeGeometry(.06, .3 + (i % 3) * .12, 6), benchM); c.rotation.x = Math.PI; c.position.set(9.4 + i * .6, 3.05, i % 2 ? -1 : 3); scene.add(c); }
+  for (const [x, z] of [[9.6, -.8], [13.1, 2.8], [13.1, -.8]]) { const b = box(.5, .5, .5, benchM, x, .25, z); b.rotation.y = x; scene.add(b); }
+  const iceLight = new THREE.PointLight(0x9fdcff, 2.2, 7, 1.5); iceLight.position.set(11.2, 2.6, 1); scene.add(iceLight);
   scene.add(box(.2, .2, 2.6, woodM, 8.8, 2.95, 1)); for (const dz of [-1.2, 1.2]) scene.add(box(.2, 3, .2, woodM, 8.8, 1.5, 1 + dz));
   
   const iceSign = textSprite("🧊 얼음방 4℃", { bg: "rgba(40,120,180,.92)", size: 26 }); iceSign.position.set(8.2, 3.5, 1); scene.add(iceSign);
@@ -82,18 +93,18 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
     { bg: ["#ffffff", "#e8f3fb"], t: "동탄 대방튼튼재활의학과", s: "메디화이트웹 제휴 광고", e: "🏥", ad: true },
     { bg: ["#4b3b8f", "#e58bb0"], t: "오늘의 운세 · 당직 편", s: "CH 9 · 조용한 밤이 될 거예요", e: "🔮" },
   ];
-  const drawTv = (k: number, noise = false) => { const c = CH[k % CH.length], W = 640, Hh = 384; if (noise) { const im = tx.createImageData(W, Hh); for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; } tx.putImageData(im, 0, 0); tvTex.needsUpdate = true; return; }
+  const drawTv = (k: number) => { const c = CH[k % CH.length], W = 640, Hh = 384; 
     const g = tx.createLinearGradient(0, 0, W, Hh); g.addColorStop(0, c.bg[0]); g.addColorStop(1, c.bg[1]); tx.fillStyle = g; tx.fillRect(0, 0, W, Hh);
     const ink = c.ad ? "#1E2A26" : "#fff"; tx.fillStyle = ink; tx.textBaseline = "alphabetic"; tx.font = "120px sans-serif"; tx.fillText(c.e, 40, 170);
     tx.font = `800 ${c.t.length > 11 ? 40 : 48}px sans-serif`; tx.fillText(c.t, 40, 250, 560); tx.font = "500 30px sans-serif"; tx.globalAlpha = .85; tx.fillText(c.s, 40, 300, 560); tx.globalAlpha = 1;
     if (c.ad) { tx.fillStyle = "#E2712B"; tx.beginPath(); (tx as any).roundRect ? (tx as any).roundRect(W - 120, 28, 88, 44, 10) : tx.rect(W - 120, 28, 88, 44); tx.fill(); tx.fillStyle = "#fff"; tx.font = "800 28px sans-serif"; tx.fillText("AD", W - 96, 61); }
     else { tx.fillStyle = "rgba(0,0,0,.35)"; tx.fillRect(W - 140, 28, 108, 40); tx.fillStyle = "#fff"; tx.font = "700 24px sans-serif"; tx.fillText("● LIVE", W - 130, 56); }
     tvTex.needsUpdate = true; };
-  let tvK = 0, tvT = 0, tvNoise = 0; drawTv(0);
+  let tvK = 0, tvT = 0; drawTv(0);
   const tv = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.56), new THREE.MeshStandardMaterial({ map: tvTex, emissive: 0xffffff, emissiveMap: tvTex, emissiveIntensity: .55 }));
   tv.position.set(8.82, 2.6, -5.4); tv.rotation.y = -Math.PI / 2; scene.add(tv, box(.12, 1.7, 2.8, M(0x1a1a1a, .4), 8.88, 2.6, -5.4));
   const tvLight = new THREE.PointLight(0x9fc8ff, .8, 5, 2); tvLight.position.set(7.8, 2.4, -5.4); scene.add(tvLight);
-  const tvTick = (dt: number) => { tvT += dt; if (tvNoise > 0) { tvNoise -= dt; if (tvNoise <= 0) drawTv(tvK); else if (Math.random() < .5) drawTv(tvK, true); return; } if (tvT > 8) { tvT = 0; tvK = (tvK + 1) % CH.length; tvNoise = .35; drawTv(tvK, true); tvLight.color.set(CH[tvK].ad ? 0xffffff : 0x9fc8ff); } };
+  const tvTick = (dt: number) => { tvT += dt; if (tvT > 16) { tvT = 0; tvK = (tvK + 1) % CH.length; drawTv(tvK); tvLight.color.set(CH[tvK].ad ? 0xffffff : 0x9fc8ff); } }; // 16초마다 바로 다음 채널
 
   // 방석(앉는 곳) + 매트·목침(눕는 곳)
   const matCols = [0xe9b44c, 0xe58b4e, 0xd8a25a, 0xef9f6a], pillow = M(0x8a5a32, .8), cush = [M(0xc0563a, .95), M(0xd88a3a, .95)];
