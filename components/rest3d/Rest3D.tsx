@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import type { RestPerson, RestPos } from "@/lib/rest.actions";
-import { restSay, restBurn } from "@/lib/rest.actions";
+import { restSay, restBurn, restDone } from "@/lib/rest.actions";
+import { buildSauna, SAUNA_SEATS, SAUNA_SPOTS, SAUNA_FIRE } from "./scenes3";
 import { Ambience, unlockAudio } from "./ambience";
 import { Fireworks, FW_TYPES } from "./fireworks";
 import BurnPaper from "./BurnPaper";
@@ -13,7 +14,7 @@ import { buildZenHall, buildMarsBase, ZEN_SEATS, MARS_SEATS } from "./scenes2";
    - 로우폴리 three.js, 바닥 탭 → 이동, 앉기, 한마디 말풍선, 걱정 태우기, 불멍 모드
    - 위치·포즈는 RestRoom이 restBeat로 서버에 보내고, 다른 사람 위치는 people로 받아요
    ======================================================================== */
-export type Scene = "roof" | "pocha" | "zen" | "mars";
+export type Scene = "roof" | "pocha" | "zen" | "mars" | "sauna";
 type Seat = { x: number; z: number; ry: number };
 type Props = { extra?: React.ReactNode; full?: boolean; people: RestPerson[]; me: string; myDept: string; breathK: number; onMove: (p: RestPos) => void; onToast: (m: string) => void; onXp: (m: string) => void; onFirework?: (code: string) => void; actPulse: { k: number; a: string } | null };
 
@@ -23,8 +24,9 @@ const SEATS: Record<Scene, Seat[]> = {
   pocha: [{ x: -3, z: 1.2, ry: Math.PI / 2 }, { x: -1.4, z: 1.2, ry: -Math.PI / 2 }, { x: -3, z: 3, ry: Math.PI / 2 }, { x: -1.4, z: 3, ry: -Math.PI / 2 }, { x: 1.4, z: 1.2, ry: Math.PI / 2 }, { x: 3, z: 1.2, ry: -Math.PI / 2 }, { x: 1.4, z: 3, ry: Math.PI / 2 }, { x: 3, z: 3, ry: -Math.PI / 2 }, { x: -2.2, z: -0.4, ry: 0 }, { x: 2.2, z: -0.4, ry: 0 }],
   zen: ZEN_SEATS,
   mars: MARS_SEATS,
+  sauna: SAUNA_SEATS,
 };
-const FIRE: Record<Scene, THREE.Vector3> = { roof: new THREE.Vector3(0, 0, 0), pocha: new THREE.Vector3(0, 0.9, -2.4), zen: new THREE.Vector3(0, .8, -6.6), mars: new THREE.Vector3(0, .3, 0) };
+const FIRE: Record<Scene, THREE.Vector3> = { roof: new THREE.Vector3(0, 0, 0), pocha: new THREE.Vector3(0, 0.9, -2.4), zen: new THREE.Vector3(0, .8, -6.6), mars: new THREE.Vector3(0, .3, 0), sauna: SAUNA_FIRE };
 
 /* ---------- 텍스트 스프라이트 (이름표·말풍선) ---------- */
 function textSprite(text: string, opt: { bg?: string; fg?: string; size?: number; pad?: number } = {}) {
@@ -225,22 +227,29 @@ const boxMesh = box;
 /* ---------- 함께 있는 동료들 (분위기용 · 이름표 없음 · 인원수에는 안 들어가요) ---------- */
 const NPC_DEPTS = ["간호사", "의사", "방사선", "물리치료", "임상병리", "응급구조", "원무", "간호조무사"];
 function suit(a: Avatar) { const helmet = new THREE.Mesh(new THREE.SphereGeometry(.38, 16, 12), new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: .3, roughness: .05 })); a.head.add(helmet); (a.body.material as THREE.MeshStandardMaterial).color.set(0xeef1f5); }
+/** 찜질방 옷 + 🐑 양머리 수건 */
+function jjim(a: Avatar) {
+  (a.body.material as THREE.MeshStandardMaterial).color.set(0xe8925a); const leg = a.legs.children[0] as THREE.Mesh; (leg.material as THREE.MeshStandardMaterial).color.set(0xd47640);
+  const tw = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0xfff4e6, emissiveIntensity: .35 }); const cap = new THREE.Mesh(new THREE.SphereGeometry(.335, 16, 10, 0, Math.PI * 2, 0, Math.PI * .55), tw); cap.position.y = .03; a.head.add(cap);
+  for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.TorusGeometry(.12, .075, 8, 14), tw); ear.position.set(sx * .3, .16, 0); ear.rotation.y = Math.PI / 2; a.head.add(ear); }
+  const band = new THREE.Mesh(new THREE.TorusGeometry(.31, .045, 8, 24), tw); band.rotation.x = Math.PI / 2; band.position.y = .07; a.head.add(band);
+}
 function spawnNPCs(scene: Scene, sc: THREE.Scene) {
   const seats = SEATS[scene], rate = scene === "zen" ? .72 : scene === "mars" ? .5 : .55, out: { a: Avatar; seat: number; stand?: boolean }[] = [];
   const rnd = (i: number) => { const v = Math.sin(i * 12.9898 + seats.length * 78.233) * 43758.5453; return v - Math.floor(v); };
-  seats.forEach((st, i) => { if (rnd(i) > rate || (scene === "zen" && (i === 20 || i === 21))) return; const a = makeAvatar("", NPC_DEPTS[i % NPC_DEPTS.length], false); a.g.remove(a.name); if (scene === "mars") suit(a); a.g.position.set(st.x, 0, st.z); a.tx = st.x; a.tz = st.z; a.pose = "sit"; a.g.rotation.y = st.ry; sc.add(a.g); out.push({ a, seat: i }); });
-  const extra: [number, number, number][] = scene === "roof" ? [[-6.5, -6, .4], [6.6, 5.8, -2.4], [4.8, -6.4, 0]] : scene === "pocha" ? [[6.4, -1.6, -1.2], [-5.6, 3.8, 1.6]] : scene === "mars" ? [[-6, -8, .4], [5, -9, -.3], [8, -2, -1.2]] : [];
-  extra.forEach(([x, z, ry], i) => { const a = makeAvatar("", NPC_DEPTS[(i + 3) % NPC_DEPTS.length], false); a.g.remove(a.name); if (scene === "mars") suit(a); a.g.position.set(x, 0, z); a.tx = x; a.tz = z; a.pose = "stand"; a.g.rotation.y = ry; sc.add(a.g); out.push({ a, seat: -1, stand: true }); });
+  seats.forEach((st, i) => { if (rnd(i) > rate || (scene === "zen" && (i === 20 || i === 21))) return; const a = makeAvatar("", NPC_DEPTS[i % NPC_DEPTS.length], false); a.g.remove(a.name); if (scene === "mars") suit(a); if (scene === "sauna") jjim(a); a.g.position.set(st.x, 0, st.z); a.tx = st.x; a.tz = st.z; a.pose = "sit"; a.g.rotation.y = st.ry; sc.add(a.g); out.push({ a, seat: i }); });
+  const extra: [number, number, number][] = scene === "roof" ? [[-6.5, -6, .4], [6.6, 5.8, -2.4], [4.8, -6.4, 0]] : scene === "pocha" ? [[6.4, -1.6, -1.2], [-5.6, 3.8, 1.6]] : scene === "mars" ? [[-6, -8, .4], [5, -9, -.3], [8, -2, -1.2]] : scene === "sauna" ? [[-6.6, .4, -1.5], [6.9, 2.6, 1.6], [-2.6, -3.4, 2.6]] : [];
+  extra.forEach(([x, z, ry], i) => { const a = makeAvatar("", NPC_DEPTS[(i + 3) % NPC_DEPTS.length], false); a.g.remove(a.name); if (scene === "mars") suit(a); if (scene === "sauna") jjim(a); a.g.position.set(x, 0, z); a.tx = x; a.tz = z; a.pose = "stand"; a.g.rotation.y = ry; sc.add(a.g); out.push({ a, seat: -1, stand: true }); });
   return out;
 }
 export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, onXp, actPulse, extra, full, onFirework }: Props) {
   const box = useRef<HTMLDivElement>(null);
-  const [scene, setScene] = useState<Scene>(() => { try { return (localStorage.getItem("mw-rest-scene") as Scene) || "roof"; } catch { return "roof"; } });
+  const [scene, setScene] = useState<Scene>(() => { try { const q = new URLSearchParams(location.search).get("s"); if (q && q in SEATS) return q as Scene; return (localStorage.getItem("mw-rest-scene") as Scene) || "roof"; } catch { return "roof"; } });
   const [snd, setSnd] = useState<"off" | "on" | "wait">("wait"), [vol, setVol] = useState(() => { try { return Number(localStorage.getItem("mw-rest-vol") ?? .7); } catch { return .7; } });
   const amb = useRef<Ambience | null>(null); const sndRef = useRef(snd); sndRef.current = snd;
   const [fwOpen, setFwOpen] = useState(false); const [burning, setBurning] = useState<string | null>(null); const fwCd = useRef(0);
   const [mode, setMode] = useState<"normal" | "zen">("normal"), [say, setSay] = useState(""), [burn, setBurn] = useState<string | null>(null), [busy, setBusy] = useState(false), [sitting, setSitting] = useState(false);
-  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
+  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
   const peopleRef = useRef(people), breathRef = useRef(breathK), sceneRef = useRef(scene), modeRef = useRef(mode);
   peopleRef.current = people; breathRef.current = breathK; sceneRef.current = scene; modeRef.current = mode;
   const moveTimer = useRef<any>(null);
@@ -260,9 +269,9 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     }
     // 씬 구성
     const sc = new THREE.Scene(); S.sc = sc; S.others.forEach(a => setBubble(a, null)); S.others.clear(); S.emo = []; S.paper = undefined; S.seat = -1; setSitting(false);
-    const H = { M, box: boxMesh, makeFire, textSprite }; const built = scene === "roof" ? buildRoof(sc) : scene === "pocha" ? buildPocha(sc) : scene === "zen" ? buildZenHall(sc, H) : buildMarsBase(sc, H); S.npcs = spawnNPCs(scene, sc); S.fw?.dispose(); S.fw = undefined; S.fwSeen = S.fwSeen ?? {};
+    const H = { M, box: boxMesh, makeFire, textSprite }; const built = scene === "roof" ? buildRoof(sc) : scene === "pocha" ? buildPocha(sc) : scene === "zen" ? buildZenHall(sc, H) : scene === "sauna" ? buildSauna(sc, H) : buildMarsBase(sc, H); S.npcs = spawnNPCs(scene, sc); S.fw?.dispose(); S.fw = undefined; S.fwSeen = S.fwSeen ?? {};
     if (scene === "roof") { S.fw = new Fireworks(sc); const pad = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, .08, 24), M(0x2a2f3a, .7)); pad.position.set(3.2, .04, -5.8); pad.receiveShadow = true; sc.add(pad); const stripe = new THREE.Mesh(new THREE.RingGeometry(1.15, 1.28, 32), new THREE.MeshBasicMaterial({ color: 0xffd36e, side: THREE.DoubleSide })); stripe.rotation.x = -Math.PI / 2; stripe.position.set(3.2, .09, -5.8); sc.add(stripe); for (let i = 0; i < 5; i++) { const tube = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .5, 10), M([0xe2574c, 0xf2a900, 0x5fa8e8, 0x7ed69b, 0xf48fb1][i], .5)); tube.position.set(2.6 + i * .3, .3, -5.8 + (i % 2) * .3); tube.rotation.x = -.2; tube.castShadow = true; sc.add(tube); } const fsign = textSprite("🎆 불꽃놀이 존", { bg: "rgba(242,169,0,.95)", fg: "#2b1a08", size: 28 }); fsign.position.set(3.2, 2.2, -5.8); sc.add(fsign); } S.fire = built.fire; S.camBase = built.camBase; S.ground = sc.getObjectByName("ground")!;
-    const meAv = makeAvatar(me, myDept, true); const spawn = scene === "roof" ? { x: 0, z: 5.5 } : scene === "pocha" ? { x: 0, z: 5 } : scene === "zen" ? { x: 0, z: 7 } : { x: 0, z: 5 }; meAv.g.position.set(spawn.x, 0, spawn.z); meAv.tx = spawn.x; meAv.tz = spawn.z; meAv.ry = Math.PI; meAv.g.rotation.y = Math.PI; sc.add(meAv.g); S.me = meAv;
+    const meAv = makeAvatar(me, myDept, true); if (scene === "sauna") jjim(meAv); const spawn = scene === "roof" ? { x: 0, z: 5.5 } : scene === "pocha" ? { x: 0, z: 5 } : scene === "zen" || scene === "sauna" ? { x: 0, z: 7 } : { x: 0, z: 5 }; meAv.g.position.set(spawn.x, 0, spawn.z); meAv.tx = spawn.x; meAv.tz = spawn.z; meAv.ry = Math.PI; meAv.g.rotation.y = Math.PI; sc.add(meAv.g); S.me = meAv;
     try { localStorage.setItem("mw-rest-scene", scene); } catch {}
     onMove({ scene, x: spawn.x, z: spawn.z, pose: "stand" });
 
@@ -279,7 +288,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       if (Math.hypot(dx, dy) > 8 || dt > 400 || modeRef.current === "zen") return;
       const rc = S.renderer!.domElement.getBoundingClientRect(); ndc.set(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1);
       ray.setFromCamera(ndc, S.cam!); const hit = ray.intersectObject(S.ground!, false)[0]; if (!hit) return;
-      const a = S.me!; const sN = sceneRef.current; a.tx = Math.max(sN === "mars" ? -12 : -7.4, Math.min(sN === "mars" ? 12 : 7.4, hit.point.x)); a.tz = Math.max(sN === "zen" ? -5.4 : sN === "mars" ? -10 : -7.4, Math.min(sN === "roof" ? 7.4 : sN === "zen" ? 9 : sN === "mars" ? 9 : 5.6, hit.point.z)); a.pose = "stand"; S.seat = -1; setSitting(false); emitMove("stand");
+      const a = S.me!; const sN = sceneRef.current; a.tx = Math.max(sN === "mars" ? -12 : sN === "sauna" ? -7 : -7.4, Math.min(sN === "mars" ? 12 : 7.4, hit.point.x)); a.tz = Math.max(sN === "zen" ? -5.4 : sN === "sauna" ? -3.2 : sN === "mars" ? -10 : -7.4, Math.min(sN === "roof" ? 7.4 : sN === "zen" || sN === "sauna" ? 9 : sN === "mars" ? 9 : 5.6, hit.point.z)); a.pose = "stand"; S.seat = -1; setSitting(false); emitMove("stand");
     };
     const dom = S.renderer!.domElement; dom.addEventListener("pointerdown", onDown); addEventListener("pointermove", onMoveP); addEventListener("pointerup", onUp);
 
@@ -291,7 +300,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       if (S.fw) for (const p of peopleRef.current) { if (p.me || p.scene !== "roof" || !p.act?.startsWith("fw:") || p.actAge > 6) continue; const key = p.nick + p.act; if (S.fwSeen![key]) continue; S.fwSeen![key] = Date.now(); const [, ty, ox] = p.act.split(":"); launchFw(+ty || 0, +ox || 0, false); }
       // 다른 사람 동기화
       const ps = peopleRef.current.filter(p => !p.me && p.scene === sceneRef.current); const alive = new Set<string>();
-      for (const p of ps) { alive.add(p.nick); let a = S.others.get(p.nick); if (!a) { a = makeAvatar(p.nick, p.dept, false); a.g.position.set(p.x, 0, p.z); a.tx = p.x; a.tz = p.z; sc.add(a.g); S.others.set(p.nick, a); } a.tx = p.x; a.tz = p.z; a.pose = p.pose; const txt = p.say && p.sayAge < 12 ? p.say : null; if ((txt ?? "") !== a.bubbleText) setBubble(a, txt); }
+      for (const p of ps) { alive.add(p.nick); let a = S.others.get(p.nick); if (!a) { a = makeAvatar(p.nick, p.dept, false); if (sceneRef.current === "sauna") jjim(a); a.g.position.set(p.x, 0, p.z); a.tx = p.x; a.tz = p.z; sc.add(a.g); S.others.set(p.nick, a); } a.tx = p.x; a.tz = p.z; a.pose = p.pose; const txt = p.say && p.sayAge < 12 ? p.say : null; if ((txt ?? "") !== a.bubbleText) setBubble(a, txt); }
       for (const [k, a] of S.others) if (!alive.has(k)) { sc.remove(a.g); S.others.delete(k); }
       // 아바타 이동/애니메이션
       const anim = (a: Avatar, isMe: boolean) => {
@@ -305,6 +314,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
         a.body.position.y = (sit ? .62 : .82) + (walking ? Math.abs(Math.sin(a.walkT)) * .05 : Math.sin(t * 2 + a.tx) * .012) + k * .03; a.head.position.y = (sit ? 1.22 : 1.42) + (walking ? Math.abs(Math.sin(a.walkT)) * .05 : 0) + k * .04; a.arms.position.y = sit ? -.2 : 0; a.name.position.y = sit ? 1.85 : 2.05; if (a.bubble) a.bubble.position.y = sit ? 2.3 : 2.5;
         a.legs.rotation.x = sit ? -Math.PI / 2 : 0; a.legs.position.y = sit ? .4 : 0; a.legs.position.z = sit ? .2 : 0;
         a.body.scale.setScalar(1 + k * .05);
+        if (isMe) a.head.rotation.x = S.bump && now - S.bump < 500 ? Math.sin((now - S.bump) / 500 * Math.PI) * .7 : 0;
       };
       if (S.me) anim(S.me, true); S.others.forEach(a => anim(a, false)); S.npcs?.forEach(n => anim(n.a, false));
       // 이모지·종이
@@ -345,21 +355,47 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   // 첫 터치에 자동으로 소리 켜기 (브라우저 정책상 제스처 필요) — 전에 껐던 사람은 안 켬
   useEffect(() => { const el = box.current; if (!el) return; const first = () => { let pref = "1"; try { pref = localStorage.getItem("mw-rest-snd") ?? "1"; } catch {} if (pref !== "0") soundOn(); else setSnd("off"); }; el.addEventListener("pointerdown", first, { once: true }); return () => el.removeEventListener("pointerdown", first); }, []); // eslint-disable-line
   const here = people.filter(p => p.scene === scene).length;
+  /* ---- 🧖 찜질방: 고구마·달걀·식혜·땀 게이지 ---- */
+  const [pot, setPot] = useState(-1), [egg, setEgg] = useState(0), [sip, setSip] = useState(0), [heat, setHeat] = useState(15), [, setTk] = useState(0);
+  const jj = useRef({ at: 0, done: false, hot: false, sweat: 0 });
+  const potPct = pot < 0 ? 0 : Math.floor((Date.now() - pot) / 400);
+  useEffect(() => { if (scene !== "sauna") return; jj.current.at = Date.now(); const id = setInterval(() => { setTk(t => t + 1); const a = st.current.me; if (!a) return; const p = a.g.position;
+    const dDome = Math.hypot(p.x - SAUNA_SPOTS.dome.x, p.z - SAUNA_SPOTS.dome.z), dIce = Math.hypot(p.x - SAUNA_SPOTS.ice.x, p.z - SAUNA_SPOTS.ice.z);
+    setHeat(h => { const n = Math.max(0, Math.min(100, h + (dIce < 2.4 ? -8 : dDome < 4.5 ? 3 : .7))); if (n >= 95 && !jj.current.hot) { jj.current.hot = true; onToast("🥵 너무 뜨거워요! 얼음방에서 땀 식혀요"); } if (n < 60) jj.current.hot = false;
+      if (n > 65 && Date.now() - jj.current.sweat > 5000) { jj.current.sweat = Date.now(); emo("💦"); } return n; }); }, 1000); return () => clearInterval(id); }, [scene]); // eslint-disable-line
+  const emo = (t: string) => { const S = st.current; const a = S.me; if (!a || !S.sc) return; const sp = textSprite(t, { bg: "rgba(0,0,0,0)", size: 44, pad: 4 }); sp.position.set(a.g.position.x + .4, 2.2, a.g.position.z); S.sc.add(sp); S.emo.push({ sp, t: 0 }); };
+  const goTo = (k: keyof typeof SAUNA_SPOTS) => { const S = st.current; const a = S.me; if (!a) return; const sp = SAUNA_SPOTS[k]; a.tx = sp.x + (Math.random() - .5) * .6; a.tz = sp.z + (Math.random() - .5) * .4; a.pose = "stand"; S.seat = -1; setSitting(false); emitMove("stand"); };
+  const announce = (t: string) => { restSay(t).catch(() => {}); const a = st.current.me; if (a) { setBubble(a, t); setTimeout(() => { if (a.bubbleText === t) setBubble(a, null); }, 8000); } };
+  const reward = async () => { const J = jj.current; if (J.done || Date.now() - J.at < 60000) return; J.done = true; const x = await restDone("sauna").catch(() => 0); onXp(x ? `🧖 오늘 찜질 완료 +${x} XP` : "🧖 오늘 찜질 완료"); };
+  const potato = () => {
+    if (pot < 0) { goTo("coal"); setPot(Date.now()); onToast("🍠 숯불에 고구마를 묻었어요 · 40초면 익어요"); return; }
+    if (potPct < 100) { onToast(`🍠 아직 익는 중이에요 (${potPct}%)`); return; }
+    setPot(-1); if (potPct >= 170) { emo("⚫"); onToast("🥲 숯이 됐어요… 다음엔 일찍 꺼내요"); return; }
+    emo("😋"); announce("🍠 군고구마 다 익었다~ 호호 불어서 냠"); reward(); };
+  const eggTap = () => {
+    if (egg === 0) { goTo("shop"); setEgg(1); onToast("🥚 맥반석 달걀 하나 집었어요 · 한 번 더 누르면 이마로 톡!"); return; }
+    if (egg === 1) { st.current.bump = performance.now(); emo("💥"); try { navigator.vibrate?.(35); } catch {} setEgg(2); onToast("🐑 양머리 이마에 톡! 쩍 갈라졌어요"); return; }
+    setEgg(0); emo("😋"); announce("🥚 맥반석 달걀 이마로 깨먹기 성공!"); reward(); };
+  const sikhye = () => { if (sip === 0) goTo("shop"); const n = sip + 1; emo("🥤"); if (n >= 3) { setSip(0); announce("🥤 캬~ 살얼음 식혜 원샷!"); reward(); } else { setSip(n); onToast("🥤 쭈욱… 살얼음이 사각사각"); } };
 
   return (
     <div className={"r3" + (mode === "zen" ? " zen" : "") + (full ? " full" : "")}>
       <div ref={box} className="r3-canvas" />
       <div className="r3-top">
-        {full && <a href="/board" className="r3-back" aria-label="나가기">‹</a>}<div className="r3-tabs"><button type="button" aria-pressed={scene === "roof"} onClick={() => setScene("roof")}>옥상</button><button type="button" aria-pressed={scene === "pocha"} onClick={() => setScene("pocha")}>포차</button><button type="button" aria-pressed={scene === "zen"} onClick={() => setScene("zen")}>명상</button><button type="button" aria-pressed={scene === "mars"} onClick={() => setScene("mars")}>🔴 화성</button></div>
+        {full && <a href="/board" className="r3-back" aria-label="나가기">‹</a>}<div className="r3-tabs"><button type="button" aria-pressed={scene === "roof"} onClick={() => setScene("roof")}>옥상</button><button type="button" aria-pressed={scene === "sauna"} onClick={() => setScene("sauna")}>🧖 찜질방</button><button type="button" aria-pressed={scene === "pocha"} onClick={() => setScene("pocha")}>포차</button><button type="button" aria-pressed={scene === "zen"} onClick={() => setScene("zen")}>명상</button><button type="button" aria-pressed={scene === "mars"} onClick={() => setScene("mars")}>🔴 화성</button></div>
         <span className="r3-right"><button type="button" className={"r3-snd" + (snd === "on" ? " on" : "")} onClick={() => snd === "on" ? soundOff() : soundOn()} aria-label="소리">{snd === "on" ? "🔊" : "🔇"}</button><span className="r3-count">👥 {here}명</span></span>
       </div>
       {mode === "zen" ? <><button type="button" className="r3-zen-exit" onClick={() => setMode("normal")}>{scene === "zen" ? "명상 끝내기" : "불멍 끝내기"}</button>{scene === "zen" && <div className="r3-breath" aria-hidden><div className="r3-breath-c" /><div className="r3-breath-t"><span>들이쉬기 4</span><span>멈추기 7</span><span>내쉬기 8</span></div></div>}</> : <>
-        <div className="r3-hint">{snd === "wait" ? "🔊 화면을 한 번 탭하면 소리가 켜져요" : "바닥을 탭하면 걸어가요 · 좌우로 끌면 둘러보기"}</div>
+        {scene === "sauna" && <div className="r3-heat"><span>🌡️ 땀</span><i><em style={{ width: `${heat}%` }} /></i><b>{heat > 85 ? "얼음방 가요!" : heat > 50 ? "개운해요" : "데워지는 중"}</b></div>}<div className="r3-hint">{snd === "wait" ? "🔊 화면을 한 번 탭하면 소리가 켜져요" : "바닥을 탭하면 걸어가요 · 좌우로 끌면 둘러보기"}</div>
         {snd === "on" && <input type="range" className="r3-vol" min={0} max={1} step={.05} value={vol} onChange={e => setVol(Number(e.target.value))} aria-label="볼륨" />}
         <div className="r3-acts">
-          <a href="/rest/sauna" className="r3-sauna"><span>🧖</span>찜질방</a><button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
+          {scene === "sauna" && <>            <button type="button" className={"r3-jj" + (potPct >= 100 && potPct < 170 ? " ready" : "")} onClick={potato}><span>{potPct >= 170 ? "⚫" : "🍠"}</span>{pot < 0 ? "고구마 굽기" : potPct < 100 ? `굽는 중 ${potPct}%` : potPct < 170 ? "꺼내 먹기!" : "타버렸어요"}</button>
+            <button type="button" className="r3-jj" onClick={eggTap}><span>{egg === 2 ? "🍳" : "🥚"}</span>{egg === 0 ? "맥반석 달걀" : egg === 1 ? "이마로 톡!" : "까서 먹기"}</button>
+            <button type="button" className="r3-jj" onClick={sikhye}><span>🥤</span>{sip === 0 ? "살얼음 식혜" : `쭈욱 ${sip}/3`}</button>
+            <button type="button" className="r3-jj ice" onClick={() => { goTo("ice"); onToast("🧊 얼음방으로 가요 · 땀 식히기"); }}><span>🧊</span>얼음방</button></>}
+          <button type="button" onClick={sit}><span>{sitting ? "🧍" : "🪑"}</span>{sitting ? "일어나기" : "앉기"}</button>
           <button type="button" onClick={() => setBurn(b => b === null ? "" : null)}><span>🔥</span>걱정 태우기</button>
-          {scene === "zen" ? <><button type="button" onClick={strikeBowl}><span>🔔</span>싱잉볼</button><button type="button" onClick={() => setMode("zen")}><span>🧘</span>명상 모드</button></> : <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불멍 모드</button>}{scene === "roof" && <button type="button" className={fwOpen ? "on" : ""} onClick={() => setFwOpen(o => !o)}><span>🎆</span>불꽃놀이</button>}{extra}
+          {scene === "sauna" ? <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불가마 멍</button> : scene === "zen" ? <><button type="button" onClick={strikeBowl}><span>🔔</span>싱잉볼</button><button type="button" onClick={() => setMode("zen")}><span>🧘</span>명상 모드</button></> : <button type="button" onClick={() => setMode("zen")}><span>🫧</span>불멍 모드</button>}{scene === "roof" && <button type="button" className={fwOpen ? "on" : ""} onClick={() => setFwOpen(o => !o)}><span>🎆</span>불꽃놀이</button>}{extra}
         </div>
         {burning && <BurnPaper text={burning} onDone={() => setBurning(null)} onSound={k => { if (sndRef.current === "on") k === "ignite" ? amb.current?.ignite() : amb.current?.crackle(); }} />}
         {scene === "roof" && fwOpen && <div className="r3-fw">{FW_TYPES.map((f, i) => <button key={i} type="button" onClick={() => fire(i)}><span>{f.icon}</span>{f.name}</button>)}<small>같은 옥상에 있는 사람들도 같이 봐요</small></div>}

@@ -8,7 +8,7 @@ export function unlockAudio() {
     w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
     const a = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" }))); a.loop = true; (a as any).playsInline = true; a.volume = .01; a.play().catch(() => { unlocked = false; }); } catch { unlocked = false; }
 }
-export type AmbScene = "roof" | "pocha" | "zen" | "mars";
+export type AmbScene = "roof" | "pocha" | "zen" | "mars" | "sauna";
 
 function noiseBuffer(ctx: AudioContext, sec = 4, brown = true) {
   const len = ctx.sampleRate * sec, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0); let last = 0;
@@ -20,7 +20,7 @@ export class Ambience {
   ctx: AudioContext; master: GainNode; music: GainNode; sfx: GainNode; timers: any[] = []; nodes: AudioNode[] = []; scene: AmbScene = "roof"; running = false; padStep = 0; padTimer: any = null;
   constructor() { this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)(); this.master = this.ctx.createGain(); this.master.gain.value = 0; this.master.connect(this.ctx.destination); this.music = this.ctx.createGain(); this.music.gain.value = .55; this.music.connect(this.master); this.sfx = this.ctx.createGain(); this.sfx.gain.value = 1; this.sfx.connect(this.master); }
   setVolume(v: number) { this.master.gain.setTargetAtTime(Math.max(0, Math.min(1, v)), this.ctx.currentTime, .3); }
-  async start(scene: AmbScene) { await this.ctx.resume(); this.stopLayers(); this.scene = scene; this.running = true; if (scene === "roof") this.roof(); else if (scene === "pocha") this.pocha(); else if (scene === "zen") this.zen(); else this.mars(); this.pad(); }
+  async start(scene: AmbScene) { await this.ctx.resume(); this.stopLayers(); this.scene = scene; this.running = true; if (scene === "roof") this.roof(); else if (scene === "pocha") this.pocha(); else if (scene === "zen") this.zen(); else if (scene === "sauna") this.sauna(); else this.mars(); this.pad(); }
   stop() { this.stopLayers(); this.running = false; }
   dispose() { this.stop(); try { this.ctx.close(); } catch {} }
   private stopLayers() { for (const t of this.timers) clearTimeout(t); this.timers = []; if (this.padTimer) clearInterval(this.padTimer); this.padTimer = null; for (const n of this.nodes) { try { (n as any).stop?.(); } catch {} try { n.disconnect(); } catch {} } this.nodes = []; }
@@ -64,6 +64,14 @@ export class Ambience {
     this.every(9000, 20000, () => { for (let i = 0; i < 2; i++) { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = 1320; const g = this.ctx.createGain(); const t = this.ctx.currentTime + i * .18; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.02, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .12); o.connect(g); g.connect(this.sfx); o.start(t); o.stop(t + .15); } });
   }
   /* 명상실: 아주 옅은 공기 소리 + 낮은 드론 + 가끔 저절로 울리는 싱잉볼 + 풍경 */
+  /** 찜질방: 불가마 장작 타닥 · 낮은 웅성 · 컵 소리 */
+  private sauna() {
+    const brown = noiseBuffer(this.ctx, 5, true);
+    this.loop(brown, "lowpass", 220, .14); // 불가마 웅웅
+    this.every(250, 1100, () => this.burst("highpass", 2200 + Math.random() * 2500, .03, .06)); // 타닥
+    const mur = this.loop(brown, "bandpass", 650, .07, .5); const ml = this.ctx.createOscillator(); ml.frequency.value = .19; const mg = this.ctx.createGain(); mg.gain.value = .04; ml.connect(mg); mg.connect(mur.g.gain); ml.start(); this.nodes.push(ml, mg);
+    this.every(9000, 22000, () => this.clink());
+  }
   private zen() {
     const brown = noiseBuffer(this.ctx, 5, true);
     this.loop(brown, "lowpass", 260, .05); // 공기
