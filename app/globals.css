@@ -2301,3 +2301,4 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 @keyframes r3sip{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-6px) rotate(6deg)}}
 @keyframes r3steam{from{opacity:.9;transform:translateY(6px)}to{opacity:0;transform:translateY(-14px)}}
 @keyframes r3pop{from{transform:scale(.6)}}
+.auth-perk{padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#FFF4E5,#FFE9EE);border:1px solid #FFD3B0;color:#9A4A12;font-size:13px;font-weight:800;line-height:1.45;text-align:center}
