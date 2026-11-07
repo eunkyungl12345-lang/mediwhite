@@ -21,7 +21,7 @@ export class Ambience {
   constructor() { this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)(); this.master = this.ctx.createGain(); this.master.gain.value = 0; this.master.connect(this.ctx.destination); this.music = this.ctx.createGain(); this.music.gain.value = .55; this.music.connect(this.master); this.sfx = this.ctx.createGain(); this.sfx.gain.value = 1; this.sfx.connect(this.master); }
   setVolume(v: number) { this.master.gain.setTargetAtTime(Math.max(0, Math.min(1, v)), this.ctx.currentTime, .3); }
   async start(scene: AmbScene) { await this.ctx.resume(); this.stopLayers(); this.scene = scene; this.running = true; if (scene === "roof") this.roof(); else if (scene === "pocha") this.pocha(); else if (scene === "zen") this.zen(); else if (scene === "sauna") this.sauna(); else this.mars(); this.pad(); }
-  stop() { this.stopLayers(); this.running = false; }
+  stop() { this.stopLayers(); this.running = false; if (this.moktak) this.toggleMoktak(); }
   dispose() { this.stop(); try { this.ctx.close(); } catch {} }
   private stopLayers() { for (const t of this.timers) clearTimeout(t); this.timers = []; if (this.padTimer) clearInterval(this.padTimer); this.padTimer = null; for (const n of this.nodes) { try { (n as any).stop?.(); } catch {} try { n.disconnect(); } catch {} } this.nodes = []; }
   private loop(buf: AudioBuffer, filter: BiquadFilterType, freq: number, gain: number, q = 1) {
@@ -78,6 +78,21 @@ export class Ambience {
     for (const [f, g] of [[110, .022], [165, .012], [220, .008]] as [number, number][]) { const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.value = f; const gn = this.ctx.createGain(); gn.gain.value = g; const l = this.ctx.createOscillator(); l.frequency.value = .05 + Math.random() * .04; const lg = this.ctx.createGain(); lg.gain.value = g * .5; l.connect(lg); lg.connect(gn.gain); o.connect(gn); gn.connect(this.music); o.start(); l.start(); this.nodes.push(o, gn, l, lg); }
     this.every(14000, 26000, () => this.bowl(Math.random() < .5 ? 196 : 261.6, .5));
     this.every(9000, 20000, () => this.windchime());
+  }
+  /** 🪵 목탁 한 번: 나무 울림(짧게 떨어지는 사인) + 딱 소리 */
+  tok(gain = .9) { this.ctx.resume(); const t = this.ctx.currentTime; const o = this.ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(720, t); o.frequency.exponentialRampToValueAtTime(560, t + .12); const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + .004); g.gain.exponentialRampToValueAtTime(.001, t + .22); o.connect(g); g.connect(this.sfx); o.start(t); o.stop(t + .25);
+    const o2 = this.ctx.createOscillator(); o2.type = "sine"; o2.frequency.value = 1450; const g2 = this.ctx.createGain(); g2.gain.setValueAtTime(gain * .25, t); g2.gain.exponentialRampToValueAtTime(.001, t + .06); o2.connect(g2); g2.connect(this.sfx); o2.start(t); o2.stop(t + .08); this.burst("bandpass", 2600, .015, .15); }
+  moktak: { timer: any; nodes: AudioNode[] } | null = null;
+  /** 목탁 염불 켜고 끄기: 일정한 목탁 + 가끔 빨라지는 굴림 + 낮은 ‘음~’ 허밍 */
+  toggleMoktak(): boolean {
+    if (this.moktak) { clearTimeout(this.moktak.timer); for (const n of this.moktak.nodes) { try { (n as any).stop?.(); n.disconnect(); } catch {} } this.moktak = null; return false; }
+    this.ctx.resume(); const nodes: AudioNode[] = []; const out = this.ctx.createGain(); out.gain.value = 0; out.gain.setTargetAtTime(.05, this.ctx.currentTime, 2); out.connect(this.sfx); nodes.push(out);
+    const bp = this.ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 520; bp.Q.value = 2.5; bp.connect(out); nodes.push(bp);
+    for (const [f, d] of [[98, -6], [98, 6], [147, 0]] as [number, number][]) { const o = this.ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(bp); o.start(); nodes.push(o); }
+    const lfo = this.ctx.createOscillator(); lfo.frequency.value = .18; const lg = this.ctx.createGain(); lg.gain.value = 180; lfo.connect(lg); lg.connect(bp.frequency); lfo.start(); nodes.push(lfo, lg);
+    let beat = 0; const m = { timer: null as any, nodes }; this.moktak = m;
+    const step = () => { if (this.moktak !== m) return; beat++; const roll = beat % 24 >= 20; this.tok(roll ? .6 : .85); m.timer = setTimeout(step, roll ? 260 - (beat % 24 - 20) * 40 : 620); };
+    step(); return true;
   }
   /** 싱잉볼: 비조화 배음 + 미세한 맥놀이 + 긴 여운 */
   bowl(f0 = 261.6, gain = 1.6) {
