@@ -72,5 +72,9 @@ async function upbit(): Promise<Quote[]> {
 }
 export async function getQuotes(): Promise<Quote[]> {
   const ys = await Promise.all([yahoo("^IXIC", "나스닥"), yahoo("^GSPC", "S&P500"), yahoo("^DJI", "다우"), yahoo("^KS11", "코스피"), yahoo("^KQ11", "코스닥"), yahoo("KRW=X", "원/달러", "원"), yahoo("JPYKRW=X", "엔화(100엔)", "원")]);
-  return [...(ys.filter(Boolean) as Quote[]).map(q => q.name.startsWith("엔화") ? { ...q, price: q.price * 100 } : q), ...(await upbit())];
+  const out = (ys.filter(Boolean) as Quote[]).map(q => q.name.startsWith("엔화") ? { ...q, price: q.price * 100 } : q);
+  // 🥇 금 1돈(3.75g) 원화 시세 = 국제 금 선물(달러/온스) × 원/달러 ÷ 31.1035 × 3.75
+  const [gold, fx] = [await yahoo("GC=F", "금"), ys[5]];
+  if (gold && fx) { const g = { name: "금 1돈", price: Math.round(gold.price * fx.price / 31.1035 * 3.75), pct: ((1 + gold.pct / 100) * (1 + fx.pct / 100) - 1) * 100, unit: "원" }; out.splice(out.findIndex(q => q.name === "원/달러") + 1, 0, g); }
+  return [...out, ...(await upbit())];
 }
