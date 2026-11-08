@@ -40,7 +40,7 @@ function textSprite(text: string, opt: { bg?: string; fg?: string; size?: number
 }
 
 /* ---------- 아바타 ---------- */
-type Avatar = { g: THREE.Group; body: THREE.Mesh; legs: THREE.Group; arms: THREE.Group; head: THREE.Group; name: THREE.Sprite; bubble: THREE.Sprite | null; bubbleText: string; tx: number; tz: number; pose: string; ry: number; walkT: number; v?: number; sk?: number; lk?: number; seed?: number; spd?: number };
+type Avatar = { g: THREE.Group; body: THREE.Mesh; legs: THREE.Group; arms: THREE.Group; head: THREE.Group; name: THREE.Sprite; bubble: THREE.Sprite | null; bubbleText: string; tx: number; tz: number; pose: string; ry: number; walkT: number; v?: number; sk?: number; lk?: number; seed?: number; spd?: number; hold?: { m: THREE.Object3D; t: number; dur: number; kind: Food } };
 function makeAvatar(nick: string, dept: string | null, me: boolean): Avatar {
   const g = new THREE.Group(); const col = DCOL[dept ?? ""] ?? 0x8e95ae;
   const mat = (c: number, r = .9) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0 });
@@ -191,6 +191,22 @@ function buildZen(scene: THREE.Scene) {
 const boxMesh = box;
 /* ---------- 함께 있는 동료들 (분위기용 · 이름표 없음 · 인원수에는 안 들어가요) ---------- */
 const NPC_DEPTS = ["간호사", "의사", "방사선", "물리치료", "임상병리", "응급구조", "원무", "간호조무사"];
+/** 🍠🥚🥤 손에 드는 음식: 나·동료·다른 접속자 공용 */
+type Food = "potato" | "egg" | "cup";
+function makeFood(kind: Food) {
+  const m = kind === "potato" ? (() => { const g = new THREE.Group(); const skin = new THREE.Mesh(new THREE.CapsuleGeometry(.09, .22, 4, 10), M(0x7a3352, .8)); const in_ = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 8), M(0xf2b23a, .6, 0xf2a020, .25)); in_.position.y = .16; skin.add(in_); g.add(skin); return g; })()
+      : kind === "egg" ? (() => { const e = new THREE.Mesh(new THREE.SphereGeometry(.09, 12, 10), M(0xfaf6ee, .5)); e.scale.set(1, 1.25, 1); const y = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 8), M(0xf2b23a, .6)); y.position.z = .07; e.add(y); return e; })()
+      : (() => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(.1, .08, .2, 12), M(0xf5e6c8, .4)); const d = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .02, 12), M(0xe8cf98, .6)); d.position.y = .08; g.add(c, d); return g; })();
+  return m;
+}
+function startHold(a: Avatar, kind: Food, dur: number) { if (a.hold) a.g.remove(a.hold.m); const m = makeFood(kind); a.g.add(m); a.hold = { m, t: 0, dur, kind }; }
+/** 음식이 무릎에서 입으로 올라가 오물오물 → 점점 작아짐 */
+function holdTick(a: Avatar, dt: number) { const H = a.hold; if (!H) return; H.t += dt; const sit = a.pose === "sit"; const hy = (sit ? 1.22 : 1.42) - .28; const k = Math.min(1, H.t / .35); const bob = H.kind === "cup" ? 0 : Math.max(0, Math.sin(H.t * 7)) * .08;
+  H.m.position.set(.28 * (1 - k) + .02, (sit ? .7 : .9) * (1 - k) + (hy + bob) * k, .3 + k * .2 - bob); H.m.rotation.x = H.kind === "cup" ? -k * .9 : 0; H.m.rotation.z = H.kind === "potato" ? .3 : 0;
+  if (H.kind !== "cup") H.m.scale.setScalar(1 - Math.min(.7, H.t / H.dur * .7));
+  if (H.t > H.dur) { a.g.remove(H.m); a.hold = undefined; } }
+const FOOD_SAY: Record<Food, string[]> = { cup: ["🥤 후루룩~", "🥤 캬~ 시원해"], egg: ["🥚 톡! 냠냠", "🥚 이마로 톡!"], potato: ["🍠 호호~ 꿀맛", "🍠 냠냠 달다"] };
+const foodOf = (t: string): Food | null => t.includes("🍠") ? "potato" : t.includes("🥚") ? "egg" : t.includes("🥤") ? "cup" : null;
 /** 찜질방 옷 + 🐑 양머리 수건 */
 function jjim(a: Avatar) {
   (a.body.material as THREE.MeshStandardMaterial).color.set(0xe8925a); const leg = a.legs.children[0] as THREE.Mesh; (leg.material as THREE.MeshStandardMaterial).color.set(0xd47640);
@@ -217,14 +233,14 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const amb = useRef<Ambience | null>(null); const sndRef = useRef(snd); sndRef.current = snd;
   const [fwOpen, setFwOpen] = useState(false); const [burning, setBurning] = useState<string | null>(null); const fwCd = useRef(0);
   const [mode, setMode] = useState<"normal" | "zen">("normal"), [say, setSay] = useState(""), [burn, setBurn] = useState<string | null>(null), [busy, setBusy] = useState(false), [sitting, setSitting] = useState(false);
-  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean; walk?: { wait: number } }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number; hold?: { m: THREE.Object3D; t: number; dur: number; kind: string } }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
+  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean; walk?: { wait: number }; eatT?: number }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number; foodSeen?: Record<string, number> }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
   const peopleRef = useRef(people), breathRef = useRef(breathK), sceneRef = useRef(scene), modeRef = useRef(mode);
   peopleRef.current = people; breathRef.current = breathK; sceneRef.current = scene; modeRef.current = mode;
   const moveTimer = useRef<any>(null);
   const emitMove = (pose: string) => { const a = st.current.me; if (!a) return; clearTimeout(moveTimer.current); moveTimer.current = setTimeout(() => onMove({ scene: sceneRef.current, x: a.tx, z: a.tz, pose }), 350); };
 
   /** 불꽃 발사 (mine=true면 서버로 알려 다른 사람도 보게) */
-  const launchFw = (type: number, ox: number, mine: boolean, at?: { x: number; z: number }) => { const S = st.current; if (!S.fw) return; const o = at ?? { x: 3.2, z: -5.8 }; const from = new THREE.Vector3(o.x + ox * .3, .5, o.z - .6), to = new THREE.Vector3(o.x * .6 + ox * 3 + (Math.random() - .5) * 4, 13 + Math.random() * 5, -24 - Math.random() * 8); // 내가 서 있는 자리에서 쏘아 올림 S.fw.launch(type, from, to, 1.1);
+  const launchFw = (type: number, ox: number, mine: boolean, at?: { x: number; z: number }) => { const S = st.current; if (!S.fw) return; const o = at ?? { x: 3.2, z: -5.8 }; const from = new THREE.Vector3(o.x + ox * .3, .5, o.z - .6), to = new THREE.Vector3(ox * 2.2, 11 + Math.random() * 2.5, -16 - Math.random() * 3); // 카메라 정면 밤하늘 한가운데 // 내가 서 있는 자리에서 쏘아 올림 S.fw.launch(type, from, to, 1.1);
     if (amb.current && sndRef.current === "on") amb.current.firework(1.1, mine ? 1 : .7); if (mine) { try { navigator.vibrate?.([10, 1050, 40]); } catch {} onFirework?.(`fw:${type}:${ox.toFixed(1)}:0`); } };
   /* ---- 초기화 / 씬 전환 ---- */
   useEffect(() => {
@@ -270,7 +286,8 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       if (S.fw) for (const p of peopleRef.current) { if (p.me || p.scene !== "roof" || !p.act?.startsWith("fw:") || p.actAge > 6) continue; const key = p.nick + p.act; if (S.fwSeen![key]) continue; S.fwSeen![key] = Date.now(); const [, ty, ox] = p.act.split(":"); launchFw(+ty || 0, +ox || 0, false, { x: p.x ?? 3.2, z: p.z ?? -5.8 }); }
       // 다른 사람 동기화
       const ps = peopleRef.current.filter(p => !p.me && p.scene === sceneRef.current); const alive = new Set<string>();
-      for (const p of ps) { alive.add(p.nick); let a = S.others.get(p.nick); if (!a) { a = makeAvatar(p.nick, p.dept, false); if (sceneRef.current === "sauna") jjim(a); a.g.position.set(p.x, 0, p.z); a.tx = p.x; a.tz = p.z; sc.add(a.g); S.others.set(p.nick, a); } a.tx = p.x; a.tz = p.z; a.pose = p.pose; const txt = p.say && p.sayAge < 12 ? p.say : null; if ((txt ?? "") !== a.bubbleText) setBubble(a, txt); }
+      for (const p of ps) { alive.add(p.nick); let a = S.others.get(p.nick); if (!a) { a = makeAvatar(p.nick, p.dept, false); if (sceneRef.current === "sauna") jjim(a); a.g.position.set(p.x, 0, p.z); a.tx = p.x; a.tz = p.z; sc.add(a.g); S.others.set(p.nick, a); } a.tx = p.x; a.tz = p.z; a.pose = p.pose; const txt = p.say && p.sayAge < 12 ? p.say : null; if ((txt ?? "") !== a.bubbleText) setBubble(a, txt);
+        if (p.say && p.sayAge < 4) { const fk = foodOf(p.say), seen = (S.foodSeen ??= {}), key = p.nick + p.say; if (fk && Date.now() - (seen[key] ?? 0) > 6000) { seen[key] = Date.now(); startHold(a, fk, 2.5); } } }
       for (const [k, a] of S.others) if (!alive.has(k)) { sc.remove(a.g); S.others.delete(k); }
       // 아바타 이동/애니메이션
       const anim = (a: Avatar, isMe: boolean) => {
@@ -296,10 +313,11 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       S.npcs?.forEach(n => { if (!n.walk) return; const a = n.a; if (Math.hypot(a.tx - a.g.position.x, a.tz - a.g.position.z) < .1) { n.walk.wait -= dt; if (n.walk.wait <= 0) { const p = SAUNA_ROUTE[Math.floor(Math.random() * SAUNA_ROUTE.length)]; a.tx = p.x + (Math.random() - .5) * 1.2; a.tz = p.z + (Math.random() - .5) * 1.2; n.walk.wait = 2 + Math.random() * 6; } } });
       if (S.me) anim(S.me, true); S.others.forEach(a => anim(a, false)); S.npcs?.forEach(n => anim(n.a, false));
       // 이모지·종이
-      if (S.hold && S.me) { const H = S.hold, a = S.me; H.t += dt; const sit = a.pose === "sit"; const hy = (sit ? 1.22 : 1.42) - .28; const k = Math.min(1, H.t / .35); const bob = H.kind === "cup" ? 0 : Math.max(0, Math.sin(H.t * 7)) * .08;
-        H.m.position.set(.28 * (1 - k) + .02, (sit ? .7 : .9) * (1 - k) + (hy + bob) * k, .3 + k * .2 - bob); H.m.rotation.x = H.kind === "cup" ? -k * .9 : 0; H.m.rotation.z = H.kind === "potato" ? .3 : 0;
-        if (H.kind !== "cup") { const s = 1 - Math.min(.7, H.t / H.dur * .7); H.m.scale.setScalar(s); }
-        if (H.t > H.dur) { a.g.remove(H.m); S.hold = undefined; } }
+      if (S.me) holdTick(S.me, dt); for (const a of S.others.values()) holdTick(a, dt);
+      // 🧖 가까이 가면 앉아 있는 동료들이 가끔 먹어요
+      if (sceneRef.current === "sauna" && S.me) for (const n of S.npcs ?? []) { holdTick(n.a, dt); if (n.seat < 0 || n.a.pose !== "sit") continue; const d = Math.hypot(n.a.g.position.x - S.me.g.position.x, n.a.g.position.z - S.me.g.position.z); if (d > 2.8) continue;
+        n.eatT = (n.eatT ?? 1 + Math.random() * 3) - dt; if (n.eatT > 0 || n.a.hold) continue; n.eatT = 5 + Math.random() * 3; const kinds: Food[] = ["cup", "egg", "potato"]; const kind = kinds[Math.floor(Math.random() * 3)]; startHold(n.a, kind, 2.2);
+        const say = FOOD_SAY[kind][Math.floor(Math.random() * 2)]; const sp = textSprite(say, { bg: "rgba(160,72,28,.85)", size: 22 }); sp.scale.multiplyScalar(.55); sp.position.set(n.a.g.position.x, 2.3, n.a.g.position.z); sc.add(sp); S.emo.push({ sp, t: 0 }); }
       for (const e of S.emo) { e.t += dt; e.sp.position.y += dt * .9; (e.sp.material as THREE.SpriteMaterial).opacity = Math.max(0, 1 - e.t / 1.8); } S.emo = S.emo.filter(e => { if (e.t > 1.8) { sc.remove(e.sp); return false; } return true; });
       if (S.paper) { const p = S.paper; p.t += dt; const fp = FIRE[sceneRef.current].clone().add(new THREE.Vector3(0, .9, 0)); p.sp.position.lerpVectors(p.from, fp, Math.min(1, p.t / 1.4)); p.sp.position.y += Math.sin(Math.min(1, p.t / 1.4) * Math.PI) * 1.2; p.sp.material.rotation += dt * 4; if (p.t > 1.4) { p.sp.material.opacity -= dt * 2.5; if (p.sp.material.opacity <= 0) { sc.remove(p.sp); S.paper = undefined; } } }
       // 카메라
@@ -307,7 +325,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       if (modeRef.current === "zen") { const f = FIRE[sceneRef.current]; const ang = t * .12; camPos.set(f.x + Math.cos(ang) * 4.2, f.y + 1.6 + Math.sin(t * .3) * .1, f.z + Math.sin(ang) * 4.2); look.set(f.x, f.y + .9, f.z); }
       else if (sceneRef.current === "sauna") { const far = 8.5; camPos.set(meP.x + Math.sin(S.yaw) * far, meP.y + 5, meP.z + Math.cos(S.yaw) * far); look.set(meP.x, meP.y + 1.1, meP.z); } // 찜질방: 늘 내 캐릭터 중심을 정면으로
       else { const far = S.cam!.aspect < .8 ? 9.6 : 6.4, rf = sceneRef.current === "roof"; camPos.set(meP.x + Math.sin(S.yaw) * far, far * (rf ? .5 : .66), meP.z + Math.cos(S.yaw) * far); look.set(meP.x, rf ? 2.8 : 1, meP.z - (sceneRef.current === "zen" ? 3 : 1.2)); } // 옥상은 하늘(야경)이 더 보이게
-      if (S.fw && S.fw.active > 0 && modeRef.current !== "zen") { const k = Math.min(1, S.fw.active / 1.2); const sky = new THREE.Vector3(S.fw.lastBurst.x * .5, 8, -12); look.lerp(sky, k * .8); }
+      if (S.fw && S.fw.active > 0 && modeRef.current !== "zen") { const k = Math.min(1, S.fw.active / 1.2); const sky = new THREE.Vector3(S.fw.lastBurst.x * .4, 10.5, -14); look.lerp(sky, k * .8); }
       S.cam!.position.lerp(camPos, Math.min(1, dt * 4)); if (!S.lookCur) S.lookCur = look.clone(); S.lookCur.lerp(look, Math.min(1, dt * 3)); S.cam!.lookAt(S.lookCur);
       S.renderer!.render(sc, S.cam!);
     };
@@ -336,7 +354,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const doBurn = async () => { const S = st.current; const a = S.me; const txt = (burn ?? "").trim(); if (!a || !S.sc || !txt) return; const sp = textSprite("📝", { bg: "rgba(0,0,0,0)", size: 40, pad: 2 }); sp.position.set(a.g.position.x, 1.6, a.g.position.z); S.sc.add(sp); S.paper = { sp, t: 0, from: sp.position.clone() }; S.flare = 6; setBurn(null); setBurning(txt); if (sndRef.current !== "on" && sndRef.current !== "off") soundOn(); navigator.vibrate?.(20); const xp = await restBurn(txt.length).catch(() => 0); onXp(xp ? `🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요 (+${xp} XP)` : "🔥 걱정 한 장 태웠어요 · 내용은 저장되지 않아요"); };
   const soundOn = async () => { unlockAudio(); try { if (!amb.current) amb.current = new Ambience(); await amb.current.start(sceneRef.current); amb.current.setVolume(vol); setSnd("on"); try { localStorage.setItem("mw-rest-snd", "1"); } catch {} } catch { setSnd("off"); } };
   const strikeBowl = () => { const S = st.current; const r = S.sc?.getObjectByName("bowlring") as THREE.Mesh | undefined; if (r) r.userData.t = 1; if (snd !== "on") soundOn().then(() => amb.current?.bowl()); else amb.current?.bowl(); try { navigator.vibrate?.(15); } catch {} };
-  const fire = async (type: number) => { const now = Date.now(); if (now - fwCd.current < 1200) return; fwCd.current = now; if (sndRef.current !== "on" && sndRef.current !== "off") { await soundOn(); sndRef.current = "on"; } const mp = st.current.me?.g.position; launchFw(type, Math.round((Math.random() * 4 - 2) * 10) / 10, true, mp ? { x: mp.x, z: mp.z } : undefined); };
+  const fire = async (type: number) => { const now = Date.now(); if (now - fwCd.current < 1200) return; fwCd.current = now; if (sndRef.current !== "on" && sndRef.current !== "off") { soundOn().then(() => { sndRef.current = "on"; }).catch(() => {}); } const mp = st.current.me?.g.position; launchFw(type, Math.round((Math.random() * 4 - 2) * 10) / 10, true, mp ? { x: mp.x, z: mp.z } : undefined); };
   const soundOff = () => { amb.current?.stop(); amb.current?.setVolume(0); setSnd("off"); try { localStorage.setItem("mw-rest-snd", "0"); } catch {} };
   useEffect(() => { if (snd === "on") amb.current?.start(scene).then(() => amb.current?.setVolume(vol)); }, [scene]); // eslint-disable-line
   useEffect(() => { amb.current?.setVolume(snd === "on" ? vol : 0); try { localStorage.setItem("mw-rest-vol", String(vol)); } catch {} }, [vol]); // eslint-disable-line
@@ -368,11 +386,8 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   useEffect(() => { if (pot < 0 || !grill.current) return; const k = Math.min(1, potPct / 100), m = grill.current.pot.material as THREE.MeshStandardMaterial; m.color.setHex(potPct >= 170 ? 0x1a1414 : 0x7a3352).lerp(new THREE.Color(potPct >= 170 ? 0x1a1414 : 0xa0522d), potPct >= 170 ? 0 : k); if (potPct % 6 === 0) { const S = st.current; const G = grill.current; if (S.sc && G) { const sp = textSprite(potPct >= 100 ? "♨️" : "💨", { bg: "rgba(0,0,0,0)", size: 30, pad: 2 }); sp.position.set(G.g.position.x, .6, G.g.position.z); S.sc.add(sp); S.emo.push({ sp, t: 0 }); } } }); // eslint-disable-line
   useEffect(() => { if (scene !== "sauna") { dropGrill(); setPot(-1); } }, [scene]); // eslint-disable-line
   /** 먹는 모션: 손에 든 음식이 입으로 왔다 갔다 + 냠 */
-  const eatItem = async (kind: "potato" | "egg" | "cup", sec = 2.4) => { const S = st.current; const a = S.me; if (!a) return; S.hold && a.g.remove(S.hold.m);
-    const m = kind === "potato" ? (() => { const g = new THREE.Group(); const skin = new THREE.Mesh(new THREE.CapsuleGeometry(.09, .22, 4, 10), M(0x7a3352, .8)); const in_ = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 8), M(0xf2b23a, .6, 0xf2a020, .25)); in_.position.y = .16; skin.add(in_); g.add(skin); return g; })()
-      : kind === "egg" ? (() => { const e = new THREE.Mesh(new THREE.SphereGeometry(.09, 12, 10), M(0xfaf6ee, .5)); e.scale.set(1, 1.25, 1); const y = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 8), M(0xf2b23a, .6)); y.position.z = .07; e.add(y); return e; })()
-      : (() => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(.1, .08, .2, 12), M(0xf5e6c8, .4)); const d = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .02, 12), M(0xe8cf98, .6)); d.position.y = .08; g.add(c, d); return g; })();
-    a.g.add(m); S.hold = { m, t: 0, dur: sec, kind }; const au = await sfx();
+  const eatItem = async (kind: "potato" | "egg" | "cup", sec = 2.4) => { const S = st.current; const a = S.me; if (!a) return;
+    startHold(a, kind, sec); const au = await sfx();
     const key = Date.now(); setEat({ kind, step: 0, key, last: kind === "cup" && sip + 1 >= 3 }); for (let i = 1; i <= 3; i++) setTimeout(() => setEat(e => e && e.key === key ? { ...e, step: i } : e), i * sec * 1000 / 4); setTimeout(() => setEat(e => e && e.key === key ? null : e), sec * 1000 + 500);
     if (kind === "cup") { au?.slurp(); setTimeout(() => au?.slurp(), 650); } else au?.chew(Math.round(sec * 1.6)); };
   /** 🧊 얼음방: 이동 없이 시원한 소리 + ❄️ + 땀 게이지 0 */

@@ -25,7 +25,7 @@ async function requireAdmin(): Promise<Session> { const s = await requireUser();
 
 /* ---------- 가입/로그인 ---------- */
 /** 공유 링크(/h/<id>)로 들어와 가입·로그인하면 원래 보려던 병원으로 */
-async function afterLogin() { const { cookies } = await import("next/headers"); const c = cookies(); const n = decodeURIComponent(c.get("mw_next")?.value ?? ""); if (n) c.delete("mw_next"); return /^\/(hospitals|jobs)\/[\w-]+$/.test(n) ? n : "/home"; }
+async function afterLogin() { const { cookies } = await import("next/headers"); const c = cookies(); const n = decodeURIComponent(c.get("mw_next")?.value ?? ""); if (n) c.delete("mw_next"); return /^\/(hospitals|jobs)\/[\w-]+(\?id=\d+)?$/.test(n) ? n : "/home"; }
 export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const username = clean(fd.get("username"), 20).toLowerCase();
   const password = String(fd.get("password") ?? "");

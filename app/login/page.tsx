@@ -2,7 +2,7 @@ import OpenPromo from "@/components/OpenPromo";
 import Link from "next/link";
 import AuthForm from "@/components/AuthForm";
 export default function LoginPage({ searchParams }: { searchParams: { ref?: string; next?: string; mode?: string } }) {
-  const next = /^\/(hospitals|jobs)\/[\w-]+$/.test(searchParams.next ?? "") ? searchParams.next! : "";
+  const next = /^\/(hospitals|jobs)\/[\w-]+(\?id=\d+)?$/.test(searchParams.next ?? "") ? searchParams.next! : "";
   const ref = (searchParams.ref || "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
   return (
     <div className="login-bg"><div className="app"><main><div className="auth form login-card">

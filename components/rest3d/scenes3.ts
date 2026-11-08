@@ -108,6 +108,16 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
   const tvLight = new THREE.PointLight(0x9fc8ff, .8, 5, 2); tvLight.position.set(7.8, 2.4, -5.4); scene.add(tvLight);
   const tvTick = (dt: number) => { tvT += dt; if (tvT > 16) { tvT = 0; tvK = (tvK + 1) % CH.length; drawTv(tvK); tvLight.color.set(CH[tvK].ad ? 0xffffff : 0x9fc8ff); } }; // 16초마다 바로 다음 채널
 
+  // 🍽 동료들 옆 소반: 살얼음 식혜 · 맥반석 달걀 바구니 · 군고구마
+  const sobanM = M(0x9a6236, .7), legM = M(0x6b3f22, .8);
+  for (const [x, z] of [[-1.75, -1.9], [1.75, -1.9], [5.4, -5.4]]) {
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(.34, .34, .05, 20), sobanM); top.position.set(x, .2, z); scene.add(top);
+    for (let k = 0; k < 4; k++) { const a = k / 4 * Math.PI * 2 + .7; scene.add(box(.05, .18, .05, legM, x + Math.cos(a) * .24, .09, z + Math.sin(a) * .24)); }
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(.07, .055, .14, 12), M(0xf5e6c8, .4)); cup.position.set(x - .14, .29, z - .06); scene.add(cup);
+    const bsk = new THREE.Mesh(new THREE.CylinderGeometry(.11, .08, .07, 12), M(0xa8743c, .9)); bsk.position.set(x + .1, .26, z - .1); scene.add(bsk);
+    for (let e = 0; e < 3; e++) { const egg = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), M(0xb98a5e, .6)); egg.scale.set(1, 1.25, 1); egg.position.set(x + .07 + e * .04, .31, z - .1 + (e % 2) * .04); scene.add(egg); }
+    const pot = new THREE.Mesh(new THREE.CapsuleGeometry(.05, .14, 4, 8), M(0x7a3352, .8)); pot.rotation.z = Math.PI / 2; pot.position.set(x + .02, .26, z + .14); scene.add(pot);
+  }
   // 방석(앉는 곳) + 매트·목침(눕는 곳)
   const matCols = [0xe9b44c, 0xe58b4e, 0xd8a25a, 0xef9f6a], pillow = M(0x8a5a32, .8), cush = [M(0xc0563a, .95), M(0xd88a3a, .95)];
   SAUNA_SEATS.forEach((st, i) => { const c = box(.85, .1, .85, cush[i % 2], st.x, .05, st.z); c.rotation.y = st.ry; c.castShadow = false; scene.add(c); });
