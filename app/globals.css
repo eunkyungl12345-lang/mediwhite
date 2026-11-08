@@ -2313,3 +2313,4 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .pc-in{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#7A6A55}.pc-in span{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:#3A2A1A}.pc-in input{width:92px;padding:5px 8px;border:1px solid #E5D3B3;border-radius:8px;font-size:14px}
 .pc-note{font-size:11px;color:#9A8A75;line-height:1.5}
 .pc-cta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed #EBD9B9;font-size:12.5px;font-weight:700;color:#7A3A12}.pc-cta .btn{padding:7px 12px;font-size:12.5px}
+.nw-q.gold{background:linear-gradient(135deg,rgba(212,167,60,.22),rgba(212,167,60,.06));border-color:rgba(212,167,60,.55)}.nw-q.gold span:before{content:"🥇 "}
