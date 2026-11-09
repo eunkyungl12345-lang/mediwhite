@@ -3,6 +3,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { HOLIDAYS_2027, NOTE_SECS, type HNote } from "@/lib/handover";
 import { OpsForm } from "@/components/jobs/NoteBits";
+export const metadata = { title: "인계장" };
 export const dynamic = "force-dynamic";
 const WD = ["일", "월", "화", "수", "목", "금", "토"];
 /** 📋 인수인계 — 운영팀 인계 · 이번 주 리포트 · 최근 병원 인계 노트 · 2027 근무표 도우미 */
@@ -36,7 +37,7 @@ export default async function Handover() {
     <section className="ho-card"><h3>🏥 최근 올라온 병원 인계</h3>
       {notes?.length ? <div className="ho-notes">{notes.filter((n, i) => H.has(nh[i])).map((n, i) => { const [, hid, sec] = String(n.game).split(":"), S = NOTE_SECS.find(x => x.k === sec), x = n.state as HNote;
         return <Link key={n.game + i} href={`/hospitals/${hid}?t=note`} className="ho-note"><small>{H.get(Number(hid))?.name} · {S?.icon} {S?.name}</small><p>{x.text}</p></Link>; })}</div>
-        : <p className="muted" style={{ fontSize: 13, margin: 0 }}>아직 인계 노트가 없어요. 다니는 병원 화면의 <b>인계장</b> 탭에서 첫 인계를 남겨주세요.</p>}
+        : <div className="emp"><p>아직 인계 노트가 없어요. 다니는 병원 화면의 <b>인계장</b> 탭에서 첫 인계를 남겨주세요.</p><Link href="/hospitals?q=" className="btn sm ghost">🏥 내 병원 찾아가기</Link></div>}
       <Link href="/hospitals" className="btn ghost" style={{ justifySelf: "start" }}>병원 찾아서 인계 남기기</Link>
     </section>
 

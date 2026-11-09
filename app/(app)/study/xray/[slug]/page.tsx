@@ -5,7 +5,7 @@ import { XVIEWS, xvBySlug } from "@/lib/xrayAll";
 import { getSession } from "@/lib/auth";
 import { loadXrayPhotos } from "@/lib/xrayPhotoDb";
 import XrayGallery from "@/components/XrayGallery";
-export function generateMetadata({ params }: { params: { slug: string } }) { const x = xvBySlug(params.slug); return { title: x ? `${x.d?.title ?? `${x.exam.en} ${x.view.v}`} 촬영법 · 메디화이트웹` : "촬영법" }; }
+export function generateMetadata({ params }: { params: { slug: string } }) { const x = xvBySlug(params.slug); return { title: x ? `${x.d?.title ?? `${x.exam.en} ${x.view.v}`} 촬영법` : "촬영법" }; }
 /** 🩻 촬영법 폼 한 장 — 콘솔 촬영 가이드처럼: 제목·투사명·노출·부위·병변·SID·중심선·호흡·포지셔닝·콜리메이션·평가·팁 */
 export default async function XrayForm({ params }: { params: { slug: string } }) {
   const x = xvBySlug(params.slug); if (!x) notFound(); const me = (await getSession())!; const photos = await loadXrayPhotos(x.slug, me.id);

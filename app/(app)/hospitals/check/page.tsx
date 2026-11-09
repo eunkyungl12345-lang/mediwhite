@@ -3,6 +3,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import HospCheck from "@/components/jobs/HospCheck";
 import { factKey } from "@/lib/hospFacts";
+export const metadata = { title: "다녔던 병원 체크" };
 export const dynamic = "force-dynamic";
 /** 🔎 병원 실체 체크 — 다니는/다녔던 병원 30초 익명 체크 */
 export default async function CheckPage({ searchParams }: { searchParams: { id?: string } }) {

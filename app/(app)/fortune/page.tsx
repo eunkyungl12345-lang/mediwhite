@@ -5,6 +5,7 @@ import { fortune } from "@/lib/fortune";
 import BirthForm from "@/components/BirthForm";
 import { analyze, flowRel, monthPillarNow, yearPillarOf, pHan, pName, tenGod, STEM_EL, BRANCH_EL, EL_COLOR, EL_HAN, GOD_DESC, type Pillar } from "@/lib/saju";
 import { STEMS, BRANCHES, dayGanzhi } from "@/lib/fortune";
+export const metadata = { title: "오늘의 운세" };
 export const dynamic = "force-dynamic";
 const Bar = ({ label, s, t, icon }: { label: string; s: number; t: string; icon: string }) => (
   <div className="ft-row"><div className="ft-row-h"><b>{icon} {label}</b><span className="ft-stars">{"★".repeat(Math.round(s / 20))}<i>{"★".repeat(5 - Math.round(s / 20))}</i></span></div><div className="ft-bar"><i style={{ width: s + "%" }} /></div><div className="ft-t">{t}</div></div>);

@@ -10,6 +10,7 @@ import { getFocus } from "@/lib/focus";
 import JobCard from "@/components/jobs/JobCard";
 import { openExtJobs, EXT_SRC, extTags, isG3, splitArea, extCheckedLabel } from "@/lib/extJobs";
 import { QUICK, tagLabel } from "@/lib/jobTags";
+export const metadata = { title: "저녁 약속 잡을 수 있는 알짜 병원" };
 export const dynamic = "force-dynamic";
 /** ☀️ 3교대 탈출 — 나이트 없는 삶, 실수령은 얼마나 줄까? (교대 vs 상근 비교 · 상근 공고 · 상근 병원) */
 export default async function DayPage({ searchParams }: { searchParams: { k?: string; c?: string; g3?: string } }) {

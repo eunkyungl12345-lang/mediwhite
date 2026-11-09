@@ -7,6 +7,7 @@ import { loadNps } from "@/lib/nps";
 import { loadDistricts } from "@/lib/districtDb";
 import { MIN_N, factLine } from "@/lib/hospFacts";
 import JobCard from "@/components/jobs/JobCard";
+export const metadata = { title: "검색" };
 export const dynamic = "force-dynamic";
 /** 🔍 통합 검색 — 잡플래닛처럼 전체 · 병원 · 채용 공고 탭 + 키워드 */
 export default async function SearchPage({ searchParams }: { searchParams: { q?: string; tab?: string } }) {

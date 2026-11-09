@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { PAY, MIN_N, type HFact } from "@/lib/hospFacts";
 import { npsKey } from "@/lib/nps";
 import SalaryCurve from "@/components/jobs/SalaryCurve";
+export const metadata = { title: "급여" };
 export const dynamic = "force-dynamic";
 /** 💰 급여 — 직종별 실수령 분포·내 위치 + 공공데이터 추정 평균 월급 높은 병원 */
 export default async function SalaryPage() {

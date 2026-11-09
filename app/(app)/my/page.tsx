@@ -5,6 +5,7 @@ import { logout } from "@/lib/actions";
 import { rankFor, deptLeaders } from "@/lib/ranksvc";
 import Avatar from "@/components/Avatar";
 import { lockMode, freeLeft } from "@/lib/hospFactsDb";
+export const metadata = { title: "MY" };
 export const dynamic = "force-dynamic";
 /** 👤 MY — 내 프로필 · 열람권 · 인증 · 내 활동(체크·리뷰·면접·자랑·공고) · 설정 */
 export default async function MyPage() {
@@ -35,7 +36,7 @@ export default async function MyPage() {
       {ivs.map(c => { const id = Number(String(c.game).slice(6)); return <Row key={c.game} href={`/hospitals/interview?id=${id}`} icon="🎤" t={hn(id)} sub="면접 후기" />; })}
       {brags.map(c => { const id = Number(String(c.game).slice(5)); return <Row key={c.game} href={`/hospitals/brag/new?id=${id}`} icon="🏆" t={hn(id)} sub="자랑" />; })}
       {(jobs ?? []).map(j => <Row key={j.id} href={`/jobs/${j.id}`} icon="💼" t={`${j.hospital} · ${j.dept}`} sub={j.closed ? "마감" : "모집 중"} />)}
-      {!rows.length && !(revs ?? []).length && !(jobs ?? []).length && <p className="muted" style={{ fontSize: 13, padding: "4px 2px" }}>아직 활동이 없어요. 다녔던 병원부터 체크해보세요.</p>}
+      {!rows.length && !(revs ?? []).length && !(jobs ?? []).length && <div className="emp"><p>아직 활동이 없어요. 다녔던 병원부터 체크해보세요.</p><Link href="/hospitals/check" className="btn sm">🔎 다녔던 병원 체크하기 <small>+50 XP</small></Link></div>}
     </section>
     <section className="my-sec"><h3>인증</h3>
       <Row href="/badge" icon="🥇" t="면허 인증 (골드뱃지)" sub={me?.blue_badge ? "완료" : "의료인 면허로 인증"} />

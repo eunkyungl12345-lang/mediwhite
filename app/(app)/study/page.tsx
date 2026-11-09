@@ -4,6 +4,7 @@ import { GUIDES } from "@/lib/deptGuides";
 import { TERM_CATS } from "@/lib/terms";
 import { ago } from "@/lib/format";
 import { getSession } from "@/lib/auth";
+export const metadata = { title: "스터디" };
 export const dynamic = "force-dynamic";
 /** 📚 공부방·자료실 — 자료실·자료 요청·약어 사전·면접 질문·직종별 실무 가이드 */
 const GROUPS: [string, string[]][] = [["간호", ["간호사", "간호조무사"]], ["방사선", ["방사선"]], ["물리·작업치료", ["물리치료", "작업치료사"]], ["임상병리", ["임상병리"]], ["원무·총괄", ["원무", "총괄", "의무기록사", "병원컨설팅"]], ["의사·한의사", ["의사", "한의사"]], ["약사", ["약사"]], ["치과", ["치과위생사", "치과기공사"]], ["그 밖의 직종", ["응급구조", "영양사", "임상심리사"]]];

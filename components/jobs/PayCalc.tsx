@@ -33,7 +33,7 @@ export default function PayCalc({ pay, signup }: { pay: string; signup: string }
         : <>{p && <p className="pc-res">4대 보험·소득세 공제 후 예상 통장 실수령액<br /><b>약 월 {fmt(netMonthly(p.lo))}{p.hi !== p.lo ? `~${fmt(netMonthly(p.hi))}` : ""}만 원</b></p>}
           <label className="pc-in">{p ? "연봉을 바꿔 보기" : "공고에 금액이 없어요. 연봉을 넣어 보세요"}<span><input type="number" inputMode="numeric" min={1000} max={20000} step={100} value={ann} onChange={e => setAnn(Number(e.target.value) || 0)} />만 원 → <b>월 약 {ann >= 1000 ? fmt(netMonthly(ann)) : "-"}만 원</b></span></label>
           <small className="pc-note">2026년 요율·1인 가구·비과세 식대 20만 원 기준 추정이에요. 퇴직금 포함 연봉이면 더 적어요.</small></>}
-      <div className="pc-cta"><span>⚠️ 입사 전 원장 성향·실제 퇴근시간 체크 필수!</span><Link href={signup} className="btn">가입하고 분위기 보기</Link></div>
+      <div className="pc-cta"><span>⚠️ 입사 전 원장 성향·실제 퇴근시간 체크 필수!</span><Link href={signup} className="btn">🔓 가입하고 실수령·분위기 보기</Link></div>
     </div>}
   </div>;
 }

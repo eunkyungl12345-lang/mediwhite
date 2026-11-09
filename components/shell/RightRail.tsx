@@ -7,16 +7,18 @@ import Insignia from "@/components/Insignia";
 /** 💻 PC 오른쪽 레일: 내 계급 · 실시간 인기글 · 미니게임 바로가기 (1080px 이상) */
 export default async function RightRail({ rank, xp, nick, dept }: { rank: Rank; xp: number; nick: string; dept: string }) {
   const hot = await memo("rail_hot", 60_000, async () => { const since = new Date(Date.now() - 3 * 86400000).toISOString(); const { data } = await db().from("posts").select("id,title,views,created_at,category").eq("hidden", false).neq("category", "썸").neq("category", "익명").neq("category", "공지").gte("created_at", since).order("views", { ascending: false }).limit(6); return data ?? []; });
+  const recent = hot.length ? [] : await memo("rail_recent", 60_000, async () => { const { data } = await db().from("posts").select("id,title,views,created_at,category").eq("hidden", false).neq("category", "썸").neq("category", "익명").neq("category", "공지").order("created_at", { ascending: false }).limit(6); return data ?? []; });
+  const list = hot.length ? hot : recent;
   const r: any = rank;
   return <aside className="rail">
     <Link href="/rank" className="rail-card rail-me">
       <span className={`ins t${r.tier}`}><Insignia index={r.index} size={22} /></span>
       <div><b>{nick}</b><small>{dept} · {r.name}</small><div className="xpbar"><i style={{ width: `${Math.round((r.progress ?? 0) * 100)}%` }} /></div><small>{xp.toLocaleString()} XP{r.nextName ? ` · ${r.nextName}까지 ${(r.next - xp).toLocaleString()}` : ""}</small></div>
     </Link>
-    <div className="rail-card">
-      <div className="rail-h">🔥 지금 인기글</div>
-      {hot.length ? <ol className="rail-hot">{hot.map((p: any, i: number) => <li key={p.id}><Link href={`/board/${p.id}`}><em>{i + 1}</em><span>{p.title}</span><small>{ago(p.created_at)} · 조회 {p.views ?? 0}</small></Link></li>)}</ol> : <div className="muted" style={{ fontSize: 13 }}>최근 3일 인기글이 아직 없어요</div>}
-    </div>
+    {list.length > 0 && <div className="rail-card">
+      <div className="rail-h">{hot.length ? "🔥 지금 인기글" : "📝 최근 글"}</div>
+      <ol className="rail-hot">{list.map((p: any, i: number) => <li key={p.id}><Link href={`/board/${p.id}`}><em>{i + 1}</em><span>{p.title}</span><small>{ago(p.created_at)} · 조회 {p.views ?? 0}</small></Link></li>)}</ol>
+    </div>}
     <div className="rail-card">
       <div className="rail-h">🎮 잠깐 쉬어가기</div>
       <div className="rail-games">{[["/rest", "🛋️", "당직실"]].map(([h, ic, n]) => <Link key={h} href={h}><span>{ic}</span>{n}</Link>)}</div>

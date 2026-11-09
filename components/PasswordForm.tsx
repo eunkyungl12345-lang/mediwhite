@@ -9,7 +9,7 @@ export default function PasswordForm() {
   return (
     <form ref={ref} action={async fd => { await action(fd); }} className="form">
       <input name="current" type="password" placeholder="현재 비밀번호" autoComplete="current-password" required />
-      <div className="row"><input name="next" type="password" placeholder="새 비밀번호 (4자 이상)" autoComplete="new-password" required /><input name="again" type="password" placeholder="새 비밀번호 확인" autoComplete="new-password" required /></div>
+      <div className="row"><input name="next" type="password" placeholder="새 비밀번호 (8자 이상)" minLength={8} autoComplete="new-password" required /><input name="again" type="password" placeholder="새 비밀번호 확인" autoComplete="new-password" required /></div>
       <div className="row"><Btn />{st?.error && <span className="error">{st.error}</span>}{st?.ok && <span className="muted" style={{ color: "var(--scrub)" }}>{st.ok}</span>}</div>
     </form>
   );

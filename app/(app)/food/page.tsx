@@ -6,6 +6,7 @@ import { fmt } from "@/lib/format";
 import { deleteRestaurant } from "@/lib/foodActions";
 import { FoodForm, FoodLike, AreaPicker } from "@/components/FoodForms";
 import Roulette from "@/components/food/Roulette";
+export const metadata = { title: "구내식당" };
 export const dynamic = "force-dynamic";
 
 export default async function FoodPage({ searchParams }: { searchParams: { r?: string; d?: string; t?: string } }) {

@@ -22,13 +22,13 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
   const open = (jobs ?? []).filter(j => dday(j.deadline) !== "마감").slice(0, 12);
   const login = (next: string) => `/login?next=${encodeURIComponent(next)}`, signup = (next: string) => `/login?mode=signup&next=${encodeURIComponent(next)}`;
   return <div className="pub-bg"><div className="app"><main className="pub">
-    <header className="pub-h"><Link href="/" className="pub-brand">메디화이트웹</Link><Link href="/login" className="btn">로그인 · 30초 가입</Link></header>
-    <OpenPromo href="/login?mode=signup" />
+    <header className="pub-h"><Link href="/" className="pub-brand">메디화이트웹</Link><Link href="/login" className="btn">로그인 · 가입</Link></header>
     <section className="pub-hero"><small className="pub-kicker">📍 강남 3구부터</small><h1>강남 3구 병원<br />실제 실수령액 &<br />분위기 팩트체크 🏥</h1><p>입사하기 전에 <b>원장 성향</b>과 <b>실제 퇴근 시간</b> 확인하고 가세요.</p>
       <div className="pub-pts"><span>💰 통장 실수령</span><span>🙆 원장 성향</span><span>⏰ 실제 퇴근</span><span>😶 태움</span><span>🌴 연차 방식</span></div>
       <form action="/" className="jb2-search"><input name="q" defaultValue={kw} placeholder="지원할 병원 이름 검색 (예: 연세, 정형외과)" /><button className="btn">검색</button></form>
       {kw && <div className="pub-hosp">{(hs ?? []).length ? (hs ?? []).map(h => <Link key={h.id} href={`/h/${h.id}`}><b>🏥 {h.name}</b><small>{h.region} · {h.kind}</small></Link>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>‘{kw}’ 병원이 아직 없어요. <Link href={signup("/hospitals/check")} className="link">처음 등록하고 리뷰 남기기</Link></p>}</div>}
     </section>
+    <OpenPromo href="/login?mode=signup" />
     <section id="ext" className="pub-sec"><h2>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h2><div className="pb-ex"><small>다녀본 사람 리뷰가 모이면 이런 뱃지가 붙어요 <b>(예시)</b></small><PosBadges list={["⏰ 정시 퇴근", "🙆 원장 터치 적음", "🌴 주5일 + 연차 따로"]} /></div>
       <div className="dtab">{[["", "전체", all.length] as const, ...kinds.map(x => [x, DL[x], all.filter(e => e.k === x).length] as const)].map(([x, n, cnt]) => <Link key={x} href={qs({ k: x })} className={ek === x ? "on" : ""} scroll={false}>{n} <small>{cnt}</small></Link>)}</div>
       <div className="rf-kw ex-conds"><Link href={qs({ g3: g3 ? "" : "1" })} className={"ex-g3chip" + (g3 ? " on" : "")} scroll={false}>📍 강남 3구만 <small>{g3n}</small></Link>{CONDS.map(x => <Link key={x} href={qs({ c: c === x ? "" : x })} className={c === x ? "on" : ""} scroll={false}>{tagLabel(x)}</Link>)}</div>

@@ -3,6 +3,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { fmt } from "@/lib/format";
 import { notiReadAll, notiClear } from "@/lib/noti.actions";
+export const metadata = { title: "알림" };
 export const dynamic = "force-dynamic";
 
 const ICON = (t?: string | null, title?: string) => { const m = (title ?? "").match(/^\p{Extended_Pictographic}/u); if (m) return m[0]; if (!t) return "🔔"; if (t.startsWith("meet")) return "⚡"; if (t.startsWith("dm")) return "💌"; if (t === "report") return "🚨"; return "🔔"; };

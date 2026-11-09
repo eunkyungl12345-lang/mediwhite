@@ -7,6 +7,7 @@ import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
 import { MIN_N, factLine, posBadges } from "@/lib/hospFacts";
 import PosBadges from "@/components/jobs/PosBadges";
 import { loadDistricts } from "@/lib/districtDb";
+export const metadata = { title: "병원 리뷰 — 실수령·분위기 팩트체크" };
 export const dynamic = "force-dynamic";
 
 /** 🏥 병원 리뷰 — 키워드별 TOP 카드 · 리뷰 피드(전체/내 직종/내 병원) · 병원 순위 */

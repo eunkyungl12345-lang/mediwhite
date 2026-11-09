@@ -15,6 +15,7 @@ import PasswordForm from "@/components/PasswordForm";
 import InviteLink from "@/components/InviteLink";
 import Hero from "@/components/Hero";
 import { dailyStatus, DAILY_BONUS, STREAK_BONUS } from "@/lib/daily";
+export const metadata = { title: "내 계급" };
 export const dynamic = "force-dynamic";
 
 export default async function RankPage() {

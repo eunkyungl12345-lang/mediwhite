@@ -1568,7 +1568,10 @@ body:has(.cf-bottom) .chat-fab{bottom:calc(70px + env(safe-area-inset-bottom,0px
 /* 당직실 3D */
 .r3{position:relative;border-radius:16px;overflow:hidden;background:#0a1022;border:1px solid #1d2540}
 .r3-canvas{display:block;line-height:0}.r3-canvas canvas{display:block;touch-action:none;user-select:none;-webkit-user-select:none}
-.r3-loading{height:420px;display:grid;place-items:center;background:#0a1022;color:#9fb4ff;border-radius:16px;font-weight:700}
+.r3-loading{min-height:420px;height:100dvh;display:grid;place-content:center;justify-items:center;gap:8px;background:radial-gradient(circle at 50% 40%,#3a2418,#140c08 70%);color:#ffd9b0;border-radius:16px;font-weight:700;text-align:center;padding:24px}
+.r3-ld-ico{font-size:56px;animation:r3bob 1.4s ease-in-out infinite}.r3-loading small{color:#c9a98a;font-weight:500;font-size:13px;max-width:260px;line-height:1.5}
+.r3-ld-bar{display:block;width:180px;height:6px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:6px}.r3-ld-bar i{display:block;height:100%;width:40%;border-radius:99px;background:linear-gradient(90deg,#ff9a3c,#ffd166);animation:r3slide 1.3s ease-in-out infinite}
+@keyframes r3bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes r3slide{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
 .r3-top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
 .r3-tabs{display:flex;gap:4px;background:rgba(10,16,34,.7);backdrop-filter:blur(6px);border-radius:999px;padding:3px;pointer-events:auto}.r3-tabs button{border:0;background:none;color:#cfd6ea;font:inherit;font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:999px;cursor:pointer}.r3-tabs button[aria-pressed="true"]{background:#fff;color:#1b1b1b}
 .r3-count{background:rgba(10,16,34,.7);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:6px 10px;pointer-events:auto}
@@ -2314,3 +2317,13 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .pc-note{font-size:11px;color:#9A8A75;line-height:1.5}
 .pc-cta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed #EBD9B9;font-size:12.5px;font-weight:700;color:#7A3A12}.pc-cta .btn{padding:7px 12px;font-size:12.5px}
 .nw-q.gold{background:linear-gradient(135deg,rgba(212,167,60,.22),rgba(212,167,60,.06));border-color:rgba(212,167,60,.55)}.nw-q.gold span:before{content:"🥇 "}
+/* 🧭 404 */
+.nf{text-align:center}.nf-links{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.nf-links .btn{text-decoration:none}
+/* 👆 /rank 터치 타깃 (모바일 최소 32px) */
+.games .board li{align-items:center;min-height:38px;padding:4px 0}.games .board li a.name{display:inline-flex;align-items:center;min-height:32px}
+.games a.tag,.games .bb-tag{min-height:30px;padding:4px 10px}.games summary{min-height:32px;display:flex;align-items:center}
+.games button.link,.games .card a.link{min-height:32px;display:inline-flex;align-items:center}
+/* 🫙 빈 상태 + 다음 행동 */
+.emp{display:grid;gap:10px;justify-items:start;padding:4px 2px}.emp p{margin:0;font-size:13px;color:var(--muted)}.emp .btn.sm{padding:8px 14px;font-size:13px;text-decoration:none;display:inline-flex;gap:6px;align-items:center}.emp .btn small{opacity:.8;font-weight:600}
+/* 🔎 첫 체크 유도 카드 */
+.fc{display:flex;gap:12px;align-items:center;padding:13px 15px;border-radius:16px;background:var(--surface);border:1.5px dashed var(--scrub);color:var(--ink);text-decoration:none}.fc-ico{font-size:26px}.fc div{display:grid;gap:3px;flex:1}.fc b{font-size:15px;line-height:1.3}.fc small{font-size:12.5px;color:var(--muted);line-height:1.4}.fc em{font-style:normal;font-weight:800;color:var(--scrub)}.fc-go{font-size:22px;color:var(--muted)}

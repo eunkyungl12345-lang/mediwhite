@@ -15,6 +15,7 @@ import { QUICK, splitTags, tagLabel, SHARE_TAG } from "@/lib/jobTags";
 import { VOICE_OPTS } from "@/lib/jobVoice";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
 import { factLine, type FactAgg } from "@/lib/hospFacts";
+export const metadata = { title: "의료 채용 — 3교대 탈출관" };
 export const dynamic = "force-dynamic";
 
 /** 💼 의료인 채용 — 파트별 탭 · 공공병원 자동수집 + 현직자 제보 · 병원 리뷰 평점 같이 보기 (의료계의 블라인드) */

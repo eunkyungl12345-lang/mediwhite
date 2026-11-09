@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { restBeat, restLeave, restDone, type RestView, type RestPos } from "@/lib/rest.actions";
 import IVDrip from "./rest3d/IVDrip";
-const Rest3D = dynamic(() => import("./rest3d/Rest3D"), { ssr: false, loading: () => <div className="r3-loading">🌃 당직실 불 켜는 중…</div> });
+const Rest3D = dynamic(() => import("./rest3d/Rest3D"), { ssr: false, loading: () => <div className="r3-loading"><span className="r3-ld-ico">🧖</span><b>찜질방 데우는 중…</b><small>처음 들어올 땐 10초쯤 걸려요 · 그동안 신발 벗고 양머리 수건 준비!</small><i className="r3-ld-bar"><i /></i></div> });
 
 /* ---------- 자연 소리 (파일 없이 WebAudio로 생성) ---------- */
 type Snd = "rain" | "fire" | "wave" | "white" | null;

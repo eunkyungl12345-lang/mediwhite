@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getNews, getQuotes, NEWS_TABS } from "@/lib/news";
+export const metadata = { title: "의료 뉴스" };
 export const revalidate = 900;
 const ago = (t: number) => { const m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? `${m}분 전` : m < 1440 ? `${Math.round(m / 60)}시간 전` : `${Math.round(m / 1440)}일 전`; };
 export default async function NewsPage({ searchParams }: { searchParams: { t?: string } }) {

@@ -6,7 +6,7 @@ import { DEPTS, DEPT_GROUPS, VENDOR_FIELDS, deptLabel, display } from "@/lib/dep
 
 function Submit({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "잠시만요…" : label}</button>; }
 
-export default function AuthForm({ refCode, next, initialMode }: { refCode?: string; next?: string; initialMode?: "login" | "signup" }) {
+export default function AuthForm({ refCode, next, initialMode, promoUntil }: { refCode?: string; next?: string; initialMode?: "login" | "signup"; promoUntil?: string | null }) {
   const [mode, setMode] = useState<"login" | "signup" | "find">(initialMode ?? (refCode ? "signup" : "login"));
   const [fs, findAction] = useFormState<FormState, FormData>(findUsername, undefined);
   const [ls, loginAction] = useFormState<FormState, FormData>(login, undefined);
@@ -40,10 +40,10 @@ export default function AuthForm({ refCode, next, initialMode }: { refCode?: str
         </form>
       ) : (
         <form action={signupAction} className="form">
-          <div className="auth-perk">🎉 12월 31일까지 가입 즉시 모든 병원 실수령 &amp; 분위기 무료 열람!</div>
+          {promoUntil && <div className="auth-perk">🎉 {Number(promoUntil.slice(5, 7))}월 {Number(promoUntil.slice(8))}일까지 가입 즉시 모든 병원 실수령 &amp; 분위기 무료 열람!</div>}
           {refCode && <><input type="hidden" name="ref" value={refCode} /><div className="muted">초대 링크로 오셨어요 (초대한 사람: {refCode})</div></>}
           <input name="username" placeholder="아이디 (영문 소문자·숫자 3~20자)" autoComplete="username" required />
-          <input name="password" type="password" placeholder="비밀번호 (4자 이상)" autoComplete="new-password" required />
+          <input name="password" type="password" placeholder="비밀번호 (8자 이상)" minLength={8} autoComplete="new-password" required />
           <select name="dept" value={dept} onChange={e => setDept(e.target.value)} required>
             <option value="" disabled>직종 선택 (가입 후 변경 불가)</option>
             {DEPT_GROUPS.map(([g, ds]) => <optgroup key={g} label={g}>{ds.map(d => <option key={d} value={d}>{deptLabel(d)}</option>)}</optgroup>)}

@@ -3,6 +3,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { ANON_CAT, ANON_TOPICS } from "@/lib/depts";
 import { fmt } from "@/lib/format";
+export const metadata = { title: "익명 게시판" };
 export const dynamic = "force-dynamic";
 const DAY = 86400000;
 const topicOf = (k: string | null) => ANON_TOPICS.find(t => t.key === k) ?? ANON_TOPICS[0];

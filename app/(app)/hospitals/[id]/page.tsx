@@ -12,6 +12,7 @@ import BragCard from "@/components/jobs/BragCard";
 import { loadBrags } from "@/lib/bragDb";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
 import ShareHosp from "@/components/jobs/ShareHosp";
+export async function generateMetadata({ params }: { params: { id: string } }) { const { data } = await db().from("hospitals").select("name").eq("id", Number(params.id)).maybeSingle(); return { title: data?.name ? `${data.name} 리뷰 — 실수령·분위기` : "병원 리뷰" }; }
 import { loadDistricts } from "@/lib/districtDb";
 import Takedown from "@/components/jobs/Takedown";
 import { aggregate, factKey, MIN_N } from "@/lib/hospFacts";
@@ -85,7 +86,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
           <div className="rv2-grid">{recOk && <div className="fb-donut" style={{ ["--p" as any]: fa.recPct }}><i><b>{fa.recPct}%</b></i><span>추천률</span></div>}
             <div className="rv2-bars">{statBars.map(x => <div key={x.name}><span>{x.name}</span><i><em style={{ width: `${x.avg / 5 * 100}%` }} /></i><b>★ {x.avg.toFixed(1)}</b></div>)}</div></div>
           {fa.starN > 0 && fa.starN < need && <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>항목별 별점은 {need}명이 모이면 보여요 (지금 {fa.starN}명)</p>}
-        </> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>아직 평가가 없어요. 다니는(다녔던) 병원이라면 처음으로 남겨주세요.</p>}
+        </> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>아직 평가가 없어요. 바로 아래 <b>30초 체크</b>가 첫 리뷰가 돼요.</p>}
       </section>
       <FactBox a={fa} hid={id} mine={!!myFact} vstat={vstat} locked={locked} hideTop />
       {myHidden && <div className="card fb-wait"><b>🔎 내 리뷰는 신고가 들어와 검토 중이에요</b><p>운영팀이 확인하는 동안(최대 30일) 다른 사람에게 보이지 않고, 수정도 잠시 막혀요. 결과는 알림으로 알려드려요.</p></div>}

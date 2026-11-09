@@ -34,7 +34,8 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const ref = clean(fd.get("ref"), 20).toLowerCase() || cookies().get("mw_ref")?.value || null;
   if (fd.get("agree") !== "on") return { error: "커뮤니티 규칙에 동의해주세요" };
   if (!/^[a-z0-9_]{3,20}$/.test(username)) return { error: "아이디는 영문 소문자·숫자·밑줄 3~20자예요" };
-  if (password.length < 4) return { error: "비밀번호는 4자 이상이에요" };
+  if (password.length < 8) return { error: "비밀번호는 8자 이상이에요" };
+  if (password.toLowerCase().includes(username) || /^(.)\1+$/.test(password) || /^(password|12345678|123456789|87654321|qwerty|qwertyui|asdfghjk|abcdefgh|11111111)$/i.test(password)) return { error: "아이디가 들어가거나 너무 흔한 비밀번호는 쓸 수 없어요" };
   if (!nickname) return { error: "닉네임을 입력해주세요" };
   if (!(DEPTS as readonly string[]).includes(dept)) return { error: "직종을 선택해주세요" };
   if (dept === "업체" && !(VENDOR_FIELDS as readonly string[]).includes(field)) return { error: "업체 분야를 선택해주세요" };
@@ -87,7 +88,7 @@ export async function updateProfile(_: FormState, fd: FormData): Promise<FormSta
 export async function changePassword(_: FormState, fd: FormData): Promise<FormState> {
   const u = await requireUser();
   const cur = String(fd.get("current") ?? ""), next = String(fd.get("next") ?? ""), again = String(fd.get("again") ?? "");
-  if (next.length < 4) return { error: "새 비밀번호는 4자 이상이에요" };
+  if (next.length < 8) return { error: "새 비밀번호는 8자 이상이에요" };
   if (next !== again) return { error: "새 비밀번호 두 칸이 서로 달라요" };
   const s = db();
   const { data: row } = await s.from("users").select("password_hash").eq("id", u.id).single();
@@ -98,7 +99,7 @@ export async function changePassword(_: FormState, fd: FormData): Promise<FormSt
 export async function adminResetPassword(_: FormState, fd: FormData): Promise<FormState> {
   await requireAdmin();
   const userId = clean(fd.get("user_id"), 40), next = String(fd.get("next") ?? "");
-  if (next.length < 4) return { error: "4자 이상" };
+  if (next.length < 8) return { error: "8자 이상" };
   await db().from("users").update({ password_hash: await bcrypt.hash(next, 10) }).eq("id", userId);
   return { ok: "초기화했어요" };
 }
@@ -244,7 +245,7 @@ export async function adminCreateUser(_: FormState, fd: FormData): Promise<FormS
   const username = clean(fd.get("username"), 20).toLowerCase(), password = String(fd.get("password") ?? ""), nickname = clean(fd.get("nickname"), 12), dept = clean(fd.get("dept"), 30);
   const rankIdx = Math.max(0, Math.min(RANKS.length - 1, Number(fd.get("rank") ?? 0)));
   const stealth = fd.get("stealth") === "on";
-  if (!/^[a-z0-9_]{3,20}$/.test(username) || password.length < 4 || !nickname || !(DEPTS as readonly string[]).includes(dept)) return { error: "입력값을 확인해주세요" };
+  if (!/^[a-z0-9_]{3,20}$/.test(username) || password.length < 8 || !nickname || !(DEPTS as readonly string[]).includes(dept)) return { error: "입력값을 확인해주세요" };
   const s = db();
   const { data: exists } = await s.from("users").select("id").eq("username", username).maybeSingle();
   if (exists) return { error: "이미 쓰는 아이디예요" };

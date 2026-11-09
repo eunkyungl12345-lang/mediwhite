@@ -6,6 +6,7 @@ import FocusCard from "@/components/jobs/FocusCard";
 import HomeTop from "@/components/home/HomeTop";
 import G3Banner from "@/components/home/G3Banner";
 import OpenPromo from "@/components/OpenPromo";
+import FirstCheck from "@/components/home/FirstCheck";
 import ReviewHighlights from "@/components/home/ReviewHighlights";
 import { dday } from "@/lib/jobs";
 import { CafeHeader } from "@/components/CafeNav";
@@ -23,6 +24,7 @@ import Insignia from "@/components/Insignia";
 import { NEWS_TABS, getNews, getQuotes } from "@/lib/news";
 import { fortune } from "@/lib/fortune";
 import { memo } from "@/lib/memo";
+export const metadata = { title: "홈" };
 export const dynamic = "force-dynamic";
 
 const hourGreet = () => { const h = new Date(Date.now() + 9 * 3600000).getUTCHours(); return h < 6 ? "밤번 수고 많아요" : h < 11 ? "좋은 아침이에요" : h < 14 ? "점심은 드셨어요?" : h < 18 ? "오후도 힘내요" : h < 22 ? "퇴근하셨어요?" : "오늘도 수고했어요"; };
@@ -86,8 +88,9 @@ export default async function HomePage() {
     <div className="home v2">
       <div className="h-greet"><b>{me?.nickname ?? s.nickname}님,</b> {hourGreet()}{(memberN ?? 0) >= 300 && <span className="h-online">회원 {(memberN ?? 0).toLocaleString()} · 오늘 {online.toLocaleString()}명</span>}</div>
       <OpenPromo />
-      <G3Banner />
+      <FirstCheck userId={s.id} role={s.role} />
       <HomeTop mid={<ReviewHighlights />} />
+      <G3Banner />
       <section className="hc-sec"><div className="ht-h"><b>💬 커뮤니티 인기글</b><Link href="/board">더보기 ›</Link></div>
         {hot.length ? <div className="hc-list">{hot.map(p => <Row key={p.id} p={p} />)}</div> : <p className="muted" style={{ fontSize: 13 }}>아직 인기글이 없어요.</p>}</section>
     </div>

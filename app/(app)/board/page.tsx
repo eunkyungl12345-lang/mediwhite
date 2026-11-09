@@ -14,6 +14,7 @@ import BoardSearch from "@/components/BoardSearch";
 import { liveCounts } from "@/lib/live";
 import { boardNavItems } from "@/lib/boardNav";
 
+export const metadata = { title: "커뮤니티" };
 export const dynamic = "force-dynamic";
 const SEL = "id,category,title,body,pinned,boosted,created_at,board_id,topic,hidden,views,author:users(id,username,nickname,dept,xp,blue_badge)";
 const DAY = 86400000;

@@ -26,11 +26,11 @@ export default async function PublicHosp({ params }: { params: { id: string } })
       {(x.a?.n ?? 0) + x.rv === 0 ? <div className="ph-empty">
         <b>🤫 아직 등록된 내부 리뷰가 모이는 중이에요</b>
         <p>이 병원에 다녀보신 적 있나요? 첫 번째 실수령액과 분위기를 남겨주시면 다음 지원자에게 큰 힘이 돼요.</p>
-        <Link href={`/login?mode=signup&next=${encodeURIComponent(`/hospitals/check?id=${params.id}`)}`} className="btn ph-cta">✍️ 30초 만에 첫 팩트 남기기</Link>
+        <Link href={`/login?mode=signup&next=${encodeURIComponent(`/hospitals/check?id=${params.id}`)}`} className="btn ph-cta">✍️ 가입하고 병원 체크하기 <small>+50 XP</small></Link>
       </div> : <>
       <div className="fb-blur ph-blur" aria-hidden><div>💰 세후 실수령 보통 ███만원</div><div>😶 태움·갑질 ████ · 칼퇴 ███</div><div>⚠️ 입사 전에 알았으면 좋았을 것 █개</div><div>🚪 퇴사 사유 1위 ██████</div></div>
       <p>{(x.a?.n ?? 0) >= MIN_N ? "이 병원에 다녀본 사람들이 남긴 진짜 정보가 있어요." : "아직 정보가 모이는 중이에요. 다녀본 적 있다면 처음 알려주세요."}<br />급여·분위기·육아휴직 불이익처럼 <b>입사해야만 알던 것</b>을, 지원하기 전에.</p>
-      <Link href={`/login?mode=signup&next=${encodeURIComponent(next)}`} className="btn ph-cta">30초 가입하고 전부 보기</Link>
+      <Link href={`/login?mode=signup&next=${encodeURIComponent(next)}`} className="btn ph-cta">🔓 가입하고 실수령·분위기 보기</Link>
       </>}
       <small className="muted">아이디·닉네임만으로 가입 · 실명·전화번호 안 받아요</small>
     </div>}

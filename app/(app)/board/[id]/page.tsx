@@ -10,6 +10,7 @@ import Name from "@/components/Name";
 import CommentForm from "@/components/CommentForm";
 import CommentThread, { type CItem } from "@/components/CommentThread";
 import Reactions from "@/components/Reactions";
+export async function generateMetadata({ params }: { params: { id: string } }) { const { data } = await db().from("posts").select("title").eq("id", params.id).maybeSingle(); return { title: data?.title ? `${data.title} — 커뮤니티` : "커뮤니티" }; }
 import { topicOf } from "@/lib/depts";
 import ReportButton from "@/components/ReportButton";
 import Linkify from "@/components/Linkify";
