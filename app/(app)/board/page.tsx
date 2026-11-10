@@ -72,6 +72,7 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
   const tabs: [string, string][] = [["", "전체"], ...TOPICS.map(t => [t.key, t.name] as [string, string])];
   return (
     <div className="cm">
+      <Link href="/ssum" className="cm-ssum"><span className="cm-ssum-ico" aria-hidden="true">💘</span><div><b>썸·소개팅</b><small>병원 사람끼리 셀소·번개 · 병원 밖 1:1 소개팅까지</small></div><em aria-hidden="true">›</em></Link>
       <nav className="cm-tabs">{tabs.map(([k, n]) => <Link key={k} href={qs({ topic: k })} className={topic === k ? "on" : ""}>{n}</Link>)}</nav>
       <div className="cm-chips">
         <Link href={qs({ sort: "" })} className={sort === "new" ? "on" : ""}>최신</Link><Link href={qs({ sort: "best" })} className={sort === "best" ? "on" : ""}>인기</Link>
