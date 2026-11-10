@@ -36,7 +36,7 @@ export default function WelfareForm({ hid, name, mine }: { hid: number; name: st
     </div>
     : <div className="wz-step"><h3>✍️ 써본 복지, 실제로는 어땠나요?</h3><p>신청 과정, 실제 금액·조건, 눈치 보이는지까지 적어주면 다음 사람에게 큰 도움이 돼요.</p>
       <div className="hc-chips">{["재직", "퇴사"].map(x => <label key={x}><input type="radio" checked={status === x} onChange={() => setStatus(x)} /><span>{x === "재직" ? "지금 다녀요" : "다녔어요"}</span></label>)}</div>
-      <textarea name="text" rows={6} maxLength={1000} value={text} onChange={e => setText(e.target.value)} placeholder={"최소 20자 이상 적어주세요\n\n예) 본인 진료비는 50% 감면인데 비급여는 안 돼요. 기숙사는 신규 1년만 되고 2인 1실이에요."} />
+      <textarea name="text" rows={6} maxLength={1000} value={text} onChange={e => setText(e.target.value)} placeholder={"예) 본인 진료비는 50% 감면인데 비급여는 안 돼요. 기숙사는 신규 1년만 되고 2인 1실이에요."} />
       <small className="muted" style={{ textAlign: "right" }}><b style={{ color: text.trim().length >= 20 ? "#1F9D63" : "#D33" }}>{text.length}</b> / 최대 1,000자</small></div>}
     {(err || st?.error) && <div className="error">{err || st?.error}</div>}
     <div className="wz-nav">{i > 0 && <button type="button" className="btn ghost wz-prev" onClick={() => { setErr(""); setI(i - 1); }}>이전으로</button>}

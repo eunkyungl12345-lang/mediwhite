@@ -44,6 +44,15 @@ export const D: Record<string, XDetail> = {
     tips: ["얕은 호흡과 긴 노출 시간 (breathing technique)으로 폐·갈비뼈를 흐리게 하면 복장뼈가 잘 보여요", "회전이 과하면 복장뼈가 심장 밖으로 벗어나 폐야와 겹쳐요"] },
 
   /* ───────── 상지 ───────── */
+  "어깨|CAUDAL 30°": {
+    title: "SHOULDER CAUDAL 30°", proj: "Shoulder AP Axial Projection", kvp: "70", exp: { kv: 70, ma: 100, ms: 125 }, sid: "100 cm (40 inches)", breath: "호흡중지 (suspended)",
+    region: "위팔오목관절 (glenohumeral joint), 가시위근 (supraspinatus), 봉우리밑주머니 (subacromial bursa)",
+    path: "가시위근 (supraspinatus)의 파열 (rupture), 봉우리밑 충돌증후군 (subacromial impingement syndrome), 부리어깨인대 (coracoacromial ligament)의 석회화 (calcification), 뼈 결손 부상 (Hill-Sachs lesion)",
+    cr: "어깨관절 (shoulder joint)을 향하여 다리쪽 (caudad) 30 (degree) 각도로 입사",
+    steps: ["환자는 선 자세 (erect position) 또는 바로 누운 자세 (supine position)를 한다", "촬영측으로 몸을 기울여 상수용체 (image receptor: IR)에 어깨 (shoulder)를 밀착 시킨다", "상수용체의 중심에는 어깨관절 (shoulder joint)를 위치시키고, 환자의 팔을 굽힌 (flexion) 자세를 취한다"],
+    coll: "빗장뼈 (clavicle)의 2/3와 위팔뼈 (humerus)의 몸쪽부위 (proximal portion) 1/3을 포함한다",
+    eval: ["어깨뼈봉우리 (acromion)은 빗장뼈 (clavicle)와 겹쳐야 한다", "어깨뼈가시 (spine of scapula)는 관절오목 (glenoid fossa) 위에 위치해야 한다"],
+  },
   "어깨|AP": {
     title: "SHOULDER AP", proj: "Shoulder AP Projection (External / Neutral Rotation)", kvp: "70~80", sid: "100 cm (40 inches)",
     region: "위팔뼈 근위부 (proximal humerus), 위팔뼈머리 (humeral head), 큰결절 (greater tubercle), 어깨뼈 관절오목 (glenoid cavity), 봉우리 (acromion), 빗장뼈 바깥쪽 (lateral clavicle)",

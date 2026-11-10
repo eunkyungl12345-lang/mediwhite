@@ -21,7 +21,7 @@ export default function HeaderMenu({ admin, logout, name, fresh = [] }: { admin:
       <div className="dm-foot">
         <Link href="/board?cat=공지">📢 알리는 말씀</Link>
         <button type="button" onClick={() => { setOpen(false); window.dispatchEvent(new Event("mw-tour")); }}>❓ 사용법</button>
-        <Link href="/about">ℹ️ 메디화이트웹 소개</Link>
+        <Link href="/about">ℹ️ 메디화이트 소개</Link>
         <Link href="/contact">✉️ 문의·제안</Link>
         <form action={logout}><button type="submit" className="dm-out">나가기</button></form>
       </div>

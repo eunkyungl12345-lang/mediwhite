@@ -42,7 +42,7 @@ export const DAILY_POSTS: { category: string; title: string; body: string }[] = 
   { category: "방사선", title: "우리 과 장비 자랑 or 한탄", body: "최신 장비 쓰는 분 자랑 좀, 오래된 장비 쓰는 분 한탄 좀." },
   { category: "방사선", title: "피폭 관리, 솔직히 잘 지켜지나요", body: "현장 현실 이야기. 서로 참고할 수 있게." },
   { category: "방사선", title: "소아 촬영 꿀팁", body: "우는 아이 달래서 찍는 각자의 비법." },
-  { category: "방사선", title: "방사선사 대기 시간엔 뭐 하세요", body: "공부? 게임? 메디화이트웹? ㅎㅎ" },
+  { category: "방사선", title: "방사선사 대기 시간엔 뭐 하세요", body: "공부? 게임? 메디화이트? ㅎㅎ" },
   { category: "방사선", title: "방사선 파트에 필요한 탭은?", body: "장비 Q&A? 자격증 스터디? 파트 리더가 만들 수 있어요." },
   // 물리치료
   { category: "물리치료", title: "물리치료사 손목·허리, 다들 괜찮으세요", body: "치료하다 내가 환자 되는 직업. 셀프 케어 루틴 공유." },
@@ -53,7 +53,7 @@ export const DAILY_POSTS: { category: string; title: string; body: string }[] = 
   { category: "물리치료", title: "하루 환자 몇 명이 적정선?", body: "현실 vs 이상. 번아웃 안 오는 선은 어디일까요." },
   { category: "물리치료", title: "효과 체감이 제일 빨랐던 케이스", body: "환자 정보 빼고, 치료 접근법 위주로." },
   { category: "물리치료", title: "치료사 유니폼, 뭐가 제일 편해요", body: "브랜드·소재 추천." },
-  { category: "물리치료", title: "환자가 안 오는 시간대, 뭐 하세요", body: "정리? 공부? 스트레칭? 메디화이트웹 게임? ㅎㅎ" },
+  { category: "물리치료", title: "환자가 안 오는 시간대, 뭐 하세요", body: "정리? 공부? 스트레칭? 메디화이트 게임? ㅎㅎ" },
   { category: "물리치료", title: "물리치료 파트 탭 제안", body: "케이스 토론? 교육 자료? 파트 리더가 만들 수 있어요." },
   // 임상병리
   { category: "임상병리", title: "채혈 한 번에 성공하는 비법", body: "혈관 안 보이는 분 채혈 노하우. 신규 분들을 위해." },
@@ -75,7 +75,7 @@ export const DAILY_POSTS: { category: string; title: string; body: string }[] = 
   { category: "응급구조", title: "응급구조사 가방 속 비밀 아이템", body: "공식 장비 말고 개인적으로 챙기는 것." },
   { category: "응급구조", title: "일반인에게 꼭 가르치고 싶은 응급처치 1개", body: "하임리히? 지혈? 이것만 알아도 사람 산다 싶은 것." },
   { category: "응급구조", title: "교대 끝나고 바로 잠들 수 있나요", body: "아드레날린 내리는 각자의 방법." },
-  { category: "응급구조", title: "응급 파트 사람들의 스트레스 해소법", body: "운동? 게임? 메디화이트웹 총알 피하기? ㅎㅎ" },
+  { category: "응급구조", title: "응급 파트 사람들의 스트레스 해소법", body: "운동? 게임? 메디화이트 총알 피하기? ㅎㅎ" },
   { category: "응급구조", title: "응급구조 파트 탭 제안", body: "프로토콜 공유? 교육 일정? 파트 리더가 만들 수 있어요." },
   // 원무
   { category: "원무", title: "원무과가 제일 억울한 순간 TOP3", body: "'그건 원무과에 물어보세요'로 시작되는 모든 상황." },

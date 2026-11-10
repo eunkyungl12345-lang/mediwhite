@@ -2327,3 +2327,23 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .emp{display:grid;gap:10px;justify-items:start;padding:4px 2px}.emp p{margin:0;font-size:13px;color:var(--muted)}.emp .btn.sm{padding:8px 14px;font-size:13px;text-decoration:none;display:inline-flex;gap:6px;align-items:center}.emp .btn small{opacity:.8;font-weight:600}
 /* 🔎 첫 체크 유도 카드 */
 .fc{display:flex;gap:12px;align-items:center;padding:13px 15px;border-radius:16px;background:var(--surface);border:1.5px dashed var(--scrub);color:var(--ink);text-decoration:none}.fc-ico{font-size:26px}.fc div{display:grid;gap:3px;flex:1}.fc b{font-size:15px;line-height:1.3}.fc small{font-size:12.5px;color:var(--muted);line-height:1.4}.fc em{font-style:normal;font-weight:800;color:var(--scrub)}.fc-go{font-size:22px;color:var(--muted)}
+/* 🏥 브랜드 로고 */
+.bl{display:inline-flex;align-items:center;gap:8px;line-height:1}.bl-mark{flex:none;display:block}.bl-word{font-weight:800;letter-spacing:-.02em}
+/* 🩻 촬영법 — 촬영실 콘솔 화면 */
+.xcw{gap:12px}
+.xc{background:#1b1d20;color:#e9edf1;border-radius:18px;padding:16px;display:grid;gap:14px;box-shadow:inset 0 0 0 1px #2a2e33}
+.xc-h{display:grid;justify-items:center;gap:2px;text-align:center;padding:4px 0 8px;border-bottom:1px solid #2a2e33}.xc-h span{font-size:11.5px;letter-spacing:.08em;color:#8b949d}.xc-h b{font-size:22px;letter-spacing:.01em;color:#fff}
+.xc-grid{display:grid;gap:16px}@media (min-width:860px){.xc-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);align-items:start}}
+.xc-left .xg2-main{background:#0d0e10;border-radius:10px;min-height:260px;place-items:center}.xc-left .xg2-main img{max-height:460px}.xc-left .xf-nofig{background:#0d0e10;color:#8b949d}
+.xc-left .xg2-thumbs{gap:8px}.xc-left .xg2-thumbs button{width:72px;height:60px;border-color:#33383e;background:#0d0e10;color:#cfd6dc;font-size:11px;text-align:center;line-height:1.25}.xc-left .xg2-thumbs button.on{border-color:#3cc4e8;box-shadow:0 2px 0 #3cc4e8}
+.xg2-empty{display:grid!important;place-content:center;border-style:dashed!important;font-size:18px!important;color:#8b949d!important}.xg2-empty small{font-size:10px;line-height:1.2}
+.xc-left .xg2-up{border-color:#33383e;color:#cfd6dc}.xc-left .xg2-up summary small{color:#8b949d}.xc-left .xg2-up input,.xc-left .xg2-up select{background:#0d0e10;color:#e9edf1;border-color:#33383e}
+.xc-left .link{color:#8b949d!important}.xc-left .xg-fig{background:#f4f6f8;border-radius:10px}
+.xc-right{display:grid;gap:6px;align-content:start}.xc-t{margin:0;font-size:30px;font-weight:800;color:#3cc4e8;letter-spacing:-.01em;line-height:1.15}.xc-proj{margin:0;font-weight:700;font-size:15px;color:#e9edf1}
+.xc-exp{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;font-size:19px;font-weight:800;padding:8px 0 6px}.xc-exp small{font-size:12px;font-weight:500;color:#8b949d}
+.xc-scroll{display:grid;gap:12px}@media (min-width:860px){.xc-scroll{max-height:520px;overflow-y:auto;padding-right:10px;scrollbar-width:thin;scrollbar-color:#4a5057 transparent}}
+.xc-sec h4{margin:0 0 4px;font-size:15px;font-weight:800;color:#fff}.xc-sec p,.xc-sec ol{margin:0;font-size:14.5px;line-height:1.6;color:#d3d9df;padding-left:12px}.xc-sec ol{padding-left:30px}.xc-sec li+li{margin-top:4px}
+.xc-sibs{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid #2a2e33;padding-top:12px}.xc-sibs a{padding:8px 12px;border-radius:9px;border:1px solid #33383e;font-size:13px;font-weight:700;color:#cfd6dc;text-decoration:none;min-height:20px}.xc-sibs a.on{background:#3cc4e8;border-color:#3cc4e8;color:#0d0e10}
+.xc-left .xg2-thumbs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible}.xc-left .xg2-thumbs button{width:auto;height:auto;aspect-ratio:6/5}.xc-left .xg2-thumbs img{width:100%;height:100%;object-fit:cover}
+.xc-h{width:100%}
+.jb2-more{display:flex;justify-content:center;text-decoration:none;margin-top:4px}

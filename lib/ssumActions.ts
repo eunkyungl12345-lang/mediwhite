@@ -24,8 +24,7 @@ export async function sendConfession(_: R, fd: FormData): Promise<R> {
   const { data: to } = await s.from("users").select("id").eq("nickname", nick).eq("stealth", false).maybeSingle();
   if (!to) return { error: "그 닉네임을 가진 회원이 없어요" };
   if (to.id === u.id) return { error: "스스로에게는 고백할 수 없어요" };
-  const { count } = await s.from("confessions").select("id", { count: "exact", head: true }).eq("from_id", u.id).gte("created_at", new Date(Date.now() - 86400000).toISOString());
-  if ((count ?? 0) >= 3) return { error: "고백은 하루 3번까지예요" };
+  
   await s.from("confessions").insert({ from_id: u.id, to_id: to.id, text });
   pushToUsers([to.id], { title: "💌 누군가 고백을 보냈어요", body: "썸 탭 → 내 썸함에서 확인해보세요", url: "/ssum?tab=box", tag: "confess" }).catch(() => {});
   revalidatePath("/ssum"); return { ok: "익명으로 보냈어요. 상대가 수락하면 두 사람 닉네임과 함께 공개돼요 💘" };
@@ -64,8 +63,6 @@ export async function saveIntro(_: R, fd: FormData): Promise<R> {
   const gender = clean(fd.get("gender"), 2); if (!["남", "여"].includes(gender)) return { error: "지인의 성별을 골라주세요" };
   const f = { dept: clean(fd.get("dept"), 20), region: clean(fd.get("region"), 20), personality: clean(fd.get("personality"), 60), hobby: clean(fd.get("hobby"), 60), style: clean(fd.get("style"), 60), want: clean(fd.get("want"), 60), intro: clean(fd.get("intro"), 300) };
   if (Object.values(f).some(v => CONTACT.test(v)) || personMention(f.intro)) return { error: "이름·연락처·SNS 등 지인을 알아볼 수 있는 정보는 빼주세요" };
-  const { count } = await db().from("intros").select("id", { count: "exact", head: true }).eq("author_id", u.id);
-  if ((count ?? 0) >= 5) return { error: "지인 소개는 5명까지 올릴 수 있어요" };
   const photo = clean(fd.get("photo"), 300), photo_blur = clean(fd.get("photo_blur"), 300);
   if (!okUrl(photo) || !okUrl(photo_blur)) return { error: "사진을 다시 올려주세요" };
   await db().from("intros").insert({ author_id: u.id, age, height, gender, photo: photo || null, photo_blur: photo_blur || null, photo_public: fd.get("photo_public") === "on", ...f });
@@ -83,8 +80,6 @@ export async function toggleLike(kind: "profile" | "intro", target: string) {
   if (cur) { await s.from("likes").delete().eq("from_id", u.id).eq("kind", kind).eq("target", target); revalidatePath("/ssum"); return { liked: false, mutual: false }; }
   if (kind === "profile") {
     if (target === u.id) return { liked: false, mutual: false };
-    const rk = await myRank(u.id), lim = u.role === "admin" ? Infinity : PERK.hearts(rk);
-    if (lim !== Infinity) { const { count } = await s.from("likes").select("from_id", { count: "exact", head: true }).eq("from_id", u.id).eq("kind", "profile").gte("created_at", new Date(Date.now() - 86400000).toISOString()); if ((count ?? 0) >= lim) return { liked: false, mutual: false, error: `💗 하트는 하루 ${lim}개까지예요 (${rk.name}). 소령부터 5개, 준장부터 무제한!` }; }
   }
   await s.from("likes").insert({ from_id: u.id, kind, target });
   let mutual = false;

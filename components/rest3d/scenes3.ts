@@ -92,7 +92,7 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
     { bg: ["#3a6ea5", "#f2a65a"], t: "주말 드라마 재방송", s: "CH 7 · 오후 3시", e: "📺" },
     { bg: ["#c2412d", "#f5b042"], t: "나이트 끝나고 보는 먹방", s: "CH 11 · 국밥 한 그릇", e: "🍲" },
     { bg: ["#1f5e3c", "#8fd3a8"], t: "칼퇴의 정석", s: "CH 3 · 오늘은 6시 땡", e: "🏃" },
-    { bg: ["#ffffff", "#e8f3fb"], t: "이 자리, 우리 병원 광고 어때요?", s: "제휴 문의 · 메디화이트웹 문의하기", e: "📣", ad: true },
+    { bg: ["#ffffff", "#e8f3fb"], t: "이 자리, 우리 병원 광고 어때요?", s: "제휴 문의 · 메디화이트 문의하기", e: "📣", ad: true },
     { bg: ["#4b3b8f", "#e58bb0"], t: "오늘의 운세 · 당직 편", s: "CH 9 · 조용한 밤이 될 거예요", e: "🔮" },
   ];
   const drawTv = (k: number) => { const c = CH[k % CH.length], W = 640, Hh = 384; 
@@ -103,8 +103,8 @@ export function buildSauna(scene: THREE.Scene, h: Helpers) {
     else { tx.fillStyle = "rgba(0,0,0,.35)"; tx.fillRect(W - 140, 28, 108, 40); tx.fillStyle = "#fff"; tx.font = "700 24px sans-serif"; tx.fillText("● LIVE", W - 130, 56); }
     tvTex.needsUpdate = true; };
   let tvK = 0, tvT = 0; drawTv(0);
-  const tv = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.56), new THREE.MeshStandardMaterial({ map: tvTex, emissive: 0xffffff, emissiveMap: tvTex, emissiveIntensity: .55 }));
-  tv.position.set(8.82, 2.6, -5.4); tv.rotation.y = -Math.PI / 2; scene.add(tv, box(.12, 1.7, 2.8, M(0x1a1a1a, .4), 8.88, 2.6, -5.4));
+  const tv = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 1.98), new THREE.MeshStandardMaterial({ map: tvTex, emissive: 0xffffff, emissiveMap: tvTex, emissiveIntensity: .55 }));
+  tv.position.set(8.74, 2.6, -5.4); tv.renderOrder = 2; (tv.material as THREE.MeshStandardMaterial).polygonOffset = true; (tv.material as THREE.MeshStandardMaterial).polygonOffsetFactor = -2; tv.rotation.y = -Math.PI / 2; scene.add(tv, box(.1, 2.18, 3.54, M(0x1a1a1a, .4), 8.82, 2.6, -5.4));
   const tvLight = new THREE.PointLight(0x9fc8ff, .8, 5, 2); tvLight.position.set(7.8, 2.4, -5.4); scene.add(tvLight);
   const tvTick = (dt: number) => { tvT += dt; if (tvT > 16) { tvT = 0; tvK = (tvK + 1) % CH.length; drawTv(tvK); tvLight.color.set(CH[tvK].ad ? 0xffffff : 0x9fc8ff); } }; // 16초마다 바로 다음 채널
 

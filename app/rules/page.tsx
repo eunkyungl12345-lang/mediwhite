@@ -1,12 +1,12 @@
 import Link from "next/link";
-export const metadata = { title: "커뮤니티 규칙 — 메디화이트웹" };
+export const metadata = { title: "커뮤니티 규칙 — 메디화이트" };
 export default function Rules() {
   return (
     <div className="app" style={{ padding: "24px 16px 60px" }}>
-      <h1 style={{ fontFamily: "var(--f-display)", fontWeight: 400 }}>메디화이트웹 커뮤니티 규칙</h1>
+      <h1 style={{ fontFamily: "var(--f-display)", fontWeight: 400 }}>메디화이트 커뮤니티 규칙</h1>
       <div className="card" style={{ lineHeight: 1.65 }}>
         <h3>1. 익명이지만 책임은 글쓴이에게</h3>
-        <p>메디화이트웹은 아이디·닉네임만으로 활동하는 익명 라운지예요. 다만 게시물의 법적 책임은 작성자 본인에게 있고, 수사기관의 적법한 요청이 있으면 접속 기록이 제공될 수 있어요.</p>
+        <p>메디화이트은 아이디·닉네임만으로 활동하는 익명 라운지예요. 다만 게시물의 법적 책임은 작성자 본인에게 있고, 수사기관의 적법한 요청이 있으면 접속 기록이 제공될 수 있어요.</p>
         <h3>2. 올리면 안 되는 것</h3>
         <ul>
           <li><b>특정 개인의 실명·사진·연락처</b>, 또는 누구인지 알아볼 수 있는 정보 (이니셜+직함+병원명 조합 포함)</li>
@@ -22,7 +22,7 @@ export default function Rules() {
         <p>규칙 위반 시 글 삭제, 훈련병 강등(계급 초기화), 이용 정지, 탈퇴 처리될 수 있어요.</p>
         <h3>6. 문의</h3>
         <p>삭제 요청·권리 침해 신고·기타 문의: <Link href="/contact">문의하기</Link></p>
-        <p className="muted" style={{ fontSize: 12 }}>시행 2026-10-27 · 메디화이트웹 운영팀</p>
+        <p className="muted" style={{ fontSize: 12 }}>시행 2026-10-27 · 메디화이트 운영팀</p>
       </div>
       <p><Link href="/login" className="link">← 돌아가기</Link></p>
     </div>

@@ -47,7 +47,7 @@ export default async function MyPage() {
       <Row href="/fortune" icon="🔮" t="오늘의 운세" />
       <Row href="/rest" icon="🛋️" t="당직실" />
       <Row href="/support" icon="💬" t="문의·응원" />
-      <Row href="/about" icon="ℹ️" t="메디화이트웹 소개" />
+      <Row href="/about" icon="ℹ️" t="메디화이트 소개" />
       {s.role === "admin" && <Row href="/admin" icon="🛠️" t="관리자" />}
       <form action={logout}><button className="my-out">로그아웃</button></form>
     </section>

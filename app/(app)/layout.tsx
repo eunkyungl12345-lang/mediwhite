@@ -1,4 +1,5 @@
 import CommTabs from "@/components/CommTabs";
+import BrandLogo from "@/components/BrandLogo";
 import Link from "next/link";
 import Bell from "@/components/Bell";
 import BottomNav from "@/components/BottomNav";
@@ -54,7 +55,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <Suspense fallback={<aside className="side" />}><SideNav admin={s.role === "admin"} unread={unread ?? 0} fresh={fresh} /></Suspense>
     <div className="app">
       <header>
-        <div className="brand"><h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트웹</Link></h1></div>
+        <div className="brand"><h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }} aria-label="메디화이트 소개"><BrandLogo /></Link></h1></div>
         <div className="hd-r">
           <span className="hd-desk"><TourButton /></span><span className="hd-mob"><ChatBtn /></span><Bell initial={unread ?? 0} />
           <div className="me hd-desk"><Link href="/my" className="me-rank" title="MY">[{s.dept}]{s.nickname}</Link>{s.role === "admin" && <Link href="/admin" className="tag" style={{ textDecoration: "none" }}>관리자</Link>}<form action={logout}><button>나가기</button></form></div>

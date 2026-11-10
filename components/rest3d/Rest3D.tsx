@@ -233,14 +233,14 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
   const amb = useRef<Ambience | null>(null); const sndRef = useRef(snd); sndRef.current = snd;
   const [fwOpen, setFwOpen] = useState(false); const [burning, setBurning] = useState<string | null>(null); const fwCd = useRef(0);
   const [mode, setMode] = useState<"normal" | "zen">("normal"), [say, setSay] = useState(""), [burn, setBurn] = useState<string | null>(null), [busy, setBusy] = useState(false), [sitting, setSitting] = useState(false);
-  const st = useRef<{ flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean; walk?: { wait: number }; eatT?: number }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number; foodSeen?: Record<string, number> }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
+  const st = useRef<{ col?: THREE.Object3D[]; pitch?: number; flare?: number; fw?: Fireworks; fwSeen?: Record<string, number>; lookCur?: THREE.Vector3; fwAt?: number; npcs?: { a: Avatar; seat: number; stand?: boolean; walk?: { wait: number }; eatT?: number }[]; renderer?: THREE.WebGLRenderer; cam?: THREE.PerspectiveCamera; sc?: THREE.Scene; ground?: THREE.Object3D; me?: Avatar; others: Map<string, Avatar>; fire?: ReturnType<typeof makeFire>; raf: number; yaw: number; last: number; emo: { sp: THREE.Sprite; t: number }[]; paper?: { sp: THREE.Sprite; t: number; from: THREE.Vector3 }; camBase: THREE.Vector3; seat: number; bump?: number; foodSeen?: Record<string, number> }>({ others: new Map(), raf: 0, yaw: 0, last: 0, emo: [], camBase: new THREE.Vector3(), seat: -1 });
   const peopleRef = useRef(people), breathRef = useRef(breathK), sceneRef = useRef(scene), modeRef = useRef(mode);
   peopleRef.current = people; breathRef.current = breathK; sceneRef.current = scene; modeRef.current = mode;
   const moveTimer = useRef<any>(null);
   const emitMove = (pose: string) => { const a = st.current.me; if (!a) return; clearTimeout(moveTimer.current); moveTimer.current = setTimeout(() => onMove({ scene: sceneRef.current, x: a.tx, z: a.tz, pose }), 350); };
 
   /** 불꽃 발사 (mine=true면 서버로 알려 다른 사람도 보게) */
-  const launchFw = (type: number, ox: number, mine: boolean, at?: { x: number; z: number }) => { const S = st.current; if (!S.fw) return; const o = at ?? { x: 3.2, z: -5.8 }; const from = new THREE.Vector3(o.x + ox * .3, .5, o.z - .6), to = new THREE.Vector3(ox * 2.2, 11 + Math.random() * 2.5, -16 - Math.random() * 3); // 카메라 정면 밤하늘 한가운데 // 내가 서 있는 자리에서 쏘아 올림 S.fw.launch(type, from, to, 1.1);
+  const launchFw = (type: number, ox: number, mine: boolean, at?: { x: number; z: number }) => { const S = st.current; if (!S.fw) return; const o = at ?? { x: 3.2, z: -5.8 }; const from = new THREE.Vector3(o.x + ox * .3, .5, o.z - .6), to = new THREE.Vector3(o.x * .5 + ox * 2.2, 11 + Math.random() * 2.5, -16 - Math.random() * 3); /* 내가 서 있는 자리에서 정면 밤하늘로 */ S.fw.launch(type, from, to, 1.1);
     if (amb.current && sndRef.current === "on") amb.current.firework(1.1, mine ? 1 : .7); if (mine) { try { navigator.vibrate?.([10, 1050, 40]); } catch {} onFirework?.(`fw:${type}:${ox.toFixed(1)}:0`); } };
   /* ---- 초기화 / 씬 전환 ---- */
   useEffect(() => {
@@ -253,7 +253,9 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     }
     // 씬 구성
     const sc = new THREE.Scene(); S.sc = sc; S.others.forEach(a => setBubble(a, null)); S.others.clear(); S.emo = []; S.paper = undefined; S.seat = -1; setSitting(false);
-    const H = { M, box: boxMesh, makeFire, textSprite }; const built = scene === "roof" ? buildRoof(sc) : scene === "zen" ? buildZenHall(sc, H) : buildSauna(sc, H); S.npcs = spawnNPCs(scene, sc); S.fw?.dispose(); S.fw = undefined; S.fwSeen = S.fwSeen ?? {};
+    const H = { M, box: boxMesh, makeFire, textSprite }; const built = scene === "roof" ? buildRoof(sc) : scene === "zen" ? buildZenHall(sc, H) : buildSauna(sc, H);
+    { const col: THREE.Object3D[] = []; const v = new THREE.Vector3(); sc.updateMatrixWorld(true); sc.traverse(o => { const m = o as THREE.Mesh; if (!m.isMesh || !m.geometry) return; const mt = m.material as THREE.Material; if (!mt || (mt as any).transparent) return; m.geometry.computeBoundingSphere(); m.getWorldScale(v); if ((m.geometry.boundingSphere?.radius ?? 0) * Math.max(v.x, v.y, v.z) > .9) col.push(m); }); S.col = col; }
+    S.npcs = spawnNPCs(scene, sc); S.fw?.dispose(); S.fw = undefined; S.fwSeen = S.fwSeen ?? {};
     if (scene === "roof") { S.fw = new Fireworks(sc); const pad = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, .08, 24), M(0x2a2f3a, .7)); pad.position.set(3.2, .04, -5.8); pad.receiveShadow = true; sc.add(pad); const stripe = new THREE.Mesh(new THREE.RingGeometry(1.15, 1.28, 32), new THREE.MeshBasicMaterial({ color: 0xffd36e, side: THREE.DoubleSide })); stripe.rotation.x = -Math.PI / 2; stripe.position.set(3.2, .09, -5.8); sc.add(stripe); for (let i = 0; i < 5; i++) { const tube = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .5, 10), M([0xe2574c, 0xf2a900, 0x5fa8e8, 0x7ed69b, 0xf48fb1][i], .5)); tube.position.set(2.6 + i * .3, .3, -5.8 + (i % 2) * .3); tube.rotation.x = -.2; tube.castShadow = true; sc.add(tube); } const fsign = textSprite("🎆 불꽃놀이 존", { bg: "rgba(242,169,0,.95)", fg: "#2b1a08", size: 28 }); fsign.position.set(3.2, 2.2, -5.8); sc.add(fsign); } S.fire = built.fire; S.camBase = built.camBase; S.ground = sc.getObjectByName("ground")!;
     const meAv = makeAvatar(me, myDept, true); if (scene === "sauna") { jjim(meAv); meAv.name.scale.multiplyScalar(.6); } const spawn = scene === "roof" ? { x: 0, z: 5.5 } : scene === "zen" ? { x: 0, z: 7 } : { x: 0, z: 5.6 }; meAv.g.position.set(spawn.x, 0, spawn.z); meAv.tx = spawn.x; meAv.tz = spawn.z; meAv.ry = Math.PI; meAv.g.rotation.y = Math.PI; sc.add(meAv.g); S.me = meAv;
     try { localStorage.setItem("mw-rest-scene", scene); } catch {}
@@ -263,10 +265,10 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     resize(); addEventListener("resize", resize); const ro = new ResizeObserver(resize); ro.observe(el);
 
     // 입력: 탭 → 이동, 드래그 → 카메라 회전
-    let down: { x: number; y: number; t: number; yaw: number } | null = null;
+    let down: { x: number; y: number; t: number; yaw: number; pitch: number } | null = null;
     const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-    const onDown = (e: PointerEvent) => { down = { x: e.clientX, y: e.clientY, t: e.timeStamp, yaw: S.yaw }; };
-    const onMoveP = (e: PointerEvent) => { if (!down) return; const dx = e.clientX - down.x; if (Math.abs(dx) > 6) S.yaw = down.yaw - dx * .006; };
+    const onDown = (e: PointerEvent) => { down = { x: e.clientX, y: e.clientY, t: e.timeStamp, yaw: S.yaw, pitch: S.pitch ?? .5 }; };
+    const onMoveP = (e: PointerEvent) => { if (!down) return; const dx = e.clientX - down.x, dy = e.clientY - down.y; if (Math.abs(dx) > 6) S.yaw = down.yaw - dx * .006; if (Math.abs(dy) > 6) S.pitch = Math.max(-.08, Math.min(1.35, down.pitch + dy * .005)); }; // 좌우 드래그 = 돌아보기, 위아래 드래그 = 내려다보기·올려다보기
     const onUp = (e: PointerEvent) => {
       if (!down) return; const dx = e.clientX - down.x, dy = e.clientY - down.y, dt = e.timeStamp - down.t; down = null;
       if (Math.hypot(dx, dy) > 12 || dt > 650 || modeRef.current === "zen") return;
@@ -279,7 +281,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
     const dom = S.renderer!.domElement; dom.addEventListener("pointerdown", onDown); addEventListener("pointermove", onMoveP); addEventListener("pointerup", onUp);
 
     // 루프
-    const camPos = new THREE.Vector3(), look = new THREE.Vector3(); S.last = performance.now();
+    const camPos = new THREE.Vector3(), look = new THREE.Vector3(), camRay = new THREE.Raycaster(); S.last = performance.now();
     const tick = () => {
       S.raf = requestAnimationFrame(tick); const now = performance.now(), dt = Math.min(.05, (now - S.last) / 1000); S.last = now; const t = now / 1000;
       S.fire?.update(dt); S.fw?.update(dt); if (S.flare && S.flare > 0 && S.fire) { S.flare -= dt; const k = Math.sin(Math.min(1, S.flare / 6) * Math.PI); S.fire.light.intensity += k * 4; S.fire.pts.scale.setScalar(1 + k * .9); } else if (S.fire) S.fire.pts.scale.setScalar(1);
@@ -323,9 +325,10 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
       // 카메라
       const meP = S.me ? S.me.g.position : S.camBase;
       if (modeRef.current === "zen") { const f = FIRE[sceneRef.current]; const ang = t * .12; camPos.set(f.x + Math.cos(ang) * 4.2, f.y + 1.6 + Math.sin(t * .3) * .1, f.z + Math.sin(ang) * 4.2); look.set(f.x, f.y + .9, f.z); }
-      else if (sceneRef.current === "sauna") { const far = 8.5; camPos.set(meP.x + Math.sin(S.yaw) * far, meP.y + 5, meP.z + Math.cos(S.yaw) * far); look.set(meP.x, meP.y + 1.1, meP.z); } // 찜질방: 늘 내 캐릭터 중심을 정면으로
-      else { const far = S.cam!.aspect < .8 ? 9.6 : 6.4, rf = sceneRef.current === "roof"; camPos.set(meP.x + Math.sin(S.yaw) * far, far * (rf ? .5 : .66), meP.z + Math.cos(S.yaw) * far); look.set(meP.x, rf ? 2.8 : 1, meP.z - (sceneRef.current === "zen" ? 3 : 1.2)); } // 옥상은 하늘(야경)이 더 보이게
+      else if (sceneRef.current === "sauna") { const D = 9.4, p = S.pitch ?? .5, up = Math.max(0, .3 - p) * 9; camPos.set(meP.x + Math.sin(S.yaw) * Math.cos(p) * D, meP.y + 1.1 + Math.sin(p) * D, meP.z + Math.cos(S.yaw) * Math.cos(p) * D); look.set(meP.x, meP.y + 1.1 + up, meP.z); } // 찜질방: 늘 내 캐릭터 중심, 위아래로 내려다보기·올려다보기
+      else { const far = S.cam!.aspect < .8 ? 9.6 : 6.4, rf = sceneRef.current === "roof", p = (S.pitch ?? .5) - .5 + (rf ? .46 : .58), D = far * Math.hypot(1, rf ? .5 : .66), up = Math.max(0, .3 - p) * 9; camPos.set(meP.x + Math.sin(S.yaw) * Math.cos(p) * D, Math.max(.4, Math.sin(p) * D), meP.z + Math.cos(S.yaw) * Math.cos(p) * D); look.set(meP.x, (rf ? 2.8 : 1) + up, meP.z - (sceneRef.current === "zen" ? 3 : 1.2)); } // 옥상은 하늘(야경)이 더 보이게
       if (S.fw && S.fw.active > 0 && modeRef.current !== "zen") { const k = Math.min(1, S.fw.active / 1.2); const sky = new THREE.Vector3(S.fw.lastBurst.x * .4, 10.5, -14); look.lerp(sky, k * .8); }
+      if (modeRef.current !== "zen" && S.col?.length) { const eye = new THREE.Vector3(meP.x, meP.y + 1.3, meP.z), dir = camPos.clone().sub(eye), D = dir.length(); dir.normalize(); camRay.set(eye, dir); camRay.far = D; const h = camRay.intersectObjects(S.col, false)[0]; if (h) { camPos.copy(eye).addScaledVector(dir, Math.max(.9, h.distance - .35)); S.cam!.position.copy(camPos); } } // 벽·기둥이 나와 카메라 사이에 오면 카메라를 바로 앞으로 당겨 캐릭터가 가리지 않게
       S.cam!.position.lerp(camPos, Math.min(1, dt * 4)); if (!S.lookCur) S.lookCur = look.clone(); S.lookCur.lerp(look, Math.min(1, dt * 3)); S.cam!.lookAt(S.lookCur);
       S.renderer!.render(sc, S.cam!);
     };
@@ -414,7 +417,7 @@ export default function Rest3D({ people, me, myDept, breathK, onMove, onToast, o
         {scene === "sauna" && eat && <div className={"r3-eat " + eat.kind} key={eat.key}>
           <div className="r3-eat-food"><span>{eat.kind === "potato" ? "🍠" : eat.kind === "egg" ? "🥚" : "🥤"}</span>{eat.kind !== "cup" ? [0, 1, 2].filter(i => i < eat.step).map(i => <i key={i} className={"bite b" + i} />) : <em className="lvl" style={{ height: `${Math.max(0, 70 - eat.step * 22)}%` }} />}{eat.kind === "potato" && <b className="steam">♨️</b>}</div>
           <div className="r3-eat-say" key={eat.step}>{(eat.kind === "potato" ? ["후후~", "냠", "냠냠", "꿀맛!"] : eat.kind === "egg" ? ["톡", "냠", "냠냠", "꿀꺽"] : ["후루룩", "쭈욱", "사각사각", eat.last ? "캬~!" : "시원해"])[eat.step]}</div></div>}
-        {scene === "sauna" && <div className="r3-heat"><span>🌡️ 땀</span><i><em style={{ width: `${heat}%` }} /></i><b>{heat > 85 ? "얼음방 가요!" : heat > 50 ? "개운해요" : "데워지는 중"}</b></div>}<div className="r3-hint">{snd === "wait" ? "🔊 화면을 한 번 탭하면 소리가 켜져요" : "바닥을 탭하면 걸어가요 · 좌우로 끌면 둘러보기"}</div>
+        {scene === "sauna" && <div className="r3-heat"><span>🌡️ 땀</span><i><em style={{ width: `${heat}%` }} /></i><b>{heat > 85 ? "얼음방 가요!" : heat > 50 ? "개운해요" : "데워지는 중"}</b></div>}<div className="r3-hint">{snd === "wait" ? "🔊 화면을 한 번 탭하면 소리가 켜져요" : "탭하면 걸어가요 · 끌면 상하좌우 둘러보기"}</div>
         {snd === "on" && <input type="range" className="r3-vol" min={0} max={1} step={.05} value={vol} onChange={e => setVol(Number(e.target.value))} aria-label="볼륨" />}
         <div className="r3-acts">
           {scene === "sauna" && <>            <button type="button" className={"r3-jj" + (potPct >= 100 && potPct < 170 ? " ready" : "")} onClick={potato}><span>{potPct >= 170 ? "⚫" : "🍠"}</span>{pot < 0 ? "고구마 굽기" : potPct < 100 ? `굽는 중 ${potPct}%` : potPct < 170 ? "꺼내 먹기!" : "타버렸어요"}</button>

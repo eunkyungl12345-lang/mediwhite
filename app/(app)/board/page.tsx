@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { guidesForDept, GUIDES } from "@/lib/deptGuides";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { CATS, NOTICE_CAT, DEPTS } from "@/lib/depts";

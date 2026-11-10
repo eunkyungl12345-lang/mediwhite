@@ -1,7 +1,7 @@
 /** 방사선사 라운지 · 일반촬영 검사별 촬영법 (교과서 표준 요약. 병원 프로토콜·장비 설정이 우선이에요) */
 export type XrayView = { v: string; pos: string; cr: string; fig?: string; d?: XDetail };
 /** 뷰 상세 (촬영법 폼): 제목·영문 투사명·참고 kVp·부위·주요 병변·콜리메이션·포지셔닝 순서·평가·팁 */
-export type XDetail = { title: string; proj: string; kvp?: string; region: string; path: string; coll: string; steps: string[]; eval: string[]; tips?: string[]; breath?: string; sid?: string; cr?: string };
+export type XDetail = { title: string; proj: string; kvp?: string; region: string; path: string; coll: string; steps: string[]; eval: string[]; tips?: string[]; breath?: string; sid?: string; cr?: string; exp?: { kv: number; ma: number; ms: number } };
 export type XrayExam = { part: string; name: string; en: string; views: XrayView[]; sid?: string; breath?: string; check?: string[]; tip?: string };
 export const XRAY_PARTS = ["두부·안면", "척추", "흉곽", "상지", "골반·하지", "전척추·스캐노", "흉부·복부"] as const;
 
@@ -84,6 +84,7 @@ export const XRAY: XrayExam[] = [
     { v: "LAT (경흉부)", pos: "환측을 IR에 대고 반대쪽 팔을 머리 위로. 호흡법 사용 가능.", cr: "수평, 상완골 외과경 (환측)" },
     { v: "Y VIEW", pos: "환측 앞면을 IR에, 몸을 45~60° 회전 (RAO/LAO).", cr: "수직, 견갑상완관절 (견봉 끝 약 5cm 아래)" },
     { v: "AXIAL", pos: "앙와위, 팔 90° 외전·외회전, IR은 어깨 위쪽 목에 세움 (Lawrence).", cr: "수평, 15~30° 내측으로 액와 통과" },
+    { v: "CAUDAL 30°", pos: "기립 또는 앙와위, 촬영측으로 몸을 기울여 어깨를 IR에 밀착, 팔은 굽힌 자세.", cr: "어깨관절을 향해 다리쪽(caudad) 30°" },
   ], check: ["Y: 견갑골이 Y자, 상완골두가 Y 중심(정상)", "외상·탈구 의심 시 회전 금지 → Y·경흉부"] },
   { part: "상지", name: "견쇄관절", en: "AC joint", sid: "180cm", views: [
     { v: "AP", pos: "기립, 양팔 내리고 양측 비교 촬영 (필요 시 무게 有·無 각각, 손목에 2.5~4.5kg).", cr: "수직, 양측: 경정맥절흔 약 2.5cm 위 정중 / 편측: AC 관절" },

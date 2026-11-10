@@ -28,10 +28,9 @@ export async function createJob(_: R, fd: FormData): Promise<R> {
   if (!inList(JOB_REGIONS, region)) return { error: "지역을 골라주세요" };
   if (!inList(JOB_DEPTS, dept)) return { error: "모집 직종을 골라주세요" };
   if (!inList(EMP_TYPES, emp)) return { error: "고용 형태를 골라주세요" };
-  if (body.length < 20) return { error: "업무 내용·자격 요건을 20자 이상 적어주세요" };
+  if (!body.trim()) return { error: "업무 내용을 적어주세요" };
   if (deadline && isNaN(Date.parse(deadline))) return { error: "마감일 형식이 이상해요" };
-  const { count } = await s.from("jobs").select("id", { count: "exact", head: true }).eq("author_id", u.id).gte("created_at", new Date(Date.now() - 86400000).toISOString());
-  if ((count ?? 0) >= 5) return { error: "채용공고는 하루 5개까지만 올릴 수 있어요" };
+  
   const tags = fd.getAll("tag").map(String).filter(t => JOB_TAGS.some(x => x.id === t)).slice(0, 8);
   const shared = fd.get("who") === "share"; if (shared) tags.unshift(SHARE_TAG);
   const meta: Record<string, string> = {}; for (const m of META) { const v = String(fd.get("m_" + m.k) ?? "").replace(/\s+/g, " ").trim().slice(0, 60); if (v) meta[m.k] = v; }
@@ -65,7 +64,7 @@ export async function createReview(_: R, fd: FormData): Promise<R> {
   for (const k of RATING_KEYS) { const v = Number(fd.get(k.key)); if (!(v >= 1 && v <= 5)) return { error: `${k.name} 별점을 골라주세요` }; r[k.key] = v; }
   if (!inList(JOB_DEPTS, dept)) return { error: "직종을 골라주세요" };
   if (!["재직", "퇴사"].includes(status)) return { error: "재직/퇴사를 골라주세요" };
-  if (pros.length < 15 || cons.length < 15) return { error: "장점·단점을 각각 15자 이상 적어주세요 (다른 분들에게 진짜 도움이 되게!)" };
+  if (!pros.trim() && !cons.trim()) return { error: "장점이나 단점을 적어주세요" };
   for (const t of [pros, cons, tip]) { const pm = personMention(t); if (pm) return { error: `특정인을 알 수 있는 표현("${pm}")은 뺄게요. 사람이 아니라 병원에 대한 후기만!` }; }
   if (!hospitalId) {
     if (!name || !inList(JOB_REGIONS, region)) return { error: "병원명과 지역을 적어주세요" };
@@ -154,7 +153,6 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
     exit = { reasons };
   }
   const key = factKey(hid); const { data: prev } = await s.from("game_state").select("user_id").eq("user_id", u.id).eq("game", key).maybeSingle();
-  if (!prev) { const { count } = await s.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", u.id).like("game", "hfact:%").gte("updated_at", new Date(Date.now() - 86400000).toISOString()); if ((count ?? 0) >= 5) return { error: "하루 5곳까지만 체크할 수 있어요" }; }
   const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, shift, emp: emp || undefined, pros: pros || undefined, cons: cons || undefined, ...mood, stars: Object.keys(stars).length ? stars : undefined, overall, rec, future: [0, 1, 2].includes(future) && fd.get("future") !== null && fd.get("future") !== "" ? future : undefined, risks, good, ...exit, last: word || undefined, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
   if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");

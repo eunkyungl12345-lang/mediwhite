@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 import { db } from "@/lib/supabase";
 import { openExtJobs, isG3, extTags, EXT_SRC, splitArea, extCheckedLabel } from "@/lib/extJobs";
 import PosBadges from "@/components/jobs/PosBadges";
@@ -22,7 +23,7 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
   const open = (jobs ?? []).filter(j => dday(j.deadline) !== "마감").slice(0, 12);
   const login = (next: string) => `/login?next=${encodeURIComponent(next)}`, signup = (next: string) => `/login?mode=signup&next=${encodeURIComponent(next)}`;
   return <div className="pub-bg"><div className="app"><main className="pub">
-    <header className="pub-h"><Link href="/" className="pub-brand">메디화이트웹</Link><Link href="/login" className="btn">로그인 · 가입</Link></header>
+    <header className="pub-h"><Link href="/" className="pub-brand" aria-label="메디화이트 홈"><BrandLogo /></Link><Link href="/login" className="btn">로그인 · 가입</Link></header>
     <section className="pub-hero"><small className="pub-kicker">📍 강남 3구부터</small><h1>강남 3구 병원<br />실제 실수령액 &<br />분위기 팩트체크 🏥</h1><p>입사하기 전에 <b>원장 성향</b>과 <b>실제 퇴근 시간</b> 확인하고 가세요.</p>
       <div className="pub-pts"><span>💰 통장 실수령</span><span>🙆 원장 성향</span><span>⏰ 실제 퇴근</span><span>😶 태움</span><span>🌴 연차 방식</span></div>
       <form action="/" className="jb2-search"><input name="q" defaultValue={kw} placeholder="지원할 병원 이름 검색 (예: 연세, 정형외과)" /><button className="btn">검색</button></form>
@@ -32,7 +33,7 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
     <section id="ext" className="pub-sec"><h2>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h2><div className="pb-ex"><small>다녀본 사람 리뷰가 모이면 이런 뱃지가 붙어요 <b>(예시)</b></small><PosBadges list={["⏰ 정시 퇴근", "🙆 원장 터치 적음", "🌴 주5일 + 연차 따로"]} /></div>
       <div className="dtab">{[["", "전체", all.length] as const, ...kinds.map(x => [x, DL[x], all.filter(e => e.k === x).length] as const)].map(([x, n, cnt]) => <Link key={x} href={qs({ k: x })} className={ek === x ? "on" : ""} scroll={false}>{n} <small>{cnt}</small></Link>)}</div>
       <div className="rf-kw ex-conds"><Link href={qs({ g3: g3 ? "" : "1" })} className={"ex-g3chip" + (g3 ? " on" : "")} scroll={false}>📍 강남 3구만 <small>{g3n}</small></Link>{CONDS.map(x => <Link key={x} href={qs({ c: c === x ? "" : x })} className={c === x ? "on" : ""} scroll={false}>{tagLabel(x)}</Link>)}</div>
-      <div className="ex-list">{ext.map(e => <div key={e.id} className="ex">
+      <div className="ex-list">{ext.slice(0, 6).map(e => <div key={e.id} className="ex">
         <div className="ex-top"><b>{e.h}</b>{isG3(e) && <span className="ex-g3">강남 3구</span>}</div>
         <div className="ex-meta">{e.dept} · {splitArea(e.area).r}{splitArea(e.area).st && <span className="ex-sta">🚇 {splitArea(e.area).st}</span>}</div>
         <div className="ex-row"><span>⏰ {e.time}</span><span>💰 {e.pay}</span></div>
@@ -41,6 +42,7 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
         <p className="ex-note">☀️ {e.note}</p>{e.warn && <p className="ex-warn">⚠️ {e.warn}</p>}
         <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC}에서 보고 지원 ↗</a><Link href={EHP.get(e.h) ? `/h/${EHP.get(e.h)}` : `/?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="btn ghost">👀 이 병원 진짜 분위기 보기</Link></div>
       </div>)}</div>
+      {ext.length > 6 && <Link href={signup("/jobs/day")} className="btn ghost jb2-more">🌙 가입하고 {ext.length}곳 전부 보기 ›</Link>}
       <p className="muted" style={{ fontSize: 12, margin: 0 }}>🔄 {extCheckedLabel()} · {EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 지원 전 원문을 꼭 확인하세요.</p>
     </section>
     {open.length > 0 && <section className="pub-sec"><h2>💼 메디화이트 채용 공고</h2>

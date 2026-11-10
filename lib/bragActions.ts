@@ -21,7 +21,7 @@ export async function submitBrag(_: R, fd: FormData): Promise<R> {
   }
   const tags = fd.getAll("tag").map(String).filter(t => (BRAG_TAGS as readonly string[]).includes(t)).slice(0, 6), text = clean(fd.get("text"), 300);
   if (!tags.length) return { error: "자랑 포인트를 하나 이상 골라주세요" };
-  if (text.length < 10) return { error: "자랑 한마디를 10자 이상 적어주세요" };
+  if (!text.trim()) return { error: "자랑 한마디를 적어주세요" };
   const pm = personMention(text); if (pm) return { error: `특정인을 알 수 있는 표현("${pm}")은 빼주세요` };
   const files = fd.getAll("photo").filter(okImg).slice(0, 3);
   const key = bragKey(hid); const { data: prev } = await s.from("game_state").select("state").eq("user_id", u.id).eq("game", key).maybeSingle();

@@ -2,7 +2,7 @@ self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
 self.addEventListener("push", e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch {}
-  const title = d.title || "메디화이트웹";
+  const title = d.title || "메디화이트";
   e.waitUntil(self.registration.showNotification(title, { body: d.body || "", icon: "/icon-192.png", badge: "/badge-72.png", tag: d.tag || "mw", renotify: true, data: { url: d.url || "/" } }));
 });
 self.addEventListener("notificationclick", e => {

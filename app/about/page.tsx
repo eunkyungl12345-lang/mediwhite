@@ -6,7 +6,7 @@ import { topicOf, display } from "@/lib/depts";
 import Insignia from "@/components/Insignia";
 import { fmt } from "@/lib/format";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "메디화이트웹 — 병원 사람들의 익명 라운지" };
+export const metadata = { title: "메디화이트 — 병원 사람들의 익명 라운지" };
 
 export default async function AboutPage() {
   const s = await getSession();
@@ -34,7 +34,7 @@ export default async function AboutPage() {
       <section className="about-hero">
         <div className="about-hero-in">
           <div className="about-kicker">의료계 익명 커뮤니티</div>
-          <h1>메디화이트웹</h1>
+          <h1>메디화이트</h1>
           <p><b>병원 사람들의 진짜 이야기.</b><br />익명 라운지 · 병원 리뷰 · 급여·연봉 · 이직·채용 — 그리고 계급과 게임.</p>
           <div className="row" style={{ justifyContent: "center" }}>
             {s ? <Link className="btn" href="/board">라운지로 들어가기</Link> : <><Link className="btn" href="/login">가입하고 입장</Link><Link className="btn ghost about-ghost" href="/login">이미 회원이에요</Link></>}

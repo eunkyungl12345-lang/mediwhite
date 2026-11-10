@@ -136,7 +136,6 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   const topic = category === SSUM_CAT ? (SSUM_TOPICS.some(t => t.key === topicRaw) ? topicRaw : "moment") : category === ANON_CAT ? (ANON_TOPICS.some(t => t.key === topicRaw) ? topicRaw : "free") : (TOPICS.some(t => t.key === topicRaw) ? topicRaw : "free");
   if (!(CATS as readonly string[]).includes(category) && category !== SSUM_CAT && category !== ANON_CAT) return { error: "칸을 선택해주세요" };
   if (category === NOTICE_CAT && u.role !== "admin" && !can(await myRank(u.id), "준장")) return { error: "공지 칸은 준장 이상만 쓸 수 있어요" };
-  if (category === ANON_CAT && u.role !== "admin" && !can(await myRank(u.id), PERK.anonMin)) return { error: `익명 게시판 글쓰기는 ${PERK.anonMin} 이상부터예요. 댓글은 누구나 달 수 있어요` };
   if (!title || !body) return { error: "제목과 내용을 적어주세요" };
   const pm = personMention(title + " " + body);
   const plm = category === SSUM_CAT ? placeMention(title + " " + body) : null;
@@ -174,7 +173,6 @@ export async function togglePin(postId: string, pinned: boolean) {
 }
 export async function boostPost(postId: string, on: boolean) {
   const u = await requireUser();
-  if (!can(await myRank(u.id), "소령")) return;
   const s = db();
   if (on) await s.from("posts").update({ boosted: false }).eq("author_id", u.id).eq("boosted", true);
   await s.from("posts").update({ boosted: on }).eq("id", postId).eq("author_id", u.id);
@@ -379,7 +377,7 @@ export async function savePushSub(sub: { endpoint: string; keys?: { p256dh: stri
 }
 export async function adminBroadcast(_: FormState, fd: FormData): Promise<FormState> {
   await requireAdmin();
-  const title = clean(fd.get("title"), 40) || "메디화이트웹", body = clean(fd.get("body"), 140), url = clean(fd.get("url"), 200) || "/board";
+  const title = clean(fd.get("title"), 40) || "메디화이트", body = clean(fd.get("body"), 140), url = clean(fd.get("url"), 200) || "/board";
   if (!body) return { error: "내용을 적어주세요" };
   await pushToAll({ title, body, url, tag: "broadcast" });
   return { ok: "보냈어요" };

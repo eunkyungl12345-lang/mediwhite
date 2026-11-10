@@ -30,13 +30,11 @@ export function rankOf(xp: number, isDeptLeader = true): Rank {
 
 export const PRIVILEGES: { minRank: string; title: string; desc: string }[] = [
   { minRank: "훈련병", title: "훈련병", desc: "19금 발언·욕설로 강등된 상태. 처음부터 다시 올라와야 해요 (이병까지 30 XP)" },
-  { minRank: "이병", title: "기본", desc: "채팅, 게시판 글·댓글, 게임" },
+  { minRank: "이병", title: "기본", desc: "채팅, 게시판·익명 글·댓글, 밀어올리기, 번개·하트 제한 없음" },
   { minRank: "일병", title: "글 우선 노출", desc: "계급이 높을수록 내 글이 목록 위쪽에 와요 (모든 계급 공통)" },
   { minRank: "하사", title: "글 빛남 1단계", desc: "내 글이 은은하게 강조돼요" },
   { minRank: "소위", title: "글 빛남 2단계", desc: "내 글에 색 테두리가 붙어요" },
-  { minRank: "대위", title: "익명 게시판 글쓰기", desc: "🕶️ 익명 게시판에 글을 쓸 수 있어요 (댓글·읽기는 누구나)" },
-  { minRank: "소령", title: "밀어올리기 · 번개 2개 · 하트 5개", desc: "내 글 1개를 공지 바로 아래 고정 · ⚡ 번개 2개 동시 개설 · 💗 셀소 하트 하루 5개 (기본 3개)" },
-  { minRank: "준장", title: "공지 작성 · 하트 무제한 · 번개 3개", desc: "모든 칸 위에 보이는 '공지' 칸에 글 + ★ 배지 · 💗 셀소 하트 무제한 · ⚡ 번개 3개 동시 개설" },
+  { minRank: "준장", title: "공지 작성", desc: "모든 칸 위에 보이는 '공지' 칸에 글 + ★ 배지" },
   { minRank: "참모총장", title: "파트 참모총장", desc: "파트별 단 한 명(경험치 1위). 금빛 글, ★★★★. 1위가 아니면 중장까지" },
 ];
 export const can = (r: Rank, minRank: string) => r.index >= IDX[minRank];

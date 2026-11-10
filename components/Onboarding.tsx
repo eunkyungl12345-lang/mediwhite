@@ -4,7 +4,7 @@ import { markOnboarded } from "@/lib/actions";
 
 /** 처음 들어온 사람용 사용법 투어. 헤더의 ? 버튼으로 언제든 다시 열 수 있어요. */
 const STEPS: { icon: string; title: string; body: React.ReactNode; demo: React.ReactNode }[] = [
-  { icon: "👋", title: "메디화이트웹에 오신 걸 환영해요", body: <>병원 사람들끼리 <b>익명</b>으로 수다 떨고, 게임하고, 계급 올리는 라운지예요.<br />여기선 이름 대신 <b>[직종]닉네임</b>으로 불려요.</>,
+  { icon: "👋", title: "메디화이트에 오신 걸 환영해요", body: <>병원 사람들끼리 <b>익명</b>으로 수다 떨고, 게임하고, 계급 올리는 라운지예요.<br />여기선 이름 대신 <b>[직종]닉네임</b>으로 불려요.</>,
     demo: <div className="ob-demo"><span className="ob-badge">🪖</span><b>[간호사]야간러버</b><span className="muted">← 이렇게 보여요</span></div> },
   { icon: "🎖️", title: "계급은 활동하면 저절로 올라요", body: <>채팅·글·댓글·게임을 하면 <b>경험치</b>가 쌓이고 훈련병 → 이병 → … → 참모총장까지 진급해요.<br />계급이 높을수록 글이 위에 뜨고, 이름이 반짝여요.</>,
     demo: <div className="ob-demo ob-ladder"><span>훈련병</span>→<span>이병</span>→<span>병장</span>→<span>소위</span>→<span>대령</span>→<span className="ob-top">★ 참모총장</span></div> },

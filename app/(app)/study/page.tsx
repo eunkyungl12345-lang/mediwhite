@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { XRAY, XVIEWS } from "@/lib/xrayAll";
 import { db } from "@/lib/supabase";
-import { GUIDES } from "@/lib/deptGuides";
 import { TERM_CATS } from "@/lib/terms";
 import { ago } from "@/lib/format";
 import { getSession } from "@/lib/auth";
@@ -17,8 +17,7 @@ export default async function Study({ searchParams }: { searchParams: { g?: stri
   const termN = TERM_CATS.reduce((a, c) => a + c.items.length, 0), dl = (x: string) => ({ 방사선: "방사선사", 물리치료: "물리치료사", 임상병리: "임상병리사", 응급구조: "응급구조사", 원무: "원무과", 총괄: "병원총괄" } as Record<string, string>)[x] ?? x;
   /** 우리가 정리한 자료 — 직종 태그로 거르기 */
   const RES: { href: string; icon: string; name: string; sub: string; ds: string[] | "all" }[] = [
-    ...GUIDES.map(x => ({ href: `/guide/${x.slug}`, icon: x.icon, name: x.title, sub: x.blurb, ds: x.depts })),
-    { href: "/study/xray", icon: "🩻", name: "방사선 촬영법 폼", sub: "37개 검사 · 97개 뷰 · 포지셔닝·평가·팁", ds: ["방사선"] },
+    { href: "/study/xray", icon: "🩻", name: "방사선 촬영법 폼", sub: `${XRAY.length}개 검사 · ${XVIEWS.length}개 뷰 · 촬영실 콘솔 화면 그대로`, ds: ["방사선"] },
     { href: "/study/terms", icon: "📖", name: "의료 약어 사전", sub: `${termN}개 · NPO, PRN, I/O…`, ds: "all" },
     { href: gd ? `/study/interview?dept=${encodeURIComponent(gd[0])}` : "/study/interview", icon: "🎤", name: "면접 질문 모음", sub: ivN ? `면접 후기 ${ivN}개` : "병원별 받은 질문", ds: "all" },
     { href: "/handover#cal", icon: "🗓️", name: "근무표 도우미", sub: "2027 공휴일·대체공휴일", ds: "all" },

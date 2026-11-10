@@ -20,7 +20,7 @@ export default function InterviewForm({ hid, dept, mine }: { hid: number; dept: 
     {fo && <label className="hc-q iv-follow"><b>{fo.q} <small>(선택)</small></b><textarea name="follow" rows={3} maxLength={500} defaultValue={mine?.follow} placeholder={fo.ph} /></label>}
     {res && res !== "결과 대기" && <div className="hc-q"><b>결과 발표까지 걸린 시간 <small>(선택)</small></b><input type="hidden" name="wait" value={wait || ""} /><div className="hc-chips">{IV_WAIT.map(w => <label key={w}><input type="radio" checked={wait === w} onChange={() => setWait(w)} /><span>{w === 60 ? "한 달 이상" : w === 30 ? "한 달 안" : `${w}일 안`}</span></label>)}</div></div>}
     <div className="hc-q"><b>면접 경험</b><R name="feel" opts={IV_FEEL} values={[0, 1, 2]} def={mine?.feel} /></div>
-    <label className="hc-q"><b>받은 면접 질문 <small>(20자 이상)</small></b><textarea name="q" rows={4} maxLength={1000} defaultValue={mine?.q} placeholder={"예) 1분 자기소개 / 간호사가 된 이유 / 투약 5Right / 갈등 상황에서 어떻게 할지 / 3교대 괜찮은지"} /></label>
+    <label className="hc-q"><b>받은 면접 질문</b><textarea name="q" rows={4} maxLength={1000} defaultValue={mine?.q} placeholder={"예) 1분 자기소개 / 간호사가 된 이유 / 투약 5Right / 갈등 상황에서 어떻게 할지 / 3교대 괜찮은지"} /></label>
     <label className="hc-q"><b>합격 팁·면접 분위기 <small>(선택)</small></b><textarea name="tip" rows={3} maxLength={500} defaultValue={mine?.tip} placeholder="예) 압박 질문은 없었고 술기 시험은 활력징후·IV 위주였어요" /></label>
     {st?.error && <div className="error">{st.error}</div>}<Send edit={!!mine} /></form>;
 }
