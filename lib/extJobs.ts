@@ -1,6 +1,6 @@
 /** ☀️ 3교대 탈출관 · 외부 상근 공고 (메디잡 공개 공고에서 낮 근무만 골라 사실만 요약, 한 줄 설명은 운영팀이 새로 씀)
  *  원문·지원은 메디잡 링크로. 마감 지나면 자동으로 숨겨요. 마지막 정리 2026-11-05 */
-export type ExtJob = { id: number; h: string; dept: string; k: "간호" | "간호조무사" | "방사선" | "물리치료" | "임상병리" | "원무"; area: string; time: string; pay: string; until?: string; note: string; warn?: string };
+export type ExtJob = { id: number; h: string; dept: string; k: "간호" | "간호조무사" | "방사선" | "물리치료" | "임상병리" | "원무" | "총괄"; area: string; time: string; pay: string; until?: string; note: string; warn?: string };
 export const EXT_SRC = "메디잡";
 /** 마지막으로 원문을 확인한 날. '채용 시 마감' 공고는 이 날부터 30일 지나면 자동으로 숨겨요 (새 파일로 갱신하면 날짜만 바꾸기) */
 export const EXT_CHECKED = "2026-11-05";
@@ -46,3 +46,13 @@ export const splitArea = (a: string) => { const [r, st] = a.split(" · "); retur
 export const isG3 = (j: ExtJob) => /강남|서초|송파/.test(j.area);
 export const extTags = (id: number) => T[id] ?? [];
 export const openExtJobs = (today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10)) => { const stale = new Date(Date.parse(EXT_CHECKED) + 30 * 86400000).toISOString().slice(0, 10); return EXT_JOBS.filter(j => j.until ? j.until >= today : today <= stale); };
+
+/** 💰 급여 문자열 → 연봉 추정(만원). 범위는 가운데값, 월급은 ×12, 실수령 월급은 세전 환산(×1.15).
+ *  "연 2,500~4,000만" → 3250 · "세전 300만" → 3600 · "실수령 260~280만" → 3726 · "면접 협의" → 0 (맨 뒤로) */
+export function parsePay(pay: string): number {
+  const t = (pay ?? "").replace(/,/g, ""), m = t.match(/(\d+(?:\.\d+)?)\s*(?:만)?\s*(?:~\s*(\d+(?:\.\d+)?))?\s*만/);
+  if (!m) return 0;
+  const lo = Number(m[1]), hi = m[2] ? Number(m[2]) : lo, mid = (lo + hi) / 2, pre = t.slice(0, m.index);
+  if (/연봉|연\s*$|연 /.test(pre) || mid >= 1000) return Math.round(mid);
+  return Math.round(mid * 12 * (/실수령/.test(pre) ? 1.15 : 1));
+}

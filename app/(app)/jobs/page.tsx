@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { openExtJobs, extTags, isG3 } from "@/lib/extJobs";
+import { openExtJobs, extTags, isG3, parsePay } from "@/lib/extJobs";
 import ExtCard from "@/components/jobs/ExtCard";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
@@ -19,7 +19,7 @@ export const metadata = { title: "의료 채용 — 3교대 탈출관" };
 export const dynamic = "force-dynamic";
 
 /** 💼 의료인 채용 — 파트별 탭 · 공공병원 자동수집 + 현직자 제보 · 병원 리뷰 평점 같이 보기 (의료계의 블라인드) */
-export default async function JobsPage({ searchParams }: { searchParams: { region?: string; dept?: string; src?: string; q?: string; t?: string; soon?: string; g3?: string } }) {
+export default async function JobsPage({ searchParams }: { searchParams: { region?: string; dept?: string; src?: string; q?: string; t?: string; soon?: string; g3?: string; sort?: string } }) {
   const s = (await getSession())!; const d = db();
   const region = JOB_REGIONS.includes(searchParams.region as any) ? searchParams.region! : "", dept = JOB_DEPTS.includes(searchParams.dept as any) ? searchParams.dept! : "";
   const src = ["public", "member", "share", "ext"].includes(searchParams.src ?? "") ? searchParams.src! : "", tg = QUICK.some(x => x.id === searchParams.t) ? searchParams.t! : "", kw = (searchParams.q ?? "").trim().slice(0, 30);
@@ -44,10 +44,12 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const [facts, contributed] = await Promise.all([loadFacts(matched.map(h => h.id)), hasContributed(s.id, s.role)]); const fmap: Record<string, FactAgg> = {};
   for (const [k, v] of Object.entries(hmap)) if (facts[v.id]) fmap[k] = facts[v.id];
   const cnt: Record<string, number> = {}; for (const r of deptCounts ?? []) cnt[r.dept] = (cnt[r.dept] ?? 0) + 1;
-  const link = (o: Record<string, string>) => { const p = new URLSearchParams(Object.entries({ region, dept, src, q: kw, t: tg, g3: searchParams.g3 === "1" ? "1" : "", ...o }).filter(([, v]) => v)); return `/jobs${p.toString() ? "?" + p : ""}`; };
-  const EXK: Record<string, string> = { 간호: "간호사", 간호조무사: "간호조무사", 방사선: "방사선", 물리치료: "물리치료", 임상병리: "임상병리", 원무: "원무" };
+  const byPay = searchParams.sort === "pay";
+  const link = (o: Record<string, string>) => { const p = new URLSearchParams(Object.entries({ region, dept, src, q: kw, t: tg, g3: searchParams.g3 === "1" ? "1" : "", sort: byPay ? "pay" : "", ...o }).filter(([, v]) => v)); return `/jobs${p.toString() ? "?" + p : ""}`; };
+  const EXK: Record<string, string> = { 간호: "간호사", 간호조무사: "간호조무사", 방사선: "방사선", 물리치료: "물리치료", 임상병리: "임상병리", 원무: "원무", 총괄: "총괄" };
   const exReg = (a: string) => a.startsWith("서울") ? "서울" : /고양|파주|의정부|남양주|구리|양주|동두천|포천|연천|김포/.test(a) ? "경기 북부" : a.startsWith("경기") ? "경기 남부" : "";
-  const ext = (!src || src === "ext") && !soonOnly ? openExtJobs().filter(e => (!dept || EXK[e.k] === dept) && (!region || exReg(e.area) === region) && (!kw || e.h.includes(kw)) && (!tg || extTags(e.id).includes(tg)) && (searchParams.g3 !== "1" || isG3(e))).sort((a, b) => Number(isG3(b)) - Number(isG3(a))) : [];
+  const ext = (!src || src === "ext") && !soonOnly ? openExtJobs().filter(e => (!dept || EXK[e.k] === dept) && (!region || exReg(e.area) === region) && (!kw || e.h.includes(kw)) && (!tg || extTags(e.id).includes(tg)) && (searchParams.g3 !== "1" || isG3(e))).sort((a, b) => byPay ? parsePay(b.pay) - parsePay(a.pay) : Number(isG3(b)) - Number(isG3(a))) : [];
+  if (byPay) open.sort((a, b) => parsePay(b.pay ?? "") - parsePay(a.pay ?? ""));
   const { data: exH } = ext.length ? await d.from("hospitals").select("id,name").in("name", Array.from(new Set(ext.map(e => e.h)))) : { data: [] as any[] }; const EXH = new Map((exH ?? []).map(h => [h.name, h.id])); const exF = EXH.size ? await loadFacts(Array.from(EXH.values())) : {};
   const exCnt: Record<string, number> = {}; for (const e of openExtJobs()) { const k = EXK[e.k]; if (k) exCnt[k] = (exCnt[k] ?? 0) + 1; }
   const soon = open.filter(j => { const x = dday(j.deadline); return x === "오늘 마감" || (x.startsWith("D-") && Number(x.slice(2)) <= 3); }).length;
@@ -63,7 +65,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
       </div>
       <details className="jb2-fold" open={!!tg || searchParams.g3 === "1"}><summary>⚙️ 조건으로 거르기{tg || searchParams.g3 === "1" ? <b> · {[searchParams.g3 === "1" ? "강남 3구" : "", tg ? QUICK.find(q => q.id === tg)?.label.replace(/^\S+\s/, "") ?? tg : ""].filter(Boolean).join(" · ")}</b> : <small>야간진료 없음 · 토요 휴무 · 연차 보장 · 강남 3구…</small>}</summary>
         <div className="jb2-quick"><Link href={link({ g3: searchParams.g3 === "1" ? "" : "1" })} className={"g3" + (searchParams.g3 === "1" ? " on" : "")}>📍 강남 3구</Link>{QUICK.map(x => <Link key={x.id} href={link({ t: tg === x.id ? "" : x.id })} className={tg === x.id ? "on" : ""}>{x.label}</Link>)}</div></details>
-      <div className="jb2-sum"><span>모집 중 <b>{(src === "ext" ? 0 : open.length) + ext.length}</b></span>{soon > 0 && <span className="hot">⏰ 3일 안에 마감 {soon}</span>}{kw && <span>‘{kw}’ 검색 · <Link href={link({ q: "" })}>해제</Link></span>}</div>
+      <div className="jb2-sum"><Link href={link({ sort: byPay ? "" : "pay" })} className={"jb2-sort" + (byPay ? " on" : "")} aria-pressed={byPay}>💰 급여순</Link><span>모집 중 <b>{(src === "ext" ? 0 : open.length) + ext.length}</b></span>{soon > 0 && <span className="hot">⏰ 3일 안에 마감 {soon}</span>}{kw && <span>‘{kw}’ 검색 · <Link href={link({ q: "" })}>해제</Link></span>}</div>
       {s.role === "admin" && <ImportButton />}
       {ext.length > 0 && <><h3 className="dy-h" style={{ margin: "4px 0 0" }}>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h3><div className="jb2-list">{ext.slice(0, 4).map(e => <ExtCard key={e.id} e={e} hid={EXH.get(e.h)} fa={EXH.get(e.h) ? exF[EXH.get(e.h)!] : undefined} />)}</div>{ext.length > 4 && <Link href="/jobs/day" className="btn ghost jb2-more">🌙 알짜 병원 {ext.length}곳 전부 보기 ›</Link>}</>}
       {src === "ext" ? null : open.length === 0 ? <div className="jb2-empty"><span>💼</span><b>{dept ? `${deptLabel(dept)} 공고가 아직 없어요` : "아직 올라온 공고가 없어요"}</b><p>단톡방에서 본 공고, 우리 병원 구인 — 첫 공고를 올려주세요. 공공병원 공고는 자동 수집이 켜지면 여기에 모여요.</p></div>

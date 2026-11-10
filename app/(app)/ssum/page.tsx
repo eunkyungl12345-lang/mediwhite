@@ -198,7 +198,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
     body = <>
       <div className="mt-intro"><b>⚡ 번개</b> — 오늘 오프인데 심심할 때, 교대 끝나고 한잔할 때. 지역·시간만 정하고 가볍게 모여요. <span className="muted">참여 신청 → 모임장이 수락하면 모임 채팅방이 열려요.</span></div>
       <Link href="/badge" className={"bd-cta" + (meU?.blue_badge ? " on" : "")}>{meU?.blue_badge ? <><BlueBadge size={26} /><b>골드뱃지 회원</b><span className="muted">☕ 커피챗 번개를 열 수 있어요</span></> : <><BlueBadge size={26} /><b>골드뱃지 인증하고 커피챗 열기</b><span className="muted">운전면허증 + 면허·자격증 확인 → 이름 옆 <BlueBadge size={12} className="bb" /></span><span className="bd-arrow">›</span></>}</Link>
-      <details className="card ss-details"><summary><b>⚡ 번개 열기</b> <span className="muted">— 2주 안, 2~10명, 동시에 3개까지</span></summary><MeetForm defaultArea={myProf?.region?.includes("서울") ? "서울" : undefined} badge={!!meU?.blue_badge} /></details>
+      <details className="card ss-details"><summary><b>⚡ 번개 열기</b> <span className="muted">— 2주 안, 2~10명</span></summary><MeetForm defaultArea={myProf?.region?.includes("서울") ? "서울" : undefined} badge={!!meU?.blue_badge} /></details>
       <div className="topics scroll">{["", ...MEET_AREAS].map(a => <Link key={a} href={`/ssum?tab=meet${a ? `&area=${encodeURIComponent(a)}` : ""}`} className={"topic" + (area === a ? " on" : "")}>{a || "전체"}</Link>)}</div>
       {today.length > 0 && <><div className="mt-sec">🔥 오늘</div>{today.map(m => <Row key={m.id} m={m} />)}</>}
       {later.length > 0 && <><div className="mt-sec">📅 다가오는 번개</div>{later.map(m => <Row key={m.id} m={m} />)}</>}
@@ -299,6 +299,8 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
       </div>
       {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} badge={solo.user.blue_badge} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
       <div className="cats" style={{ paddingBottom: 0 }}>{TABS.map(([k, n]) => <Link key={k} href={`/ssum?tab=${k}`} aria-current={tab === k ? "true" : undefined}>{n}</Link>)}</div>
+      {tab === "meet" && <a className="ss-out" href="https://ssumcenter.vercel.app" target="_blank" rel="noopener noreferrer"><span className="ss-out-ico" aria-hidden="true">🍷</span><div><b>이번 주말, 병원 밖에서 만나요</b><small>병원 밖 2030과 함께하는 프라이빗 파티 · 11/14 Friendsgiving 홈파티 (의료인 &amp; 일반 직장인 누구나 환영!)</small></div><em aria-hidden="true">↗</em></a>}
+      {(tab === "me" || tab === "box") && <a className="ss-out" href="https://ssumcenter.vercel.app" target="_blank" rel="noopener noreferrer"><span className="ss-out-ico" aria-hidden="true">💌</span><div><b>사내연애 걱정 없는 1:1 소개팅</b><small>3교대·교대근무 이해해 주는 대기업·IT·전문직 일반 직장인과의 맞춤 매칭 (썸류센터 x 메디화이트 특별 매칭)</small></div><em aria-hidden="true">↗</em></a>}
       {body}
     </div>
   );

@@ -2347,3 +2347,7 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .xc-left .xg2-thumbs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible}.xc-left .xg2-thumbs button{width:auto;height:auto;aspect-ratio:6/5}.xc-left .xg2-thumbs img{width:100%;height:100%;object-fit:cover}
 .xc-h{width:100%}
 .jb2-more{display:flex;justify-content:center;text-decoration:none;margin-top:4px}
+/* 💰 급여순 · 💌 썸 연계 배너 */
+.jb2-sort{display:inline-flex;align-items:center;min-height:30px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;background:var(--surface)}.jb2-sort.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ss-out{display:flex;gap:12px;align-items:center;padding:13px 15px;border-radius:16px;background:linear-gradient(135deg,#fff1f4,#fff8ec);border:1px solid #f6d3dc;color:#3a2228;text-decoration:none}.ss-out-ico{font-size:26px}.ss-out div{display:grid;gap:3px;flex:1;min-width:0}.ss-out b{font-size:15px}.ss-out small{font-size:12.5px;line-height:1.45;color:#6b4a52}.ss-out em{font-style:normal;font-weight:800;color:#c2496a}
+.jb2-sum{align-items:center;flex-wrap:wrap}
