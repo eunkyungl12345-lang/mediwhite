@@ -5,7 +5,7 @@ import { ago } from "@/lib/format";
 import type { Rank } from "@/lib/ranks";
 import Insignia from "@/components/Insignia";
 /** 💻 PC 오른쪽 레일: 내 계급 · 실시간 인기글 · 미니게임 바로가기 (1080px 이상) */
-export default async function RightRail({ rank, xp, nick, dept }: { rank: Rank; xp: number; nick: string; dept: string }) {
+export default async function RightRail({ rank, xp, nick, dept, fresh }: { rank: Rank; xp: number; nick: string; dept: string; fresh?: boolean }) {
   const hot = await memo("rail_hot", 60_000, async () => { const since = new Date(Date.now() - 3 * 86400000).toISOString(); const { data } = await db().from("posts").select("id,title,views,created_at,category").eq("hidden", false).neq("category", "썸").neq("category", "익명").neq("category", "공지").gte("created_at", since).order("views", { ascending: false }).limit(6); return data ?? []; });
   const recent = hot.length ? [] : await memo("rail_recent", 60_000, async () => { const { data } = await db().from("posts").select("id,title,views,created_at,category").eq("hidden", false).neq("category", "썸").neq("category", "익명").neq("category", "공지").order("created_at", { ascending: false }).limit(6); return data ?? []; });
   const list = hot.length ? hot : recent;
@@ -19,10 +19,10 @@ export default async function RightRail({ rank, xp, nick, dept }: { rank: Rank; 
       <div className="rail-h">{hot.length ? "🔥 지금 인기글" : "📝 최근 글"}</div>
       <ol className="rail-hot">{list.map((p: any, i: number) => <li key={p.id}><Link href={`/board/${p.id}`}><em>{i + 1}</em><span>{p.title}</span><small>{ago(p.created_at)} · 조회 {p.views ?? 0}</small></Link></li>)}</ol>
     </div>}
-    <div className="rail-card">
+    {fresh ? <Link href="/hospitals/check" className="rail-card rail-chk"><b>🔎 다녔던 병원 1분 체크</b><small>체크 1곳이면 모든 병원 실수령·분위기를 계속 볼 수 있어요</small></Link> : <div className="rail-card">
       <div className="rail-h">🎮 잠깐 쉬어가기</div>
       <div className="rail-games">{[["/rest", "🛋️", "당직실"]].map(([h, ic, n]) => <Link key={h} href={h}><span>{ic}</span>{n}</Link>)}</div>
-    </div>
+    </div>}
     <div className="rail-foot"><Link href="/about">소개</Link> · <Link href="/support">문의</Link> · © 메디화이트</div>
   </aside>;
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { memoOnce } from "@/lib/memo";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import HospCheck from "@/components/jobs/HospCheck";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 /** 🔎 병원 실체 체크 — 다니는/다녔던 병원 30초 익명 체크 */
 export default async function CheckPage({ searchParams }: { searchParams: { id?: string } }) {
   const s = (await getSession())!; const d = db(); const id = Number(searchParams.id) || 0;
+  if (s.role !== "admin" && memoOnce("chkopen:" + s.id, 30 * 60_000)) d.from("events").insert({ kind: "chkopen", user_id: s.id, text: String(id || "") }).then(() => {}, () => {}); // 🎯 체크 화면까지 왔는지 (관리자 '진짜 유저 10명' 퍼널)
   const { data: h } = id ? await d.from("hospitals").select("id,name,region,kind").eq("id", id).maybeSingle() : { data: null };
   const { data: mine } = h ? await d.from("game_state").select("state").eq("user_id", s.id).eq("game", factKey(h.id)).maybeSingle() : { data: null };
   return <div className="detail hc-page">

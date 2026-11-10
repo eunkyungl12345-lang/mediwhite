@@ -1,3 +1,4 @@
+import { memo } from "./memo";
 import { db } from "./supabase";
 import { aggregate, SMALL_N, MIN_N, type FactAgg, type HFact } from "./hospFacts";
 /** 병원 id들 → 실체 체크 집계 */
@@ -47,4 +48,12 @@ export async function shiftCompare() {
   const grp = (f: (hid: number) => boolean) => { const g = rows.filter(r => f(r.hid)).map(r => r.s); return { n: g.length, a: aggregate(g), offPct: g.length ? Math.round(g.filter(x => x.off === 0).length / g.length * 100) : 0 }; };
   const dayHosp = hids.filter(h => local(K.get(h)));
   return { shift: grp(h => big(K.get(h))), day: grp(h => local(K.get(h))), dayHosp };
+}
+
+/** 🌱 아직 병원 체크·리뷰가 하나도 없는 회원인가 (첫인상 화면을 리뷰 중심으로 단순하게 보여줄 때 씀). 1분 캐시 */
+export async function isFresh(userId: string, role?: string): Promise<boolean> {
+  if (role === "admin") return false;
+  return memo("fresh:" + userId, 60_000, async () => { const d = db();
+    const [{ count: a }, { count: b }] = await Promise.all([d.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", userId).like("game", "hfact:%"), d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("user_id", userId)]);
+    return (a ?? 0) + (b ?? 0) === 0; });
 }

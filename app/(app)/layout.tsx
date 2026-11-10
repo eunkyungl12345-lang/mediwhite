@@ -1,4 +1,5 @@
 import CommTabs from "@/components/CommTabs";
+import { isFresh } from "@/lib/hospFactsDb";
 import BrandLogo from "@/components/BrandLogo";
 import Link from "next/link";
 import Bell from "@/components/Bell";
@@ -37,6 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!s) redirect("/login");
   const d = db();
   runSchedulers().catch(() => {});
+  const newbie = await isFresh(s.id, s.role); // 첫 체크 전: 운세·시세·당직실 같은 곁가지는 숨기고 리뷰에 집중
   if (memoOnce("visit:" + s.id, 30 * 60_000)) { d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {}); bump(s.id, "visit").catch(() => {}); }
   const [{ data: me }, { data: msgs }, { pub }, { data: offs }, roomsOn] = await Promise.all([
     d.from("users").select("id,dept,xp,stealth,onboarded,birth_date,birth_time,fortune_name").eq("id", s.id).maybeSingle(),
@@ -63,7 +65,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       <Tabs admin={s.role === "admin"} />
-      <OnlyOn prefixes={["/home", "/news", "/fortune"]}><Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense></OnlyOn>
+      {!newbie && <OnlyOn prefixes={["/home", "/news", "/fortune"]}><Suspense fallback={<div className="tb" />}><TodayBar birth={me ? { date: (me as any).birth_date, time: (me as any).birth_time, name: (me as any).fortune_name } : null} /></Suspense></OnlyOn>}
       {pub && <PushSetup vapidPublic={pub} />}
       <main><CommTabs />{children}</main>
       <BottomNav />
@@ -71,7 +73,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <PromoToast />
       <Onboarding show={!!me && !me.onboarded} />
       </div>
-      <Suspense fallback={<aside className="rail" />}><RightRail rank={rank} xp={me?.xp ?? 0} nick={s.nickname} dept={s.dept} /></Suspense>
+      <Suspense fallback={<aside className="rail" />}><RightRail rank={rank} xp={me?.xp ?? 0} nick={s.nickname} dept={s.dept} fresh={newbie} /></Suspense>
       <ChatDock me={s} initial={(msgs ?? []).reverse()} myRank={String(rank.index)} official={official} online={<Presence user={s} stealth={!!me?.stealth} />} roomsOn={roomsOn} />
     </div>
   );

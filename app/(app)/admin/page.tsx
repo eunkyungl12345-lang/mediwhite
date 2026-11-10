@@ -4,6 +4,7 @@ import { XrayPhotoAdmin } from "@/components/XrayGallery";
 import { pendingXrayPhotos } from "@/lib/xrayPhotoDb";
 import AdminFocus from "@/components/AdminGrowth";
 import AdminLock from "@/components/AdminLock";
+import AdminTen from "@/components/AdminTen";
 import AdminPromo from "@/components/AdminPromo";
 import { lockMode } from "@/lib/hospFactsDb";
 import { getFocus } from "@/lib/focus";
@@ -83,7 +84,8 @@ export default async function AdminPage() {
     <div className="games">
       <Stats series={series} totals={{ users: (signups ?? []).length, today: series[series.length - 1]?.visitors ?? 0, msg24h: msg24 ?? 0, posts: postsAll ?? 0, games24h: scores24 ?? 0 }} />
       <div className="card" id="kpi">
-        <h3>📈 핵심 지표 (최근 7일)</h3>
+        <h3>🎯 진짜 유저 10명 (11/17 목표)</h3><AdminTen />
+        <h3 style={{ marginTop: 12 }}>📈 핵심 지표 (최근 7일)</h3>
         <div className="kpi">
           <div><b>{kpi.verifiedPeople}</b><span>인증된 의료인<br /><small>재직·퇴사 인증 + 골드뱃지</small></span></div>
           <div><b>{kpi.openH}</b><span>정보 공개된 병원<br /><small>체크 {MIN_N}명↑ · 체크 있는 병원 {kpi.anyH}</small></span></div>
