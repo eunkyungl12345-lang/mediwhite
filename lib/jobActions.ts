@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "./supabase";
 import { saveDistrict } from "./districtDb";
 import { getSession, type Session } from "./auth";
-import { personMention } from "./safety";
+import { reviewProblem } from "./safety";
 import { awardXp } from "./xp";
 import { JOB_REGIONS, JOB_DEPTS, EMP_TYPES, HOSP_KINDS, RATING_KEYS } from "./jobs";
 import { pushToUsers } from "./push";
@@ -65,7 +65,7 @@ export async function createReview(_: R, fd: FormData): Promise<R> {
   if (!inList(JOB_DEPTS, dept)) return { error: "직종을 골라주세요" };
   if (!["재직", "퇴사"].includes(status)) return { error: "재직/퇴사를 골라주세요" };
   if (!pros.trim() && !cons.trim()) return { error: "장점이나 단점을 적어주세요" };
-  for (const t of [pros, cons, tip]) { const pm = personMention(t); if (pm) return { error: `특정인을 알 수 있는 표현("${pm}")은 뺄게요. 사람이 아니라 병원에 대한 후기만!` }; }
+  for (const t of [pros, cons, tip]) { const rp = reviewProblem(t); if (rp) return { error: rp }; }
   if (!hospitalId) {
     if (!name || !inList(JOB_REGIONS, region)) return { error: "병원명과 지역을 적어주세요" };
     if (!inList(HOSP_KINDS, kind)) return { error: "병원 종류를 골라주세요" };
@@ -146,8 +146,8 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
   const overall = Number(fd.get("st_overall")); if (!(overall >= 1 && overall <= 5)) return { error: "총평점을 매겨주세요" };
   const rec = Number(fd.get("rec")), future = Number(fd.get("future")); if (![0, 1].includes(rec) || fd.get("rec") === null) return { error: "추천 여부를 골라주세요" }; 
   const pros = clean(fd.get("pros"), 1000), cons = clean(fd.get("cons"), 1000), emp = clean(fd.get("emp"), 10);
-  for (const [v, n] of [[pros, "장점"], [cons, "단점"]] as const) if (v) { const tp = textProblem(v, 20); if (tp) return { error: `${n}: ${tp}` }; const pm = personMention(v); if (pm) return { error: `${n}에 특정인을 알 수 있는 표현("${pm}")은 빼주세요` }; }
-  const word = clean(fd.get("last"), 100); if (word) { const tp = textProblem(word, 10); if (tp) return { error: `한줄평: ${tp}` }; const pm = personMention(word); if (pm) return { error: `특정인을 알 수 있는 표현("${pm}")은 빼주세요. 사람이 아니라 병원에 대한 한마디만!` }; }
+  for (const [v, n] of [[pros, "장점"], [cons, "단점"]] as const) if (v) { const tp = textProblem(v, 20); if (tp) return { error: `${n}: ${tp}` }; const rp = reviewProblem(v); if (rp) return { error: `${n}: ${rp}` }; }
+  const word = clean(fd.get("last"), 100); if (word) { const tp = textProblem(word, 10); if (tp) return { error: `한줄평: ${tp}` }; const rp = reviewProblem(word); if (rp) return { error: `한줄평: ${rp}` }; }
   if (status === "퇴사") {
     const reasons = fd.getAll("reason").map(String).filter(r => inList(EXIT_REASONS, r)); if (!reasons.length && fd.get("more") === "1") return { error: "퇴사 사유를 하나 이상 골라주세요" };
     exit = { reasons };

@@ -34,3 +34,13 @@ export function placeMention(text: string): string | null {
   if (val.includes("썸류센터") || val.includes("메디화이트")) return null;
   return val;
 }
+
+/** 🔞 리뷰 금칙어 (2026-11-11): 실명·직함 검사는 빼고, 19금·욕설과 전화번호만 막아요.
+ *  '해보지 않았다', '곱씹어'처럼 흔한 말이 걸리지 않게 확실한 표현만 넣었어요 */
+const ADULT = /(섹스|섹쓰|쎅스|야동|포르노|좆|좃같|씨발|씨팔|씨바|시발(?!점)|ㅅㅂ|ㅆㅂ|씹새|씹년|씹창|씹할|병신|ㅂㅅ|개새끼|개새(?![가-힣])|미친새끼|새끼야|지랄|ㅈㄹ|창녀|걸레년|강간|딸딸이|엠창|니미|느금|따먹|꼴리|보빨|자위)/;
+const PHONE = /010[-\s.]?\d{3,4}[-\s.]?\d{4}/;
+export function reviewProblem(text: string): string | null {
+  const a = text.match(ADULT); if (a) return `19금·욕설 표현("${a[0]}")은 쓸 수 없어요`;
+  if (PHONE.test(text)) return "전화번호는 적을 수 없어요";
+  return null;
+}
