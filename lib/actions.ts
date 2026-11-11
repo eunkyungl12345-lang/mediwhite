@@ -46,7 +46,8 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   if (!nickname) return { error: "닉네임을 입력해주세요" };
   if (!(DEPTS as readonly string[]).includes(dept)) return { error: "직종을 선택해주세요" };
   if (dept === "업체" && !(VENDOR_FIELDS as readonly string[]).includes(field)) return { error: "업체 분야를 선택해주세요" };
-  const s = db(), role = admins().includes(username) ? "admin" : "member", test = username.startsWith("zz_");
+  if (admins().includes(username) || /^(admin|administrator|root|sysop|manager|master|operator|official|staff|support|helpdesk|mediwhite|medi_white|mw_)|admin$|gwanlija|unyoung/.test(username)) return { error: "이 아이디는 쓸 수 없어요. 다른 아이디로 가입해주세요" };
+  const s = db(), role = "member", test = username.startsWith("zz_"); // 🔒 가입으로는 관리자가 될 수 없어요 (관리자는 DB에서만 지정)
   // 닉네임·아이디 검사, 순번 세기, 비밀번호 해시를 동시에 (가입 버튼 뒤 기다리는 시간 줄이기)
   const [np, { data: exists }, { count }, password_hash] = await Promise.all([nickProblem(nickname, dept, role), s.from("users").select("id").eq("username", username).maybeSingle(), s.from("users").select("id", { count: "exact", head: true }).eq("stealth", false).not("username", "like", "zz\\_%"), bcrypt.hash(password, 10)]);
   if (np) return { error: np };

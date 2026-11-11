@@ -12,7 +12,7 @@ import FactBox from "@/components/jobs/FactBox";
 import ExtraReviews from "@/components/jobs/ExtraReviews";
 import BragCard from "@/components/jobs/BragCard";
 import { loadBrags } from "@/lib/bragDb";
-import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
+import { loadFacts, hasContributed, founderOf } from "@/lib/hospFactsDb";
 import ShareHosp from "@/components/jobs/ShareHosp";
 export async function generateMetadata({ params }: { params: { id: string } }) { const { data } = await db().from("hospitals").select("name").eq("id", Number(params.id)).maybeSingle(); return { title: data?.name ? `${data.name} 리뷰 — 실수령·분위기` : "병원 리뷰" }; }
 import { loadDistricts } from "@/lib/districtDb";
@@ -54,7 +54,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const { data: myJobs } = await d.from("jobs").select("id,dept,emp_type,deadline,welfare,author:users!jobs_author_id_fkey(username)").eq("closed", false).eq("hidden", false).eq("hospital", h.name).eq("region", h.region).limit(30);
   const cur = rs.filter(r => r.status === "재직").length;
   const [facts, { data: myFact }, brags] = await Promise.all([loadFacts([id]), d.from("game_state").select("user_id").eq("user_id", s.id).eq("game", factKey(id)).maybeSingle(), loadBrags(s.id, { hid: id })]);
-  const { data: myV } = await d.from("game_state").select("state").eq("user_id", s.id).eq("game", vKey(id)).maybeSingle(); const vstat = (myV?.state as any)?.status ?? null; const [contributed, distm, npsm] = await Promise.all([hasContributed(s.id, s.role, id), loadDistricts([id]), loadNps([id])]); const nps = npsm[id]; const locked = !contributed, gu = distm[id]; const fa = facts[id] ?? aggregate([]); const score = fa.starN >= (fa.need ?? MIN_N) ? fa.overallAvg : rs.length ? overall(rs) : 0;
+  const { data: myV } = await d.from("game_state").select("state").eq("user_id", s.id).eq("game", vKey(id)).maybeSingle(); const vstat = (myV?.state as any)?.status ?? null; const [contributed, distm, npsm] = await Promise.all([hasContributed(s.id, s.role, id), loadDistricts([id]), loadNps([id])]); const nps = npsm[id]; const locked = !contributed, gu = distm[id], founderNo = searchParams.checked ? await founderOf(s.id, true) : null; const fa = facts[id] ?? aggregate([]); const score = fa.starN >= (fa.need ?? MIN_N) ? fa.overallAvg : rs.length ? overall(rs) : 0;
   const t = ["pay", "intv", "welfare", "note", "jobs"].includes(searchParams.t ?? "") ? searchParams.t! : "rev";
   const [{ data: ivRows }, { data: hfFull }] = await Promise.all([d.from("game_state").select("user_id,state").eq("game", ivKey(id)).limit(500), d.from("game_state").select("user_id,state").eq("game", factKey(id)).limit(1000)]);
   const ivs = (ivRows ?? []).map(r => ({ uid: r.user_id, ...(r.state as Interview) })).sort((a, b) => b.at.localeCompare(a.at)), myIv = ivs.some(x => x.uid === s.id);
@@ -83,6 +83,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <div className="hh-score">★ <b>{score ? score.toFixed(1) : "-"}</b><small>{fa.n + rs.length ? `리뷰 ${fa.n + rs.length}` : "아직 평가 없음"}</small></div>
       </div>
       <nav className="hh-tabs">{([["rev", `리뷰 ${rs.length + fa.n || ""}`], ["pay", "급여"], ["intv", `면접 ${ivs.length || ""}`], ["welfare", "복지"], ["note", "인계장"], ["jobs", `채용 ${myJobs?.length || ""}`]] as [string, string][]).map(([k, n]) => <Link key={k} href={tabHref(k)} className={t === k ? "on" : ""} scroll={false}>{n}</Link>)}</nav>
+      {searchParams.checked && founderNo && <div className="fb-thanks fd">🏅 <b>창립 멤버 {founderNo}호</b>가 되셨어요! 이제 모든 병원을 평생 볼 수 있어요.</div>}
       {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요. <b>+50 XP</b>{vstat !== "approved" && <> · <Link href={`/hospitals/verify?id=${id}`} className="link"><b>✅ 명찰/서류로 인증하면 더 믿을 만해져요 →</b></Link></>}</div>}
       {t === "rev" && <>
       <section className="rv2-stat">

@@ -40,7 +40,7 @@ export default function AuthForm({ refCode, next, initialMode, promoUntil }: { r
         </form>
       ) : (
         <form action={signupAction} className="form">
-          {promoUntil && <div className="auth-perk">🎉 {Number(promoUntil.slice(5, 7))}월 {Number(promoUntil.slice(8))}일까지 가입 즉시 모든 병원 실수령 &amp; 분위기 무료 열람!</div>}
+          {promoUntil && <div className="auth-perk">{Number(promoUntil.slice(5, 7))}월 {Number(promoUntil.slice(8))}일까지 병원 1곳만 제보하면 🏅 창립 멤버(선착순 100명) · 평생 열람</div>}
           {refCode && <><input type="hidden" name="ref" value={refCode} /><div className="muted">초대 링크로 오셨어요 (초대한 사람: {refCode})</div></>}
           <input name="username" placeholder="아이디 (영문 소문자·숫자 3~20자)" autoComplete="username" required />
           <input name="password" type="password" placeholder="비밀번호 (8자 이상)" minLength={8} autoComplete="new-password" required />
