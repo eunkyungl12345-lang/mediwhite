@@ -21,11 +21,11 @@ async function loadFactsRaw(hids?: number[]): Promise<Record<number, FactAgg>> {
 }
 /** 열람 잠금 방식 (관리자 설정 settings.lock_mode): off = 모두 열람 / free3 = 병원 3곳까지 무료 / on = 체크해야 열람 */
 export type LockMode = "off" | "free3" | "on";
-/** 🏅 창립 멤버 모집 마감일 (settings.open_promo = "YYYY-MM-DD"). 2026-11-11부터 '전부 무료 열람'이 아니라 '이 날까지 제보한 선착순 100명 = 평생 열람'으로 씀 */
+/** 🏅 창립 멤버 모집 마감일 (settings.open_promo = "YYYY-MM-DD"). 2026-11-11부터 '전부 무료 열람'이 아니라 '이 날까지 제보한 선착순 30명 = 평생 열람'으로 씀 */
 export async function promoUntil(): Promise<string | null> { const { memo } = await import("./memo"); return memo("open_promo", 60_000, async () => { const { data } = await db().from("settings").select("value").eq("key", "open_promo").maybeSingle(); const v = data?.value ?? ""; const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(v) && v >= today ? v : null; }); }
 export async function lockMode(): Promise<LockMode> { const { memo } = await import("./memo"); return memo("lock_mode", 60_000, async () => { const { data } = await db().from("settings").select("value").eq("key", "lock_mode").maybeSingle(); const v = data?.value; return v === "off" || v === "free3" ? v : "on"; }); }
-/** 🏅 창립 멤버 — 모집 기간에 병원 제보를 남긴 선착순 100명. 배지 + 평생 전체 열람 */
-export const FOUNDER_MAX = 100;
+/** 🏅 창립 멤버 — 모집 기간에 병원 제보를 남긴 선착순 30명. 배지 + 평생 전체 열람 */
+export const FOUNDER_MAX = 30;
 export async function founderCount(): Promise<number> { return memo("founder_n", 30_000, async () => (await db().from("game_state").select("user_id", { count: "exact", head: true }).eq("game", "founder")).count ?? 0); }
 export async function founderLeft(): Promise<number> { return (await promoUntil()) ? Math.max(0, FOUNDER_MAX - await founderCount()) : 0; }
 /** again=true: 같은 화면 안에서 방금 창립 멤버가 됐는지 다시 읽을 때 (같은 요청의 동일 조회는 Next가 한 번만 보내서, 조회 모양을 달리함) */

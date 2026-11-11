@@ -99,7 +99,7 @@ export default async function AdminPage() {
           <div><b>{kpi.out7}</b><span>공고 원문 지원 클릭</span></div>
         </div>
         <h3 style={{ marginTop: 12 }}>🔐 리뷰 열람 잠금</h3><AdminLock cur={await lockMode()} />
-        <h3 style={{ marginTop: 12 }}>🏅 창립 멤버 모집 마감일 <small className="muted">(이 날까지 제보한 선착순 100명 = 평생 열람)</small></h3><AdminPromo cur={(await db().from("settings").select("value").eq("key", "open_promo").maybeSingle()).data?.value ?? ""} />
+        <h3 style={{ marginTop: 12 }}>🏅 창립 멤버 모집 마감일 <small className="muted">(이 날까지 제보한 선착순 30명 = 평생 열람)</small></h3><AdminPromo cur={(await db().from("settings").select("value").eq("key", "open_promo").maybeSingle()).data?.value ?? ""} />
         <h3 style={{ marginTop: 12 }}>📍 집중 지역</h3><AdminFocus cur={focus} />
       </div>
       <div className="card" id="takedown">
