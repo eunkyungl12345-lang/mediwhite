@@ -70,6 +70,7 @@ export async function submitQuickReview(_: R, fd: FormData): Promise<R> {
   if (!(overall >= 1 && overall <= 5)) return { error: "별점을 매겨주세요" };
   if (!pros && !cons) return { error: "장점이나 단점 중 하나는 적어주세요" };
   for (const [v, n] of [[pros, "장점"], [cons, "단점"]] as const) if (v) { const rp = reviewProblem(v); if (rp) return { error: `${n}: ${rp}` }; }
+  const rpRaw = String(fd.get("regular_pct") ?? "").trim(), rpN = Math.round(Number(rpRaw)); if (rpRaw !== "" && !(Number.isFinite(rpN) && rpN >= 0 && rpN <= 100)) return { error: "정규직 전환율은 0~100 사이 숫자로 적어주세요" };
   if (pay && !inList(PAY, pay)) return { error: "실수령 구간을 다시 골라주세요" }; if (years && !inList(YEARS, years)) return { error: "연차를 다시 골라주세요" };
   if (!hid) {
     if (!name || !inList(JOB_REGIONS, region) || !inList(HOSP_KINDS, hk)) return { error: "병원을 찾거나, 새 병원 이름·지역·종류를 골라주세요" };
@@ -77,7 +78,7 @@ export async function submitQuickReview(_: R, fd: FormData): Promise<R> {
     if (ex) hid = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind: hk, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hid = h.id; await saveDistrict(h.id, region, String(fd.get("gu") ?? "")).catch(() => {}); }
   }
   const key = factKey(hid); const { data: prev } = await s.from("game_state").select("state").eq("user_id", u.id).eq("game", key).maybeSingle();
-  const state = { ...((prev?.state as any) ?? {}), dept, status, cat, rec3, rec: rec3 === 0 ? 1 : rec3 === 2 ? 0 : undefined, overall, pros: pros || undefined, cons: cons || undefined, ...(pay ? { pay } : {}), ...(years ? { years } : {}), at: new Date().toISOString() };
+  const state = { ...((prev?.state as any) ?? {}), dept, status, cat, rec3, rec: rec3 === 0 ? 1 : rec3 === 2 ? 0 : undefined, overall, pros: pros || undefined, cons: cons || undefined, ...(pay ? { pay } : {}), ...(years ? { years } : {}), ...(rpRaw !== "" ? { regularPct: rpN } : {}), at: new Date().toISOString() };
   const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
   if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");
