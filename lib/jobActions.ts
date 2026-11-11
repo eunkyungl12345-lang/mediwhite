@@ -139,6 +139,8 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
   if (!inList(JOB_DEPTS, dept)) return { error: "직종을 골라주세요" };
   // 빠른 체크: 실제 퇴근(late)만 필수, 나머지 분위기·현장 항목은 '더 알려주기'에서 (답한 것만 저장)
   const mood: Record<string, number> = {}; for (const m of MOOD) { const raw = fd.get(m.k); if (raw === null || raw === "") { if (m.k === "late") return { error: `'${m.q}'를 골라주세요` }; continue; } const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v < m.opts.length) mood[m.k] = v; }
+  const rpRaw = String(fd.get("regular_pct") ?? "").trim(), rpN = Math.round(Number(rpRaw)); if (rpRaw !== "" && !(Number.isFinite(rpN) && rpN >= 0 && rpN <= 100)) return { error: "정규직 전환율은 0~100 사이 숫자로 적어주세요" };
+  const regularPct = rpRaw === "" ? undefined : rpN;
   const risks = fd.getAll("risk").map(String).filter(r => RISKS.some(x => x.k === r)); const good = fd.get("good") === "1" && !risks.length;
   let exit: Record<string, any> = {};
   const stars: Record<string, number> = {}; for (const st of EXIT_STARS) { const v = Number(fd.get("st_" + st.k)); if (v >= 1 && v <= 5) stars[st.k] = v; }
@@ -153,7 +155,7 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
     exit = { reasons };
   }
   const key = factKey(hid); const { data: prev } = await s.from("game_state").select("user_id").eq("user_id", u.id).eq("game", key).maybeSingle();
-  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, shift, emp: emp || undefined, pros: pros || undefined, cons: cons || undefined, ...mood, stars: Object.keys(stars).length ? stars : undefined, overall, rec, future: [0, 1, 2].includes(future) && fd.get("future") !== null && fd.get("future") !== "" ? future : undefined, risks, good, ...exit, last: word || undefined, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
+  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, shift, regularPct, emp: emp || undefined, pros: pros || undefined, cons: cons || undefined, ...mood, stars: Object.keys(stars).length ? stars : undefined, overall, rec, future: [0, 1, 2].includes(future) && fd.get("future") !== null && fd.get("future") !== "" ? future : undefined, risks, good, ...exit, last: word || undefined, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
   if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");
   if (pros && cons) await awardXp(u.id, 20, `hfactpc:${hid}`, "quest");

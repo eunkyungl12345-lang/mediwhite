@@ -20,7 +20,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
   const [q, setQ] = useState(""), [hits, setHits] = useState<any[]>([]), [picked, setPicked] = useState(hospital ?? null), [isNew, setIsNew] = useState(false);
   const [risk, setRisk] = useState<string[]>(mine?.risks ?? []), [good, setGood] = useState(mine?.good ?? false), [status, setStatus] = useState(mine?.status ?? "재직"), [txt, setTxt] = useState(mine?.last ?? ""), [pros, setPros] = useState((mine as any)?.pros ?? ""), [cons, setCons] = useState((mine as any)?.cons ?? "");
   // 빠른 체크(3문항) → 여기서 끝내거나 '더 알려주기'
-  const [more, setMore] = useState(false);
+  const [more, setMore] = useState(false), [rp, setRp] = useState(typeof (mine as any)?.regularPct === "number" ? String((mine as any).regularPct) : "");
   const steps: string[] = [...(hospital ? [] : ["hosp"]), "me", "pay", "quick", ...(more ? ["mood", "field", "real", "star", "future", "risk", "pc", "word"] : ["fork"])];
   const [i, setI] = useState(0), [err, setErr] = useState(""); const cur = steps[i], last = i === steps.length - 1;
   const search = async (v: string) => { setQ(v); setPicked(null); setIsNew(false); setHits(v.trim() ? await searchHospitals(v) : []); };
@@ -81,7 +81,11 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
       {MOOD.filter(isField).map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={m.opts.map((_, i) => i)} def={(mine as any)?.[m.k]} big /></div>)}</div>
 
     <div style={show("real")} className="wz-step"><h3>💼 공고랑 현실, 얼마나 달라요?</h3><p>다음 지원자가 제일 궁금해하는 것들이에요. 실제 퇴근, 잡무, 인센티브, 연차 방식, 원장 스타일.</p>
-      {MOOD.filter(m => isReal(m) && m.k !== "late").map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={m.opts.map((_, i) => i)} def={(mine as any)?.[m.k]} big /></div>)}</div>
+      {MOOD.filter(m => isReal(m) && m.k !== "late").map(m => <div key={m.k} className="hc-q"><b>{m.q}</b><Chips name={m.k} opts={m.opts} values={m.opts.map((_, i) => i)} def={(mine as any)?.[m.k]} big /></div>)}
+      <div className="hc-q hc-pct"><b>계약직의 정규직 전환율, 체감상 몇 %인가요? <small>(선택)</small></b>
+        <div className="hc-pctrow"><input type="number" name="regular_pct" inputMode="numeric" min={0} max={100} step={5} value={rp} onChange={e => setRp(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))} placeholder="예: 20" aria-label="체감 정규직 전환율 (%)" /><span>%</span>
+          <div className="hc-pctq">{[0, 10, 30, 50, 70, 90].map(v => <button key={v} type="button" className={rp === String(v) ? "on" : ""} onClick={() => setRp(String(v))}>{v}%</button>)}<button type="button" className={rp === "" ? "on" : ""} onClick={() => setRp("")}>잘 몰라요</button></div></div>
+        <small className="muted">내 직종 기준으로, 계약직 10명 중 몇 명쯤 정규직이 되는지 느낌대로 적어주세요. 계약직이 없으면 비워두세요.</small></div></div>
 
     <div style={show("star")} className="wz-step"><h3>⭐ 항목별 별점</h3>
       {EXIT_STARS.map(s => <div key={s.k} className="hc-srow"><span>{s.icon} {s.name}</span><Star5 name={"st_" + s.k} def={mine?.stars?.[s.k]} /></div>)}</div>
