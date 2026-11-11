@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { login, signup, findUsername, type FormState } from "@/lib/actions";
 import { DEPTS, DEPT_GROUPS, VENDOR_FIELDS, deptLabel, display } from "@/lib/depts";
+import { KakaoSymbol, NaverSymbol, GoogleSymbol } from "@/components/BrandIcons";
 
 function Submit({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "잠시만요…" : label}</button>; }
 
@@ -17,9 +18,9 @@ export default function AuthForm({ refCode, next, initialMode, promoUntil, oauth
   return (
     <>
       {oauthError && <div className="error" style={{ marginBottom: 10 }}>{oauthError}</div>}
-      <a href="/api/auth/kakao" className="btn-kakao"><span className="kakao-ico" aria-hidden>💬</span> 카카오로 3초 시작</a>
-      <a href="/api/auth/naver" className="btn-naver"><span className="naver-ico" aria-hidden>N</span> 네이버로 시작</a>
-      <a href="/api/auth/google" className="btn-google"><span className="google-ico" aria-hidden>G</span> Google로 시작</a>
+      <a href="/api/auth/kakao" className="btn-kakao"><KakaoSymbol size={18} /> 카카오로 3초 시작</a>
+      <a href="/api/auth/naver" className="btn-naver"><NaverSymbol size={16} /> 네이버로 시작</a>
+      <a href="/api/auth/google" className="btn-google"><GoogleSymbol size={18} /> Google로 시작</a>
       <div className="muted" style={{ fontSize: 12, textAlign: "center" }}>처음이면 직종만 고르면 끝나요 · 기존 회원은 바로 입장</div>
       <div className="auth-divider"><span>또는 아이디로 로그인</span></div>
       <div className="switch" role="tablist">
