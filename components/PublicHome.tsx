@@ -29,6 +29,17 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
       <form action="/" className="jb2-search"><input name="q" defaultValue={kw} placeholder="지원할 병원 이름 검색 (예: 연세, 정형외과)" /><button className="btn">검색</button></form>
       {kw && <div className="pub-hosp">{(hs ?? []).length ? (hs ?? []).map(h => <Link key={h.id} href={`/h/${h.id}`}><b>🏥 {h.name}</b><small>{h.region} · {h.kind}</small></Link>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>‘{kw}’ 병원이 아직 없어요. <Link href={signup("/hospitals/check")} className="link">처음 등록하고 리뷰 남기기</Link></p>}</div>}
     </section>
+    <section className="f3" aria-label="공고에는 없는 3가지 팩트"><span className="f3-kick">공고에는 절대 안 나오는 3가지</span>
+      <div className="f3-list">
+        <Link href={signup("/hospitals")} className="f3-c r"><em>01</em><b>2년 뒤,<br />정규직 될까?</b><p>“전환 가능”이라 써놓고 2년마다 물갈이하는 병원. 다녀본 사람이 알려줘요.</p>
+          <div className="f3-ex"><span className="f3-sig">🚨 2년 만기퇴사 주의군</span><span className="f3-sig g">🌱 정규직 전환 안정권</span><i>이렇게 보여요 (예시)</i></div><span className="f3-go">🔒 가입하고 열어보기 ›</span></Link>
+        <Link href={signup("/hospitals")} className="f3-c g"><em>02</em><b>통장에 진짜<br />얼마 찍힐까?</b><p>“내규에 따름” 뒤에 숨은 세후 실수령. 직종·연차별로 확인하세요.</p>
+          <div className="f3-ex"><span className="f3-num">세후 월 <u>███</u>만 원</span><i>이렇게 보여요 (예시)</i></div><span className="f3-go">🔒 가입하고 열어보기 ›</span></Link>
+        <Link href={signup("/hospitals")} className="f3-c y"><em>03</em><b>진짜 몇 시에<br />퇴근할까?</b><p>공고엔 6시 퇴근, 현실은? 오버타임 수당·인계·잡무까지.</p>
+          <div className="f3-ex"><span className="f3-num">공고보다 <u>███</u> 늦게 퇴근</span><i>이렇게 보여요 (예시)</i></div><span className="f3-go">🔒 가입하고 열어보기 ›</span></Link>
+      </div>
+      <Link href={signup("/hospitals")} className="btn f3-btn">30초 가입하고 3가지 팩트 열어보기</Link><small className="f3-note">아이디·닉네임만 있으면 돼요. 실명·전화번호 안 받아요.</small>
+    </section>
     <Link href="/pay" className="fc"><span className="fc-ico">💳</span><div><b>내 통장 실수령 카드 만들기</b><small>연봉 넣으면 실수령·진짜 시급이 나와요 · 병원 이름 없이 단톡방 공유 · <em>가입 없이</em></small></div><span className="fc-go">›</span></Link>
     <OpenPromo href="/login?mode=signup" />
     <section id="ext" className="pub-sec"><h2>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h2><div className="pb-ex"><small>다녀본 사람 리뷰가 모이면 이런 뱃지가 붙어요 <b>(예시)</b></small><PosBadges list={["⏰ 정시 퇴근", "🙆 원장 터치 적음", "🌴 주5일 + 연차 따로"]} /></div>

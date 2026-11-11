@@ -14,8 +14,7 @@ export default async function CheckPage({ searchParams }: { searchParams: { id?:
   const { data: mine } = h ? await d.from("game_state").select("state").eq("user_id", s.id).eq("game", factKey(h.id)).maybeSingle() : { data: null };
   return <div className="detail hc-page">
     <Link className="link" href={h ? `/hospitals/${h.id}` : "/jobs"}>← {h ? h.name : "채용"}</Link>
-    <h2 style={{ margin: "8px 0 4px" }}>🛡️ {h ? `${h.name} 팩트 제보` : "병원 팩트 제보"}</h2>
-    <p className="muted" style={{ margin: "0 0 12px", fontSize: 13.5, lineHeight: 1.6 }}>전부 <b>익명</b>이에요. 하나만 남겨도 6개월간 모든 병원의 고용 현실·실수령이 열려요.</p>
+    <h2 style={{ margin: "8px 0 10px" }}>{h ? `${h.name}, 어땠나요?` : "다녀본 병원, 10초만 알려주세요"}</h2>
     <ReviewWrite hospital={h} dept={s.dept} mine={(mine?.state as any) ?? null} t0={searchParams.t === "pay" || searchParams.t === "alba" ? searchParams.t : "hosp"} />
   </div>;
 }

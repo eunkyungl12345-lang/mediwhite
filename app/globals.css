@@ -2478,3 +2478,31 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .hs-row.t9{background:rgba(255,255,255,.1);color:#fff;border-left-color:rgba(255,255,255,.35)}.hs-row.t9 small{color:rgba(255,255,255,.78)}.hs-row.t9 b{font-size:15px}
 .hs-a2{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:rgba(255,255,255,.85)}.hs-a2 em{font-style:normal;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff}.hs-a2 em b{color:#8FE9C4}
 .hs-cta{justify-self:start;font-size:13px;font-weight:700;color:#8FE9C4;text-decoration:none;padding:4px 0}
+
+/* ✂️ 10초 제보 폼 — 병원 + 칩 하나 */
+.q1-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.q1-tabs button{all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;display:grid;place-items:center;text-align:center;padding:6px 4px;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--muted);word-break:keep-all}
+.q1-tabs button.on{background:#0F3A2E;color:#7BF0C2}.q1-tabs button:focus-visible{outline:2px solid var(--scrub);outline-offset:1px}
+.q1-tip{margin:0;font-size:13.5px;line-height:1.55;color:var(--muted);word-break:keep-all}
+.q1{gap:18px}.q1-q{font-size:18px;font-weight:800;line-height:1.35;color:var(--ink);word-break:keep-all}
+.q1 .fq-pills.wide .fq-pill span{min-height:72px;padding:14px}.q1 .fq-pill b{font-size:15px}
+.q1-me{margin:-6px 0 0;font-size:13.5px;color:var(--muted)}.q1-me b{color:var(--ink)}.q1-me button{all:unset;cursor:pointer;margin-left:6px;text-decoration:underline;font-size:13px;padding:8px 4px}
+.q1-edit{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px;margin-top:-6px}.q1-edit select{min-height:44px;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:14.5px}
+.q1-more{border-top:1px solid var(--line);padding-top:12px}.q1-more summary{cursor:pointer;font-size:14px;font-weight:700;color:var(--ink);padding:6px 0;list-style:none}.q1-more summary::-webkit-details-marker{display:none}.q1-more summary::after{content:" ＋";color:var(--muted)}.q1-more[open] summary::after{content:" －"}
+.q1-more summary small{font-weight:500;color:var(--muted)}.q1-more[open]{display:grid;gap:14px}
+.q1 .hc-send{min-height:52px;font-size:16px}.q1-safe{margin:-8px 0 0;text-align:center;font-size:12.5px;color:var(--muted)}
+@media (max-width:480px){.q1 .fq-pills.wide{grid-template-columns:repeat(2,minmax(0,1fr))}.q1 .fq-pill b{font-size:14px}}
+/* 🌐 첫 화면 — 공고에는 없는 3가지 팩트 */
+.f3{display:grid;gap:12px;padding:20px 16px;border-radius:22px;background:linear-gradient(165deg,#081A16 0%,#0E3027 70%,#134537 100%);color:#F1FBF7}
+.f3-kick{font-size:13px;font-weight:800;letter-spacing:.04em;color:#5FE3B0}
+.f3-list{display:grid;gap:10px}@media (min-width:860px){.f3-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.f3-c{position:relative;display:grid;gap:8px;align-content:start;padding:18px 16px 14px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#F1FBF7;text-decoration:none;min-width:0}
+.f3-c em{font-style:normal;font-size:12px;font-weight:800;letter-spacing:.12em;color:#5FE3B0;font-variant-numeric:tabular-nums}.f3-c.r em{color:#FF8C82}.f3-c.y em{color:#FFD166}
+.f3-c>b{font-size:27px;line-height:1.22;letter-spacing:-.03em;font-weight:800;word-break:keep-all}
+.f3-c p{margin:0;font-size:13.5px;line-height:1.6;color:rgba(241,251,247,.78);word-break:keep-all}
+.f3-ex{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px;border-radius:12px;background:rgba(0,0,0,.28)}.f3-ex i{font-style:normal;font-size:11px;color:rgba(241,251,247,.6);flex-basis:100%}
+.f3-sig{font-size:13px;font-weight:800;padding:6px 10px;border-radius:9px;background:#FFF1F0;color:#8E1F1F}.f3-sig.g{background:#E9F9F2;color:#0B4A38}
+.f3-num{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}.f3-num u{text-decoration:none;filter:blur(3px);color:#5FE3B0;letter-spacing:.04em}
+.f3-go{font-size:13px;font-weight:800;color:#5FE3B0}
+.f3-btn{min-height:54px;font-size:16.5px;font-weight:800;background:#5FE3B0;color:#06231B;border:0;display:grid;place-items:center;text-align:center;text-decoration:none;border-radius:14px}
+.f3-note{font-size:12px;color:rgba(241,251,247,.65);text-align:center}
