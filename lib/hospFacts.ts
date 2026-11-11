@@ -33,7 +33,7 @@ export const isReal = (m: { k: string }) => ["late", "chores", "incent", "leave2
 /** 🌱 직종별 전환 현실에 늘 보여줄 4대 직종 (응답이 없어도 '첫 투표' 유도) */
 export const HIRE_DEPTS = ["간호사", "방사선", "임상병리", "물리치료"] as const;
 /** 체감 전환율(%) → 한 줄 판정. 70 이상 희망적 / 30 미만 만기퇴사 주의 / 그 사이 일부만 */
-export const hireLabel = (pct: number) => pct >= 70 ? { t: 0, s: "🌱 대부분 전환" } : pct < 30 ? { t: 2, s: "🚨 만기퇴사 많음" } : { t: 1, s: "🟡 일부만 전환" };
+export const hireLabel = (pct: number) => pct >= 70 ? { t: 0, s: "🌱 대부분 전환" } : pct < 10 ? { t: 2, s: "🚨 만기퇴사 많음" } : { t: 1, s: "🟡 일부만 전환" };
 export const RISKS = [
   { k: "parental", s: "육아휴직 불이익", label: "육아휴직 쓰기 어렵거나 쓰면 불이익" },
   { k: "pregnant", s: "임신 불이익", label: "임신하면 눈치·불이익" },
@@ -86,7 +86,7 @@ export function factLine(a?: FactAgg, locked?: boolean): string[] {
   const lt = a.mood.find(m => m.k === "late"); if (lt && lt.counts[2] > 0 && lt.counts[2] * 2 >= lt.counts.reduce((x, y) => x + y, 0)) out.push(`🕖 실제 퇴근 1시간+ ${lt.counts[2]}/${a.n}`);
   const ch = a.mood.find(m => m.k === "chores"); if (ch && ch.counts[2] > 0 && ch.counts[2] * 2 >= ch.counts.reduce((x, y) => x + y, 0)) out.push(`🧹 잡무 많음 ${ch.counts[2]}/${a.n}`);
   const lv = a.mood.find(m => m.k === "leave2"); if (lv && lv.counts[1] > 0 && lv.counts[1] * 2 >= lv.counts.reduce((x, y) => x + y, 0)) out.push(`⚠️ 연차로 만든 주5일 ${lv.counts[1]}/${a.n}`);
-  if (a.hireN >= BADGE_N && a.hireAvg < 30) out.push(`🚨 계약직 만기퇴사 주의 (체감 전환율 ${a.hireAvg}%)`);
+  if (a.hireN >= BADGE_N && a.hireAvg < 10) out.push(`🚨 계약직 만기퇴사 주의 (체감 전환율 ${a.hireAvg}%)`);
   if (a.risks[0]) out.push(`⚠️ ${a.risks[0].s} ${a.risks[0].n}/${a.n}`);
   return out;
 }

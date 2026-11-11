@@ -75,6 +75,8 @@ function ExtraForm({ kind, hospital, dept }: { kind: "pay" | "alba"; hospital?: 
 /** 🏥 병원 후기 — 한 화면에 딱딱 떨어지는 입력칸 (병원·직종·재직 상태·구분·추천·별점·장점/단점) */
 function QuickForm({ hospital, dept, mine }: { hospital?: Hosp | null; dept?: string; mine?: any }) {
   const [st, act] = useFormState(submitQuickReview, undefined); const [rec, setRec] = useState<number | null>(typeof mine?.rec3 === "number" ? mine.rec3 : mine?.rec === 1 ? 0 : mine?.rec === 0 ? 2 : null), [status, setStatus] = useState<string>(mine?.status ?? "재직"), [rp, setRp] = useState<string>(typeof mine?.regularPct === "number" ? String(mine.regularPct) : "");
+  const band = (v: string) => v === "" ? "" : Number(v) >= 70 ? "0" : Number(v) < 10 ? "2" : "1";
+  const [rg, setRg] = useState<string>(band(rp)); const pick = (v: string) => { setRp(v); setRg(band(v)); };
   return <form action={act} className="form rw-form">
     <div className="rw-2"><HospPick hospital={hospital} />
       <div className="rw-f"><label htmlFor="rq-d">내 직종</label><select id="rq-d" name="dept" defaultValue={mine?.dept ?? (JOB_DEPTS.includes(dept as any) ? dept : "")}><option value="" disabled>직종 선택</option>{JOB_DEPTS.map(d => <option key={d}>{d}</option>)}</select></div></div>
@@ -87,10 +89,12 @@ function QuickForm({ hospital, dept, mine }: { hospital?: Hosp | null; dept?: st
     <div className="rw-2">
       <div className="rw-f"><label htmlFor="rq-p">세후 실수령 <small>(선택 · 월, 만 원)</small></label><select id="rq-p" name="pay" defaultValue={mine?.pay ?? ""}><option value="">선택 안 함</option>{PAY.map(p => <option key={p}>{p}</option>)}</select></div>
       <div className="rw-f"><label htmlFor="rq-y">연차 <small>(선택)</small></label><select id="rq-y" name="years" defaultValue={mine?.years ?? ""}><option value="">선택 안 함</option>{YEARS.map(y => <option key={y}>{y}</option>)}</select></div></div>
-    <div className="rw-f"><label htmlFor="rq-rp">계약직 → 정규직 전환율 <small>(선택 · 내 직종 기준 체감 %)</small></label>
-      <div className="hc-pctrow"><input id="rq-rp" type="number" name="regular_pct" inputMode="numeric" min={0} max={100} step={5} value={rp} onChange={e => setRp(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))} placeholder="예: 20" /><span>%</span>
-        <div className="hc-pctq">{[0, 10, 30, 50, 70, 90].map(v => <button key={v} type="button" className={rp === String(v) ? "on" : ""} onClick={() => setRp(String(v))}>{v}%</button>)}<button type="button" className={rp === "" ? "on" : ""} onClick={() => setRp("")}>잘 몰라요</button></div></div>
-      <span className="rw-hint">계약직 10명 중 몇 명쯤 정규직이 되는지 느낌대로요. 70% 이상이면 🌱 대부분 전환, 30% 미만이면 🚨 만기퇴사 많음으로 모여요.</span></div>
+    <div className="rw-f"><label htmlFor="rq-rg">계약직 → 정규직 전환 <small>(선택 · 내 직종 기준 체감 %)</small></label>
+      <select id="rq-rg" name="regular" aria-label="계약직 정규직 전환" value={rg} onChange={e => { const v = e.target.value; setRg(v); setRp(v === "" ? "" : ["80", "15", "0"][Number(v)]); }}>
+        <option value="">선택 안 함</option><option value="0">🌱 대부분 정규직 전환돼요 (70%+)</option><option value="1">🟡 티오 날 때 소수만 전환 (10~20%)</option><option value="2">🚨 전환 거의 없어요 (2년 만기퇴사)</option></select>
+      <div className="hc-pctrow"><input id="rq-rp" type="number" name="regular_pct" inputMode="numeric" min={0} max={100} step={5} value={rp} onChange={e => pick(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))} placeholder="예: 20" aria-label="체감 정규직 전환율 (%)" /><span>%</span>
+        <div className="hc-pctq">{[0, 10, 30, 50, 70, 90].map(v => <button key={v} type="button" className={rp === String(v) ? "on" : ""} onClick={() => pick(String(v))}>{v}%</button>)}<button type="button" className={rp === "" ? "on" : ""} onClick={() => pick("")}>잘 몰라요</button></div></div>
+      <span className="rw-hint">위에서 고르면 대표 숫자가 채워져요. 더 정확히 알면 %를 직접 고쳐주세요 (계약직 10명 중 몇 명쯤 정규직이 되는지).</span></div>
     <div className="rw-f"><label htmlFor="rq-pr">핵심 장점 <small>(1~3줄)</small></label><textarea id="rq-pr" name="pros" rows={3} maxLength={500} defaultValue={mine?.pros ?? ""} placeholder="예: 칼퇴 지켜주고, 연차 눈치 안 봐요. 장비가 새 거예요." /></div>
     <div className="rw-f"><label htmlFor="rq-cn">핵심 단점 <small>(1~3줄)</small></label><textarea id="rq-cn" name="cons" rows={3} maxLength={500} defaultValue={mine?.cons ?? ""} placeholder="예: 주말 당직이 잦고, 인계 때문에 30분 일찍 나와요." /></div>
     <div className="wz-safe">🔒 닉네임 없이 <b>익명</b>으로 올라가요. 카드에는 병원·직종·현직/전직만 보여요. 19금·욕설과 전화번호만 막아요.</div>
