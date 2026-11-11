@@ -7,7 +7,7 @@ import { searchHospitals } from "@/lib/jobActions";
 import { JOB_REGIONS, HOSP_KINDS } from "@/lib/jobs";
 import { BRAG_TAGS } from "@/lib/brag";
 import { shrinkImage } from "@/lib/shrink";
-function Send() { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "올리는 중…" : "🏆 우리 병원 자랑 올리기 (+30 XP)"}</button>; }
+function Send() { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "올리는 중…" : "🏆 우리 병원 자랑 올리기"}</button>; }
 export default function BragForm({ hospital, mine }: { hospital?: { id: number; name: string; region: string } | null; mine?: { tags: string[]; text: string; urls: string[] } | null }) {
   const [st, act] = useFormState(submitBrag, undefined);
   const [q, setQ] = useState(""), [hits, setHits] = useState<any[]>([]), [picked, setPicked] = useState(hospital ?? null), [isNew, setIsNew] = useState(false), [prev, setPrev] = useState<string[]>(mine?.urls ?? []);

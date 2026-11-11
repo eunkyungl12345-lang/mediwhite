@@ -13,7 +13,7 @@ function Stars({ name, label, icon }: { name: string; label: string; icon: strin
     <span className="rv-star-val">{v ? ["", "별로", "아쉬움", "보통", "좋음", "최고"][v] : ""}</span>
     <input type="hidden" name={name} value={v || ""} /></div>;
 }
-function Submit() { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "저장 중…" : "⭐ 리뷰 남기기 (+40 XP)"}</button>; }
+function Submit() { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "저장 중…" : "⭐ 리뷰 남기기"}</button>; }
 export default function ReviewForm({ hospital, dept, mine, proofState }: { hospital?: { id: number; name: string; region: string } | null; dept?: string; mine?: any; proofState?: "pending" | "verified" | null }) {
   const [st, action] = useFormState(createReview, undefined);
   const [q, setQ] = useState(""), [hits, setHits] = useState<any[]>([]), [picked, setPicked] = useState<{ id: number; name: string; region: string } | null>(hospital ?? null), [isNew, setIsNew] = useState(false);

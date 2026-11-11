@@ -15,7 +15,7 @@ export default async function ExtraReviews({ hid, locked, done }: { hid: number;
   return <>
     <section className="rv2-stat xr" id="x-pay">
       <h3>💰 연봉 리뷰 <small>({pays.length}명)</small></h3>
-      {done === "pay" && <div className="xr-ok" role="status">✅ 연봉 리뷰가 올라갔어요. 고마워요! (+30 XP)</div>}
+      {done === "pay" && <div className="xr-ok" role="status">✅ 연봉 리뷰가 올라갔어요. 고마워요!</div>}
       {pays.length >= X_MIN ? (locked ? <p className="muted" style={{ margin: 0, fontSize: 13 }}>🔒 {pays.length}명이 연봉을 남겼어요. 다녔던 병원 1곳을 체크하면 범위가 보여요.</p> : <>
         <div className="xr-sum"><b>{fmt(a[0])}~{fmt(a[a.length - 1])}만 원</b><small>세전 연봉 · 가운데값 {fmt(med)}만 (실수령 약 {fmt(netMonthly(med))}만/월) · 만족도 ★ {star.toFixed(1)}</small></div>
         {subs.length > 0 && <div className="xr-subs">{subs.map(x => <span key={x.n}>{x.n.replace(/ \(.*/, "")} <b>★ {x.avg.toFixed(1)}</b></span>)}{recN > 0 && <span>취업 추천 <b>{Math.round(recY / recN * 100)}%</b></span>}</div>}
@@ -27,7 +27,7 @@ export default async function ExtraReviews({ hid, locked, done }: { hid: number;
     </section>
     <section className="rv2-stat xr" id="x-alba">
       <h3>⏱ 알바·단기 리뷰 <small>({albas.length}개)</small></h3>
-      {done === "alba" && <div className="xr-ok" role="status">✅ 알바 리뷰가 올라갔어요. 고마워요! (+30 XP)</div>}
+      {done === "alba" && <div className="xr-ok" role="status">✅ 알바 리뷰가 올라갔어요. 고마워요!</div>}
       {albas.length ? (locked ? <p className="muted" style={{ margin: 0, fontSize: 13 }}>🔒 알바 리뷰 {albas.length}개가 있어요. 다녔던 병원 1곳을 체크하면 볼 수 있어요.</p> : <div className="xr-list">{albas.slice(0, 20).map((x, i) => <article key={i} className="xr-it">
         <header><b>{x.unit} {fmt(x.amount)}만 원</b><span className="xr-tag">{x.dept}</span><span className="xr-tag">{x.time}</span>{x.days && <span className="xr-tag">{x.days}</span>}{x.cases ? <span className="xr-tag">하루 {x.cases}건</span> : null}{x.star ? <span className="xr-tag">★ {x.star}</span> : null}<span className="xr-tag">{x.again ? "👍 또 갈래요" : "👎 안 갈래요"}</span><small className="muted" style={{ marginLeft: "auto" }}>{ago(x.at)}</small></header>
         <p><small>세금</small>{x.tax} <small style={{ marginLeft: 10 }}>식사</small>{x.meal} <small style={{ marginLeft: 10 }}>강도</small>{x.load}</p>

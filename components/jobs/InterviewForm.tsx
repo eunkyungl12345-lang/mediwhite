@@ -4,7 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { submitInterview } from "@/lib/interview.actions";
 import { JOB_DEPTS } from "@/lib/jobs";
 import { IV_ROUTE, IV_STEPS, IV_RESULT, IV_FEEL, IV_LEVEL, IV_FOLLOW, IV_WAIT, type Interview } from "@/lib/interview";
-function Send({ edit }: { edit: boolean }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : edit ? "✏️ 수정 완료" : "🎤 면접 후기 남기기 (+30 XP)"}</button>; }
+function Send({ edit }: { edit: boolean }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : edit ? "✏️ 수정 완료" : "🎤 면접 후기 남기기"}</button>; }
 const R = ({ name, opts, def, values }: { name: string; opts: readonly string[]; def?: string | number; values?: (string | number)[] }) => <div className="hc-chips">{opts.map((o, i) => { const v = values ? values[i] : o; return <label key={o}><input type="radio" name={name} value={v} defaultChecked={def != null && String(def) === String(v)} /><span>{o}</span></label>; })}</div>;
 export default function InterviewForm({ hid, dept, mine }: { hid: number; dept: string; mine?: Interview | null }) {
   const [st, act] = useFormState(submitInterview, undefined); const yr = new Date().getFullYear();

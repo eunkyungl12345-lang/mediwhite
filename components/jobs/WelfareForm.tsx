@@ -5,7 +5,7 @@ import { submitWelfare } from "@/lib/welfare.actions";
 import { WEL_CATS, type Welfare } from "@/lib/welfare";
 import { textProblem } from "@/lib/textQuality";
 const W = ["", "별로예요", "아쉬워요", "보통", "좋아요", "최고예요"];
-function Send({ edit }: { edit: boolean }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : edit ? "✏️ 수정 완료" : "🎁 복지 평가 남기기 +30"}</button>; }
+function Send({ edit }: { edit: boolean }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : edit ? "✏️ 수정 완료" : "🎁 복지 평가 남기기"}</button>; }
 /** 카테고리마다 한 화면: 써본 복지를 누르면 별점 칸이 열려요 → 마지막에 사용 경험 */
 export default function WelfareForm({ hid, name, mine }: { hid: number; name: string; mine?: Welfare | null }) {
   const [st, act] = useFormState(submitWelfare, undefined);

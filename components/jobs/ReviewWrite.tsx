@@ -68,7 +68,7 @@ function ExtraForm({ kind, hospital, dept }: { kind: "pay" | "alba"; hospital?: 
     </>}
     <div className="wz-safe">🔒 닉네임 없이 <b>익명</b>으로 올라가요. 19금·욕설과 전화번호만 막아요.</div>
     {st?.error && <div className="error" role="alert">{st.error}</div>}
-    <Send label={kind === "pay" ? "💰 연봉 후기 올리기 (+30 XP)" : "⏰ 알바·당직 후기 올리기 (+30 XP)"} />
+    <Send label={kind === "pay" ? "💰 연봉 후기 올리기" : "⏰ 알바·당직 후기 올리기"} />
   </form>;
 }
 const MAIN_DEPTS: [string, string][] = [["간호사", "간호사"], ["방사선", "방사선사"], ["임상병리", "임상병리사"], ["물리치료", "물리치료사"]];
@@ -93,7 +93,7 @@ function QuickForm({ hospital, dept, mine }: { hospital?: Hosp | null; dept?: st
       <div className="rw-f"><label htmlFor="rq-cn">지원 전에 꼭 알아야 할 점</label><textarea id="rq-cn" name="cons" rows={2} maxLength={500} defaultValue={mine?.cons ?? ""} placeholder="예: 공고엔 “전환 가능”인데 최근 3년간 전환된 사람을 못 봤어요." /></div>
     </details>
     {st?.error && <div className="error" role="alert">{st.error}</div>}
-    <Send label={mine ? "✏️ 수정하기" : "제보하기 (+50 XP)"} />
+    <Send label={mine ? "✏️ 수정하기" : "제보하기"} />
     <p className="q1-safe">🔒 익명 · 병원·직종·현직/전직만 보여요</p>
   </form>;
 }

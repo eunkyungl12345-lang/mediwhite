@@ -84,7 +84,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       </div>
       <nav className="hh-tabs">{([["rev", `리뷰 ${rs.length + fa.n || ""}`], ["pay", "급여"], ["intv", `면접 ${ivs.length || ""}`], ["welfare", "복지"], ["note", "인계장"], ["jobs", `채용 ${myJobs?.length || ""}`]] as [string, string][]).map(([k, n]) => <Link key={k} href={tabHref(k)} className={t === k ? "on" : ""} scroll={false}>{n}</Link>)}</nav>
       {searchParams.checked && founderNo && <div className="fb-thanks fd">🏅 <b>창립 멤버 {founderNo}호</b>가 되셨어요! 이제 모든 병원을 평생 볼 수 있어요.</div>}
-      {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요. <b>+50 XP</b>{vstat !== "approved" && <> · <Link href={`/hospitals/verify?id=${id}`} className="link"><b>✅ 명찰/서류로 인증하면 더 믿을 만해져요 →</b></Link></>}</div>}
+      {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요.{vstat !== "approved" && <> · <Link href={`/hospitals/verify?id=${id}`} className="link"><b>✅ 명찰/서류로 인증하면 더 믿을 만해져요 →</b></Link></>}</div>}
       {t === "rev" && <>
       <section className="rv2-stat">
         <h3><em>전체</em> 만족도 통계 <small>({rs.length + fa.n}개)</small></h3>
@@ -101,7 +101,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       {mine && !myHidden && <details className="card ss-details" open={!!searchParams.write}><summary><b>✏️ 예전에 쓴 내 리뷰 수정</b></summary><ReviewForm hospital={{ id: h.id, name: h.name, region: h.region }} dept={s.dept} mine={mine} proofState={proofState as any} /></details>}
       {(blindN ?? 0) > 0 && <div className="rv-blind">🔒 신고·권리침해 요청으로 <b>{blindN}개</b> 리뷰가 운영팀 검토 중이라 잠시 가려져 있어요 (최대 30일). 검토 후 다시 보이거나 삭제돼요.</div>}
       <div className="rv2-head"><b>리뷰 <em>{list.length}</em></b>{vN + fa.verified > 0 && <small>✅ 인증 {vN + fa.verified}</small>}</div>
-      {!list.length ? <div className="fb fb-wait"><b>아직 공개된 리뷰가 없어요</b><p>{fa.n ? `${fa.n}명이 남겼어요 — ${need}명이 모이면 한줄평·장단점이 공개돼요.` : "이 병원을 다녀봤다면 첫 리뷰를 남겨주세요. 딱 세 가지면 돼요."}</p><Link href={`/hospitals/check?id=${id}`} className="btn">＋ 리뷰 작성 +50</Link></div>
+      {!list.length ? <div className="fb fb-wait"><b>아직 공개된 리뷰가 없어요</b><p>{fa.n ? `${fa.n}명이 남겼어요 — ${need}명이 모이면 한줄평·장단점이 공개돼요.` : "이 병원을 다녀봤다면 첫 리뷰를 남겨주세요. 딱 세 가지면 돼요."}</p><Link href={`/hospitals/check?id=${id}`} className="btn">＋ 리뷰 작성</Link></div>
       : <div className="rv2-list">{list.map(x => <article key={x.key} className={"rv2" + (x.mine ? " mine" : "")}>
         <RevHead hospital={h.name} dept={x.dept} status={x.status} cat={x.cat} />
         <div className="rf-meta">{x.meta.join("  |  ")}{x.v ? <em>✅ 인증</em> : null}{x.mine ? <em className="me">내 리뷰</em> : null}</div>
@@ -124,7 +124,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       </>}
       {t === "intv" && <div className="iv-sec">
         {ivs.length > 0 && <div className="fb-head"><div><b>{(ivs.reduce((a, b) => a + b.level, 0) / ivs.length).toFixed(1)}</b><span>난이도 (5점)</span></div><div><b>{Math.round(ivs.filter(x => isPass(x.result)).length / ivs.length * 100)}%</b><span>합격 후기</span></div>{ivs.some(x => x.wait) && <div><b>{(() => { const w = ivs.filter(x => x.wait).map(x => x.wait!).sort((a, b) => a - b); const m = w[Math.floor((w.length - 1) / 2)]; return m >= 60 ? "한 달+" : `${m}일`; })()}</b><span>결과 발표까지</span></div>}<div><b>{Math.round(ivs.filter(x => x.feel === 0).length / ivs.length * 100)}%</b><span>😊 좋은 경험</span></div></div>}
-        <Link href={`/hospitals/interview?id=${id}`} className="btn">{myIv ? "✏️ 내 면접 후기 수정" : "🎤 면접 후기 남기기 +30"}</Link>
+        <Link href={`/hospitals/interview?id=${id}`} className="btn">{myIv ? "✏️ 내 면접 후기 수정" : "🎤 면접 후기 남기기"}</Link>
         {!ivs.length ? <p className="muted" style={{ fontSize: 13 }}>아직 면접 후기가 없어요. 면접 본 적 있다면 받은 질문을 남겨주세요. 다음 지원자에게 제일 큰 도움이 돼요.</p>
           : ivs.map((x, i) => <article key={i} className="rf-item"><div className="rf-meta">{[x.dept, `${x.year}년`, x.route, x.result].join("  |  ")}</div>
             <div className="iv-tags"><span>난이도 {IV_LEVEL[x.level - 1]}</span><span>{IV_FEEL[x.feel]}</span>{x.steps.map(st => <span key={st}>{st}</span>)}</div>
@@ -133,14 +133,14 @@ export default async function HospitalPage({ params, searchParams }: { params: {
           <div className="rc-foot"><span /><RevMark /></div></article>)}
       </div>}
       {t === "welfare" && <>
-        {searchParams.done && <div className="fb-thanks">🙏 복지 평가 고마워요! <b>+30 XP</b></div>}
+        {searchParams.done && <div className="fb-thanks">🙏 복지 평가 고마워요!</div>}
         <section className="rv2-stat"><h3>🎁 직원들이 실제로 쓴 복지 <small>({wa.n}명)</small></h3>
           {wa.n >= need ? <>
             <div className="wf-agg">{wa.items.slice(0, 12).map(x => <div key={x.name}><span>{x.cat ?? "➕"} {x.name}</span><i><em style={{ width: `${x.n / wa.n * 100}%` }} /></i><small>{x.n}명 써봤어요</small><b>★ {x.avg.toFixed(1)}</b></div>)}</div>
             {wa.texts.length > 0 && (locked ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">후기</em>복지를 실제로 신청해 본 과정과 조건에 대한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 복지 후기 보기</Link></div>
               : <div className="wf-texts">{wa.texts.map((x, k) => <More key={k} long={x.length > 140}><p className="rf-pc"><em className="g">후기</em>{x}</p></More>)}</div>)}
           </> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>{wa.n ? `${wa.n}명이 평가했어요. ${need - wa.n}명만 더 모이면 공개돼요.` : "진료비 감면, 기숙사, 식당, 보수교육비… 실제로 써본 복지를 처음 알려주세요."}</p>}
-          <Link href={`/hospitals/welfare?id=${id}`} className="btn" style={{ justifySelf: "start" }}>{myWel ? "✏️ 내 복지 평가 수정" : "🎁 복지 평가하기 +30"}</Link>
+          <Link href={`/hospitals/welfare?id=${id}`} className="btn" style={{ justifySelf: "start" }}>{myWel ? "✏️ 내 복지 평가 수정" : "🎁 복지 평가하기"}</Link>
         </section>
         <div className="fb-head">{welfStar && fa.starN >= need && <div><b>{welfStar.avg.toFixed(1)}</b><span>🎁 복지 별점(체크)</span></div>}{rs.length > 0 && <div><b>{revWelf.toFixed(1)}</b><span>🎁 복지 별점(리뷰)</span></div>}<div><b>{brags.length}</b><span>🏆 자랑</span></div></div>
       <div className="bg-sec" id="brag"><div className="bg-sec-h"><b>🏆 현직자 자랑 {brags.length || ""}</b><Link href={`/hospitals/brag/new?id=${id}`} className="link">📸 자랑하기</Link></div>

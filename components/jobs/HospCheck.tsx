@@ -6,7 +6,7 @@ import { submitHospFact, searchHospitals } from "@/lib/jobActions";
 import { JOB_DEPTS, HOSP_KINDS } from "@/lib/jobs";
 import { isField, isReal, SHIFT, PAY, YEARS, MOOD, RISKS, EXIT_STARS, EXIT_REASONS, FUTURE, type HFact } from "@/lib/hospFacts";
 import { textProblem } from "@/lib/textQuality";
-function Send({ edit, label }: { edit: boolean; label?: string }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : label ?? (edit ? "✏️ 수정 완료" : "🔎 익명으로 체크 완료 (+50 XP)")}</button>; }
+function Send({ edit, label }: { edit: boolean; label?: string }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : label ?? (edit ? "✏️ 수정 완료" : "🔎 익명으로 체크 완료")}</button>; }
 const Chips = ({ name, opts, def, values, big }: { name: string; opts: readonly string[]; def?: string | number; values?: (string | number)[]; big?: boolean }) =>
   <div className={"hc-chips" + (big ? " big" : "")}>{opts.map((o, i) => { const v = values ? values[i] : o; return <label key={o}><input type="radio" name={name} value={v} defaultChecked={def !== undefined && String(def) === String(v)} /><span>{o}</span></label>; })}</div>;
 const STAR_W = ["", "별로예요", "아쉬워요", "보통", "좋아요", "최고예요"];
@@ -69,9 +69,9 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
       <div className="hc-q"><b>👍 친한 동료에게 이 병원 추천해요?</b><Chips name="rec" opts={["👍 추천해요", "👎 추천 안 해요"]} values={[1, 0]} def={mine?.rec} big /></div>
       <div className="hc-q"><b>⭐ 총평점</b><Star5 name="st_overall" def={mine?.overall} big /></div></div>
 
-    <div style={show("fork")} className="wz-step wz-fork"><h3>🙌 여기까지만 해도 충분해요!</h3><p>저장하면 바로 <b>+50 XP</b>, 오픈 기념 기간이 끝나도 6개월간 모든 병원이 열려요.</p>
-      <Send edit={!!mine} label={mine ? "✏️ 이대로 수정 완료" : "✅ 여기까지 저장하기 (+50 XP)"} />
-      <button type="button" className="btn ghost wz-more" onClick={() => { setMore(true); setI(i + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}>💬 분위기·원장 스타일·연차까지 더 알려주기 <small>+20 XP 더</small></button>
+    <div style={show("fork")} className="wz-step wz-fork"><h3>🙌 여기까지만 해도 충분해요!</h3><p>저장하면 바로 모든 병원의 실수령·고용 현실이 열려요.</p>
+      <Send edit={!!mine} label={mine ? "✏️ 이대로 수정 완료" : "✅ 여기까지 저장하기"} />
+      <button type="button" className="btn ghost wz-more" onClick={() => { setMore(true); setI(i + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}>💬 분위기·원장 스타일·연차까지 더 알려주기</button>
       <small className="muted">더 알려주면 정시 퇴근·원장 터치 적음 같은 초록 뱃지가 더 빨리 붙어요.</small></div>
 
     <div style={show("mood")} className="wz-step"><h3>😶 내부 분위기는 어때요?</h3>
@@ -97,7 +97,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
       <div className="hc-chips multi">{RISKS.map(r => <label key={r.k}><input type="checkbox" name="risk" value={r.k} checked={risk.includes(r.k)} onChange={e => setRisk(x => e.target.checked ? [...x, r.k] : x.filter(y => y !== r.k))} /><span>{r.label}</span></label>)}
         <label className="good"><input type="checkbox" name="good" value="1" checked={!risk.length && good} disabled={risk.length > 0} onChange={e => setGood(e.target.checked)} /><span>{risk.length ? "—" : "딱히 없어요, 괜찮은 곳 👍"}</span></label></div></div>
 
-    <div style={show("pc")} className="wz-step"><h3>👍 좋았던 점, 👎 아쉬운 점 <small>(선택 · 쓰면 +20 XP)</small></h3><p>체크만으로는 담기 어려운 이야기를 남겨주세요. 사람이 아니라 병원 이야기만요.</p>
+    <div style={show("pc")} className="wz-step"><h3>👍 좋았던 점, 👎 아쉬운 점 <small>(선택)</small></h3><p>체크만으로는 담기 어려운 이야기를 남겨주세요. 사람이 아니라 병원 이야기만요.</p>
       <label className="hc-q"><b>장점 <small>{pros.length} / 1000</small></b><textarea name="pros" rows={4} maxLength={1000} value={pros} onChange={e => setPros(e.target.value)} placeholder="이 병원을 다니며 좋았던 점 (20자 이상)" /></label>
       <label className="hc-q"><b>단점 <small>{cons.length} / 1000</small></b><textarea name="cons" rows={4} maxLength={1000} value={cons} onChange={e => setCons(e.target.value)} placeholder="아쉬웠던 점, 입사 전에 알았으면 좋았을 것 (20자 이상)" /></label></div>
 
@@ -109,6 +109,6 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
 
     {(err || st?.error) && <div className="error">{err || st?.error}</div>}
     <div className="wz-nav">{i > 0 && <button type="button" className="btn ghost wz-prev" onClick={() => { setErr(""); setI(i - 1); }}>이전으로</button>}
-      {cur === "fork" ? null : last ? <Send edit={!!mine} label={more ? (mine ? "✏️ 수정 완료" : "🔎 익명으로 체크 완료 (+70 XP)") : undefined} /> : <button type="button" className="btn wz-next" onClick={next}>다음</button>}</div>
+      {cur === "fork" ? null : last ? <Send edit={!!mine} label={more ? (mine ? "✏️ 수정 완료" : "🔎 익명으로 체크 완료") : undefined} /> : <button type="button" className="btn wz-next" onClick={next}>다음</button>}</div>
   </form>;
 }

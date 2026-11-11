@@ -73,7 +73,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
           <Link href={link({ st: st === "재직" ? "퇴사" : st === "퇴사" ? "" : "재직" })} className={st ? "on" : ""}>{st ? (st === "재직" ? "현직원" : "전직원") : "재직 상태"}</Link>
         </div>
         {tab === "mine" && <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{s.dept} 직종이 쓴 리뷰만 보여요</p>}
-        {!feed.length ? <div className="fb fb-wait"><b>{tab === "my" ? "내가 체크·리뷰한 병원이 아직 없어요" : "아직 리뷰가 없어요"}</b><p>다니는(다녔던) 병원 하나만 체크하면 6개월간 모든 리뷰가 열려요.</p><Link href="/hospitals/check" className="btn">🔎 병원 체크하기 +50</Link></div>
+        {!feed.length ? <div className="fb fb-wait"><b>{tab === "my" ? "내가 체크·리뷰한 병원이 아직 없어요" : "아직 리뷰가 없어요"}</b><p>다니는(다녔던) 병원 하나만 체크하면 6개월간 모든 리뷰가 열려요.</p><Link href="/hospitals/check" className="btn">🔎 병원 체크하기</Link></div>
           : <div className="rf-list">{feed.map(x => { const h = H.get(x.hid)!; return <article key={x.key} className="rf-item">
             <Link href={`/hospitals/${x.hid}`} className="rc-link"><RevHead hospital={h.name} dept={x.dept} status={x.status} cat={x.cat} /></Link>
             <PosBadges list={posBadges(facts[x.hid])} max={3} />

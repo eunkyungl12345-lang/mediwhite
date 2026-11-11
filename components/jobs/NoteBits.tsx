@@ -7,7 +7,7 @@ function Btn({ t }: { t: string }) { const { pending } = useFormStatus(); return
 export function NoteForm({ hid, sec, ph, mine }: { hid: number; sec: string; ph: string; mine?: { text: string; status?: string } | null }) {
   const [open, setOpen] = useState(false), [st, act] = useFormState(saveNote, undefined), [txt, setTxt] = useState(mine?.text ?? "");
   useEffect(() => { if (st?.ok) setOpen(false); }, [st]);
-  if (!open) return <button type="button" className="hn-add" onClick={() => setOpen(true)}>{mine ? "✏️ 내 인계 고치기" : "＋ 내 인계 남기기 +10"}</button>;
+  if (!open) return <button type="button" className="hn-add" onClick={() => setOpen(true)}>{mine ? "✏️ 내 인계 고치기" : "＋ 내 인계 남기기"}</button>;
   return <form action={act} className="hn-form"><input type="hidden" name="hid" value={hid} /><input type="hidden" name="sec" value={sec} />
     <textarea name="text" rows={3} maxLength={300} value={txt} onChange={e => setTxt(e.target.value)} placeholder={ph} autoFocus />
     <div className="hn-row"><select name="status" defaultValue={mine?.status ?? "재직"}><option value="재직">지금 다녀요</option><option value="퇴사">다녔어요</option></select><small className="muted">{txt.length}/300{mine ? " · 비우고 저장하면 지워져요" : ""}</small>
