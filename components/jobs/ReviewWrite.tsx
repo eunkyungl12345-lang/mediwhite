@@ -6,7 +6,7 @@ import RegionPick from "./RegionPick";
 import { submitHospExtra } from "@/lib/hospExtra.actions";
 import { searchHospitals } from "@/lib/jobActions";
 import { JOB_DEPTS, HOSP_KINDS } from "@/lib/jobs";
-import { X_YEARS, CONTRACT, PAY_YEAR, ALBA_UNIT, ALBA_TAX, ALBA_MEAL, ALBA_LOAD } from "@/lib/hospExtra";
+import { X_YEARS, CONTRACT, PAY_YEAR, ALBA_UNIT, ALBA_TAX, ALBA_MEAL, ALBA_LOAD, HOBONG, WORK_AREA, PAY_SUB } from "@/lib/hospExtra";
 import { netMonthly } from "./PayCalc";
 import type { HFact } from "@/lib/hospFacts";
 type Hosp = { id: number; name: string; region: string; kind?: string };
@@ -19,8 +19,8 @@ const TABS: { k: T; icon: string; n: string; sub: string; tip: string }[] = [
 function Send({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : label}</button>; }
 const Chips = ({ name, opts, values, def }: { name: string; opts: readonly string[]; values?: (string | number)[]; def?: string | number }) =>
   <div className="hc-chips">{opts.map((o, i) => { const v = values ? values[i] : o; return <label key={o}><input type="radio" name={name} value={v} defaultChecked={def !== undefined && String(def) === String(v)} /><span>{o}</span></label>; })}</div>;
-function Stars({ name }: { name: string }) { const [v, setV] = useState(0); const W = ["", "많이 아쉬워요", "아쉬워요", "보통", "만족", "아주 만족"];
-  return <span className="hc-stars big">{[1, 2, 3, 4, 5].map(n => <button key={n} type="button" className={v >= n ? "on" : ""} onClick={() => setV(n)} aria-label={`${n}점`}>★</button>)}<em className="hc-sw">{W[v]}</em><input type="hidden" name={name} value={v || ""} /></span>; }
+function Stars({ name, small }: { name: string; small?: boolean }) { const [v, setV] = useState(0); const W = ["", "많이 아쉬워요", "아쉬워요", "보통", "만족", "아주 만족"];
+  return <span className={"hc-stars" + (small ? "" : " big")}>{[1, 2, 3, 4, 5].map(n => <button key={n} type="button" className={v >= n ? "on" : ""} onClick={() => setV(n)} aria-label={`${n}점`}>★</button>)}<em className="hc-sw">{W[v]}</em><input type="hidden" name={name} value={v || ""} /></span>; }
 /** 병원 고르기 (검색 → 선택, 없으면 새로 등록) */
 function HospPick({ hospital }: { hospital?: Hosp | null }) {
   const [q, setQ] = useState(""), [hits, setHits] = useState<Hosp[]>([]), [picked, setPicked] = useState<Hosp | null>(hospital ?? null), [isNew, setIsNew] = useState(false);
@@ -45,17 +45,24 @@ function ExtraForm({ kind, hospital, dept }: { kind: "pay" | "alba"; hospital?: 
       <div className="rw-f"><span className="rw-l">계약 형태</span><Chips name="contract" opts={CONTRACT} /></div>
       <div className="rw-f"><span className="rw-l">언제 기준인가요?</span><Chips name="year" opts={PAY_YEAR} def="올해" /></div>
       <div className="rw-f"><label htmlFor="rw-hr">주 근무시간 <small>(선택 · 실제로 일하는 시간)</small></label><input id="rw-hr" name="hours" type="number" inputMode="numeric" min={10} max={80} placeholder="예: 45" /></div>
+      <div className="rw-2"><div className="rw-f"><label htmlFor="rw-hb">호봉 <small>(선택)</small></label><select id="rw-hb" name="hobong" defaultValue=""><option value="">선택 안 함</option>{HOBONG.map(x => <option key={x}>{x}</option>)}</select></div>
+        <div className="rw-f"><label htmlFor="rw-ar">근무 영역 <small>(선택)</small></label><select id="rw-ar" name="area" defaultValue=""><option value="">선택 안 함</option>{WORK_AREA.map(x => <option key={x}>{x}</option>)}</select></div></div>
       <div className="rw-f"><span className="rw-l">연봉 만족도</span><Stars name="star" /></div>
+      <fieldset className="rw-sub"><legend>세부 평가 <small>(선택 · 아는 것만)</small></legend>
+        <div className="rw-subg">{PAY_SUB.map(p => <div key={p.k} className="rw-subi"><span>{p.n}</span><Stars name={"sub_" + p.k} small /></div>)}</div>
+        <div className="rw-f"><span className="rw-l">이 병원 취업, 추천하나요?</span><Chips name="rec" opts={["👍 추천해요", "👎 비추천"]} values={[1, 0]} /></div></fieldset>
       <div className="rw-f"><label htmlFor="rw-w">한마디 <small>(선택)</small></label><textarea id="rw-w" name="word" rows={3} maxLength={200} placeholder="예: 기본급은 낮은데 인센티브가 매달 나와요. 연봉 협상은 1월에 해요." /></div>
     </> : <>
       {D}
       <div className="rw-f"><span className="rw-l">급여</span><div className="hc-chips">{ALBA_UNIT.map(u => <label key={u}><input type="radio" name="unit" value={u} checked={unit === u} onChange={() => setUnit(u)} /><span>{u}</span></label>)}</div>
         <div className="rw-amt"><input name="amount" type="number" inputMode="numeric" min={1} max={200} placeholder={unit === "일급" ? "예: 15" : "예: 2"} aria-label={`${unit} (만 원)`} /><span>만 원</span></div></div>
       <div className="rw-2"><div className="rw-f"><label htmlFor="rw-t">근무 시간</label><input id="rw-t" name="time" maxLength={30} placeholder="예: 09~18시" /></div><div className="rw-f"><label htmlFor="rw-dy">근무한 날 <small>(선택)</small></label><input id="rw-dy" name="days" maxLength={30} placeholder="예: 토요일 하루, 3일" /></div></div>
+      <div className="rw-f"><label htmlFor="rw-cs">하루 검사·환자 건수 <small>(선택 · 대략)</small></label><input id="rw-cs" name="cases" type="number" inputMode="numeric" min={1} max={2000} placeholder="예: 80" /></div>
       <div className="rw-f"><span className="rw-l">세금·신고는 어떻게 했나요?</span><Chips name="tax" opts={ALBA_TAX} /></div>
       <div className="rw-f"><span className="rw-l">식사</span><Chips name="meal" opts={ALBA_MEAL} /></div>
       <div className="rw-f"><span className="rw-l">근무 강도</span><Chips name="load" opts={ALBA_LOAD} /></div>
       <div className="rw-f"><span className="rw-l">또 갈 의향이 있나요?</span><Chips name="again" opts={["👍 또 갈래요", "👎 안 갈래요"]} values={[1, 0]} /></div>
+      <div className="rw-f"><span className="rw-l">총평 <small>(선택)</small></span><Stars name="star" /></div>
       <div className="rw-f"><label htmlFor="rw-wk">주로 한 일 <small>(선택)</small></label><textarea id="rw-wk" name="work" rows={3} maxLength={500} placeholder="예: 검진 채혈, 접수 보조, 판독 준비" /></div>
       <div className="rw-f"><label htmlFor="rw-nt">다음 사람에게 인계 한마디 <small>(선택)</small></label><textarea id="rw-nt" name="note" rows={3} maxLength={500} placeholder="예: 주차 안 돼요. 점심은 12시 반, 장비는 ○○ 써요." /></div>
     </>}
