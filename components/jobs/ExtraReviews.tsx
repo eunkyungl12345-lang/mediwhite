@@ -1,3 +1,4 @@
+import { RevMark } from "./RevCardParts";
 import Link from "next/link";
 import { db } from "@/lib/supabase";
 import { X_MIN, PAY_SUB, type XPay, type XAlba } from "@/lib/hospExtra";
@@ -18,7 +19,7 @@ export default async function ExtraReviews({ hid, locked, done }: { hid: number;
       {pays.length >= X_MIN ? (locked ? <p className="muted" style={{ margin: 0, fontSize: 13 }}>🔒 {pays.length}명이 연봉을 남겼어요. 다녔던 병원 1곳을 체크하면 범위가 보여요.</p> : <>
         <div className="xr-sum"><b>{fmt(a[0])}~{fmt(a[a.length - 1])}만 원</b><small>세전 연봉 · 가운데값 {fmt(med)}만 (실수령 약 {fmt(netMonthly(med))}만/월) · 만족도 ★ {star.toFixed(1)}</small></div>
         {subs.length > 0 && <div className="xr-subs">{subs.map(x => <span key={x.n}>{x.n.replace(/ \(.*/, "")} <b>★ {x.avg.toFixed(1)}</b></span>)}{recN > 0 && <span>취업 추천 <b>{Math.round(recY / recN * 100)}%</b></span>}</div>}
-        {pays.some(p => p.word) && <div className="xr-list">{pays.filter(p => p.word).slice(0, 5).map((p, i) => <div key={i} className="xr-it"><header><span className="xr-tag">{p.dept}</span><span className="xr-tag">{p.years}</span><span className="xr-tag">{p.contract}</span>{p.area && <span className="xr-tag">{p.area}</span>}</header><p>{p.word}</p></div>)}</div>}
+        {pays.some(p => p.word) && <div className="xr-list">{pays.filter(p => p.word).slice(0, 5).map((p, i) => <div key={i} className="xr-it"><header><span className="xr-tag">{p.dept}</span><span className="xr-tag">{p.years}</span><span className="xr-tag">{p.contract}</span>{p.area && <span className="xr-tag">{p.area}</span>}</header><p>{p.word}</p><RevMark /></div>)}</div>}
       </>) : pays.length ? (locked ? <p className="muted" style={{ margin: 0, fontSize: 13 }}>🔒 {pays.length}명이 연봉을 남겼어요. 다녔던 병원 1곳을 체크하면 보여요.</p> : <>
         <div className="xr-sum"><b>{[...new Set(a.map(v => Math.floor(v / 1000) * 1000))].map(v => `${fmt(v)}만 원대`).join(" · ")}</b><small>세전 연봉 · {pays.length}명 응답</small></div>
         <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>누가 썼는지 짐작되지 않게 {X_MIN}명이 모이기 전에는 천만 원 단위로만 보여줘요.</p></>)
@@ -32,6 +33,7 @@ export default async function ExtraReviews({ hid, locked, done }: { hid: number;
         <p><small>세금</small>{x.tax} <small style={{ marginLeft: 10 }}>식사</small>{x.meal} <small style={{ marginLeft: 10 }}>강도</small>{x.load}</p>
         {x.work && <p><small>한 일</small>{x.work}</p>}
         {x.note && <p><small>인계</small>{x.note}</p>}
+        <RevMark />
       </article>)}</div>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>아직 없어요. 여기서 단기·알바로 일해봤다면 첫 리뷰를 남겨주세요.</p>}
       <div className="xr-add"><Link href={`/hospitals/check?id=${hid}&t=pay`}>💰 연봉 리뷰 쓰기</Link><Link href={`/hospitals/check?id=${hid}&t=alba`}>⏱ 알바 리뷰 쓰기</Link></div>
     </section>

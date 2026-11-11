@@ -2432,3 +2432,4 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 @media (prefers-color-scheme:dark){.rc-dept{background:#262B31;color:#D5DBE2}.rc-dept em{background:#15181C;color:#AEB6BF}.rc-dept.now{background:#1F3530;color:#8FE0B8}.rc-dept.now em{color:#8FE0B8}.rc-rec{background:#262B31;color:#D5DBE2}.rc-rec.r0{background:#1F3530;color:#8FE0B8}.rc-rec.r2{background:#3A1F1F;color:#FF9C9C}
 .rw-seg button.on{background:#1F3530;color:#8FE0B8}.rw-seg button.on.r1{background:#262B31;color:#D5DBE2}.rw-seg button.on.r2{background:#3A1F1F;color:#FF9C9C}}
 @media (max-width:480px){.rw-tabs button{font-size:13px;padding:10px 6px;justify-items:center;text-align:center;word-break:keep-all}}
+.rc-mark{font-size:12.5px;color:var(--ink);border:1px solid var(--line);background:var(--bg);padding:5px 11px;font-weight:600}.xr-it .rc-mark,.xr-list article .rc-mark{justify-self:end;margin-top:4px;width:max-content}

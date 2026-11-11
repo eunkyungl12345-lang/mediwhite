@@ -127,7 +127,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
             <div className="iv-tags"><span>난이도 {IV_LEVEL[x.level - 1]}</span><span>{IV_FEEL[x.feel]}</span>{x.steps.map(st => <span key={st}>{st}</span>)}</div>
             {locked && x.uid !== s.id ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">질문</em>1분 자기소개와 지원 동기, 그리고 이 병원만의 단골 질문이 여기에 있어요</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 면접 후기 보기</Link></div>
               : <><p className="rf-pc"><em className="g">질문</em><span style={{ whiteSpace: "pre-wrap" }}>{x.q}</span></p>{x.follow && IV_FOLLOW[x.result] && <p className="rf-pc"><em className="b">{IV_FOLLOW[x.result].tag}</em>{x.follow}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</>}
-          </article>)}
+          <div className="rc-foot"><span /><RevMark /></div></article>)}
       </div>}
       {t === "welfare" && <>
         {searchParams.done && <div className="fb-thanks">🙏 복지 평가 고마워요! <b>+30 XP</b></div>}
