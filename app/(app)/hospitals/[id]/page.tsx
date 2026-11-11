@@ -9,6 +9,7 @@ import ReportButton from "@/components/ReportButton";
 import LiveViewers from "@/components/LiveViewers";
 import { ReviewDelete } from "@/components/jobs/Buttons";
 import FactBox from "@/components/jobs/FactBox";
+import ExtraReviews from "@/components/jobs/ExtraReviews";
 import BragCard from "@/components/jobs/BragCard";
 import { loadBrags } from "@/lib/bragDb";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
@@ -33,7 +34,7 @@ import PosBadges from "@/components/jobs/PosBadges";
 import { posBadges } from "@/lib/hospFacts";
 export const dynamic = "force-dynamic";
 
-export default async function HospitalPage({ params, searchParams }: { params: { id: string }; searchParams: { write?: string; checked?: string; t?: string; done?: string } }) {
+export default async function HospitalPage({ params, searchParams }: { params: { id: string }; searchParams: { write?: string; checked?: string; t?: string; done?: string; xdone?: string } }) {
   const s = (await getSession())!; const d = db(); const id = Number(params.id);
   const [{ data: h }, { data: revs }] = await Promise.all([
     d.from("hospitals").select("*").eq("id", id).maybeSingle(),
@@ -90,6 +91,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         </> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>아직 평가가 없어요. 바로 아래 <b>30초 체크</b>가 첫 리뷰가 돼요.</p>}
       </section>
       <FactBox a={fa} hid={id} mine={!!myFact} vstat={vstat} locked={locked} hideTop />
+      <ExtraReviews hid={id} locked={locked} done={searchParams.xdone} />
       {myHidden && <div className="card fb-wait"><b>🔎 내 리뷰는 신고가 들어와 검토 중이에요</b><p>운영팀이 확인하는 동안(최대 30일) 다른 사람에게 보이지 않고, 수정도 잠시 막혀요. 결과는 알림으로 알려드려요.</p></div>}
       {mine && !myHidden && <details className="card ss-details" open={!!searchParams.write}><summary><b>✏️ 예전에 쓴 내 리뷰 수정</b></summary><ReviewForm hospital={{ id: h.id, name: h.name, region: h.region }} dept={s.dept} mine={mine} proofState={proofState as any} /></details>}
       {(blindN ?? 0) > 0 && <div className="rv-blind">🔒 신고·권리침해 요청으로 <b>{blindN}개</b> 리뷰가 운영팀 검토 중이라 잠시 가려져 있어요 (최대 30일). 검토 후 다시 보이거나 삭제돼요.</div>}

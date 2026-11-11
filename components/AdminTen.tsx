@@ -7,7 +7,7 @@ export default async function AdminTen() {
     d.from("users").select("id,nickname,dept,role,stealth,created_at,username").order("created_at", { ascending: false }).limit(500),
     d.from("events").select("user_id").eq("kind", "hview").not("user_id", "is", null).order("created_at", { ascending: false }).limit(20000),
     d.from("events").select("user_id").eq("kind", "chkopen").order("created_at", { ascending: false }).limit(20000), // 병원 조회가 아무리 많아도 체크 화면 기록이 잘리지 않게 따로 가져와요
-    d.from("game_state").select("user_id,updated_at").like("game", "hfact:%").limit(5000),
+    d.from("game_state").select("user_id,updated_at").or("game.like.hfact:%,game.like.hx:%").limit(5000),
     d.from("hospital_reviews").select("user_id,created_at").limit(5000),
   ]);
   const real = (us ?? []).filter(u => u.role !== "admin" && !u.stealth && !String(u.username).startsWith("zz_"));
