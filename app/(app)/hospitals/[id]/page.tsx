@@ -55,7 +55,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const t = ["pay", "intv", "welfare", "note", "jobs"].includes(searchParams.t ?? "") ? searchParams.t! : "rev";
   const [{ data: ivRows }, { data: hfFull }] = await Promise.all([d.from("game_state").select("user_id,state").eq("game", ivKey(id)).limit(500), d.from("game_state").select("user_id,state").eq("game", factKey(id)).limit(1000)]);
   const ivs = (ivRows ?? []).map(r => ({ uid: r.user_id, ...(r.state as Interview) })).sort((a, b) => b.at.localeCompare(a.at)), myIv = ivs.some(x => x.uid === s.id);
-  const need = fa.need ?? MIN_N, payByDept = Object.entries((hfFull ?? []).map(r => r.state as any).filter(x => x?.pay).reduce((m: Record<string, string[]>, x) => ((m[x.dept ?? "기타"] ??= []).push(x.pay), m), {})).filter(([, v]) => v.length >= need)
+  const need = fa.need ?? MIN_N, payByDept = Object.entries((hfFull ?? []).map(r => r.state as any).filter(x => x?.pay).reduce((m: Record<string, string[]>, x) => ((m[x.dept ?? "기타"] ??= []).push(x.pay), m), {})).filter(([, v]) => v.length >= Math.max(need, 2))
     .map(([k, v]) => { const idx = v.map(p => PAY.indexOf(p as any)).sort((a, b) => a - b); return { dept: k, n: v.length, mid: PAY[idx[Math.floor((idx.length - 1) / 2)]], lo: PAY[idx[0]], hi: PAY[idx[idx.length - 1]] }; });
   const [{ data: welRows }, { data: helpRows }] = await Promise.all([d.from("game_state").select("user_id,state").eq("game", welKey(id)).limit(1000), d.from("events").select("user_id,text").eq("kind", "rvhelp").like("text", `${id}:%`).limit(5000)]);
   const wa = welAgg((welRows ?? []).map(r => r.state as Welfare)), myWel = (welRows ?? []).some(r => r.user_id === s.id);

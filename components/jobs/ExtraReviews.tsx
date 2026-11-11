@@ -19,7 +19,10 @@ export default async function ExtraReviews({ hid, locked, done }: { hid: number;
         <div className="xr-sum"><b>{fmt(a[0])}~{fmt(a[a.length - 1])}만 원</b><small>세전 연봉 · 가운데값 {fmt(med)}만 (실수령 약 {fmt(netMonthly(med))}만/월) · 만족도 ★ {star.toFixed(1)}</small></div>
         {subs.length > 0 && <div className="xr-subs">{subs.map(x => <span key={x.n}>{x.n.replace(/ \(.*/, "")} <b>★ {x.avg.toFixed(1)}</b></span>)}{recN > 0 && <span>취업 추천 <b>{Math.round(recY / recN * 100)}%</b></span>}</div>}
         {pays.some(p => p.word) && <div className="xr-list">{pays.filter(p => p.word).slice(0, 5).map((p, i) => <div key={i} className="xr-it"><header><span className="xr-tag">{p.dept}</span><span className="xr-tag">{p.years}</span><span className="xr-tag">{p.contract}</span>{p.area && <span className="xr-tag">{p.area}</span>}</header><p>{p.word}</p></div>)}</div>}
-      </>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>{pays.length ? `${pays.length}명이 남겼어요. ` : ""}{X_MIN}명이 모이면 연봉 범위가 공개돼요. (한두 명이면 누군지 짐작될 수 있어서요)</p>}
+      </>) : pays.length ? (locked ? <p className="muted" style={{ margin: 0, fontSize: 13 }}>🔒 {pays.length}명이 연봉을 남겼어요. 다녔던 병원 1곳을 체크하면 보여요.</p> : <>
+        <div className="xr-sum"><b>{[...new Set(a.map(v => Math.floor(v / 1000) * 1000))].map(v => `${fmt(v)}만 원대`).join(" · ")}</b><small>세전 연봉 · {pays.length}명 응답</small></div>
+        <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>누가 썼는지 짐작되지 않게 {X_MIN}명이 모이기 전에는 천만 원 단위로만 보여줘요.</p></>)
+        : <p className="muted" style={{ margin: 0, fontSize: 13 }}>아직 없어요. 첫 연봉 리뷰를 남겨주세요.</p>}
     </section>
     <section className="rv2-stat xr" id="x-alba">
       <h3>⏱ 알바·단기 리뷰 <small>({albas.length}개)</small></h3>

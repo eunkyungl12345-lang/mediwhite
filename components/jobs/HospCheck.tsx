@@ -44,7 +44,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
     <div className="wz-top"><div className="wz-bar"><i style={{ width: `${(i + 1) / steps.length * 100}%` }} /></div><small><b>{i + 1}</b> / {steps.length}</small></div>
     {(picked || hospital || (isNew && q)) && cur !== "hosp" && <div className="wz-h"><b>{picked?.name ?? hospital?.name ?? q}</b><small>{picked?.region ?? hospital?.region ?? ""}</small>{!hospital && <button type="button" className="wz-chg" onClick={() => { setI(0); setErr(""); }}>변경</button>}</div>}
     <input type="hidden" name="more" value={more ? "1" : ""} />
-    <div className="wz-safe">🔒 입력하신 모든 정보는 <b>익명으로 처리</b>되니 걱정 마세요! 닉네임은 안 보이고, 여러 명이 모여야 합친 숫자로만 공개돼요.</div>
+    <div className="wz-safe">🔒 입력하신 모든 정보는 <b>익명으로 처리</b>되니 걱정 마세요! 닉네임은 절대 안 보이고, 병원 단위로 합쳐서만 공개돼요.</div>
 
     <div style={show("hosp")} className="wz-step"><h3>어느 병원을 알려줄까요?</h3><p>다니는 곳, 다녔던 곳 모두 좋아요.</p>
       <div className="rv-pick"><input value={picked ? `${picked.name} (${picked.region})` : q} onChange={e => search(e.target.value)} placeholder="병원·약국 이름 검색" autoComplete="off" />

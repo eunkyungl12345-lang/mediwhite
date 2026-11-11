@@ -13,7 +13,7 @@ type Hosp = { id: number; name: string; region: string; kind?: string };
 type T = "hosp" | "pay" | "alba";
 const TABS: { k: T; icon: string; n: string; sub: string; tip: string }[] = [
   { k: "hosp", icon: "🏥", n: "병원 리뷰", sub: "분위기·퇴근·실수령", tip: "실제 퇴근 시간, 분위기, 실수령 구간처럼 입사해야만 아는 걸 탭 몇 번으로 알려주세요. 1분이면 끝나요." },
-  { k: "pay", icon: "💰", n: "연봉 리뷰", sub: "숫자로 남기는 연봉", tip: "세전 연봉과 연차·계약 형태만 적으면 돼요. 같은 병원에 3명 이상 모이면 범위로만 공개돼요." },
+  { k: "pay", icon: "💰", n: "연봉 리뷰", sub: "숫자로 남기는 연봉", tip: "세전 연봉과 연차·계약 형태만 적으면 돼요. 처음엔 “4,000만 원대”처럼만 보이고, 3명 이상 모이면 범위가 공개돼요." },
   { k: "alba", icon: "⏱", n: "알바·단기 리뷰", sub: "일급·식사·업무", tip: "일급·근무 시간·식사·세금 처리, 그리고 다음에 가는 사람을 위한 인계 한마디를 남겨주세요." },
 ];
 function Send({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : label}</button>; }

@@ -2399,3 +2399,4 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .rw-sub{border:1px solid var(--line);border-radius:14px;padding:12px 14px 14px;margin:0;display:grid;gap:14px;min-width:0}.rw-sub legend{font-size:13.5px;font-weight:700;padding:0 6px}.rw-sub legend small{font-weight:500;color:var(--muted)}
 .rw-subg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}@media (max-width:480px){.rw-subg{grid-template-columns:1fr}}.rw-subi{display:grid;gap:4px}.rw-subi>span:first-child{font-size:12.5px;font-weight:700;color:var(--muted)}
 .xr-subs{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.xr-subs b{color:var(--ink)}
+.fb-few{margin:0;padding:9px 12px;border-radius:10px;background:#fff7e6;border:1px solid #f3dfb3;font-size:12.5px;line-height:1.5;color:#6b5320}

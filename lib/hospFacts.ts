@@ -1,10 +1,13 @@
 /** 🔎 병원 실체 체크 — "입사해야만 알 수 있는 것"을 탭 몇 번으로 익명 수집
  *  실수령 월급 · 내부 분위기 · 치명적 리스크(육아휴직·임신 불이익 등)
  *  저장: game_state(user_id, game = "hfact:<병원id>", state) — 1인 1병원 1응답(수정 가능)
- *  공개: 응답 MIN_N명 이상일 때만 집계로 (누가 답했는지 특정 안 되게) */
-export const MIN_N = 3;
-/** 직원 10명 이하 작은 병원·약국은 누가 썼는지 짐작되기 쉬워서 5명 */
-export const SMALL_N = 5;
+ *  공개 기준 (2026-11-11 완화): 분위기·별점·실수령 구간은 MIN_N(1)명부터 "n명 응답"과 함께 공개,
+ *  병원에 딱지가 붙는 뱃지·경고는 BADGE_N(2)명부터, 직원 10명 이하 작은 곳은 SMALL_N(2)명부터 */
+export const MIN_N = 1;
+/** 직원 10명 이하 작은 병원·약국은 누가 썼는지 짐작되기 쉬워서 2명부터 */
+export const SMALL_N = 2;
+/** 긍정 뱃지·경고 요약줄은 한 사람 의견으로 붙지 않게 2명부터 */
+export const BADGE_N = 2;
 export const PAY = ["~200", "200~250", "250~300", "300~350", "350~400", "400~500", "500~600", "600~700", "700~800", "800~1000", "1000~1500", "1500+"] as const; // 세후 월 실수령(만원)
 export const SHIFT = ["3교대", "2교대", "상근(데이)"] as const; // 0·1 = 교대, 2 = 상근
 export const YEARS = ["신규·1년 미만", "1~3년", "4~7년", "8년 이상"] as const;
@@ -17,7 +20,7 @@ export const MOOD = [
   { k: "ot", q: "오버타임 수당", opts: ["다 달아줘요", "눈치 보여요", "거의 못 달아요"], field: true },
   { k: "newquit", q: "신규가 1년 안에 그만두는 편", opts: ["드물어요", "반쯤", "대부분"], field: true },
   // 🌱 고용 안정성 — 계약직 돌려막기 여부 (4번째 답 '몰라요'는 통계에서 빼요: UNKNOWN_IDX)
-  { k: "regular", q: "계약직의 정규직 전환", opts: ["대부분 전환돼요", "티오 날 때 소수만", "전환 거의 없어요 (만기퇴사)", "계약직이 없거나 잘 몰라요"], field: true, hire: true },
+  { k: "regular", q: "여기는 어떻게 뽑나요? (고용 형태)", opts: ["정규직으로 바로 뽑아요", "계약직 → 평가 후 정규직 전환", "계약 끝나면 나가요 (만기)", "부서·공고마다 달라요", "잘 몰라요"], field: true, hire: true },
   // 💼 공고와 현실 (공고엔 절대 안 나오는 것)
   { k: "late", q: "공고 퇴근 시간보다 실제로 늦게 끝나는 편", opts: ["정시에 끝나요", "30분 안팎", "1시간 이상"], real: true },
   { k: "chores", q: "본업 말고 다른 일(접수·청소·소독·처치 보조)", opts: ["거의 없어요", "가끔 해요", "자주·당연하게"], real: true },
@@ -27,7 +30,7 @@ export const MOOD = [
 ] as const;
 export const isField = (m: { k: string }) => ["early", "ot", "newquit", "regular"].includes(m.k);
 /** '몰라요' 답의 번호 (있으면 막대·과반 계산에서 제외) */
-export const unknownIdx = (m: { k: string }) => m.k === "regular" ? 3 : -1;
+export const unknownIdx = (m: { k: string }) => m.k === "regular" ? 4 : -1;
 export const isReal = (m: { k: string }) => ["late", "chores", "incent", "leave2", "boss"].includes(m.k);
 export const RISKS = [
   { k: "parental", s: "육아휴직 불이익", label: "육아휴직 쓰기 어렵거나 쓰면 불이익" },
@@ -71,25 +74,26 @@ export function factLine(a?: FactAgg, locked?: boolean): string[] {
   const M = a?.need ?? MIN_N; if (!a || a.n < M) return [];
   if (locked) return [`🔒 실수령·별점·리스크 ${a.n}명 응답 — 체크 하나면 6개월간 열려요`];
   const out: string[] = []; if (a.payMid) out.push(`💰 실수령 ${a.payMid}만`); if (a.starN >= M) out.push(`⭐ ${a.overallAvg.toFixed(1)}`); if (a.recN >= M) out.push(`👍 추천 ${a.recPct}%`);
+  if (a.n < Math.max(M, BADGE_N)) return out; // 아래 경고들은 2명 이상 응답부터
   const t = a.mood.find(m => m.k === "taeum"); if (t && t.counts[2] > 0) out.push(`😣 태움 심함 ${t.counts[2]}/${a.n}`);
   const ot = a.mood.find(m => m.k === "ot"); if (ot && ot.counts[1] + ot.counts[2] > 0 && ot.counts[1] + ot.counts[2] >= ot.counts[0]) out.push(`⏱️ OT 수당 눈치 ${ot.counts[1] + ot.counts[2]}/${a.n}`);
   const lt = a.mood.find(m => m.k === "late"); if (lt && lt.counts[2] > 0 && lt.counts[2] * 2 >= lt.counts.reduce((x, y) => x + y, 0)) out.push(`🕖 실제 퇴근 1시간+ ${lt.counts[2]}/${a.n}`);
   const ch = a.mood.find(m => m.k === "chores"); if (ch && ch.counts[2] > 0 && ch.counts[2] * 2 >= ch.counts.reduce((x, y) => x + y, 0)) out.push(`🧹 잡무 많음 ${ch.counts[2]}/${a.n}`);
   const lv = a.mood.find(m => m.k === "leave2"); if (lv && lv.counts[1] > 0 && lv.counts[1] * 2 >= lv.counts.reduce((x, y) => x + y, 0)) out.push(`⚠️ 연차로 만든 주5일 ${lv.counts[1]}/${a.n}`);
-  const rg = a.mood.find(m => m.k === "regular"), rgT = rg ? rg.counts.reduce((x, y) => x + y, 0) : 0; if (rg && rg.counts[2] > 0 && rg.counts[2] * 2 >= rgT) out.push(`🚨 계약직 만기퇴사 주의 ${rg.counts[2]}/${rgT}`);
+  const rg = a.mood.find(m => m.k === "regular"), rgT = rg ? rg.counts.reduce((x, y) => x + y, 0) : 0; if (rg && rgT >= BADGE_N && rg.counts[2] * 2 >= rgT && rg.counts[2] > 0) out.push(`⏳ 계약 만기형 주의 ${rg.counts[2]}/${rgT}`);
   if (a.risks[0]) out.push(`⚠️ ${a.risks[0].s} ${a.risks[0].n}/${a.n}`);
   return out;
 }
 
 /** 🌿 긍정 뱃지 — 좋은 점만 사실처럼 짧게 (응답 과반이 그렇다고 할 때만, 공개 기준 넘은 병원만). 잠금 상태에도 보여줘요 */
 export function posBadges(a?: FactAgg): string[] {
-  const M = a?.need ?? MIN_N; if (!a || a.n < M) return [];
+  const M = Math.max(a?.need ?? MIN_N, BADGE_N); if (!a || a.n < M) return [];
   const maj = (k: string, i: number) => { const m = a.mood.find(x => x.k === k); const tot = m ? m.counts.reduce((x, y) => x + y, 0) : 0; return !!m && tot >= M && m.counts[i] * 2 > tot; };
   const out: string[] = [];
   if (maj("late", 0)) out.push("⏰ 정시 퇴근"); if (!maj("late", 0) && maj("off", 0)) out.push("🏃 대부분 칼퇴"); if (maj("taeum", 0)) out.push("😊 태움 거의 없음");
   if (maj("leave2", 0)) out.push("🌴 주5일 + 연차 따로");
   if (maj("boss", 0)) out.push("🙆 원장 터치 적음"); if (maj("quit", 0)) out.push("🧑‍🤝‍🧑 오래 다니는 곳"); if (maj("incent", 0)) out.push("💸 인센 약속 지킴");
-  if (maj("regular", 0)) out.push("🌱 계약직 전환 희망적");
+  if (maj("regular", 0)) out.push("🎯 정규직 직접 채용"); if (maj("regular", 1)) out.push("🌱 계약직 전환형");
   if (maj("ot", 0)) out.push("💵 OT 수당 챙겨줌"); if (maj("chores", 0)) out.push("🧹 본업만 해요"); if (maj("early", 0)) out.push("🌅 일찍 출근 없음");
   const w = a.stars.find(x => x.k === "welfare"); if (a.starN >= M && w && w.avg >= 4) out.push("🎁 복지 좋음");
   if (a.verified >= 2) out.push(`✅ 인증 ${a.verified}명`);
