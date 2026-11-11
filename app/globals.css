@@ -76,16 +76,13 @@ textarea{resize:vertical;min-height:140px}
 .btn-google{background:#FFFFFF;color:#3C4043;border:1px solid #DADCE0;box-shadow:0 1px 3px rgba(60,64,67,.10)}
 .btn-google:hover{background:#F8F9FA;border-color:#C7CBD1}
 .btn-kakao:active,.btn-naver:active,.btn-google:active{transform:translateY(1px);box-shadow:none}
-.btn-kakao .kakao-ico{font-size:18px;line-height:1}
-.naver-ico,.google-ico{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;line-height:1;-webkit-font-smoothing:antialiased}
-.naver-ico{font-size:18px;font-weight:900;letter-spacing:-.6px}
-.google-ico{font-size:17px;font-weight:900;color:#4285F4}
+.btn-kakao svg,.btn-naver svg,.btn-google svg{display:block;flex:none}
+.oauth-who svg{display:block;flex:none}
 .auth-divider{display:flex;align-items:center;gap:10px;margin:2px 0 0;color:var(--muted);font-size:12px;white-space:nowrap}
 .auth-divider::before,.auth-divider::after{content:"";flex:1;min-width:12px;height:1px;background:var(--line)}
 .oauth-who{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink);background:var(--scrub-soft);border-radius:10px;padding:8px 12px}
 .oauth-who-naver{background:rgba(3,199,90,.14)}
 .oauth-who-google{background:rgba(66,133,244,.12)}
-.oauth-who .naver-ico,.oauth-who .google-ico{width:16px;height:16px;font-size:15px}
 @media (max-width:420px){.btn-kakao,.btn-naver,.btn-google{font-size:15px;padding:13px 12px}.auth-divider{font-size:11px}}
 
 /* chat */
