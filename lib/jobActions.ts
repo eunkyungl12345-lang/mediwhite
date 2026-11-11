@@ -138,7 +138,7 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
   if (!["재직", "퇴사"].includes(status)) return { error: "재직/퇴사를 골라주세요" };
   if (!inList(JOB_DEPTS, dept)) return { error: "직종을 골라주세요" };
   // 빠른 체크: 실제 퇴근(late)만 필수, 나머지 분위기·현장 항목은 '더 알려주기'에서 (답한 것만 저장)
-  const mood: Record<string, number> = {}; for (const m of MOOD) { const raw = fd.get(m.k); if (raw === null || raw === "") { if (m.k === "late") return { error: `'${m.q}'를 골라주세요` }; continue; } const v = Number(raw); if (v >= 0 && v <= 2) mood[m.k] = v; }
+  const mood: Record<string, number> = {}; for (const m of MOOD) { const raw = fd.get(m.k); if (raw === null || raw === "") { if (m.k === "late") return { error: `'${m.q}'를 골라주세요` }; continue; } const v = Number(raw); if (Number.isInteger(v) && v >= 0 && v < m.opts.length) mood[m.k] = v; }
   const risks = fd.getAll("risk").map(String).filter(r => RISKS.some(x => x.k === r)); const good = fd.get("good") === "1" && !risks.length;
   let exit: Record<string, any> = {};
   const stars: Record<string, number> = {}; for (const st of EXIT_STARS) { const v = Number(fd.get("st_" + st.k)); if (v >= 1 && v <= 5) stars[st.k] = v; }
