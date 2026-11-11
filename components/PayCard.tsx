@@ -19,7 +19,7 @@ export default function PayCard({ depts, dist, cnt, min }: { depts: string[]; di
     <div className="pcd-form">
       <label>직종<select value={dept} onChange={e => setDept(e.target.value)}>{depts.map(d => <option key={d}>{d}</option>)}</select></label>
       <label>연차<select value={yrs} onChange={e => setYrs(e.target.value)}>{YEARS.map(y => <option key={y}>{y}</option>)}</select></label>
-      <label>세전 연봉 (만 원)<input type="number" inputMode="numeric" min={1000} max={30000} step={100} value={ann || ""} onChange={e => setAnn(Number(e.target.value) || 0)} /></label>
+      <label>세전 연봉 (만 원)<input type="number" inputMode="numeric" min={1000} max={30000} step={100} value={ann || ""} onChange={e => setAnn(Math.round(Number(e.target.value) || 0))} /></label>
       <label>주 근무시간 (실제로 일하는 시간)<input type="number" inputMode="numeric" min={10} max={80} value={hrs || ""} onChange={e => setHrs(Number(e.target.value) || 0)} /></label>
     </div>
     {ok ? <>

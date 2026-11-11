@@ -2379,3 +2379,7 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
   .side-write{margin:10px 0 0}.side-write.sub{margin:6px 0 6px;background:transparent;color:var(--ink);border:1.5px solid var(--line);padding:9px;font-size:14px}.side-write.sub:hover{background:var(--surface)}
   .wfab,.pushbar{display:none!important}
 }
+/* ✅ 재직 인증: 끌어다 놓기·붙여넣기 */
+.vf-drop{padding:22px 14px;transition:border-color .15s,background .15s}.vf-drop.over{border-color:var(--scrub);background:var(--scrub-soft)}.vf-drop span{display:grid;gap:6px;justify-items:center}.vf-drop b{font-size:15px;color:var(--ink)}.vf-drop small{font-size:12.5px;color:var(--muted)}.vf-drop kbd{font:inherit;font-weight:700;padding:1px 5px;border-radius:5px;border:1px solid var(--line);background:var(--surface)}
+.vf-pc{display:none}@media (hover:hover) and (pointer:fine){.vf-pc{display:block}}
+.vf-guide b{font-weight:700;line-height:1.5}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import JobForm from "@/components/jobs/JobForm";
+export const metadata = { title: "공고 올리기" };
 export default async function NewJobPage({ searchParams }: { searchParams: { tip?: string } }) {
   const tip = searchParams.tip === "1";
   const s = (await getSession())!;

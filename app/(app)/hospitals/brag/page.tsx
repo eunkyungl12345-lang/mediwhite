@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { loadBrags } from "@/lib/bragDb";
 import BragCard from "@/components/jobs/BragCard";
+export const metadata = { title: "우리 병원 자랑대회" };
 export const dynamic = "force-dynamic";
 /** 🏆 천하제일 우리병원 자랑대회 */
 export default async function BragPage({ searchParams }: { searchParams: { sort?: string; new?: string } }) {

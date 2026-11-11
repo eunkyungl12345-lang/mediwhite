@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import BrandLogo from "@/components/BrandLogo";
 import Link from "next/link";
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   return { title: `${x.h.name} — 실수령·분위기·리스크`, description: desc, alternates: { canonical: `/h/${x.h.id}` }, openGraph: { title: `${x.h.name}, 입사 전에 알고 가세요`, description: desc, images: [{ url: "/og.jpg", width: 1200, height: 630 }] } };
 }
 export default async function PublicHosp({ params }: { params: { id: string } }) {
-  const x = await load(Number(params.id)); const next = `/hospitals/${params.id}`;
+  const x = await load(Number(params.id)); if (!x) notFound(); const next = `/hospitals/${params.id}`;
   return <div className="login-bg"><div className="app"><main className="ph">
     <Link href="/login" className="ph-brand" aria-label="메디화이트"><BrandLogo /></Link>
     {!x ? <div className="ph-card"><b>없는 병원이에요</b><Link href="/login" className="btn">메디화이트 둘러보기</Link></div> : <div className="ph-card">

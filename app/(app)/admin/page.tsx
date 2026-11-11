@@ -32,22 +32,24 @@ import { fmt } from "@/lib/format";
 import Link from "next/link";
 import { REPORT_REASONS } from "@/lib/safety";
 import Name from "@/components/Name";
+export const metadata = { title: "관리자" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const s = (await getSession())!;
   if (s.role !== "admin") redirect("/board");
   const since = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
-  const [{ data: vis }, { data: signups }, { count: msg24 }, { count: postsAll }, { count: scores24 }] = await Promise.all([
+  const [{ data: vis }, { data: signups0 }, { count: msg24 }, { count: postsAll }, { count: scores24 }] = await Promise.all([
     db().from("visits").select("day,user_id,hits").gte("day", since),
-    db().from("users").select("created_at").eq("stealth", false),
+    db().from("users").select("id,created_at,role,username").eq("stealth", false),
     db().from("messages").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 86400000).toISOString()),
     db().from("posts").select("id", { count: "exact", head: true }),
     db().from("scores").select("user_id", { count: "exact", head: true }).gte("updated_at", new Date(Date.now() - 86400000).toISOString()),
   ]);
   const kst = (d: string | Date) => new Date(new Date(d).getTime() + 9 * 3600000).toISOString().slice(0, 10);
   const days: string[] = Array.from({ length: 14 }, (_, i) => kst(new Date(Date.now() - (13 - i) * 86400000)));
-  const visByDay: Record<string, Set<string>> = Object.fromEntries(days.map(d => [d, new Set<string>()])); for (const v of vis ?? []) visByDay[v.day]?.add(v.user_id);
+  const visByDay: Record<string, Set<string>> = Object.fromEntries(days.map(d => [d, new Set<string>()])); const realU = (signups0 ?? []).filter(u => u.role !== "admin" && !String(u.username).startsWith("zz_")), realIds = new Set(realU.map(u => u.id)), signups = realU; // 지표는 진짜 회원만 (관리자·테스트 계정 제외)
+  for (const v of vis ?? []) if (realIds.has(v.user_id)) visByDay[v.day]?.add(v.user_id);
   const signByDay: Record<string, number> = Object.fromEntries(days.map(d => [d, 0])); for (const u of signups ?? []) { const k = kst(u.created_at); if (k in signByDay) signByDay[k]++; }
   const series = days.map(d => ({ day: d.slice(5), visitors: visByDay[d].size, signups: signByDay[d] }));
   const [{ data: inq }, email] = await Promise.all([db().from("inquiries").select("*").order("created_at", { ascending: false }).limit(50), contactEmail()]);

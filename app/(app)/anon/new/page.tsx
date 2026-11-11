@@ -4,6 +4,7 @@ import { ANON_TOPICS } from "@/lib/depts";
 import { getSession } from "@/lib/auth";
 import { myRank } from "@/lib/ranksvc";
 import { can, PERK, RANKS, IDX } from "@/lib/ranks";
+export const metadata = { title: "익명 글쓰기" };
 export const dynamic = "force-dynamic";
 export default async function AnonNew({ searchParams }: { searchParams: { topic?: string } }) {
   const topic = ANON_TOPICS.some(t => t.key === searchParams.topic) ? searchParams.topic! : "free";

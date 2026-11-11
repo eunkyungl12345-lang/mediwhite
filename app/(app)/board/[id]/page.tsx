@@ -10,7 +10,7 @@ import Name from "@/components/Name";
 import CommentForm from "@/components/CommentForm";
 import CommentThread, { type CItem } from "@/components/CommentThread";
 import Reactions from "@/components/Reactions";
-export async function generateMetadata({ params }: { params: { id: string } }) { const { data } = await db().from("posts").select("title").eq("id", params.id).maybeSingle(); return { title: data?.title ? `${data.title} — 커뮤니티` : "커뮤니티" }; }
+export async function generateMetadata({ params }: { params: { id: string } }) { if (!/^[0-9a-f-]{36}$/i.test(params.id)) return { title: "커뮤니티" }; const { data } = await db().from("posts").select("title").eq("id", params.id).maybeSingle(); return { title: data?.title ? `${data.title} — 커뮤니티` : "커뮤니티" }; }
 import { topicOf } from "@/lib/depts";
 import ReportButton from "@/components/ReportButton";
 import Linkify from "@/components/Linkify";
@@ -19,6 +19,7 @@ import { memoOnce } from "@/lib/memo";
 export const dynamic = "force-dynamic";
 
 export default async function PostPage({ params }: { params: { id: string } }) {
+  if (!/^[0-9a-f-]{36}$/i.test(params.id)) notFound();
   const s = (await getSession())!;
   const d = db();
   const [{ data: p }, leaders, { data: me }] = await Promise.all([

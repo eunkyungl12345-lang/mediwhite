@@ -54,6 +54,6 @@ export async function decideHVerify(uid: string, hid: number, approve: boolean, 
   const { data: h } = await s.from("hospitals").select("name").eq("id", hid).maybeSingle();
   if (approve) { await s.from("hospital_reviews").update({ verified: true }).eq("user_id", uid).eq("hospital_id", hid); await awardXp(uid, 50, `hverify:${hid}`, "quest"); }
   pushToUsers([uid], approve ? { title: st.kind === "work" ? "✅ 재직 인증 완료!" : "✅ 퇴사 인증 완료!", body: `${h?.name ?? "병원"} 인증이 끝났어요. 내 체크·리뷰·자랑에 ✅ 마크가 붙어요 (+50 XP)`, url: `/hospitals/${hid}`, tag: "hverify" }
-    : { title: "병원 인증 심사 결과", body: reason ? `아쉽지만 승인되지 않았어요: ${reason}` : "아쉽지만 승인되지 않았어요. 닉네임 포스트잇이 잘 보이게 다시 찍어주세요", url: `/hospitals/verify?id=${hid}`, tag: "hverify" }).catch(() => {});
+    : { title: "병원 인증 심사 결과", body: reason ? `아쉽지만 승인되지 않았어요: ${reason}` : "아쉽지만 승인되지 않았어요. 병원 이름이 잘 보이는 사진으로 다시 신청해 주세요.", url: `/hospitals/verify?id=${hid}`, tag: "hverify" }).catch(() => {});
   revalidatePath("/admin"); revalidatePath(`/hospitals/${hid}`); return { ok: approve ? "승인했어요" : "거절했어요" };
 }

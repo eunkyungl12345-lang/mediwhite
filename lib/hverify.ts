@@ -1,4 +1,4 @@
-/** ✅ 병원 재직·퇴사 인증 — 재직: 명찰 + 닉네임 포스트잇 / 퇴사: 자격득실확인서(경력증명서) + 닉네임 포스트잇
+/** ✅ 병원 재직·퇴사 인증 — 재직: 명찰·사원증·명함·급여명세서 1장 / 퇴사: 자격득실확인서·경력증명서·퇴직증명서 캡처 (포스트잇 요구 없음)
  *  저장: game_state(game = "hverify:<병원id>", state = { kind, status, path?, at, reason? }) · 사진은 심사 후 즉시 삭제 */
 export type VKind = "work" | "exit";
 export type VState = { kind: VKind; status: "pending" | "approved" | "rejected"; path?: string | null; at: string; reason?: string; decided?: string };

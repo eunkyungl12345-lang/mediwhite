@@ -4,6 +4,7 @@ import { deptPools, bankInfo, AMOUNTS, POINT_PER_WON } from "@/lib/support";
 import { fmt } from "@/lib/format";
 import SupportForm from "@/components/SupportForm";
 import Hero from "@/components/Hero";
+export const metadata = { title: "문의·제안" };
 export const dynamic = "force-dynamic";
 
 export default async function SupportPage() {

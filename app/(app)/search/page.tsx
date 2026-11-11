@@ -12,9 +12,10 @@ export const dynamic = "force-dynamic";
 /** 🔍 통합 검색 — 잡플래닛처럼 전체 · 병원 · 채용 공고 탭 + 키워드 */
 export default async function SearchPage({ searchParams }: { searchParams: { q?: string; tab?: string } }) {
   const s = (await getSession())!; const d = db(); const q = (searchParams.q ?? "").trim().slice(0, 30), tab = ["hosp", "jobs"].includes(searchParams.tab ?? "") ? searchParams.tab! : "all";
+  const qe = q.replace(/[\\%_]/g, m => "\\" + m); // LIKE 특수문자(% _)는 글자 그대로 찾게
   const dept = JOB_DEPTS.find(x => q && (x === q || q.includes(x)));
   const [{ data: hs }, { data: js }, contributed] = q ? await Promise.all([
-    d.from("hospitals").select("id,name,region,kind").ilike("name", `%${q}%`).limit(30),
+    d.from("hospitals").select("id,name,region,kind").ilike("name", `%${qe}%`).limit(30),
     (dept ? d.from("jobs").select("id,hospital,region,dept,emp_type,pay,hours,welfare,deadline,views,closed,created_at,contact,body,author:users!jobs_author_id_fkey(nickname,dept,username)").eq("dept", dept) : d.from("jobs").select("id,hospital,region,dept,emp_type,pay,hours,welfare,deadline,views,closed,created_at,contact,body,author:users!jobs_author_id_fkey(nickname,dept,username)").or(`hospital.ilike.%${q}%,welfare.ilike.%${q}%`)).eq("hidden", false).eq("closed", false).order("created_at", { ascending: false }).limit(40),
     hasContributed(s.id, s.role)]) : [{ data: [] as any[] }, { data: [] as any[] }, true];
   const jobs = (js ?? []).filter(j => dday(j.deadline) !== "마감"), ids = (hs ?? []).map(h => h.id);

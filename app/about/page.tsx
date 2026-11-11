@@ -6,7 +6,7 @@ import { topicOf, display } from "@/lib/depts";
 import Insignia from "@/components/Insignia";
 import { fmt } from "@/lib/format";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "메디화이트 — 병원 사람들의 익명 라운지" };
+export const metadata = { title: { absolute: "메디화이트 소개 — 이직 전에 그 병원 실수령 확인하는 곳" } };
 
 export default async function AboutPage() {
   const s = await getSession();

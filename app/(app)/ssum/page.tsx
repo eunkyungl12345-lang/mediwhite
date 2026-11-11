@@ -10,6 +10,7 @@ import { answerConfession, deleteIntro, dmQuota } from "@/lib/ssumActions";
 import { fmt } from "@/lib/format";
 import Name from "@/components/Name";
 import { ConfessForm, ProfileForm, IntroForm, LikeButton, PickSolo, DmRequestButton, DmRequestAnswer } from "@/components/ssum/Forms";
+export const metadata = { title: "썸" };
 export const dynamic = "force-dynamic";
 
 type Tab = "lounge" | "me" | "meet" | "box";

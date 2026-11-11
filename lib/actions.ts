@@ -45,18 +45,16 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   if (password.toLowerCase().includes(username) || /^(.)\1+$/.test(password) || /^(password|12345678|123456789|87654321|qwerty|qwertyui|asdfghjk|abcdefgh|11111111)$/i.test(password)) return { error: "아이디가 들어가거나 너무 흔한 비밀번호는 쓸 수 없어요" };
   if (!nickname) return { error: "닉네임을 입력해주세요" };
   if (!(DEPTS as readonly string[]).includes(dept)) return { error: "직종을 선택해주세요" };
-  { const np = await nickProblem(nickname, dept, admins().includes(username) ? "admin" : "member"); if (np) return { error: np }; }
   if (dept === "업체" && !(VENDOR_FIELDS as readonly string[]).includes(field)) return { error: "업체 분야를 선택해주세요" };
-  const s = db();
-  const { data: exists } = await s.from("users").select("id").eq("username", username).maybeSingle();
+  const s = db(), role = admins().includes(username) ? "admin" : "member", test = username.startsWith("zz_");
+  // 닉네임·아이디 검사, 순번 세기, 비밀번호 해시를 동시에 (가입 버튼 뒤 기다리는 시간 줄이기)
+  const [np, { data: exists }, { count }, password_hash] = await Promise.all([nickProblem(nickname, dept, role), s.from("users").select("id").eq("username", username).maybeSingle(), s.from("users").select("id", { count: "exact", head: true }).eq("stealth", false).not("username", "like", "zz\\_%"), bcrypt.hash(password, 10)]);
+  if (np) return { error: np };
   if (exists) return { error: "이미 쓰는 아이디예요" };
-  const role = admins().includes(username) ? "admin" : "member";
-  const { count } = await s.from("users").select("id", { count: "exact", head: true }).eq("stealth", false);
   const order = (count ?? 0) + 1;
-  const { data, error } = await s.from("users").insert({ username, password_hash: await bcrypt.hash(password, 10), nickname, dept, field: dept === "업체" ? field : null, role, join_order: order, referred_by: ref && ref !== username ? ref : null }).select("id").single();
+  const { data, error } = await s.from("users").insert({ username, password_hash, nickname, dept, field: dept === "업체" ? field : null, role, join_order: test ? null : order, referred_by: ref && ref !== username ? ref : null }).select("id").single();
   if (error || !data) return { error: "가입에 실패했어요. 잠시 후 다시 시도해주세요" };
-  await awardXp(data.id, signupBonus(order), "signup", "signup");
-  if (ref && ref !== username) { const { data: r } = await s.from("users").select("id").eq("username", ref).maybeSingle(); if (r) await repeatXp(r.id, "referral"); }
+  await Promise.all([awardXp(data.id, signupBonus(order), "signup", "signup"), (async () => { if (ref && ref !== username) { const { data: r } = await s.from("users").select("id").eq("username", ref).maybeSingle(); if (r) await repeatXp(r.id, "referral"); } })()]);
   await createSession({ id: data.id, username, nickname, dept, role });
   redirect(await afterLogin());
 }

@@ -4,6 +4,7 @@ import { CATS, NOTICE_CAT, DEPTS } from "@/lib/depts";
 import { myRank } from "@/lib/ranksvc";
 import { can } from "@/lib/ranks";
 import { db } from "@/lib/supabase";
+export const metadata = { title: "글쓰기" };
 export const dynamic = "force-dynamic";
 export default async function NewPost({ searchParams }: { searchParams: { cat?: string; tab?: string; topic?: string; title?: string; body?: string } }) {
   const s = (await getSession())!;
