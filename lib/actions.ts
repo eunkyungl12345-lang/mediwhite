@@ -16,6 +16,13 @@ import { myRank, isDeptLeader } from "./ranksvc";
 import { POINT_PER_WON, AMOUNTS } from "./support";
 import { pushToUsers, pushToAll } from "./push";
 
+/** 🛡️ 닉네임 검사: 운영자 사칭 이름, 같은 [직종] 안 중복(표시 이름이 똑같아짐)은 막아요 */
+const RESERVED = /관리자|운영자|운영팀|운영진|메디화이트|admin|manager|official|공식|매니저|고객센터/i;
+async function nickProblem(nickname: string, dept: string, role: string, selfId?: string): Promise<string | null> {
+  if (role !== "admin" && RESERVED.test(nickname.replace(/\s/g, ""))) return "운영자로 오해할 수 있는 닉네임은 쓸 수 없어요";
+  let q = db().from("users").select("id").eq("nickname", nickname).eq("dept", dept).limit(1); if (selfId) q = q.neq("id", selfId);
+  const { data } = await q; return data?.length ? "같은 직종에 이미 있는 닉네임이에요" : null;
+}
 const admins = () => (process.env.ADMIN_USERNAMES || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
 const clean = (v: FormDataEntryValue | null, max: number) => String(v ?? "").trim().slice(0, max);
 export type FormState = { error?: string; ok?: string } | undefined;
@@ -38,6 +45,7 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   if (password.toLowerCase().includes(username) || /^(.)\1+$/.test(password) || /^(password|12345678|123456789|87654321|qwerty|qwertyui|asdfghjk|abcdefgh|11111111)$/i.test(password)) return { error: "아이디가 들어가거나 너무 흔한 비밀번호는 쓸 수 없어요" };
   if (!nickname) return { error: "닉네임을 입력해주세요" };
   if (!(DEPTS as readonly string[]).includes(dept)) return { error: "직종을 선택해주세요" };
+  { const np = await nickProblem(nickname, dept, admins().includes(username) ? "admin" : "member"); if (np) return { error: np }; }
   if (dept === "업체" && !(VENDOR_FIELDS as readonly string[]).includes(field)) return { error: "업체 분야를 선택해주세요" };
   const s = db();
   const { data: exists } = await s.from("users").select("id").eq("username", username).maybeSingle();
@@ -78,6 +86,7 @@ export async function updateProfile(_: FormState, fd: FormData): Promise<FormSta
   const u = await requireUser();
   const nickname = clean(fd.get("nickname"), 12), bio = clean(fd.get("bio"), 80);
   if (!nickname) return { error: "닉네임을 입력해주세요" };
+  if (nickname !== u.nickname) { const np = await nickProblem(nickname, u.dept, u.role, u.id); if (np) return { error: np }; }
   await db().from("users").update({ nickname, bio }).eq("id", u.id);
   if (bio) await awardXp(u.id, 50, "bio");
   await createSession({ ...u, nickname });

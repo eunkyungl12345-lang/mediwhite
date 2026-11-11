@@ -2369,3 +2369,13 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .ten{display:grid;gap:10px}.ten-goal{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline}.ten-goal b{font-size:26px}.ten-goal span{color:var(--muted);font-size:13px}.ten-goal>i{grid-column:1/-1;display:block;height:8px;border-radius:99px;background:var(--line);overflow:hidden}.ten-goal>i>i{display:block;height:100%;background:var(--scrub);border-radius:99px}
 .ten-fun{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.ten-fun div{display:grid;gap:2px;padding:10px 8px;border-radius:12px;background:var(--bg);text-align:center}.ten-fun b{font-size:20px}.ten-fun small{font-size:11.5px;color:var(--muted);line-height:1.3}.ten-fun .warn{background:#fff3e0}.ten-fun .warn b{color:#c2410c}
 .ten-list{display:grid;gap:6px}.ten-row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:9px 12px;border-radius:12px;border:1px solid var(--line);font-size:13.5px}.ten-row span{font-weight:700;font-size:12.5px;color:var(--muted)}.ten-row small{grid-column:1/-1;color:var(--muted);font-size:12px}.ten-row.s3 span{color:var(--scrub)}.ten-row.s2 span{color:#c2410c}
+/* 🧭 관리자 바로가기 · /pay에서 온 가입 안내 */
+.adm-nav{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:8px 2px;background:var(--bg);scrollbar-width:none}.adm-nav::-webkit-scrollbar{display:none}.adm-nav a{flex:none;display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}
+[id^="a-"]{scroll-margin-top:64px}
+.from-pay{margin:0;padding:11px 13px;border-radius:12px;background:#eef6f2;border:1px solid #cfe5db;font-size:13.5px;line-height:1.5;color:#1f3d33}
+/* 💻 PC 정리: 사이드바 '병원 리뷰 쓰기'가 1순위, 글쓰기는 보조 · 떠 있는 버튼과 폰 알림 안내는 PC에서 숨김 */
+.np-rev{display:flex;gap:6px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--scrub-soft);color:var(--ink);font-size:13.5px;text-decoration:none;line-height:1.4}.np-rev em{font-style:normal;margin-left:auto;font-weight:800}
+@media (min-width:1080px){
+  .side-write{margin:10px 0 0}.side-write.sub{margin:6px 0 6px;background:transparent;color:var(--ink);border:1.5px solid var(--line);padding:9px;font-size:14px}.side-write.sub:hover{background:var(--surface)}
+  .wfab,.pushbar{display:none!important}
+}

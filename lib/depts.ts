@@ -29,7 +29,7 @@ export const EMOJIS = ["👍", "😂", "😢", "🔥"] as const;
 export const TOPICS = [
   { key: "free", name: "자유", icon: "💬", hint: "아무 얘기나 편하게" },
   { key: "life", name: "일상·고민", icon: "📝", hint: "오늘 있었던 일, 고민 상담" },
-  { key: "hospital", name: "병원 리뷰", icon: "🏥", hint: "분위기·복지·근무환경 솔직 후기 (실명 금지)" },
+  { key: "hospital", name: "병원 수다", icon: "🏥", hint: "병원 생활·분위기 수다 (실명 금지) — 병원별 실수령·리뷰는 ‘병원 리뷰 쓰기’에 남겨요" },
   { key: "pay", name: "급여·연봉", icon: "💰", hint: "급여·연봉·수당 이야기" },
   { key: "study", name: "공부·시험", icon: "📚", hint: "자격·시험·실무 공부" },
   { key: "data", name: "자료실", icon: "🗂️", hint: "서식·양식·정리 노트 공유 (교재 스캔·유료 자료는 올리면 안 돼요)" },

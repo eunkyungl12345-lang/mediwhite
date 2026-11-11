@@ -5,6 +5,7 @@ import { pendingXrayPhotos } from "@/lib/xrayPhotoDb";
 import AdminFocus from "@/components/AdminGrowth";
 import AdminLock from "@/components/AdminLock";
 import AdminTen from "@/components/AdminTen";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
 import AdminPromo from "@/components/AdminPromo";
 import { lockMode } from "@/lib/hospFactsDb";
 import { getFocus } from "@/lib/focus";
@@ -82,9 +83,10 @@ export default async function AdminPage() {
   const SRC: Record<string, string> = { pub: "🏛️ 공공", own: "🏥 병원 구인", share: "🤫 히든 공고", member: "👤 회원" };
   return (
     <div className="games">
+      <nav className="adm-nav" aria-label="관리자 바로가기">{[["ten", "🎯 10명"], ["hv", "✅ 재직인증"], ["proof", "✅ 리뷰인증"], ["xr", "🩻 촬영법"], ["td", "🏥 반론"], ["rep", "🚩 신고"], ["inq", "✉️ 문의"], ["ssum", "💘 썸"], ["jobs", "📊 채용"], ["users", "👥 회원"]].map(([k, n]) => <a key={k} href={`#a-${k}`}>{n}</a>)}</nav>
       <Stats series={series} totals={{ users: (signups ?? []).length, today: series[series.length - 1]?.visitors ?? 0, msg24h: msg24 ?? 0, posts: postsAll ?? 0, games24h: scores24 ?? 0 }} />
       <div className="card" id="kpi">
-        <h3>🎯 진짜 유저 10명 (11/17 목표)</h3><AdminTen />
+        <h3 id="a-ten">🎯 진짜 유저 10명 (11/17 목표)</h3><AdminTen />
         <h3 style={{ marginTop: 12 }}>📈 핵심 지표 (최근 7일)</h3>
         <div className="kpi">
           <div><b>{kpi.verifiedPeople}</b><span>인증된 의료인<br /><small>재직·퇴사 인증 + 골드뱃지</small></span></div>
@@ -99,17 +101,17 @@ export default async function AdminPage() {
         <h3 style={{ marginTop: 12 }}>📍 집중 지역</h3><AdminFocus cur={focus} />
       </div>
       <div className="card" id="takedown">
-        <h3>🏥 병원 반론·게시중단 요청 {tds?.length ? <span className="mt-wait">{tds.length}</span> : null}</h3>
+        <h3 id="a-td">🏥 병원 반론·게시중단 요청 {tds?.length ? <span className="mt-wait">{tds.length}</span> : null}</h3>
         {(tds ?? []).length === 0 ? <div className="muted">들어온 요청이 없어요.</div> : (tds ?? []).map(t => { let x: any = {}; try { x = JSON.parse(t.text); } catch {} return <div key={t.id} className="card" style={{ padding: 10, display: "grid", gap: 4, fontSize: 13 }}>
           <b><a className="link" href={`/hospitals/${x.hid}`}>{x.hospital}</a> · {x.what}</b><span>{x.who} · 연락처 {x.contact}</span><span style={{ whiteSpace: "pre-wrap" }}>{x.detail}</span><small className="muted">{new Date(t.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · 해당 리뷰는 병원 페이지에서 신고(권리침해)로 바로 임시 블라인드할 수 있어요</small></div>; })}
       </div>
       <div className="card" id="hverify">
-        <h3>✅ 병원 재직·퇴사 인증 {hvReqs.length ? <span className="mt-wait">{hvReqs.length}</span> : null}</h3>
+        <h3 id="a-hv">✅ 병원 재직·퇴사 인증 {hvReqs.length ? <span className="mt-wait">{hvReqs.length}</span> : null}</h3>
         <AdminHVerify reqs={hvReqs as any} />
-        <h3 style={{ marginTop: 12 }}>🩻 촬영법 사진 심사</h3><XrayPhotoAdmin rows={(await pendingXrayPhotos()).map(p => ({ uid: p.uid, game: p.game, url: p.url, kind: p.kind, note: p.note, status: p.status, slug: p.slug }))} />
+        <h3 id="a-xr" style={{ marginTop: 12 }}>🩻 촬영법 사진 심사</h3><XrayPhotoAdmin rows={(await pendingXrayPhotos()).map(p => ({ uid: p.uid, game: p.game, url: p.url, kind: p.kind, note: p.note, status: p.status, slug: p.slug }))} />
       </div>
       <div className="card" id="jobstats">
-        <h3>📊 채용 반응 (최근 7일)</h3>
+        <h3 id="a-jobs">📊 채용 반응 (최근 7일)</h3>
         <div className="muted" style={{ fontSize: 12 }}>공고 열람 {(jv ?? []).length}회 · 원문 지원 클릭 {(jo ?? []).length}회 — 어디서 반응이 오는지 보고 그쪽을 더 뾰족하게</div>
         <div className="ad-js">
           <div><b>파트별 열람</b>{tally(jv, 0).slice(0, 8).map(([k, n]) => <span key={k}>{k} <em>{n}</em></span>)}</div>
@@ -121,12 +123,12 @@ export default async function AdminPage() {
         <div className="ad-js"><div>{Object.entries(vc).sort((a, b) => b[1] - a[1]).map(([k, n]) => <span key={k}>{voiceLabel(k)} <em>{n}</em></span>)}</div>{vFree.length > 0 && <div><b>직접 적은 말</b>{vFree.map((f, i) => <span key={i}>{f}</span>)}</div>}</div>
       </div>
       <div className="card" id="badges">
-        <h3>🥇 골드뱃지 심사 {badgeReqs?.length ? <span className="mt-wait">{badgeReqs.length}</span> : null}</h3>
+        <h3 id="a-gold">🥇 골드뱃지 심사 {badgeReqs?.length ? <span className="mt-wait">{badgeReqs.length}</span> : null}</h3>
         <div className="muted">운전면허증 + 의료 면허·자격증 이름이 같은지 확인. 승인/거절하면 사진은 즉시 삭제돼요.</div>
         <AdminBadges reqs={(badgeReqs ?? []) as any} />
       </div>
       <div className="card" id="proofs">
-        <h3>✅ 병원 리뷰 재직 인증 {proofReqs?.length ? <span className="mt-wait">{proofReqs.length}</span> : null}</h3>
+        <h3 id="a-proof">✅ 병원 리뷰 재직 인증 {proofReqs?.length ? <span className="mt-wait">{proofReqs.length}</span> : null}</h3>
         <div className="muted">서류의 병원명이 리뷰 병원과 같은지, 이름이 가입자와 맞는지 확인. 처리하면 서류는 즉시 삭제.</div>
         <AdminProofs items={(proofReqs ?? []) as any} />
       </div>
@@ -148,7 +150,7 @@ export default async function AdminPage() {
         <div className="muted" style={{ fontSize: 12 }}>동시 접속 30~50명쯤부터 켜는 걸 추천해요. 사람이 적을 때 방을 나누면 방마다 썰렁해져요.</div>
       </div>
       <div className="card">
-        <h3>💘 썸 현황</h3>
+        <h3 id="a-ssum">💘 썸 현황</h3>
         <div className="h-stats">
           <div className="h-stat"><b>{gcount(dps, "여")}</b><span>🙋‍♀️ 여 카드</span></div>
           <div className="h-stat"><b>{gcount(dps, "남")}</b><span>🙋‍♂️ 남 카드</span></div>
@@ -158,7 +160,7 @@ export default async function AdminPage() {
         <div className="muted">공개 카드 {(dps ?? []).filter(r => r.visible).length}장 · 1:1 대화 메시지 {dmCount ?? 0}개 · 유료 전환 신호: 공개 카드 50장 이상 + 남녀 비율 균형</div>
       </div>
       <div className="card">
-        <h3>🚩 신고함 — 처리 대기 {openR.length}건</h3>
+        <h3 id="a-rep">🚩 신고함 — 처리 대기 {openR.length}건</h3>
         <div className="muted">신고 즉시 블라인드돼요. 복구하면 다시 보이고, 삭제하면 영구 삭제. 30일 지나면 자동 복구.</div>
         {!openR.length && <div className="muted">대기 중인 신고가 없어요.</div>}
         <div className="quests">{openR.map((r: any) => { const t = preview(r); return <div key={r.id} className="quest" style={{ display: "grid", gap: 6 }}>
@@ -169,7 +171,7 @@ export default async function AdminPage() {
         </div>; })}</div>
       </div>
       <div className="card">
-        <h3>문의함 — 새 문의 {(inq ?? []).filter(i => i.status === "new").length}건</h3>
+        <h3 id="a-inq">문의함 — 새 문의 {(inq ?? []).filter(i => i.status === "new").length}건</h3>
         <AdminContact email={email} />
         {!inq?.length && <div className="muted">아직 문의가 없어요. 문의 페이지: /contact</div>}
         <div className="quests">{inq?.map(i => <div key={i.id} className={"quest" + (i.status === "done" ? " done" : "")} style={{ display: "grid", gap: 4 }}>
@@ -193,7 +195,7 @@ export default async function AdminPage() {
         <AdminForms />
       </div>
       <div className="card">
-        <h3>회원 {users?.length ?? 0}명</h3>
+        <h3 id="a-users">회원 {users?.length ?? 0}명</h3>
         <div className="admin-list">
           {users?.map(u => { const r = rankFor(u, leaders); return (
             <div key={u.id} className="admin-row">
@@ -201,10 +203,10 @@ export default async function AdminPage() {
               <div className="admin-actions">
                 <AdminForms userId={u.id} currentRank={r.index} compact />
                 <AdminResetPw userId={u.id} />
-                {r.index > 0 && <form action={adminDemote.bind(null, u.id, "19금 발언·욕설")}><button className="link" style={{ color: "var(--signal)" }}>훈련병 강등</button></form>}
+                {r.index > 0 && <form action={adminDemote.bind(null, u.id, "19금 발언·욕설")}><ConfirmSubmit msg={`[${u.dept}]${u.nickname} 님을 훈련병으로 강등할까요? 경험치가 0이 돼요.`} style={{ color: "var(--signal)" }}>훈련병 강등</ConfirmSubmit></form>}
                 <form action={adminToggleStealth.bind(null, u.id, !u.stealth)}><button className="link">{u.stealth ? "숨김 해제" : "숨김"}</button></form>
                 <form action={adminLoginAs.bind(null, u.id)}><button className="link">이 계정으로 전환</button></form>
-                {u.id !== s.id && <form action={adminDeleteUser.bind(null, u.id)}><button className="link" style={{ color: "var(--signal)" }}>삭제</button></form>}
+                {u.id !== s.id && <form action={adminDeleteUser.bind(null, u.id)}><ConfirmSubmit msg={`[${u.dept}]${u.nickname} (@${u.username}) 계정을 삭제할까요? 되돌릴 수 없어요.`} style={{ color: "var(--signal)" }}>삭제</ConfirmSubmit></form>}
               </div>
             </div>); })}
         </div>

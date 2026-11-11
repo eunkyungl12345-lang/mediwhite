@@ -13,7 +13,7 @@ export default function PayCard({ depts, dist, cnt, min }: { depts: string[]; di
   const fmt = (v: number) => v.toLocaleString("ko-KR");
   const text = `💳 내 통장 실수령 카드\n${dept} · ${yrs}\n월 실수령 약 ${fmt(net)}만 원 · 진짜 시급 ${fmt(hourly)}원${top ? `\n같은 직종 상위 ${top}%` : ""}\n\n너도 계산해봐 👉`;
   const share = async () => { const url = `${location.origin}/pay`;
-    try { if (navigator.share) { await navigator.share({ title: "내 통장 실수령 카드", text, url }); return; } } catch { return; }
+    try { if (navigator.share) { await navigator.share({ title: "내 통장 실수령 카드", text, url }); return; } } catch (e) { if ((e as Error)?.name === "AbortError") return; /* 사용자가 직접 닫은 경우만 끝. 카톡·네이버 인앱처럼 공유창이 실패하면 아래 복사로 */ }
     try { await navigator.clipboard.writeText(`${text} ${url}`); setDone("✅ 복사됐어요. 단톡방에 붙여넣기!"); setTimeout(() => setDone(""), 2500); } catch { setDone("복사가 안 됐어요. 화면을 캡처해 주세요"); } };
   return <div className="pcd">
     <div className="pcd-form">
@@ -31,7 +31,7 @@ export default function PayCard({ depts, dist, cnt, min }: { depts: string[]; di
         {top ? <p className="pcd-pct">같은 직종 <b>상위 {top}%</b> <small>({arr!.length}명 체크 기준)</small></p>
           : <p className="pcd-pct wait">같은 직종 비교는 <b>모으는 중</b> <small>({have}/{min}명 · {min}명 모이면 ‘상위 몇 %’가 열려요)</small></p>}
       </div>
-      <div className="pcd-acts"><button type="button" className="btn" onClick={share}>📤 단톡방에 공유</button><Link href="/login?mode=signup&next=/hospitals/check" className="btn ghost">🔎 다녔던 병원 체크하고 비교 열기</Link></div>
+      <div className="pcd-acts"><button type="button" className="btn" onClick={share}>📤 단톡방에 공유</button><Link href="/login?mode=signup&next=/hospitals/check&from=pay" className="btn ghost">🔎 다녔던 병원 체크하고 비교 열기</Link></div>
       {done && <p className="pcd-done" role="status">{done}</p>}
     </> : <p className="muted" style={{ margin: 0 }}>연봉(1,000~30,000만 원)과 주 근무시간(10~80시간)을 넣어 주세요.</p>}
   </div>;

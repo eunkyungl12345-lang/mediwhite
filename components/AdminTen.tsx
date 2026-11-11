@@ -3,15 +3,16 @@ import { db } from "@/lib/supabase";
  *  운영 계정(관리자·분신·테스트)은 빼고, 목표는 체크 완료 10명 */
 export default async function AdminTen() {
   const d = db();
-  const [{ data: us }, { data: ev }, { data: gs }, { data: rv }] = await Promise.all([
+  const [{ data: us }, { data: evH }, { data: evC }, { data: gs }, { data: rv }] = await Promise.all([
     d.from("users").select("id,nickname,dept,role,stealth,created_at,username").order("created_at", { ascending: false }).limit(500),
-    d.from("events").select("user_id,kind,created_at").in("kind", ["hview", "chkopen"]).order("created_at", { ascending: false }).limit(5000),
+    d.from("events").select("user_id").eq("kind", "hview").not("user_id", "is", null).order("created_at", { ascending: false }).limit(20000),
+    d.from("events").select("user_id").eq("kind", "chkopen").order("created_at", { ascending: false }).limit(20000), // 병원 조회가 아무리 많아도 체크 화면 기록이 잘리지 않게 따로 가져와요
     d.from("game_state").select("user_id,updated_at").like("game", "hfact:%").limit(5000),
     d.from("hospital_reviews").select("user_id,created_at").limit(5000),
   ]);
   const real = (us ?? []).filter(u => u.role !== "admin" && !u.stealth && !String(u.username).startsWith("zz_"));
-  const cnt = (rows: any[] | null, kind?: string) => { const m = new Map<string, number>(); for (const r of rows ?? []) if (r.user_id && (!kind || r.kind === kind)) m.set(r.user_id, (m.get(r.user_id) ?? 0) + 1); return m; };
-  const hv = cnt(ev, "hview"), co = cnt(ev, "chkopen"), ck = cnt(gs), rw = cnt(rv);
+  const cnt = (rows: any[] | null) => { const m = new Map<string, number>(); for (const r of rows ?? []) if (r.user_id) m.set(r.user_id, (m.get(r.user_id) ?? 0) + 1); return m; };
+  const hv = cnt(evH), co = cnt(evC), ck = cnt(gs), rw = cnt(rv);
   const rows = real.map(u => { const done = (ck.get(u.id) ?? 0) + (rw.get(u.id) ?? 0), stage = done ? 3 : co.get(u.id) ? 2 : hv.get(u.id) ? 1 : 0; return { u, done, stage, hv: hv.get(u.id) ?? 0, co: co.get(u.id) ?? 0 }; }).sort((a, b) => b.stage - a.stage);
   const doneN = rows.filter(r => r.stage === 3).length, STAGE = ["가입만 함", "병원 조회까지", "체크 화면 열고 멈춤", "체크 완료 ✅"];
   const by = [0, 1, 2, 3].map(i => rows.filter(r => r.stage === i).length);

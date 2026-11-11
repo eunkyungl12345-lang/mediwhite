@@ -26,6 +26,7 @@ export default function NewPostForm({ defaultCat, defaultTab, defaultTopic = "fr
         <div className="muted" style={{ fontSize: 12 }}>어떤 주제인가요?</div>
         <div className="topics">{(cat === "썸" ? SSUM_TOPICS : TOPICS).map(t => <button key={t.key} type="button" className={"topic" + (topic === t.key ? " on" : "")} onClick={() => setTopic(t.key)}><span>{t.icon}</span>{t.name}</button>)}</div>
         <div className="muted" style={{ fontSize: 12 }}>{(cat === "썸" ? SSUM_TOPICS : TOPICS as readonly { key: string; hint: string }[]).find(t => t.key === topic)?.hint ?? (cat === "썸" ? "주제를 골라주세요" : "")}</div>
+        {cat !== "썸" && topic === "hospital" && <a href="/hospitals/check" className="np-rev">🔎 <b>병원별 실수령·분위기 리뷰</b>를 남기려면 여기로 — 탭 몇 번, 1분 <em>›</em></a>}
         <input type="hidden" name="topic" value={topic} />
       </div>
       <input name="title" maxLength={80} placeholder="제목" required defaultValue={defaultTitle} onChange={e => setTitle(e.target.value)} />
