@@ -18,3 +18,6 @@ export type XPay = { kind: "pay"; dept: string; years: string; contract: string;
 export type XAlba = { kind: "alba"; dept: string; unit: string; amount: number; time: string; days?: string; tax: string; meal: string; load: string; again: number; work?: string; note?: string; cases?: number; star?: number; at: string };
 /** 연봉 리뷰는 MIN명 이상 모여야 범위를 보여줘요 (한두 명이면 누군지 짐작할 수 있어서) */
 export const X_MIN = 3;
+/** 🏥 병원 후기(간단 작성) — 후기 구분 · 추천 3단계 */
+export const REV_CATS = ["분위기", "업무강도", "면접·합격", "퇴사후기", "연봉"] as const;
+export const REC3 = ["👍 추천", "😐 보통", "👎 비추천"] as const;

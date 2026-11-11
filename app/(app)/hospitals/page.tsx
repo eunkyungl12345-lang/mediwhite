@@ -1,3 +1,5 @@
+import { RevHead, RevMark } from "@/components/jobs/RevCardParts";
+import { REC3 } from "@/lib/hospExtra";
 import Link from "next/link";
 import { db } from "@/lib/supabase";
 import { memo } from "@/lib/memo";
@@ -18,7 +20,7 @@ const KW = [
   { k: "people", name: "분위기", icon: "🤝", re: /분위기|동료|선배|태움|사람|프리셉터|팀워크|친절/ },
   { k: "growth", name: "교육·성장", icon: "📈", re: /배울|교육|성장|경력|커리어|세미나|술기/ },
 ] as const;
-type Item = { key: string; hid: number; title: string; pros?: string; cons?: string; star: number; meta: string[]; at: string; v?: boolean; uid?: string; status?: string };
+type Item = { key: string; hid: number; title: string; pros?: string; cons?: string; star: number; meta: string[]; dept?: string; cat?: string; rec3?: number; at: string; v?: boolean; uid?: string; status?: string };
 
 export default async function HospitalsPage({ searchParams }: { searchParams: { tab?: string; kw?: string; sort?: string; region?: string; st?: string } }) {
   const s = (await getSession())!; const d = db();
@@ -35,11 +37,11 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
   const ym = (t: string) => `${t.slice(0, 4)}. ${t.slice(5, 7)}`;
   // 피드: 병원 리뷰(개별 공개) + 실체 체크 한줄평(그 병원 공개 기준을 넘은 경우만, 직종·연차 없이)
   const items: Item[] = [
-    ...(revs ?? []).map(r => ({ key: "r" + r.id, hid: r.hospital_id, title: r.pros.split(/[.!?\n]/)[0].slice(0, 60), pros: r.pros, cons: r.cons, star: overall([r]), meta: [r.dept, r.status === "재직" ? "현직원" : "전직원"], at: r.created_at, v: r.verified, uid: r.user_id, status: r.status })),
-    ...(hfs ?? []).map(f => ({ f, hid: Number(String(f.game).slice(6)) })).filter(({ f, hid }) => ((f.state as any)?.last || (f.state as any)?.pros) && (facts[hid]?.n ?? 0) >= (facts[hid]?.need ?? MIN_N))
-      .map(({ f, hid }) => ({ key: "f" + f.user_id + hid, hid, title: (f.state as any).last ?? "", pros: (f.state as any).pros, cons: (f.state as any).cons, star: (f.state as any).overall ?? 0, meta: [(f.state as any).status === "퇴사" ? "전직원" : "현직원"], at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
+    ...(revs ?? []).map(r => ({ key: "r" + r.id, hid: r.hospital_id, title: r.pros.split(/[.!?\n]/)[0].slice(0, 60), pros: r.pros, cons: r.cons, star: overall([r]), meta: [], dept: r.dept, at: r.created_at, v: r.verified, uid: r.user_id, status: r.status })),
+    ...(hfs ?? []).map(f => ({ f, hid: Number(String(f.game).slice(6)) })).filter(({ f, hid }) => ((f.state as any)?.last || (f.state as any)?.pros || (f.state as any)?.cons) && (facts[hid]?.n ?? 0) >= (facts[hid]?.need ?? MIN_N))
+      .map(({ f, hid }) => ({ key: "f" + f.user_id + hid, hid, title: (f.state as any).last ?? "", pros: (f.state as any).pros, cons: (f.state as any).cons, star: (f.state as any).overall ?? 0, meta: [], dept: (f.state as any).dept, cat: (f.state as any).cat, rec3: (f.state as any).rec3, at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
   ].filter(x => H.has(x.hid)) as any[];
-  let feed = items.filter((x: any) => (tab !== "mine" || x.meta[0] === s.dept) && (tab !== "my" || myH.has(x.hid)) && (!region || H.get(x.hid)!.region === region) && (!st || x.status === st));
+  let feed = items.filter((x: any) => (tab !== "mine" || x.dept === s.dept) && (tab !== "my" || myH.has(x.hid)) && (!region || H.get(x.hid)!.region === region) && (!st || x.status === st));
   feed.sort((a, b) => sort === "top" ? b.star - a.star : sort === "low" ? a.star - b.star : b.at.localeCompare(a.at)); feed = feed.slice(0, 60);
   // 키워드 TOP 카드: 그 키워드가 장점에 나온 리뷰
   const kwCards = items.filter(x => x.pros && kw.re.test(x.pros)).sort((a, b) => b.star - a.star);
@@ -73,14 +75,14 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
         {tab === "mine" && <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{s.dept} 직종이 쓴 리뷰만 보여요</p>}
         {!feed.length ? <div className="fb fb-wait"><b>{tab === "my" ? "내가 체크·리뷰한 병원이 아직 없어요" : "아직 리뷰가 없어요"}</b><p>다니는(다녔던) 병원 하나만 체크하면 6개월간 모든 리뷰가 열려요.</p><Link href="/hospitals/check" className="btn">🔎 병원 체크하기 +50</Link></div>
           : <div className="rf-list">{feed.map(x => { const h = H.get(x.hid)!; return <article key={x.key} className="rf-item">
-            <Link href={`/hospitals/${x.hid}`} className="rf-h"><span className="rf-logo">🏥</span><b>{h.name}</b></Link>
+            <Link href={`/hospitals/${x.hid}`} className="rc-link"><RevHead hospital={h.name} dept={x.dept} status={x.status} cat={x.cat} /></Link>
             <PosBadges list={posBadges(facts[x.hid])} max={3} />
             <div className="rf-meta">{[...x.meta, `${h.region}${dist[x.hid] ? " " + dist[x.hid] : ""}`, ym(x.at)].join("  |  ")}{x.v ? <em>✅ 인증</em> : null}</div>
-            {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><Stars n={x.star} /></div>}
-            <h3 className="rf-title">{x.title}</h3>
-            {x.pros && (contributed || x.uid === s.id ? <><p className="rf-pc"><em className="g">장점</em>{x.pros}</p>{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}</>
+            {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><Stars n={x.star} />{typeof x.rec3 === "number" && <span className={"rc-rec r" + x.rec3}>{REC3[x.rec3]}</span>}</div>}
+            {x.title && <h3 className="rf-title">{x.title}</h3>}
+            {(x.pros || x.cons) && (contributed || x.uid === s.id ? <>{x.pros && <p className="rf-pc"><em className="g">장점</em>{x.pros}</p>}{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}</>
               : <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 현직자의 솔직한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>)}
-            <Link href={`/hospitals/${x.hid}`} className="rf-more">이 병원 더보기 ›</Link>
+            <div className="rc-foot"><Link href={`/hospitals/${x.hid}`} className="rf-more">이 병원 더보기 ›</Link><RevMark /></div>
           </article>; })}</div>}
       </>}
       <Link href="/hospitals/brag" className="hc-banner gold"><span>🏆</span><div><b>천하제일 우리병원 자랑대회</b><small>휴게실·식당·뷰… 사진 한 장으로 우리 병원 자랑</small></div><em>+30</em></Link>

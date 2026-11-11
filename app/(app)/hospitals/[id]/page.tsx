@@ -30,6 +30,8 @@ import { welAgg, welKey, type Welfare } from "@/lib/welfare";
 import { factPubKey } from "@/lib/helpKey";
 import { HelpBtn, More } from "@/components/jobs/RvBits";
 import NoteBoard from "@/components/jobs/NoteBoard";
+import { RevHead, RevMark } from "@/components/jobs/RevCardParts";
+import { REC3 } from "@/lib/hospExtra";
 import PosBadges from "@/components/jobs/PosBadges";
 import { posBadges } from "@/lib/hospFacts";
 export const dynamic = "force-dynamic";
@@ -61,10 +63,10 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const wa = welAgg((welRows ?? []).map(r => r.state as Welfare)), myWel = (welRows ?? []).some(r => r.user_id === s.id);
   const help = new Map<string, { n: number; me: boolean }>(); for (const e of helpRows ?? []) { const k = String(e.text).slice(String(id).length + 1), c = help.get(k) ?? { n: 0, me: false }; c.n++; if (e.user_id === s.id) c.me = true; help.set(k, c); }
   const ym = (t?: string) => t ? `${t.slice(0, 4)}. ${t.slice(5, 7)} 작성` : "";
-  type LI = { key: string; rid?: number; meta: string[]; star: number; title?: string; pros?: string; cons?: string; tip?: string; v?: boolean; mine: boolean; at: string };
+  type LI = { key: string; rid?: number; dept?: string; status?: string; cat?: string; rec3?: number; meta: string[]; star: number; title?: string; pros?: string; cons?: string; tip?: string; v?: boolean; mine: boolean; at: string };
   const list: LI[] = [
-    ...rs.map(r => ({ key: "r" + r.id, rid: r.id, meta: [r.dept, r.status === "재직" ? "현직원" : "전직원", h.region, ym(r.created_at)], star: overall([r]), pros: r.pros, cons: r.cons, tip: r.tip, v: r.verified, mine: r.user_id === s.id, at: r.created_at })),
-    ...(fa.n >= need ? (hfFull ?? []).filter(r => { const x = r.state as any; return x?.last || x?.pros || x?.cons; }).map(r => { const x = r.state as any; return { key: factPubKey(r.user_id, id), meta: [x.status === "퇴사" ? "전직원" : "현직원", ym(x.at)], star: x.overall ?? 0, title: x.last, pros: x.pros, cons: x.cons, v: x.v, mine: r.user_id === s.id, at: x.at ?? "" }; }) : []),
+    ...rs.map(r => ({ key: "r" + r.id, rid: r.id, dept: r.dept, status: r.status, meta: [h.region, ym(r.created_at)], star: overall([r]), pros: r.pros, cons: r.cons, tip: r.tip, v: r.verified, mine: r.user_id === s.id, at: r.created_at })),
+    ...(fa.n >= need ? (hfFull ?? []).filter(r => { const x = r.state as any; return x?.last || x?.pros || x?.cons; }).map(r => { const x = r.state as any; return { key: factPubKey(r.user_id, id), dept: x.dept, status: x.status === "퇴사" ? "퇴사" : "재직", cat: x.cat, rec3: x.rec3, meta: [ym(x.at)], star: x.overall ?? 0, title: x.last, pros: x.pros, cons: x.cons, v: x.v, mine: r.user_id === s.id, at: x.at ?? "" }; }) : []),
   ].sort((a, b) => Number(!!b.v) - Number(!!a.v) || b.at.localeCompare(a.at));
   const recOk = fa.recN >= need, statBars = fa.starN >= need ? fa.stars.map(x => ({ name: x.name, avg: x.avg })) : rs.length ? RATING_KEYS.map(k => ({ name: k.name, avg: avg(rs, k.key) })).sort((a, b) => Number(/분위기/.test(b.name)) - Number(/분위기/.test(a.name))) : [];
   const tabHref = (k: string) => `/hospitals/${id}${k === "rev" ? "" : `?t=${k}`}`;
@@ -98,13 +100,14 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       <div className="rv2-head"><b>리뷰 <em>{list.length}</em></b>{vN + fa.verified > 0 && <small>✅ 인증 {vN + fa.verified}</small>}</div>
       {!list.length ? <div className="fb fb-wait"><b>아직 공개된 리뷰가 없어요</b><p>{fa.n ? `${fa.n}명이 남겼어요 — ${need}명이 모이면 한줄평·장단점이 공개돼요.` : "이 병원을 다녀봤다면 첫 리뷰를 남겨주세요. 딱 세 가지면 돼요."}</p><Link href={`/hospitals/check?id=${id}`} className="btn">＋ 리뷰 작성 +50</Link></div>
       : <div className="rv2-list">{list.map(x => <article key={x.key} className={"rv2" + (x.mine ? " mine" : "")}>
+        <RevHead hospital={h.name} dept={x.dept} status={x.status} cat={x.cat} />
         <div className="rf-meta">{x.meta.join("  |  ")}{x.v ? <em>✅ 인증</em> : null}{x.mine ? <em className="me">내 리뷰</em> : null}</div>
-        {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><span className="rf-stars">{[1, 2, 3, 4, 5].map(i => <i key={i} className={x.star >= i - .25 ? "on" : ""}>★</i>)}</span></div>}
+        {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><span className="rf-stars">{[1, 2, 3, 4, 5].map(i => <i key={i} className={x.star >= i - .25 ? "on" : ""}>★</i>)}</span>{typeof x.rec3 === "number" && <span className={"rc-rec r" + x.rec3}>{REC3[x.rec3]}</span>}</div>}
         {x.title && <h3 className="rf-title">{x.title}</h3>}
         {(x.pros || x.cons) && (locked && !x.mine ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 솔직한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>
           : <More long={(x.pros?.length ?? 0) + (x.cons?.length ?? 0) + (x.tip?.length ?? 0) > 140}>{x.pros && <p className="rf-pc"><em className="g">장점</em>{x.pros}</p>}{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</More>)}
         <div className="rv2-foot"><HelpBtn hid={id} k={x.key} n={help.get(x.key)?.n ?? 0} on={!!help.get(x.key)?.me} />
-          <span className="rv2-act">{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : null}</span></div>
+          <RevMark /><span className="rv2-act">{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : null}</span></div>
       </article>)}</div>}
       </>}
       {t === "pay" && <>

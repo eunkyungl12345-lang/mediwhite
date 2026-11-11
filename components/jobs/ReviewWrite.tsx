@@ -3,23 +3,24 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import HospCheck from "./HospCheck";
 import RegionPick from "./RegionPick";
-import { submitHospExtra } from "@/lib/hospExtra.actions";
+import { submitHospExtra, submitQuickReview } from "@/lib/hospExtra.actions";
 import { searchHospitals } from "@/lib/jobActions";
 import { JOB_DEPTS, HOSP_KINDS } from "@/lib/jobs";
-import { X_YEARS, CONTRACT, PAY_YEAR, ALBA_UNIT, ALBA_TAX, ALBA_MEAL, ALBA_LOAD, HOBONG, WORK_AREA, PAY_SUB } from "@/lib/hospExtra";
+import { X_YEARS, CONTRACT, PAY_YEAR, ALBA_UNIT, ALBA_TAX, ALBA_MEAL, ALBA_LOAD, HOBONG, WORK_AREA, PAY_SUB, REV_CATS, REC3 } from "@/lib/hospExtra";
+import { PAY, YEARS } from "@/lib/hospFacts";
 import { netMonthly } from "./PayCalc";
 import type { HFact } from "@/lib/hospFacts";
 type Hosp = { id: number; name: string; region: string; kind?: string };
 type T = "hosp" | "pay" | "alba";
 const TABS: { k: T; icon: string; n: string; sub: string; tip: string }[] = [
-  { k: "hosp", icon: "🏥", n: "병원 리뷰", sub: "분위기·퇴근·실수령", tip: "실제 퇴근 시간, 분위기, 실수령 구간처럼 입사해야만 아는 걸 탭 몇 번으로 알려주세요. 1분이면 끝나요." },
-  { k: "pay", icon: "💰", n: "연봉 리뷰", sub: "숫자로 남기는 연봉", tip: "세전 연봉과 연차·계약 형태만 적으면 돼요. 처음엔 “4,000만 원대”처럼만 보이고, 3명 이상 모이면 범위가 공개돼요." },
-  { k: "alba", icon: "⏱", n: "알바·단기 리뷰", sub: "일급·식사·업무", tip: "일급·근무 시간·식사·세금 처리, 그리고 다음에 가는 사람을 위한 인계 한마디를 남겨주세요." },
+  { k: "hosp", icon: "🏥", n: "병원 후기", sub: "분위기·강도·면접·퇴사", tip: "분위기, 업무 강도, 면접 질문, 퇴사 이유처럼 지원하려는 사람이 궁금해할 내용을 장점·단점 1~3줄로 적어주세요." },
+  { k: "alba", icon: "⏰", n: "알바·당직 후기", sub: "일급·식사·업무", tip: "일급·근무 시간·식사·세금 처리, 그리고 다음에 가는 사람을 위한 인계 한마디를 남겨주세요." },
+  { k: "pay", icon: "💰", n: "연봉 후기", sub: "숫자로 남기는 연봉", tip: "세전 연봉과 연차·계약 형태만 적으면 돼요. 처음엔 “4,000만 원대”처럼만 보이고, 3명 이상 모이면 범위가 공개돼요." },
 ];
 function Send({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : label}</button>; }
 const Chips = ({ name, opts, values, def }: { name: string; opts: readonly string[]; values?: (string | number)[]; def?: string | number }) =>
   <div className="hc-chips">{opts.map((o, i) => { const v = values ? values[i] : o; return <label key={o}><input type="radio" name={name} value={v} defaultChecked={def !== undefined && String(def) === String(v)} /><span>{o}</span></label>; })}</div>;
-function Stars({ name, small }: { name: string; small?: boolean }) { const [v, setV] = useState(0); const W = ["", "많이 아쉬워요", "아쉬워요", "보통", "만족", "아주 만족"];
+function Stars({ name, small, def }: { name: string; small?: boolean; def?: number }) { const [v, setV] = useState(def ?? 0); const W = ["", "많이 아쉬워요", "아쉬워요", "보통", "만족", "아주 만족"];
   return <span className={"hc-stars" + (small ? "" : " big")}>{[1, 2, 3, 4, 5].map(n => <button key={n} type="button" className={v >= n ? "on" : ""} onClick={() => setV(n)} aria-label={`${n}점`}>★</button>)}<em className="hc-sw">{W[v]}</em><input type="hidden" name={name} value={v || ""} /></span>; }
 /** 병원 고르기 (검색 → 선택, 없으면 새로 등록) */
 function HospPick({ hospital }: { hospital?: Hosp | null }) {
@@ -68,15 +69,38 @@ function ExtraForm({ kind, hospital, dept }: { kind: "pay" | "alba"; hospital?: 
     </>}
     <div className="wz-safe">🔒 닉네임 없이 <b>익명</b>으로 올라가요. 19금·욕설과 전화번호만 막아요.</div>
     {st?.error && <div className="error" role="alert">{st.error}</div>}
-    <Send label={kind === "pay" ? "💰 연봉 리뷰 올리기 (+30 XP)" : "⏱ 알바 리뷰 올리기 (+30 XP)"} />
+    <Send label={kind === "pay" ? "💰 연봉 후기 올리기 (+30 XP)" : "⏰ 알바·당직 후기 올리기 (+30 XP)"} />
+  </form>;
+}
+/** 🏥 병원 후기 — 한 화면에 딱딱 떨어지는 입력칸 (병원·직종·재직 상태·구분·추천·별점·장점/단점) */
+function QuickForm({ hospital, dept, mine }: { hospital?: Hosp | null; dept?: string; mine?: any }) {
+  const [st, act] = useFormState(submitQuickReview, undefined); const [rec, setRec] = useState<number | null>(typeof mine?.rec3 === "number" ? mine.rec3 : mine?.rec === 1 ? 0 : mine?.rec === 0 ? 2 : null), [status, setStatus] = useState<string>(mine?.status ?? "재직");
+  return <form action={act} className="form rw-form">
+    <div className="rw-2"><HospPick hospital={hospital} />
+      <div className="rw-f"><label htmlFor="rq-d">내 직종</label><select id="rq-d" name="dept" defaultValue={mine?.dept ?? (JOB_DEPTS.includes(dept as any) ? dept : "")}><option value="" disabled>직종 선택</option>{JOB_DEPTS.map(d => <option key={d}>{d}</option>)}</select></div></div>
+    <div className="rw-2">
+      <div className="rw-f"><span className="rw-l">재직 상태</span><div className="rw-seg" role="radiogroup" aria-label="재직 상태">{[["재직", "현직"], ["퇴사", "전직"]].map(([v, n]) => <button key={v} type="button" role="radio" aria-checked={status === v} className={status === v ? "on" : ""} onClick={() => setStatus(v)}>{n}</button>)}</div><input type="hidden" name="status" value={status} /></div>
+      <div className="rw-f"><label htmlFor="rq-c">후기 구분</label><select id="rq-c" name="cat" defaultValue={mine?.cat ?? ""}><option value="" disabled>선택하세요</option>{REV_CATS.map(c => <option key={c}>{c}</option>)}</select></div></div>
+    <div className="rw-2">
+      <div className="rw-f"><span className="rw-l">추천 여부</span><div className="rw-seg three" role="radiogroup" aria-label="추천 여부">{REC3.map((n, i) => <button key={n} type="button" role="radio" aria-checked={rec === i} className={rec === i ? "on r" + i : ""} onClick={() => setRec(i)}>{n}</button>)}</div><input type="hidden" name="rec3" value={rec ?? ""} /></div>
+      <div className="rw-f"><span className="rw-l">별점 <small>(5점 만점)</small></span><Stars name="star" def={mine?.overall} /></div></div>
+    <div className="rw-2">
+      <div className="rw-f"><label htmlFor="rq-p">세후 실수령 <small>(선택 · 월, 만 원)</small></label><select id="rq-p" name="pay" defaultValue={mine?.pay ?? ""}><option value="">선택 안 함</option>{PAY.map(p => <option key={p}>{p}</option>)}</select></div>
+      <div className="rw-f"><label htmlFor="rq-y">연차 <small>(선택)</small></label><select id="rq-y" name="years" defaultValue={mine?.years ?? ""}><option value="">선택 안 함</option>{YEARS.map(y => <option key={y}>{y}</option>)}</select></div></div>
+    <div className="rw-f"><label htmlFor="rq-pr">핵심 장점 <small>(1~3줄)</small></label><textarea id="rq-pr" name="pros" rows={3} maxLength={500} defaultValue={mine?.pros ?? ""} placeholder="예: 칼퇴 지켜주고, 연차 눈치 안 봐요. 장비가 새 거예요." /></div>
+    <div className="rw-f"><label htmlFor="rq-cn">핵심 단점 <small>(1~3줄)</small></label><textarea id="rq-cn" name="cons" rows={3} maxLength={500} defaultValue={mine?.cons ?? ""} placeholder="예: 주말 당직이 잦고, 인계 때문에 30분 일찍 나와요." /></div>
+    <div className="wz-safe">🔒 닉네임 없이 <b>익명</b>으로 올라가요. 카드에는 병원·직종·현직/전직만 보여요. 19금·욕설과 전화번호만 막아요.</div>
+    {st?.error && <div className="error" role="alert">{st.error}</div>}
+    <Send label={mine ? "✏️ 후기 수정하기" : "🏥 병원 후기 올리기 (+50 XP)"} />
   </form>;
 }
 /** ✍️ 리뷰 쓰기 — 위에서 종류를 고르고(병원 / 연봉 / 알바·단기) 아래에서 바로 작성 */
 export default function ReviewWrite({ hospital, dept, mine, t0 }: { hospital?: Hosp | null; dept?: string; mine?: HFact | null; t0?: T }) {
-  const [t, setT] = useState<T>(t0 ?? "hosp"); const cur = TABS.find(x => x.k === t)!;
+  const [t, setT] = useState<T>(t0 ?? "hosp"), [full, setFull] = useState(false); const cur = TABS.find(x => x.k === t)!;
   return <div className="rw">
     <div className="rw-tabs" role="tablist" aria-label="리뷰 종류">{TABS.map(x => <button key={x.k} type="button" role="tab" aria-selected={t === x.k} className={t === x.k ? "on" : ""} onClick={() => setT(x.k)}><b>{x.icon} {x.n}</b><small>{x.sub}</small></button>)}</div>
     <div className="rw-tip"><b>무엇을 쓰면 되나요?</b><span>{cur.tip}</span></div>
-    <div className="card">{t === "hosp" ? <HospCheck hospital={hospital} dept={dept} mine={mine} /> : <ExtraForm kind={t} hospital={hospital} dept={dept} />}</div>
+    <div className="card">{t === "hosp" ? (full ? <HospCheck hospital={hospital} dept={dept} mine={mine} /> : <QuickForm hospital={hospital} dept={dept} mine={mine} />) : <ExtraForm kind={t} hospital={hospital} dept={dept} />}</div>
+    {t === "hosp" && <button type="button" className="rw-full" onClick={() => setFull(f => !f)}>{full ? "‹ 간단 후기로 돌아가기" : "🔎 실제 퇴근·분위기·정규직 전환율까지 탭으로 자세히 알려주기 ›"}</button>}
   </div>;
 }
