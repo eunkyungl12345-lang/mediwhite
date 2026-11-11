@@ -5,6 +5,14 @@ import { topicOf } from "@/lib/depts";
 export const dynamic = "force-dynamic";
 export const metadata = { title: { absolute: "메디화이트 소개 — 이직 전에 그 병원 실수령 확인하는 곳" } };
 
+/** 검색 예시 — 실제로 결과가 나오는 말만 (인기 검색어 집계가 아니라 '이렇게 찾아보세요') */
+const TAGS = ["정형외과", "재활의학과", "마취통증", "검진센터"];
+/** 미리보기 카드 — 실제 병원·실제 수치가 아닌 화면 예시 (병원명은 ○○로) */
+const PREVIEW = [
+  { h: "서울 ○○병원", d: "간호사", t: "r", ico: "🚨", tag: "2년 만기퇴사 주의군", num: "체감 전환율 0%", q: "계약 만료 후 전원 퇴사" },
+  { h: "경기 ○○병원", d: "방사선사", t: "g", ico: "🌱", tag: "정규직 전환 안정권", num: "체감 전환율 80%", q: "평가 통과 시 정규직" },
+  { h: "분당 ○○병원", d: "임상병리사", t: "b", ico: "💰", tag: "세후 실수령 월 340만 원", num: "3~5년 차 기준", q: "오버타임 1분 단위 칼지급" },
+];
 export default async function AboutPage() {
   const s = await getSession();
   const d = db(), week = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -21,15 +29,28 @@ export default async function AboutPage() {
   const join = "/login?mode=signup";
   return (
     <div className="about">
-      <section className="about-hero">
-        <div className="about-hero-in">
-          <div className="about-kicker">병원 직원 익명 커뮤니티</div>
-          <h1>메디화이트</h1>
-          <p><b>병원 사람들의 진짜 이야기.</b><br />공고에 없는 세후 실수령과 병원 분위기, 정규직 전환 실태까지.</p>
-          <div className="about-btns">
-            {s ? <Link className="about-btn" href="/hospitals">병원 리뷰 보러 가기</Link> : <><Link className="about-btn" href={join}>30초 가입하고 시작하기</Link><Link className="about-btn line" href="/login">이미 회원이에요</Link></>}
+      <section className="about-hero v2">
+        <div className="ah">
+          <div className="ah-l">
+            <span className="ah-badge">병원 직원 익명 커뮤니티</span>
+            <h1>지원하기 전에,<br />그 병원 먼저 검색하세요</h1>
+            <p>공고에 없는 세후 실수령과 병원 분위기, 정규직 전환 실태까지. 다녀본 사람들이 남긴 진짜 이야기예요.</p>
+            <form action={s ? "/search" : "/"} className="about-search" role="search">
+              <input name="q" aria-label="병원 이름 검색" placeholder="병원 이름 검색 (예: 연세, 정형외과)" autoComplete="off" />
+              <button className="btn">검색</button>
+            </form>
+            <div className="ah-tags"><span>이렇게 찾아보세요</span>{TAGS.map(t => <Link key={t} href={`${s ? "/search" : "/"}?q=${encodeURIComponent(t)}`}>#{t}</Link>)}</div>
+            <div className="about-safe">🔒 실명·전화번호 없이 익명 · 병원에서 일하는 사람들의 커뮤니티</div>
           </div>
-          <div className="about-safe">🔒 실명·전화번호 없이 익명 · 병원에서 일하는 사람들의 커뮤니티</div>
+          <div className="ah-r" aria-label="메디화이트에서 볼 수 있는 정보 예시">
+            <span className="ah-ex">이렇게 보여요 · 예시 화면</span>
+            {PREVIEW.map(c => <div key={c.h} className={"ah-card " + c.t}>
+              <div className="ah-top"><b>🏥 {c.h}</b><em>{c.d}</em></div>
+              <div className="ah-sig"><span>{c.ico}</span><div><strong>{c.tag}</strong><small>{c.num}</small></div></div>
+              <p>“{c.q}”</p>
+            </div>)}
+            <Link href={s ? "/hospitals" : join} className="ah-open">{s ? "병원별 실체 보러 가기 ›" : "🔒 가입하고 병원별 실체 전부 열어보기 ›"}</Link>
+          </div>
         </div>
       </section>
 
