@@ -6,7 +6,7 @@ import { DEPTS, DEPT_GROUPS, VENDOR_FIELDS, deptLabel, display } from "@/lib/dep
 
 function Submit({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn" disabled={pending}>{pending ? "잠시만요…" : label}</button>; }
 
-export default function AuthForm({ refCode, next, initialMode, promoUntil }: { refCode?: string; next?: string; initialMode?: "login" | "signup"; promoUntil?: string | null }) {
+export default function AuthForm({ refCode, next, initialMode, promoUntil, oauthError }: { refCode?: string; next?: string; initialMode?: "login" | "signup"; promoUntil?: string | null; oauthError?: string }) {
   const [mode, setMode] = useState<"login" | "signup" | "find">(initialMode ?? (refCode ? "signup" : "login"));
   const [fs, findAction] = useFormState<FormState, FormData>(findUsername, undefined);
   const [ls, loginAction] = useFormState<FormState, FormData>(login, undefined);
@@ -16,6 +16,10 @@ export default function AuthForm({ refCode, next, initialMode, promoUntil }: { r
   useEffect(() => { if (refCode) try { document.cookie = `mw_ref=${encodeURIComponent(refCode)}; path=/; max-age=${60 * 60 * 24 * 7}`; } catch {} }, [refCode]);
   return (
     <>
+      {oauthError && <div className="error" style={{ marginBottom: 10 }}>{oauthError}</div>}
+      <a href="/api/auth/kakao" className="btn-kakao"><span className="kakao-ico" aria-hidden>💬</span> 카카오로 3초 만에 시작하기</a>
+      <div className="muted" style={{ fontSize: 12, textAlign: "center" }}>처음이면 직종만 고르면 끝나요 · 기존 회원은 바로 입장</div>
+      <div className="auth-divider"><span>또는 아이디로 로그인</span></div>
       <div className="switch" role="tablist">
         <button type="button" role="tab" aria-selected={mode === "login"} onClick={() => setMode("login")}>로그인</button>
         <button type="button" role="tab" aria-selected={mode === "signup"} onClick={() => setMode("signup")}>가입</button>
