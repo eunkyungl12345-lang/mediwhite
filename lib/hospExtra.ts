@@ -21,3 +21,13 @@ export const X_MIN = 3;
 /** 🏥 병원 후기(간단 작성) — 후기 구분 · 추천 3단계 */
 export const REV_CATS = ["분위기", "업무강도", "면접·합격", "퇴사후기", "연봉"] as const;
 export const REC3 = ["👍 추천", "😐 보통", "👎 비추천"] as const;
+
+/** 🛡️ 고용안정성 & 채용실체 — 전환 체감(값 = 저장 번호) · 2년 만료 후 실태 */
+export const HIRE_PILLS = [
+  { v: 2, tone: "r", n: "🚨 0% 만기퇴사", sub: "희망고문", chip: "🚨 0% 만기퇴사", pct: 0 },
+  { v: 1, tone: "y", n: "🟡 20% 바늘구멍", sub: "소수만 전환", chip: "🟡 20% 바늘구멍", pct: 20 },
+  { v: 0, tone: "g", n: "🟢 70%+ 대부분 전환", sub: "안정권", chip: "🟢 70%+ 전환", pct: 80 },
+  { v: 3, tone: "b", n: "🎯 처음부터 정규직 공채", sub: "계약직 기간 없음", chip: "🎯 정규직 공채", pct: null },
+] as const;
+export const AFTER2 = ["2년마다 전원 퇴사(물갈이)", "극소수만 남음", "대부분 정규직으로 계속 근무"] as const;
+export const hireChip = (regular?: number) => HIRE_PILLS.find(p => p.v === regular)?.chip;

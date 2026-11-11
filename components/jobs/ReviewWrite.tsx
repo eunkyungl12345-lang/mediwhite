@@ -6,16 +6,15 @@ import RegionPick from "./RegionPick";
 import { submitHospExtra, submitQuickReview } from "@/lib/hospExtra.actions";
 import { searchHospitals } from "@/lib/jobActions";
 import { JOB_DEPTS, HOSP_KINDS } from "@/lib/jobs";
-import { X_YEARS, CONTRACT, PAY_YEAR, ALBA_UNIT, ALBA_TAX, ALBA_MEAL, ALBA_LOAD, HOBONG, WORK_AREA, PAY_SUB, REV_CATS, REC3 } from "@/lib/hospExtra";
-import { PAY, YEARS } from "@/lib/hospFacts";
+import { X_YEARS, CONTRACT, PAY_YEAR, ALBA_UNIT, ALBA_TAX, ALBA_MEAL, ALBA_LOAD, HOBONG, WORK_AREA, PAY_SUB, HIRE_PILLS, AFTER2 } from "@/lib/hospExtra";
 import { netMonthly } from "./PayCalc";
 import type { HFact } from "@/lib/hospFacts";
 type Hosp = { id: number; name: string; region: string; kind?: string };
 type T = "hosp" | "pay" | "alba";
 const TABS: { k: T; icon: string; n: string; sub: string; tip: string }[] = [
-  { k: "hosp", icon: "🏥", n: "병원 후기", sub: "분위기·강도·면접·퇴사", tip: "분위기, 업무 강도, 면접 질문, 퇴사 이유처럼 지원하려는 사람이 궁금해할 내용을 장점·단점 1~3줄로 적어주세요." },
-  { k: "alba", icon: "⏰", n: "알바·당직 후기", sub: "일급·식사·업무", tip: "일급·근무 시간·식사·세금 처리, 그리고 다음에 가는 사람을 위한 인계 한마디를 남겨주세요." },
-  { k: "pay", icon: "💰", n: "연봉 후기", sub: "숫자로 남기는 연봉", tip: "세전 연봉과 연차·계약 형태만 적으면 돼요. 처음엔 “4,000만 원대”처럼만 보이고, 3명 이상 모이면 범위가 공개돼요." },
+  { k: "hosp", icon: "🛡️", n: "고용안정성 & 채용실체", sub: "정규직 전환 · 2년 뒤 현실", tip: "공고만 믿고 지원했다가 2년 희망고문 당하고 버려지는 후배가 없도록, 병원이 숨기는 진짜 고용 현실을 남겨주세요." },
+  { k: "pay", icon: "💰", n: "통장 실수령 & 복지", sub: "실제 월급과 연봉", tip: "공고의 “내규에 따름” 뒤에 숨은 진짜 숫자를 남겨주세요. 연봉과 연차만 적으면 실수령이 계산돼요. 처음엔 “4,000만 원대”처럼만 보이고, 3명 이상 모이면 범위가 공개돼요." },
+  { k: "alba", icon: "⏰", n: "당직 & 업무환경", sub: "오버타임 · 인계 · 잡무", tip: "실제 퇴근 시간, 오버타임 수당, 인계와 잡무처럼 입사해야만 아는 근무 현실을 탭 몇 번으로 알려주세요." },
 ];
 function Send({ label }: { label: string }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : label}</button>; }
 const Chips = ({ name, opts, values, def }: { name: string; opts: readonly string[]; values?: (string | number)[]; def?: string | number }) =>
@@ -72,43 +71,48 @@ function ExtraForm({ kind, hospital, dept }: { kind: "pay" | "alba"; hospital?: 
     <Send label={kind === "pay" ? "💰 연봉 후기 올리기 (+30 XP)" : "⏰ 알바·당직 후기 올리기 (+30 XP)"} />
   </form>;
 }
-/** 🏥 병원 후기 — 한 화면에 딱딱 떨어지는 입력칸 (병원·직종·재직 상태·구분·추천·별점·장점/단점) */
+const MAIN_DEPTS: [string, string][] = [["간호사", "간호사"], ["방사선", "방사선사"], ["임상병리", "임상병리사"], ["물리치료", "물리치료사"]];
+const Pills = ({ name, items, def, wide }: { name: string; items: { v: string | number; n: string; sub?: string; tone?: string }[]; def?: string | number | null; wide?: boolean }) =>
+  <div className={"fq-pills" + (wide ? " wide" : "")} role="radiogroup">{items.map(o => <label key={o.v} className={"fq-pill" + (o.tone ? " t-" + o.tone : "")}><input type="radio" name={name} value={o.v} defaultChecked={def !== undefined && def !== null && String(def) === String(o.v)} /><span><b>{o.n}</b>{o.sub && <small>{o.sub}</small>}</span></label>)}</div>;
+/** 🛡️ 고용안정성 & 채용실체 — 병원·직종·현직/전직 → 전환 체감 → 2년 뒤 실태 → 한줄평 */
 function QuickForm({ hospital, dept, mine }: { hospital?: Hosp | null; dept?: string; mine?: any }) {
-  const [st, act] = useFormState(submitQuickReview, undefined); const [rec, setRec] = useState<number | null>(typeof mine?.rec3 === "number" ? mine.rec3 : mine?.rec === 1 ? 0 : mine?.rec === 0 ? 2 : null), [status, setStatus] = useState<string>(mine?.status ?? "재직"), [rp, setRp] = useState<string>(typeof mine?.regularPct === "number" ? String(mine.regularPct) : "");
-  const band = (v: string) => v === "" ? "" : Number(v) >= 70 ? "0" : Number(v) < 10 ? "2" : "1";
-  const [rg, setRg] = useState<string>(band(rp)); const pick = (v: string) => { setRp(v); setRg(band(v)); };
-  return <form action={act} className="form rw-form">
-    <div className="rw-2"><HospPick hospital={hospital} />
-      <div className="rw-f"><label htmlFor="rq-d">내 직종</label><select id="rq-d" name="dept" defaultValue={mine?.dept ?? (JOB_DEPTS.includes(dept as any) ? dept : "")}><option value="" disabled>직종 선택</option>{JOB_DEPTS.map(d => <option key={d}>{d}</option>)}</select></div></div>
-    <div className="rw-2">
-      <div className="rw-f"><span className="rw-l">재직 상태</span><div className="rw-seg" role="radiogroup" aria-label="재직 상태">{[["재직", "현직"], ["퇴사", "전직"]].map(([v, n]) => <button key={v} type="button" role="radio" aria-checked={status === v} className={status === v ? "on" : ""} onClick={() => setStatus(v)}>{n}</button>)}</div><input type="hidden" name="status" value={status} /></div>
-      <div className="rw-f"><label htmlFor="rq-c">후기 구분</label><select id="rq-c" name="cat" defaultValue={mine?.cat ?? ""}><option value="" disabled>선택하세요</option>{REV_CATS.map(c => <option key={c}>{c}</option>)}</select></div></div>
-    <div className="rw-2">
-      <div className="rw-f"><span className="rw-l">추천 여부</span><div className="rw-seg three" role="radiogroup" aria-label="추천 여부">{REC3.map((n, i) => <button key={n} type="button" role="radio" aria-checked={rec === i} className={rec === i ? "on r" + i : ""} onClick={() => setRec(i)}>{n}</button>)}</div><input type="hidden" name="rec3" value={rec ?? ""} /></div>
-      <div className="rw-f"><span className="rw-l">별점 <small>(5점 만점)</small></span><Stars name="star" def={mine?.overall} /></div></div>
-    <div className="rw-2">
-      <div className="rw-f"><label htmlFor="rq-p">세후 실수령 <small>(선택 · 월, 만 원)</small></label><select id="rq-p" name="pay" defaultValue={mine?.pay ?? ""}><option value="">선택 안 함</option>{PAY.map(p => <option key={p}>{p}</option>)}</select></div>
-      <div className="rw-f"><label htmlFor="rq-y">연차 <small>(선택)</small></label><select id="rq-y" name="years" defaultValue={mine?.years ?? ""}><option value="">선택 안 함</option>{YEARS.map(y => <option key={y}>{y}</option>)}</select></div></div>
-    <div className="rw-f"><label htmlFor="rq-rg">계약직 → 정규직 전환 <small>(선택 · 내 직종 기준 체감 %)</small></label>
-      <select id="rq-rg" name="regular" aria-label="계약직 정규직 전환" value={rg} onChange={e => { const v = e.target.value; setRg(v); setRp(v === "" ? "" : ["80", "15", "0"][Number(v)]); }}>
-        <option value="">선택 안 함</option><option value="0">🌱 대부분 정규직 전환돼요 (70%+)</option><option value="1">🟡 티오 날 때 소수만 전환 (10~20%)</option><option value="2">🚨 전환 거의 없어요 (2년 만기퇴사)</option></select>
-      <div className="hc-pctrow"><input id="rq-rp" type="number" name="regular_pct" inputMode="numeric" min={0} max={100} step={5} value={rp} onChange={e => pick(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))} placeholder="예: 20" aria-label="체감 정규직 전환율 (%)" /><span>%</span>
-        <div className="hc-pctq">{[0, 10, 30, 50, 70, 90].map(v => <button key={v} type="button" className={rp === String(v) ? "on" : ""} onClick={() => pick(String(v))}>{v}%</button>)}<button type="button" className={rp === "" ? "on" : ""} onClick={() => pick("")}>잘 몰라요</button></div></div>
-      <span className="rw-hint">위에서 고르면 대표 숫자가 채워져요. 더 정확히 알면 %를 직접 고쳐주세요 (계약직 10명 중 몇 명쯤 정규직이 되는지).</span></div>
-    <div className="rw-f"><label htmlFor="rq-pr">핵심 장점 <small>(1~3줄)</small></label><textarea id="rq-pr" name="pros" rows={3} maxLength={500} defaultValue={mine?.pros ?? ""} placeholder="예: 칼퇴 지켜주고, 연차 눈치 안 봐요. 장비가 새 거예요." /></div>
-    <div className="rw-f"><label htmlFor="rq-cn">핵심 단점 <small>(1~3줄)</small></label><textarea id="rq-cn" name="cons" rows={3} maxLength={500} defaultValue={mine?.cons ?? ""} placeholder="예: 주말 당직이 잦고, 인계 때문에 30분 일찍 나와요." /></div>
+  const [st, act] = useFormState(submitQuickReview, undefined); const d0 = mine?.dept ?? (JOB_DEPTS.includes(dept as any) ? dept : "");
+  const [dp, setDp] = useState<string>(d0 ?? ""), [etc, setEtc] = useState(!!d0 && !MAIN_DEPTS.some(m => m[0] === d0));
+  return <form action={act} className="form rw-form fq-form">
+    <section className="fq"><h3><i>1</i>어느 병원, 어떤 직종이었나요?</h3>
+      <HospPick hospital={hospital} />
+      <div className="rw-f"><span className="rw-l">내 직종</span>
+        <div className="fq-pills" role="radiogroup" aria-label="내 직종">{MAIN_DEPTS.map(([v, n]) => <button key={v} type="button" role="radio" aria-checked={!etc && dp === v} className={"fq-chip" + (!etc && dp === v ? " on" : "")} onClick={() => { setEtc(false); setDp(v); }}>{n}</button>)}
+          <button type="button" role="radio" aria-checked={etc} className={"fq-chip" + (etc ? " on" : "")} onClick={() => { setEtc(true); setDp(""); }}>그 외 직종</button></div>
+        {etc && <select aria-label="그 외 직종 선택" value={dp} onChange={e => setDp(e.target.value)}><option value="" disabled>직종 선택</option>{JOB_DEPTS.filter(d => !MAIN_DEPTS.some(m => m[0] === d)).map(d => <option key={d}>{d}</option>)}</select>}
+        <input type="hidden" name="dept" value={dp} /></div>
+      <div className="rw-f"><span className="rw-l">재직 상태</span><Pills name="status" items={[{ v: "재직", n: "현직 (다니는 중)" }, { v: "퇴사", n: "전직 (퇴사)" }]} def={mine?.status ?? "재직"} /></div>
+    </section>
+    <section className="fq"><h3><i>2</i>계약직 → 정규직 전환, 체감상 어느 정도인가요?</h3>
+      <p className="fq-d">내 직종 기준으로, 계약직 10명 중 몇 명쯤 정규직이 되는지 느낌대로 골라주세요.</p>
+      <Pills name="hire" wide items={HIRE_PILLS.map(p => ({ v: p.v, n: p.n, sub: p.sub, tone: p.tone }))} def={mine?.regular} />
+    </section>
+    <section className="fq"><h3><i>3</i>2년 채우면 어떻게 되나요? <small>(선택)</small></h3>
+      <p className="fq-d">2년 계약이 끝난 선배·동기들이 실제로 어떻게 됐는지요.</p>
+      <Pills name="after2" items={AFTER2.map((n, i) => ({ v: i, n }))} def={mine?.after2} />
+    </section>
+    <section className="fq"><h3><i>4</i>후배를 위한 솔직한 한줄평 <small>(선택)</small></h3>
+      <div className="rw-f"><label htmlFor="rq-pr">장점 <small>(1~2줄)</small></label><textarea id="rq-pr" name="pros" rows={2} maxLength={500} defaultValue={mine?.pros ?? ""} placeholder="예: 전환 심사가 투명하고, 2년 차에 대부분 정규직 면접 기회를 줘요." /></div>
+      <div className="rw-f"><label htmlFor="rq-cn">지원 시 꼭 알아야 할 주의점·단점 <small>(1~2줄)</small></label><textarea id="rq-cn" name="cons" rows={2} maxLength={500} defaultValue={mine?.cons ?? ""} placeholder="예: 공고엔 “전환 가능”이라 쓰여 있지만 최근 3년간 전환된 사람을 못 봤어요." /></div>
+    </section>
     <div className="wz-safe">🔒 닉네임 없이 <b>익명</b>으로 올라가요. 카드에는 병원·직종·현직/전직만 보여요. 19금·욕설과 전화번호만 막아요.</div>
     {st?.error && <div className="error" role="alert">{st.error}</div>}
-    <Send label={mine ? "✏️ 후기 수정하기" : "🏥 병원 후기 올리기 (+50 XP)"} />
+    <Send label={mine ? "✏️ 내 제보 수정하기" : "🛡️ 고용 현실 제보하기 (+50 XP)"} />
   </form>;
 }
-/** ✍️ 리뷰 쓰기 — 위에서 종류를 고르고(병원 / 연봉 / 알바·단기) 아래에서 바로 작성 */
+/** ✍️ 팩트 제보 — 🛡️ 고용안정성(메인) / 💰 실수령 / ⏰ 당직·업무환경(근무 중 병원 체크 ↔ 단기 알바·당직 후기) */
 export default function ReviewWrite({ hospital, dept, mine, t0 }: { hospital?: Hosp | null; dept?: string; mine?: HFact | null; t0?: T }) {
-  const [t, setT] = useState<T>(t0 ?? "hosp"), [full, setFull] = useState(false); const cur = TABS.find(x => x.k === t)!;
-  return <div className="rw">
-    <div className="rw-tabs" role="tablist" aria-label="리뷰 종류">{TABS.map(x => <button key={x.k} type="button" role="tab" aria-selected={t === x.k} className={t === x.k ? "on" : ""} onClick={() => setT(x.k)}><b>{x.icon} {x.n}</b><small>{x.sub}</small></button>)}</div>
-    <div className="rw-tip"><b>무엇을 쓰면 되나요?</b><span>{cur.tip}</span></div>
-    <div className="card">{t === "hosp" ? (full ? <HospCheck hospital={hospital} dept={dept} mine={mine} /> : <QuickForm hospital={hospital} dept={dept} mine={mine} />) : <ExtraForm kind={t} hospital={hospital} dept={dept} />}</div>
-    {t === "hosp" && <button type="button" className="rw-full" onClick={() => setFull(f => !f)}>{full ? "‹ 간단 후기로 돌아가기" : "🔎 실제 퇴근·분위기·정규직 전환율까지 탭으로 자세히 알려주기 ›"}</button>}
+  const [t, setT] = useState<T>(t0 ?? "hosp"), [alba, setAlba] = useState(t0 === "alba"); const cur = TABS.find(x => x.k === t)!;
+  return <div className="rw fx">
+    <div className="fx-hero"><span className="fx-kick">MEDIWHITE FACT CHECK</span><b>공고에는 없는 3가지 팩트</b>
+      <div className="fx-tabs" role="tablist" aria-label="제보 종류">{TABS.map(x => <button key={x.k} type="button" role="tab" aria-selected={t === x.k} className={t === x.k ? "on" : ""} onClick={() => setT(x.k)}><span>{x.icon}</span><b>{x.n}</b><small>{x.sub}</small></button>)}</div></div>
+    <blockquote className="fx-mission">{cur.tip}</blockquote>
+    <div className="card fx-card">{t === "hosp" ? <QuickForm hospital={hospital} dept={dept} mine={mine} /> : t === "pay" ? <ExtraForm kind="pay" hospital={hospital} dept={dept} /> : alba ? <ExtraForm kind="alba" hospital={hospital} dept={dept} /> : <HospCheck hospital={hospital} dept={dept} mine={mine} />}</div>
+    {t === "alba" && <button type="button" className="rw-full" onClick={() => setAlba(a => !a)}>{alba ? "‹ 다니는(다녔던) 병원의 퇴근·오버타임·잡무 체크로 돌아가기" : "⏱ 단기 알바·당직 알바로 다녀온 곳이라면 → 알바·당직 후기 쓰기 ›"}</button>}
   </div>;
 }

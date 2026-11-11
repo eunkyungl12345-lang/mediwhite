@@ -33,7 +33,11 @@ export const isReal = (m: { k: string }) => ["late", "chores", "incent", "leave2
 /** 🌱 직종별 전환 현실에 늘 보여줄 4대 직종 (응답이 없어도 '첫 투표' 유도) */
 export const HIRE_DEPTS = ["간호사", "방사선", "임상병리", "물리치료"] as const;
 /** 체감 전환율(%) → 한 줄 판정. 70 이상 희망적 / 30 미만 만기퇴사 주의 / 그 사이 일부만 */
-export const hireLabel = (pct: number) => pct >= 70 ? { t: 0, s: "🌱 대부분 전환" } : pct < 10 ? { t: 2, s: "🚨 만기퇴사 많음" } : { t: 1, s: "🟡 일부만 전환" };
+export const hireLabel = (pct: number) => pct >= 70 ? { t: 0, s: "🌱 대부분 전환" } : pct < 20 ? { t: 2, s: "🚨 만기퇴사 많음" } : { t: 1, s: "🟡 일부만 전환" };
+/** 🚦 직종별 고용안정성 신호등 — 과반이 '처음부터 정규직'이면 🎯, 아니면 체감 전환율 평균으로 */
+export type HireRow = { dept: string; avg: number; n: number; perm: number; total: number };
+export const hireSignal = (h: HireRow) => h.perm * 2 > h.total ? { t: 3, icon: "🎯", s: "🎯 처음부터 정규직 채용", tag: "처음부터 정규직 채용" }
+  : h.avg >= 70 ? { t: 0, icon: "🌱", s: "🌱 대부분 전환", tag: "정규직 전환 안정권" } : h.avg < 20 ? { t: 2, icon: "🚨", s: "🚨 만기퇴사 많음", tag: "2년 만기퇴사 주의군" } : { t: 1, icon: "🟡", s: "🟡 일부만 전환", tag: "일부만 전환 (바늘구멍)" };
 export const RISKS = [
   { k: "parental", s: "육아휴직 불이익", label: "육아휴직 쓰기 어렵거나 쓰면 불이익" },
   { k: "pregnant", s: "임신 불이익", label: "임신하면 눈치·불이익" },
@@ -54,7 +58,7 @@ export const FUTURE = ["📈 좋아질 것 같아요", "➖ 비슷할 것 같아
 export const EXIT_REASONS = ["급여가 낮아서", "태움·인간관계", "업무 과다·인력 부족", "상사·관리자", "교대·근무시간", "결혼·출산·육아", "이사·통근", "커리어·이직", "건강", "계약 만료", "기타"] as const;
 export type HFact = { shift?: number; overall?: number; rec?: number; future?: number; v?: boolean; stars?: Record<string, number>; reasons?: string[]; last?: string; pay?: string; years?: string; dept?: string; status?: string; regularPct?: number; taeum?: number; off?: number; quit?: number; risks?: string[]; good?: boolean; at?: string };
 export const factKey = (hid: number) => `hfact:${hid}`;
-export type FactAgg = { need?: number; overallAvg: number; recPct: number; recN: number; words: string[]; future: number[]; stars: { k: string; name: string; icon: string; avg: number }[]; starAvg: number; starN: number; exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string; v?: boolean }[] }; n: number; verified: number; pay: { range: string; n: number }[]; payMid?: string; hire: { dept: string; avg: number; n: number }[]; hireAvg: number; hireN: number; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
+export type FactAgg = { need?: number; overallAvg: number; recPct: number; recN: number; words: string[]; future: number[]; stars: { k: string; name: string; icon: string; avg: number }[]; starAvg: number; starN: number; exit: { n: number; stars: { k: string; name: string; icon: string; avg: number }[]; reasons: { r: string; n: number }[]; last: { text: string; dept?: string; years?: string; v?: boolean }[] }; n: number; verified: number; pay: { range: string; n: number }[]; payMid?: string; hire: HireRow[]; hireAvg: number; hireN: number; mood: { k: string; q: string; opts: readonly string[]; counts: number[]; top: number }[]; risks: { k: string; s: string; label: string; n: number }[]; good: number };
 export function aggregate(rows: HFact[]): FactAgg {
   const n = rows.length; const pay = PAY.map(r => ({ range: r, n: rows.filter(x => x.pay === r).length }));
   const paid = rows.map(x => PAY.indexOf(x.pay as any)).filter(i => i >= 0).sort((a, b) => a - b); const payMid = paid.length ? PAY[paid[Math.floor((paid.length - 1) / 2)]] : undefined;
@@ -62,7 +66,8 @@ export function aggregate(rows: HFact[]): FactAgg {
   // 🌱 직종별 체감 전환율: 각자 적은 %의 평균 (0~100)
   const hd: Record<string, number[]> = {}, hv: number[] = []; for (const x of rows) { const v = x.regularPct; if (typeof v === "number" && v >= 0 && v <= 100) { hv.push(v); (hd[x.dept || "기타"] ??= []).push(v); } }
   const avgOf = (v: number[]) => Math.round(v.reduce((p, c) => p + c, 0) / v.length);
-  const hire = Object.entries(hd).map(([dept, v]) => ({ dept, avg: avgOf(v), n: v.length })).sort((p, q) => q.n - p.n), hireAvg = hv.length ? avgOf(hv) : 0, hireN = hv.length;
+  const hp: Record<string, number> = {}; for (const x of rows) if ((x as any).regular === 3) hp[x.dept || "기타"] = (hp[x.dept || "기타"] ?? 0) + 1;
+  const hire: HireRow[] = [...new Set([...Object.keys(hd), ...Object.keys(hp)])].map(dept => { const v = hd[dept] ?? [], perm = hp[dept] ?? 0; return { dept, avg: v.length ? avgOf(v) : 0, n: v.length, perm, total: v.length + perm }; }).sort((p, q) => q.total - p.total), hireAvg = hv.length ? avgOf(hv) : 0, hireN = hv.length;
   const risks = RISKS.map(r => ({ ...r, n: rows.filter(x => x.risks?.includes(r.k)).length })).filter(r => r.n > 0).sort((a, b) => b.n - a.n);
   const sr = rows.filter(x => x.stars && Object.keys(x.stars).length);
   const stars = EXIT_STARS.map(st => { const v = sr.map(x => x.stars![st.k]).filter(v => v >= 1 && v <= 5); return { ...st, avg: v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10 : 0 }; });
@@ -86,7 +91,7 @@ export function factLine(a?: FactAgg, locked?: boolean): string[] {
   const lt = a.mood.find(m => m.k === "late"); if (lt && lt.counts[2] > 0 && lt.counts[2] * 2 >= lt.counts.reduce((x, y) => x + y, 0)) out.push(`🕖 실제 퇴근 1시간+ ${lt.counts[2]}/${a.n}`);
   const ch = a.mood.find(m => m.k === "chores"); if (ch && ch.counts[2] > 0 && ch.counts[2] * 2 >= ch.counts.reduce((x, y) => x + y, 0)) out.push(`🧹 잡무 많음 ${ch.counts[2]}/${a.n}`);
   const lv = a.mood.find(m => m.k === "leave2"); if (lv && lv.counts[1] > 0 && lv.counts[1] * 2 >= lv.counts.reduce((x, y) => x + y, 0)) out.push(`⚠️ 연차로 만든 주5일 ${lv.counts[1]}/${a.n}`);
-  if (a.hireN >= BADGE_N && a.hireAvg < 10) out.push(`🚨 계약직 만기퇴사 주의 (체감 전환율 ${a.hireAvg}%)`);
+  if (a.hireN >= BADGE_N && a.hireAvg < 20) out.push(`🚨 계약직 만기퇴사 주의 (체감 전환율 ${a.hireAvg}%)`);
   if (a.risks[0]) out.push(`⚠️ ${a.risks[0].s} ${a.risks[0].n}/${a.n}`);
   return out;
 }

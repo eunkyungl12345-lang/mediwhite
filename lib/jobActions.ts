@@ -154,8 +154,8 @@ export async function submitHospFact(_: R, fd: FormData): Promise<R> {
     const reasons = fd.getAll("reason").map(String).filter(r => inList(EXIT_REASONS, r)); if (!reasons.length && fd.get("more") === "1") return { error: "퇴사 사유를 하나 이상 골라주세요" };
     exit = { reasons };
   }
-  const key = factKey(hid); const { data: prev } = await s.from("game_state").select("user_id").eq("user_id", u.id).eq("game", key).maybeSingle();
-  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { pay, years, status, dept, shift, regularPct, emp: emp || undefined, pros: pros || undefined, cons: cons || undefined, ...mood, stars: Object.keys(stars).length ? stars : undefined, overall, rec, future: [0, 1, 2].includes(future) && fd.get("future") !== null && fd.get("future") !== "" ? future : undefined, risks, good, ...exit, last: word || undefined, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
+  const key = factKey(hid); const { data: prev } = await s.from("game_state").select("user_id,state").eq("user_id", u.id).eq("game", key).maybeSingle(); const keep = (({ regular, regularPct, after2 }: any) => ({ regular, regularPct, after2 }))((prev?.state as any) ?? {});
+  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state: { ...(regularPct === undefined ? keep : { after2: keep.after2 }), pay, years, status, dept, shift, ...(regularPct === undefined ? {} : { regularPct, regular: regularPct >= 70 ? 0 : regularPct < 20 ? 2 : 1 }), emp: emp || undefined, pros: pros || undefined, cons: cons || undefined, ...mood, stars: Object.keys(stars).length ? stars : undefined, overall, rec, future: [0, 1, 2].includes(future) && fd.get("future") !== null && fd.get("future") !== "" ? future : undefined, risks, good, ...exit, last: word || undefined, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
   if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");
   if (pros && cons) await awardXp(u.id, 20, `hfactpc:${hid}`, "quest");

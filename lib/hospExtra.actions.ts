@@ -7,8 +7,8 @@ import { awardXp } from "./xp";
 import { saveDistrict } from "./districtDb";
 import { reviewProblem } from "./safety";
 import { JOB_REGIONS, JOB_DEPTS, HOSP_KINDS } from "./jobs";
-import { xKey, X_YEARS, CONTRACT, PAY_YEAR, ALBA_UNIT, ALBA_TAX, ALBA_MEAL, ALBA_LOAD, HOBONG, WORK_AREA, PAY_SUB, REV_CATS } from "./hospExtra";
-import { PAY, YEARS, factKey } from "./hospFacts";
+import { xKey, X_YEARS, CONTRACT, PAY_YEAR, ALBA_UNIT, ALBA_TAX, ALBA_MEAL, ALBA_LOAD, HOBONG, WORK_AREA, PAY_SUB, HIRE_PILLS } from "./hospExtra";
+import { factKey } from "./hospFacts";
 type R = { error?: string } | undefined;
 const clean = (v: FormDataEntryValue | null, max: number) => String(v ?? "").trim().slice(0, max);
 const inList = (list: readonly string[], v: string) => list.includes(v);
@@ -61,25 +61,23 @@ export async function submitHospExtra(_: R, fd: FormData): Promise<R> {
 export async function submitQuickReview(_: R, fd: FormData): Promise<R> {
   const u = await getSession(); if (!u) redirect("/login"); const s = db();
   let hid = Number(fd.get("hospital_id")) || 0; const name = clean(fd.get("name"), 40), region = clean(fd.get("region"), 10), hk = clean(fd.get("kind"), 10);
-  const dept = clean(fd.get("dept"), 10), status = clean(fd.get("status"), 4), cat = clean(fd.get("cat"), 10), rec3 = Number(fd.get("rec3")), overall = Number(fd.get("star"));
-  const pros = clean(fd.get("pros"), 500), cons = clean(fd.get("cons"), 500), pay = clean(fd.get("pay"), 12), years = clean(fd.get("years"), 12);
-  if (!inList(JOB_DEPTS, dept)) return { error: "직종을 골라주세요" };
+  const dept = clean(fd.get("dept"), 10), status = clean(fd.get("status"), 4);
+  const pros = clean(fd.get("pros"), 500), cons = clean(fd.get("cons"), 500);
+  const hireRaw = String(fd.get("hire") ?? ""), hire = Number(hireRaw), a2Raw = String(fd.get("after2") ?? ""), after2 = Number(a2Raw);
+  if (!inList(JOB_DEPTS, dept)) return { error: "내 직종을 골라주세요" };
   if (!["재직", "퇴사"].includes(status)) return { error: "현직인지 전직인지 골라주세요" };
-  if (!inList(REV_CATS, cat)) return { error: "후기 구분을 골라주세요" };
-  if (![0, 1, 2].includes(rec3) || fd.get("rec3") === null || fd.get("rec3") === "") return { error: "추천 여부를 골라주세요" };
-  if (!(overall >= 1 && overall <= 5)) return { error: "별점을 매겨주세요" };
-  if (!pros && !cons) return { error: "장점이나 단점 중 하나는 적어주세요" };
-  for (const [v, n] of [[pros, "장점"], [cons, "단점"]] as const) if (v) { const rp = reviewProblem(v); if (rp) return { error: `${n}: ${rp}` }; }
-  const rpRaw = String(fd.get("regular_pct") ?? "").trim(), rpN = Math.round(Number(rpRaw)); if (rpRaw !== "" && !(Number.isFinite(rpN) && rpN >= 0 && rpN <= 100)) return { error: "정규직 전환율은 0~100 사이 숫자로 적어주세요" };
-  const rgRaw = String(fd.get("regular") ?? "").trim(), rgN = Number(rgRaw);
-  if (pay && !inList(PAY, pay)) return { error: "실수령 구간을 다시 골라주세요" }; if (years && !inList(YEARS, years)) return { error: "연차를 다시 골라주세요" };
+  if (hireRaw === "" || ![0, 1, 2, 3].includes(hire)) return { error: "② 계약직 → 정규직 전환 체감을 하나 골라주세요" };
+  if (a2Raw !== "" && ![0, 1, 2].includes(after2)) return { error: "③ 2년 만료 후 실태를 다시 골라주세요" };
+  for (const [v, n] of [[pros, "장점"], [cons, "주의점"]] as const) if (v) { const rp = reviewProblem(v); if (rp) return { error: `${n}: ${rp}` }; }
   if (!hid) {
     if (!name || !inList(JOB_REGIONS, region) || !inList(HOSP_KINDS, hk)) return { error: "병원을 찾거나, 새 병원 이름·지역·종류를 골라주세요" };
     const { data: ex } = await s.from("hospitals").select("id").eq("name", name).eq("region", region).maybeSingle();
     if (ex) hid = ex.id; else { const { data: h, error } = await s.from("hospitals").insert({ name, region, kind: hk, created_by: u.id }).select("id").single(); if (error || !h) return { error: "병원 등록에 실패했어요" }; hid = h.id; await saveDistrict(h.id, region, String(fd.get("gu") ?? "")).catch(() => {}); }
   }
   const key = factKey(hid); const { data: prev } = await s.from("game_state").select("state").eq("user_id", u.id).eq("game", key).maybeSingle();
-  const state = { ...((prev?.state as any) ?? {}), dept, status, cat, rec3, rec: rec3 === 0 ? 1 : rec3 === 2 ? 0 : undefined, overall, pros: pros || undefined, cons: cons || undefined, ...(pay ? { pay } : {}), ...(years ? { years } : {}), ...(rpRaw !== "" ? { regularPct: rpN, regular: rpN >= 70 ? 0 : rpN < 10 ? 2 : 1 } : [0, 1, 2].includes(rgN) && rgRaw !== "" ? { regular: rgN, regularPct: [80, 15, 0][rgN] } : {}), at: new Date().toISOString() };
+  const pill = HIRE_PILLS.find(p => p.v === hire)!;
+  const state: any = { ...((prev?.state as any) ?? {}), dept, status, regular: hire, regularPct: pill.pct ?? undefined, ...(a2Raw !== "" ? { after2 } : {}), pros: pros || undefined, cons: cons || undefined, at: new Date().toISOString() };
+  if (pill.pct === null) delete state.regularPct; if (a2Raw === "") delete state.after2;
   const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
   if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");

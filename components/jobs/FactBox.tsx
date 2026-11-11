@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MIN_N, BADGE_N, HIRE_DEPTS, hireLabel, isField, isReal, type FactAgg } from "@/lib/hospFacts";
+import { MIN_N, BADGE_N, HIRE_DEPTS, hireSignal, isField, isReal, type FactAgg } from "@/lib/hospFacts";
 /** 🔎 병원 실체 체크 집계 (병원 상세) */
 export default function FactBox({ a, hid, mine, vstat, locked, hideTop }: { a: FactAgg; hid: number; mine: boolean; vstat?: string | null; locked?: boolean; hideTop?: boolean }) {
   const cta = <Link href={`/hospitals/check?id=${hid}`} className="btn">{mine ? "✏️ 내 체크 수정" : "🔎 이 병원 다녀봤어요 · 30초 체크 +50"}</Link>;
@@ -21,10 +21,11 @@ export default function FactBox({ a, hid, mine, vstat, locked, hideTop }: { a: F
     {a.mood.some(m => isField(m) && m.counts.some(c => c)) && <div className="fb-sec"><b>🏥 현장 지표 <em>의료계만의 진짜 근무 조건</em></b>{a.mood.filter(m => isField(m) && m.counts.some(c => c)).map(m => <div key={m.k} className="fb-mood"><span>{m.q}</span><div className="fb-seg">{m.counts.map((c, i) => c ? <i key={i} className={"s" + i} style={{ flex: c }} title={`${m.opts[i]} ${c}명`}>{m.opts[i]} {c}</i> : null)}</div></div>)}</div>}
     {a.mood.some(m => isReal(m) && m.counts.some(c => c)) && <div className="fb-sec"><b>💼 공고와 현실 <em>실제 퇴근·잡무·인센티브</em></b>{a.mood.filter(m => isReal(m) && m.counts.some(c => c)).map(m => <div key={m.k} className="fb-mood"><span>{m.q}</span><div className="fb-seg">{m.counts.map((c, i) => c ? <i key={i} className={"s" + i} style={{ flex: c }} title={`${m.opts[i]} ${c}명`}>{m.opts[i]} {c}</i> : null)}</div></div>)}</div>}
     <div className="fb-sec" id="hire"><b>🌱 고용 안정성 <em>직종별 계약직 → 정규직 체감 전환율</em></b>
-      <div className="fb-hire">{[...HIRE_DEPTS, ...a.hire.map(h => h.dept).filter(d => !(HIRE_DEPTS as readonly string[]).includes(d))].map(d => { const h = a.hire.find(x => x.dept === d), n = h?.n ?? 0;
+      <div className="fb-hire">{[...HIRE_DEPTS, ...a.hire.map(h => h.dept).filter(d => !(HIRE_DEPTS as readonly string[]).includes(d))].map(d => { const h = a.hire.find(x => x.dept === d), n = h?.total ?? 0;
         if (n < BADGE_N) return <div key={d} className="fb-hr none"><span>{d}</span><p>{n ? `${n}명이 답했어요. 1명만 더 모이면 공개돼요.` : `아직 ${d} 응답이 없어요.`} <Link href={`/hospitals/check?id=${hid}`}>{n ? "나도 투표하기" : "첫 전환율 투표하기"} ›</Link></p></div>;
-        const L = hireLabel(h!.avg);
-        return <div key={d} className={"fb-hr t" + L.t}><span>{d}</span><div><b>{L.s} <em>(체감 {h!.avg}%)</em></b><i className="fb-hg" role="img" aria-label={`체감 전환율 ${h!.avg}%`}><i className={"g" + L.t} style={{ width: `${Math.max(4, h!.avg)}%` }} /></i><small>{n}명이 적은 숫자의 평균이에요 (병원 공식 전환율 아님)</small></div></div>; })}</div></div>
+        const L = hireSignal(h!);
+        if (L.t === 3) return <div key={d} className="fb-hr t0"><span>{d}</span><div><b>{L.s}</b><small>{n}명 중 {h!.perm}명이 계약직 기간 없이 정규직으로 입사했다고 답했어요</small></div></div>;
+        return <div key={d} className={"fb-hr t" + L.t}><span>{d}</span><div><b>{L.s} <em>(체감 {h!.avg}%)</em></b><i className="fb-hg" role="img" aria-label={`체감 전환율 ${h!.avg}%`}><i className={"g" + L.t} style={{ width: `${Math.max(4, h!.avg)}%` }} /></i><small>{h!.n}명이 답한 체감 전환율의 평균이에요 (병원 공식 전환율 아님)</small></div></div>; })}</div></div>
     {!hideTop && a.starN >= M && <div className="fb-sec"><b>⭐ 별점 <em>평균 {a.starAvg.toFixed(1)} · {a.starN}명</em></b><div className="fb-stars">{a.stars.map(st => <div key={st.k}><span>{st.icon} {st.name}</span><i><em style={{ width: `${st.avg / 5 * 100}%` }} /></i><b>{st.avg.toFixed(1)}</b></div>)}</div></div>}
     <div className="fb-sec"><b>⚠️ 입사 전에 알았으면 좋았을 것</b>{a.risks.length ? a.risks.map(r => <div key={r.k} className="fb-risk"><span>{r.label}</span><em>{r.n}/{a.n}명</em></div>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>아직 체크된 리스크가 없어요{a.good ? ` · 👍 괜찮은 곳이라고 ${a.good}명` : ""}</p>}</div>
     {a.exit.n > 0 && a.exit.n < M && <div className="fb-sec"><b>🚪 퇴사자 내부 평가</b><p className="muted" style={{ margin: 0, fontSize: 13 }}>퇴사자 {M}명 이상 모이면 퇴사 사유가 공개돼요 (누가 썼는지 알 수 없게)</p></div>}

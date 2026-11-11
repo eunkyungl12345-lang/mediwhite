@@ -31,7 +31,8 @@ import { factPubKey } from "@/lib/helpKey";
 import { HelpBtn, More } from "@/components/jobs/RvBits";
 import NoteBoard from "@/components/jobs/NoteBoard";
 import { RevHead, RevMark } from "@/components/jobs/RevCardParts";
-import { REC3 } from "@/lib/hospExtra";
+import { REC3, hireChip } from "@/lib/hospExtra";
+import HireSignal from "@/components/jobs/HireSignal";
 import PosBadges from "@/components/jobs/PosBadges";
 import { posBadges } from "@/lib/hospFacts";
 export const dynamic = "force-dynamic";
@@ -66,7 +67,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   type LI = { key: string; rid?: number; dept?: string; status?: string; cat?: string; rec3?: number; meta: string[]; star: number; title?: string; pros?: string; cons?: string; tip?: string; v?: boolean; mine: boolean; at: string };
   const list: LI[] = [
     ...rs.map(r => ({ key: "r" + r.id, rid: r.id, dept: r.dept, status: r.status, meta: [h.region, ym(r.created_at)], star: overall([r]), pros: r.pros, cons: r.cons, tip: r.tip, v: r.verified, mine: r.user_id === s.id, at: r.created_at })),
-    ...(fa.n >= need ? (hfFull ?? []).filter(r => { const x = r.state as any; return x?.last || x?.pros || x?.cons; }).map(r => { const x = r.state as any; return { key: factPubKey(r.user_id, id), dept: x.dept, status: x.status === "퇴사" ? "퇴사" : "재직", cat: x.cat, rec3: x.rec3, meta: [ym(x.at)], star: x.overall ?? 0, title: x.last, pros: x.pros, cons: x.cons, v: x.v, mine: r.user_id === s.id, at: x.at ?? "" }; }) : []),
+    ...(fa.n >= need ? (hfFull ?? []).filter(r => { const x = r.state as any; return x?.last || x?.pros || x?.cons; }).map(r => { const x = r.state as any; return { key: factPubKey(r.user_id, id), dept: x.dept, status: x.status === "퇴사" ? "퇴사" : "재직", cat: hireChip(x.regular) ?? x.cat, rec3: x.rec3, meta: [ym(x.at)], star: x.overall ?? 0, title: x.last, pros: x.pros, cons: x.cons, v: x.v, mine: r.user_id === s.id, at: x.at ?? "" }; }) : []),
   ].sort((a, b) => Number(!!b.v) - Number(!!a.v) || b.at.localeCompare(a.at));
   const recOk = fa.recN >= need, statBars = fa.starN >= need ? fa.stars.map(x => ({ name: x.name, avg: x.avg })) : rs.length ? RATING_KEYS.map(k => ({ name: k.name, avg: avg(rs, k.key) })).sort((a, b) => Number(/분위기/.test(b.name)) - Number(/분위기/.test(a.name))) : [];
   const tabHref = (k: string) => `/hospitals/${id}${k === "rev" ? "" : `?t=${k}`}`;
@@ -77,6 +78,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <div className="hh-top"><Link href="/hospitals" className="hh-back" aria-label="뒤로">‹</Link><ShareHosp hid={id} name={h.name} /></div>
         <div className="hh-badges">{!!myJobs?.length && <a href={tabHref("jobs")} className="hh-b job">💼 채용 중 {myJobs.length}</a>}{(fa.verified + vN) > 0 && <span className="hh-b vf">✅ 인증 {fa.verified + vN}</span>}</div>
         <div className="hh-name"><span className="hh-logo">🏥</span><div><h2>{h.name}</h2><small>{h.region}{gu ? ` ${gu}` : ""} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></small></div></div>
+        <HireSignal a={fa} hid={id} locked={locked} after2={[0, 1, 2].map(k => (hfFull ?? []).filter(r => (r.state as any)?.after2 === k).length)} />
         <PosBadges list={posBadges(fa)} max={6} />
         <div className="hh-score">★ <b>{score ? score.toFixed(1) : "-"}</b><small>{fa.n + rs.length ? `리뷰 ${fa.n + rs.length}` : "아직 평가 없음"}</small></div>
       </div>
