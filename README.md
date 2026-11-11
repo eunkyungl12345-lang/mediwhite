@@ -17,7 +17,7 @@
 ## 2. 배포 (Vercel)
 1. 이 폴더를 GitHub 새 저장소에 올리기 (예: `mediwhite`)
 2. https://vercel.com → Add New Project → 해당 저장소 Import
-3. **Environment Variables** 에 `.env.example` 의 6개 항목 입력
+3. **Environment Variables** 에 `.env.example` 의 항목 입력 (소셜 로그인 키는 쓰는 것만)
    - `SESSION_SECRET`: 아무 긴 랜덤 문자열 (터미널 `openssl rand -base64 32`)
    - `ADMIN_USERNAMES`: 관리자로 쓸 아이디 (예: `admin,eunkyung`). 이 아이디로 **가입하면** 자동으로 관리자.
 4. Deploy → 끝. 도메인은 Vercel이 주는 `xxx.vercel.app` 또는 직접 연결.

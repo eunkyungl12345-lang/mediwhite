@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-const PUBLIC = ["/login", "/contact", "/about", "/rules", "/h/", "/pay"];
+const PUBLIC = ["/login", "/contact", "/about", "/rules", "/h/", "/pay", "/api/auth/"];
 const isRoot = (p: string) => p === "/";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
