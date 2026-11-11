@@ -80,7 +80,7 @@ export default async function AboutPage() {
 
       <section className="about-cta">
         {s ? <Link className="about-btn" href="/hospitals">병원 리뷰 보러 가기</Link> : <Link className="about-btn" href={join}>30초 가입하고 시작하기</Link>}
-        <div className="about-count" style={{ marginTop: 12 }}>다녀본 병원 1곳만 알려주면 모든 병원이 열려요 · <Link href="/rules" style={{ color: "#93A59E" }}>커뮤니티 규칙</Link></div>
+        <div className="about-count" style={{ marginTop: 12 }}>다녀본 병원 1곳만 알려주면 모든 병원이 열려요 · <Link href="/rules" style={{ color: "#93A59E" }}>커뮤니티 규칙</Link> · <Link href="/terms" style={{ color: "#93A59E" }}>이용약관</Link> · <Link href="/privacy" style={{ color: "#93A59E" }}><b>개인정보처리방침</b></Link></div>
       </section>
     </div>
   );

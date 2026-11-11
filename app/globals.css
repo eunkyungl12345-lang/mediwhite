@@ -2565,3 +2565,8 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .ah-card.r{border-left-color:#D64545}.ah-card.r strong{color:#8E1F1F}.ah-card.g{border-left-color:#1FA97A}.ah-card.g strong{color:#0B4A38}.ah-card.b{border-left-color:#2F6FD0}.ah-card.b strong{color:#17407F}
 .ah-open{justify-self:start;margin-top:4px;font-size:14.5px;font-weight:800;color:#7BE0BD;text-decoration:none;padding:10px 0}.ah-open:hover{text-decoration:underline}
 .about-hero.v2 .ah-card p{color:#3E4C47;font-size:13.5px;line-height:1.5;max-width:none}
+
+/* 약관·방침 */
+.legal h1{font-size:24px;letter-spacing:-.02em;margin:0 0 8px}.legal .card{line-height:1.7;display:block}.legal h3{margin:22px 0 6px;font-size:16px}.legal h3:first-child{margin-top:0}.legal p,.legal li{font-size:14.5px;word-break:keep-all}
+.legal table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0}.legal th,.legal td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}.legal th{width:34%;background:var(--bg);font-weight:700}
+@media (max-width:480px){.legal th,.legal td{display:block;width:auto;border-width:1px 1px 0}.legal tr:last-child td{border-bottom-width:1px}}

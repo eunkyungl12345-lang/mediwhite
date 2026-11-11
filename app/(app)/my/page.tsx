@@ -46,8 +46,10 @@ export default async function MyPage() {
       <Row href="/noti" icon="🔔" t="알림" sub={unread ? `새 알림 ${unread}` : undefined} />
       <Row href="/fortune" icon="🔮" t="오늘의 운세" />
       <Row href="/rest" icon="🛋️" t="당직실" />
-      <Row href="/support" icon="💬" t="문의·응원" />
+      <Row href="/support" icon="💬" t="문의·파트 응원전" />
       <Row href="/about" icon="ℹ️" t="메디화이트 소개" />
+      <Row href="/terms" icon="📄" t="이용약관" />
+      <Row href="/privacy" icon="🔐" t="개인정보처리방침" />
       {s.role === "admin" && <Row href="/admin" icon="🛠️" t="관리자" />}
       <form action={logout}><button className="my-out">로그아웃</button></form>
     </section>

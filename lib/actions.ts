@@ -39,7 +39,8 @@ export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const nickname = clean(fd.get("nickname"), 12);
   const dept = clean(fd.get("dept"), 30), field = clean(fd.get("field"), 20);
   const ref = clean(fd.get("ref"), 20).toLowerCase() || cookies().get("mw_ref")?.value || null;
-  if (fd.get("agree") !== "on") return { error: "커뮤니티 규칙에 동의해주세요" };
+  if (fd.get("age14") !== "on") return { error: "만 14세 이상만 가입할 수 있어요" };
+  if (fd.get("agree") !== "on") return { error: "이용약관·개인정보처리방침에 동의해주세요" };
   if (!/^[a-z0-9_]{3,20}$/.test(username)) return { error: "아이디는 영문 소문자·숫자·밑줄 3~20자예요" };
   if (password.length < 8) return { error: "비밀번호는 8자 이상이에요" };
   if (password.toLowerCase().includes(username) || /^(.)\1+$/.test(password) || /^(password|12345678|123456789|87654321|qwerty|qwertyui|asdfghjk|abcdefgh|11111111)$/i.test(password)) return { error: "아이디가 들어가거나 너무 흔한 비밀번호는 쓸 수 없어요" };
@@ -302,6 +303,8 @@ export async function adminLoginAs(userId: string) {
 
 /* ---------- 파트 응원 (공동 경험치) ---------- */
 export async function requestContribution(_: FormState, fd: FormData): Promise<FormState> {
+  await requireUser();
+  return { error: "응원 입금은 잠시 쉬고 있어요. 준비되면 다시 열게요." }; // 🔒 2026-11-12: 사업자·통신판매업 정리 전까지 입금 받지 않음
   const u = await requireUser();
   const amount = Number(fd.get("amount")), depositor = clean(fd.get("depositor"), 20);
   if (!AMOUNTS.includes(amount)) return { error: "금액을 선택해주세요" };

@@ -23,6 +23,6 @@ export default async function RightRail({ rank, xp, nick, dept, fresh }: { rank:
       <div className="rail-h">🎮 잠깐 쉬어가기</div>
       <div className="rail-games">{[["/rest", "🛋️", "당직실"]].map(([h, ic, n]) => <Link key={h} href={h}><span>{ic}</span>{n}</Link>)}</div>
     </div>}
-    <div className="rail-foot"><Link href="/about">소개</Link> · <Link href="/support">문의</Link> · © 메디화이트</div>
+    <div className="rail-foot"><Link href="/about">소개</Link> · <Link href="/support">문의</Link> · <Link href="/terms">약관</Link> · <Link href="/privacy"><b>개인정보처리방침</b></Link> · © 메디화이트</div>
   </aside>;
 }

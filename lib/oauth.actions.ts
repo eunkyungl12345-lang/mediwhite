@@ -44,7 +44,8 @@ export async function completeSocialSignup(_: OauthFormState, fd: FormData): Pro
   const nickname = clean(fd.get("nickname"), 12);
   const dept = clean(fd.get("dept"), 30);
   const field = clean(fd.get("field"), 20);
-  if (fd.get("agree") !== "on") return { error: "커뮤니티 규칙에 동의해주세요" };
+  if (fd.get("age14") !== "on") return { error: "만 14세 이상만 가입할 수 있어요" };
+  if (fd.get("agree") !== "on") return { error: "이용약관·개인정보처리방침에 동의해주세요" };
   if (!nickname) return { error: "닉네임을 입력해주세요" };
   if (RESERVED.test(nickname.replace(/\s/g, ""))) return { error: "운영자로 오해할 수 있는 닉네임은 쓸 수 없어요" };
   if (!(DEPTS as readonly string[]).includes(dept)) return { error: "직종을 선택해주세요" };

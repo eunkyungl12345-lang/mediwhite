@@ -34,7 +34,10 @@ async function admin() { const u = await getSession(); return u?.role === "admin
 export async function hverifyPending() {
   if (!(await admin())) return [];
   const s = db(); const { data } = await s.from("game_state").select("user_id,game,state").like("game", "hverify:%").limit(500);
-  const pend = (data ?? []).filter(r => (r.state as VState)?.status === "pending"); if (!pend.length) return [];
+  // 🧹 30일 넘게 심사 안 된 사진은 지우고 '만료'로 (개인정보처리방침에 약속)
+  const old = Date.now() - 30 * 86400000;
+  for (const r of (data ?? []).filter(r => (r.state as VState)?.status === "pending" && +new Date((r.state as VState).at) < old)) { const st = r.state as VState; if (st.path) await s.storage.from("badges").remove([st.path]); await s.from("game_state").update({ state: { ...st, status: "rejected", path: null, reason: "심사 기간(30일)이 지나 사진을 삭제했어요. 다시 신청해 주세요" }, updated_at: new Date().toISOString() }).eq("user_id", r.user_id).eq("game", r.game); }
+  const pend = (data ?? []).filter(r => (r.state as VState)?.status === "pending" && +new Date((r.state as VState).at) >= old); if (!pend.length) return [];
   const hids = Array.from(new Set(pend.map(r => Number(r.game.slice(8))))), uids = Array.from(new Set(pend.map(r => r.user_id)));
   const [{ data: hs }, { data: us }] = await Promise.all([s.from("hospitals").select("id,name,region").in("id", hids), s.from("users").select("id,nickname,dept,username").in("id", uids)]);
   return pend.map(r => { const st = r.state as VState, hid = Number(r.game.slice(8)); return { uid: r.user_id, hid, kind: st.kind, at: st.at, hospital: hs?.find(h => h.id === hid) ?? null, user: us?.find(x => x.id === r.user_id) ?? null }; }).sort((a, b) => a.at.localeCompare(b.at));

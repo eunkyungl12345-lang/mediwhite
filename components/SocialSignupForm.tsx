@@ -29,7 +29,8 @@ export default function SocialSignupForm({ defaultNickname, provider }: { defaul
       {dept === "업체" && <select name="field" defaultValue="" required><option value="" disabled>업체 분야 선택</option>{VENDOR_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}</select>}
       <input name="nickname" value={nick} onChange={e => setNick(e.target.value)} placeholder="닉네임 (최대 12자, 나중에 변경 가능)" maxLength={12} required />
       <div className="muted">표시 이름: <b>{display(dept || "직종", nick || "닉네임")}</b> — 앞의 [직종]은 한 번 고르면 바꿀 수 없어요.</div>
-      <label className="muted agree"><input type="checkbox" name="agree" required /><span><a href="/rules" target="_blank">커뮤니티 규칙</a>(실명·환자정보 금지, 게시물 책임은 작성자, 신고 시 임시조치)에 동의해요.</span></label>
+      <label className="muted agree"><input type="checkbox" name="age14" required /><span>만 14세 이상이에요.</span></label>
+      <label className="muted agree"><input type="checkbox" name="agree" required /><span><a href="/terms" target="_blank">이용약관</a>, <a href="/privacy" target="_blank">개인정보처리방침</a>, <a href="/rules" target="_blank">커뮤니티 규칙</a>(실명·환자정보 금지, 게시물 책임은 작성자)에 동의해요.</span></label>
       {state?.error && <div className="error">{state.error}</div>}
       <Submit />
     </form>
