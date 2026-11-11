@@ -3,12 +3,19 @@ import Link from "next/link";
 import AuthForm from "@/components/AuthForm";
 import { promoUntil } from "@/lib/hospFactsDb";
 
-/** 카카오 로그인 실패는 이유만 짧게 알려주고, 다시 누르면 처음부터 진행돼요 */
+/** 소셜 로그인 실패는 이유만 짧게 알려주고, 다시 누르면 처음부터 진행돼요 */
 const OAUTH_ERROR: Record<string, string> = {
   kakao_failed: "카카오 로그인이 중간에 끊겼어요. 다시 한 번 시도해주세요.",
   kakao_state: "보안 확인이 맞지 않아 처음부터 다시 해야 해요. 다시 시도해주세요.",
   kakao_expired: "카카오 가입 시간(10분)이 지났어요. 카카오로 다시 시작해주세요.",
   kakao_config: "카카오 로그인 설정이 아직 없어요. 운영팀에 알려주세요.",
+  naver_failed: "네이버 로그인이 중간에 끊겼어요. 다시 한 번 시도해주세요.",
+  naver_state: "보안 확인이 맞지 않아 처음부터 다시 해야 해요. 다시 시도해주세요.",
+  naver_config: "네이버 로그인 설정이 아직 없어요. 운영팀에 알려주세요.",
+  google_failed: "구글 로그인이 중간에 끊겼어요. 다시 한 번 시도해주세요.",
+  google_state: "보안 확인이 맞지 않아 처음부터 다시 해야 해요. 다시 시도해주세요.",
+  google_config: "구글 로그인 설정이 아직 없어요. 운영팀에 알려주세요.",
+  oauth_expired: "가입 입력 시간(10분)이 지났어요. 소셜 로그인으로 다시 시작해주세요.",
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: { ref?: string; next?: string; mode?: string; from?: string; error?: string } }) {

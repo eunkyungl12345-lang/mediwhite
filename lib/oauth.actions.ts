@@ -6,7 +6,7 @@ import { createSession } from "./auth";
 import { DEPTS, VENDOR_FIELDS } from "./depts";
 import { awardXp } from "./xp";
 import { signupBonus } from "./ranks";
-import { OAUTH_TEMP_COOKIE, NEXT_COOKIE, readOauthTemp, safeNext } from "./oauth";
+import { OAUTH_TEMP_COOKIE, NEXT_COOKIE, PROVIDER_LABEL, USERNAME_PREFIX, readOauthTemp, safeNext, type OauthProvider } from "./oauth";
 
 export type OauthFormState = { error?: string } | undefined;
 
@@ -23,9 +23,9 @@ async function finish(u: { id: string; username: string; nickname: string; dept:
   redirect(dest);
 }
 
-/** 카카오 회원번호로 아이디를 만듭니다. 이미 쓰는 아이디면 뒤에 짧은 꼬리를 붙여 피해요. */
-async function freeUsername(s: ReturnType<typeof db>, oauthId: string) {
-  const base = `k_${oauthId}`.slice(0, 20);
+/** 소셜 고유번호로 아이디를 만듭니다 (k_ 카카오 · g_ 구글 · n_ 네이버). 이미 쓰는 아이디면 짧은 꼬리를 붙여 피해요. */
+async function freeUsername(s: ReturnType<typeof db>, provider: OauthProvider, oauthId: string) {
+  const base = `${USERNAME_PREFIX[provider]}_${oauthId}`.slice(0, 20);
   for (let i = 0; i < 4; i++) {
     const candidate = i === 0 ? base : `${base.slice(0, 15)}_${crypto.randomUUID().replace(/-/g, "").slice(0, 4)}`;
     const { data } = await s.from("users").select("id").eq("username", candidate).maybeSingle();
@@ -34,11 +34,13 @@ async function freeUsername(s: ReturnType<typeof db>, oauthId: string) {
   return `${base.slice(0, 10)}_${Date.now().toString(36).slice(-6)}`;
 }
 
-/** 카카오 신규 회원: 직종 + 닉네임 + 규칙 동의만 받고 가입을 끝냅니다. */
-export async function completeKakaoSignup(_: OauthFormState, fd: FormData): Promise<OauthFormState> {
+/** 소셜 신규 회원(카카오·구글·네이버 공통): 직종 + 닉네임 + 규칙 동의만 받고 가입을 끝냅니다. */
+export async function completeSocialSignup(_: OauthFormState, fd: FormData): Promise<OauthFormState> {
   const temp = await readOauthTemp(cookies().get(OAUTH_TEMP_COOKIE)?.value);
-  if (!temp) redirect("/login?error=kakao_expired");
+  if (!temp) redirect("/login?error=oauth_expired");
 
+  const provider = temp.provider;
+  const label = PROVIDER_LABEL[provider];
   const nickname = clean(fd.get("nickname"), 12);
   const dept = clean(fd.get("dept"), 30);
   const field = clean(fd.get("field"), 20);
@@ -53,10 +55,10 @@ export async function completeKakaoSignup(_: OauthFormState, fd: FormData): Prom
   if (sameNick?.length) return { error: "같은 직종에 이미 있는 닉네임이에요" };
 
   // 콜백과 폼이 겹쳐 두 번 처리된 경우: 이미 만들어졌다면 그 계정으로 로그인
-  const { data: already } = await s.from("users").select("id,username,nickname,dept,role").eq("oauth_provider", "kakao").eq("oauth_id", temp.oauth_id).maybeSingle();
+  const { data: already } = await s.from("users").select("id,username,nickname,dept,role").eq("oauth_provider", provider).eq("oauth_id", temp.oauth_id).maybeSingle();
   if (already) await finish(already);
 
-  const username = await freeUsername(s, temp.oauth_id);
+  const username = await freeUsername(s, provider, temp.oauth_id);
   const { count } = await s.from("users").select("id", { count: "exact", head: true }).eq("stealth", false).not("username", "like", "zz\\_%");
   const order = (count ?? 0) + 1;
   const { data, error } = await s.from("users").insert({
@@ -67,16 +69,16 @@ export async function completeKakaoSignup(_: OauthFormState, fd: FormData): Prom
     field: dept === "업체" ? field : null,
     role: "member",
     join_order: order,
-    oauth_provider: "kakao",
+    oauth_provider: provider,
     oauth_id: temp.oauth_id,
   }).select("id").single();
   if (error || !data) {
-    // 같은 카카오 계정이 동시에 두 번 들어온 경우(유일 인덱스 충돌)는 이미 만든 계정으로 보냅니다
+    // 같은 계정이 동시에 두 번 들어온 경우(유일 인덱스 충돌)는 이미 만든 계정으로 보냅니다
     if (error?.code === "23505") {
-      const { data: raced } = await s.from("users").select("id,username,nickname,dept,role").eq("oauth_provider", "kakao").eq("oauth_id", temp.oauth_id).maybeSingle();
+      const { data: raced } = await s.from("users").select("id,username,nickname,dept,role").eq("oauth_provider", provider).eq("oauth_id", temp.oauth_id).maybeSingle();
       if (raced) await finish(raced);
     }
-    return { error: "가입에 실패했어요. 잠시 후 다시 시도해주세요" };
+    return { error: `${label} 가입에 실패했어요. 잠시 후 다시 시도해주세요` };
   }
 
   // 아이디 가입과 같은 가입 보너스 (가입 순번 기준)

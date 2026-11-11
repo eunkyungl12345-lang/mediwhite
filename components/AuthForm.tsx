@@ -17,7 +17,9 @@ export default function AuthForm({ refCode, next, initialMode, promoUntil, oauth
   return (
     <>
       {oauthError && <div className="error" style={{ marginBottom: 10 }}>{oauthError}</div>}
-      <a href="/api/auth/kakao" className="btn-kakao"><span className="kakao-ico" aria-hidden>💬</span> 카카오로 3초 만에 시작하기</a>
+      <a href="/api/auth/kakao" className="btn-kakao"><span className="kakao-ico" aria-hidden>💬</span> 카카오로 3초 시작</a>
+      <a href="/api/auth/naver" className="btn-naver"><span className="naver-ico" aria-hidden>N</span> 네이버로 시작</a>
+      <a href="/api/auth/google" className="btn-google"><span className="google-ico" aria-hidden>G</span> Google로 시작</a>
       <div className="muted" style={{ fontSize: 12, textAlign: "center" }}>처음이면 직종만 고르면 끝나요 · 기존 회원은 바로 입장</div>
       <div className="auth-divider"><span>또는 아이디로 로그인</span></div>
       <div className="switch" role="tablist">

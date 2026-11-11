@@ -1,21 +1,27 @@
 "use client";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { completeKakaoSignup, type OauthFormState } from "@/lib/oauth.actions";
+import { completeSocialSignup, type OauthFormState } from "@/lib/oauth.actions";
 import { DEPT_GROUPS, VENDOR_FIELDS, deptLabel, display } from "@/lib/depts";
+import { PROVIDER_LABEL, type OauthProvider } from "@/lib/oauthProviders";
+
+/** 제공자별 아이콘 (로그인 화면 버튼과 같은 표기) */
+const ICON: Record<OauthProvider, string> = { kakao: "💬", naver: "N", google: "G" };
 
 function Submit() {
   const { pending } = useFormStatus();
   return <button className="btn" disabled={pending}>{pending ? "가입하는 중…" : "가입하고 입장"}</button>;
 }
 
-export default function KakaoSignupForm({ defaultNickname }: { defaultNickname: string }) {
-  const [state, action] = useFormState<OauthFormState, FormData>(completeKakaoSignup, undefined);
+export default function SocialSignupForm({ defaultNickname, provider }: { defaultNickname: string; provider: OauthProvider }) {
+  const [state, action] = useFormState<OauthFormState, FormData>(completeSocialSignup, undefined);
   const [dept, setDept] = useState("");
   const [nick, setNick] = useState(defaultNickname.slice(0, 12));
   return (
     <form action={action} className="form">
-      <div className="kakao-who"><span aria-hidden>💬</span> 카카오 계정으로 확인됐어요</div>
+      <div className={`oauth-who oauth-who-${provider}`}>
+        <span className={`${provider}-ico`} aria-hidden>{ICON[provider]}</span> {PROVIDER_LABEL[provider]} 계정으로 확인됐어요
+      </div>
       <select name="dept" value={dept} onChange={e => setDept(e.target.value)} required>
         <option value="" disabled>직종 선택 (가입 후 변경 불가)</option>
         {DEPT_GROUPS.map(([g, ds]) => <optgroup key={g} label={g}>{ds.map(d => <option key={d} value={d}>{deptLabel(d)}</option>)}</optgroup>)}
