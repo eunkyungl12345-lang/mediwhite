@@ -8,7 +8,7 @@ import { loadFacts, hasContributed, shiftCompare } from "@/lib/hospFactsDb";
 import { loadDistricts } from "@/lib/districtDb";
 import { getFocus } from "@/lib/focus";
 import JobCard from "@/components/jobs/JobCard";
-import { openExtJobs, EXT_SRC, extTags, isG3, splitArea, extCheckedLabel } from "@/lib/extJobs";
+import { openExtJobs, EXT_SRC, extSrc, extTags, isG3, splitArea, extCheckedLabel } from "@/lib/extJobs";
 import { QUICK, tagLabel } from "@/lib/jobTags";
 export const metadata = { title: "저녁 약속 잡을 수 있는 알짜 병원" };
 export const dynamic = "force-dynamic";

@@ -1,11 +1,15 @@
 /** ☀️ 3교대 탈출관 · 외부 상근 공고 (메디잡 공개 공고에서 낮 근무만 골라 사실만 요약, 한 줄 설명은 운영팀이 새로 씀)
  *  원문·지원은 메디잡 링크로. 마감 지나면 자동으로 숨겨요. 마지막 정리 2026-11-05 */
-export type ExtJob = { id: number; h: string; dept: string; k: "간호" | "간호조무사" | "방사선" | "물리치료" | "임상병리" | "원무" | "총괄"; area: string; time: string; pay: string; until?: string; note: string; warn?: string };
+export type ExtSrc = "사람인" | "잡코리아" | "메디잡";
+/** src: 공고가 올라온 곳(없으면 메디잡) · url: 메디잡이 아닌 곳은 원문 주소를 꼭 같이 */
+export type ExtJob = { id: number; h: string; dept: string; k: "간호" | "간호조무사" | "방사선" | "물리치료" | "임상병리" | "원무" | "총괄"; area: string; time: string; pay: string; until?: string; note: string; warn?: string; src?: ExtSrc; url?: string };
 export const EXT_SRC = "메디잡";
 /** 마지막으로 원문을 확인한 날. '채용 시 마감' 공고는 이 날부터 30일 지나면 자동으로 숨겨요 (새 파일로 갱신하면 날짜만 바꾸기) */
 export const EXT_CHECKED = "2026-11-05";
 export const extCheckedLabel = () => `${Number(EXT_CHECKED.slice(5, 7))}/${Number(EXT_CHECKED.slice(8))} 확인`;
 export const extUrl = (id: number) => `https://www.medijob.cc/com/cpn/com_cpn_100_view_02?recruitSeqno=${id}`;
+export const extSrc = (j: ExtJob): ExtSrc => j.src ?? "메디잡";
+export const extHref = (j: ExtJob) => j.url ?? extUrl(j.id);
 export const EXT_JOBS: ExtJob[] = [
   { id: 3759135, h: "평촌센트럴소아과", dept: "임상병리사", k: "임상병리", area: "경기 안양 · 평촌역 6분", time: "평일 14~20시 · 주말 없음", pay: "세전 300만", until: "2026-11-30", note: "오후 출근이라 오전이 통째로 내 시간" },
   { id: 3767145, h: "아이디병원", dept: "방사선사(검사팀)", k: "방사선", area: "서울 강남 · 신사역 7분", time: "평일 09:30~19시 · 토 ~16시", pay: "면접 협의", note: "검사팀 낮 근무, 칼퇴를 공고에 내건 곳" },

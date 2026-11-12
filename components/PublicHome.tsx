@@ -2,7 +2,7 @@ import Link from "next/link";
 import HospMarquee from "@/components/HospMarquee";
 import BrandLogo from "@/components/BrandLogo";
 import { db } from "@/lib/supabase";
-import { openExtJobs, isG3, extTags, EXT_SRC, splitArea, extCheckedLabel } from "@/lib/extJobs";
+import { openExtJobs, isG3, extTags, EXT_SRC, extSrc, splitArea, extCheckedLabel } from "@/lib/extJobs";
 import PosBadges from "@/components/jobs/PosBadges";
 import { tagLabel } from "@/lib/jobTags";
 import { dday } from "@/lib/jobs";

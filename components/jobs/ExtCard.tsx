@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
-import { EXT_SRC, extTags, splitArea, extCheckedLabel, type ExtJob } from "@/lib/extJobs";
+import { extSrc, extTags, splitArea, extCheckedLabel, type ExtJob } from "@/lib/extJobs";
 import { tagLabel } from "@/lib/jobTags";
 import { posBadges, type FactAgg } from "@/lib/hospFacts";
 import PosBadges from "@/components/jobs/PosBadges";
@@ -8,12 +8,13 @@ import PosBadges from "@/components/jobs/PosBadges";
 export default function ExtCard({ e, hid, fa }: { e: ExtJob; hid?: number; fa?: FactAgg }) {
   return <div className="jb3 ex-card">
     <a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="jb3-top" style={{ color: "inherit", textDecoration: "none" }}><Avatar name={e.h} size={44} /><div className="jb3-main">
-      <b className="jb3-t">{e.h}</b><small className="jb3-h">{e.dept} · ⏰ {e.time}</small></div>
+      <span className={"ex-src s-" + extSrc(e)}>{extSrc(e)}</span><b className="jb3-t">{e.h}</b><small className="jb3-h">{e.dept} · ⏰ {e.time}</small></div>
       <span className="jb2-dd">{e.until ? `~${e.until.slice(5).replace("-", "/")}` : extCheckedLabel()}</span></a>
     <div className="jb3-meta">{splitArea(e.area).r} · 💰 {e.pay}{splitArea(e.area).st && <span className="ex-sta">🚇 {splitArea(e.area).st}</span>}</div>
     {extTags(e.id).length > 0 && <div className="jb3-tags">{extTags(e.id).map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}
     <PosBadges list={posBadges(fa)} max={3} />
     <div className="jb3-f">☀️ {e.note}{e.warn ? ` · ⚠️ ${e.warn}` : ""}</div>
-    <div className="ex-acts" style={{ paddingLeft: 56 }}><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC} 지원 ↗</a><Link href={hid ? `/hospitals/${hid}` : `/search?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="btn ghost">👀 이 병원 진짜 분위기 보기</Link></div>
+    <Link href={hid ? `/hospitals/${hid}` : `/search?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="ex-real"><span aria-hidden="true">👀</span><div><b>이 병원 세후 실수령 & 고용안정성 신호등 보기</b><small>사람인엔 없는, 다녀본 사람들의 정규직 전환율·실수령·퇴근 시간</small></div><em>›</em></Link>
+    <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn ghost">원문 지원하기 ↗</a></div>
   </div>;
 }
