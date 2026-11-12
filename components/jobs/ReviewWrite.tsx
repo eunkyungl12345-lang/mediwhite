@@ -104,6 +104,6 @@ export default function ReviewWrite({ hospital, dept, mine, t0 }: { hospital?: H
     <div className="q1-tabs" role="tablist" aria-label="제보 종류">{TABS.map(x => <button key={x.k} type="button" role="tab" aria-selected={t === x.k} className={t === x.k ? "on" : ""} onClick={() => setT(x.k)}>{x.icon} {x.n}</button>)}</div>
     <p className="q1-tip">{cur.tip}</p>
     <div className="card fx-card">{t === "hosp" ? <QuickForm hospital={hospital} dept={dept} mine={mine} /> : t === "pay" ? <ExtraForm kind="pay" hospital={hospital} dept={dept} /> : alba ? <ExtraForm kind="alba" hospital={hospital} dept={dept} /> : <HospCheck hospital={hospital} dept={dept} mine={mine} />}</div>
-    {t === "alba" && <button type="button" className="rw-full" onClick={() => setAlba(a => !a)}>{alba ? "‹ 다니는(다녔던) 병원 체크로 돌아가기" : "⏱ 단기 알바·당직 알바였다면 → 알바 후기 쓰기 ›"}</button>}
+    {t === "alba" && <button type="button" className="rw-full" onClick={() => setAlba(a => !a)}>{alba ? "‹ 다니는(다녔던) 병원 제보로 돌아가기" : "⏱ 단기 알바·당직 알바였다면 → 알바 후기 쓰기 ›"}</button>}
   </div>;
 }

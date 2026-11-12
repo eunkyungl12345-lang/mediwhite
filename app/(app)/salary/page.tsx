@@ -21,7 +21,7 @@ export default async function SalaryPage() {
     <div className="sal-top"><span>등록된 실수령</span><b>총 {facts.length.toLocaleString()}건</b></div>
     <h2 className="sal-h">💰 내 급여 위치</h2>
     <SalaryCurve ranges={PAY} byDept={byDept} depts={depts} myDept={s.dept} myPay={mine} minN={MIN_N} />
-    {!mine && <Link href="/hospitals/check" className="rh-empty"><b>🔎 내 실수령도 보태기</b><span>다니는 병원 체크하면서 실수령 구간을 고르면 분포가 더 정확해져요 · 익명</span></Link>}
+    {!mine && <Link href="/hospitals/check" className="rh-empty"><b>🔎 내 실수령도 보태기</b><span>다니는 병원 제보하면서 실수령 구간을 고르면 분포가 더 정확해져요 · 익명</span></Link>}
     <h2 className="sal-h">📊 공공데이터로 본 평균 월급 높은 병원</h2>
     {npsList.length ? <div className="sal-list">{npsList.map((x, i) => { const h = (hs ?? []).find(y => y.id === x.hid); if (!h) return null; return <Link key={x.hid} href={`/hospitals/${x.hid}`} className="sal-row"><b>{i + 1}</b><div><strong>{h.name}</strong><small>{h.kind} · {h.region} · 직원 {x.cnt}명</small></div><em>{x.avgPay}만</em></Link>; })}</div>
       : <p className="muted" style={{ fontSize: 13 }}>국민연금 데이터가 연결된 병원이 늘어나면 여기에 보여요.</p>}

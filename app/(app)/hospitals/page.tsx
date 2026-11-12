@@ -82,7 +82,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
           <Link href={link({ st: st === "재직" ? "퇴사" : st === "퇴사" ? "" : "재직" })} className={st ? "on" : ""}>{st ? (st === "재직" ? "현직원" : "전직원") : "재직 상태"}</Link>
         </div>
         {tab === "mine" && <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{s.dept} 직종이 쓴 리뷰만 보여요</p>}
-        {!feed.length ? <div className="fb fb-wait"><b>{tab === "my" ? "내가 체크·리뷰한 병원이 아직 없어요" : "아직 리뷰가 없어요"}</b><p>다니는(다녔던) 병원 하나만 체크하면 6개월간 모든 리뷰가 열려요.</p><Link href="/hospitals/check" className="btn">🔎 병원 체크하기</Link></div>
+        {!feed.length ? <div className="fb fb-wait"><b>{tab === "my" ? "내가 제보·리뷰한 병원이 아직 없어요" : "아직 리뷰가 없어요"}</b><p>다니는(다녔던) 병원 하나만 제보하면 6개월간 모든 리뷰가 열려요.</p><Link href="/hospitals/check" className="btn">🔎 병원 제보하기</Link></div>
           : <div className="rf-list">{feed.map(x => { const h = H.get(x.hid)!; return <article key={x.key} className="rf-item">
             <Link href={`/hospitals/${x.hid}`} className="rc-link"><RevHead hospital={h.name} dept={x.dept} status={x.status} cat={x.cat} /></Link>
             <PosBadges list={posBadges(facts[x.hid])} max={3} />
@@ -90,7 +90,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
             {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><Stars n={x.star} />{typeof x.rec3 === "number" && <span className={"rc-rec r" + x.rec3}>{REC3[x.rec3]}</span>}</div>}
             {x.title && <h3 className="rf-title">{x.title}</h3>}
             {(x.pros || x.cons) && (contributed || x.uid === s.id ? <>{x.pros && <p className="rf-pc"><em className="g">장점</em>{x.pros}</p>}{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}</>
-              : <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 현직자의 솔직한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>)}
+              : <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 현직자의 솔직한 이야기</p><Link href="/hospitals/check" className="btn">제보 하나 남기고 6개월간 모든 리뷰 보기</Link></div>)}
             <div className="rc-foot"><Link href={`/hospitals/${x.hid}`} className="rf-more">이 병원 더보기 ›</Link><RevMark /></div>
           </article>; })}</div>}
       </>}

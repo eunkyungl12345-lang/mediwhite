@@ -28,7 +28,7 @@ export default async function MyPage() {
   const Row = ({ href, icon, t, sub }: { href: string; icon: string; t: string; sub?: string }) => <Link href={href} className="my-row"><span>{icon}</span><b>{t}</b>{sub && <small>{sub}</small>}<em>›</em></Link>;
   return <div className="my">
     <div className="my-prof"><Avatar name={me?.nickname ?? s.nickname} size={56} /><div><b>{me?.nickname ?? s.nickname}</b><small>{s.dept}{me?.blue_badge ? " · 🥇 골드뱃지" : ""}{vOk ? ` · ✅ 병원 인증 ${vOk}` : ""}</small><Link href="/rank" className="my-rank">{r.name} · {(me?.xp ?? 0).toLocaleString()} XP ›</Link></div></div>
-    <div className={"my-pass" + (unlocked ? " on" : "")}>{unlocked ? <><b>🎫 열람권 사용 중</b><span>{s.role === "admin" ? "관리자" : mode === "off" && left <= 0 ? "지금은 모든 병원 정보가 열려 있어요" : `${left}일 남았어요 · 모든 병원 리뷰·급여·면접 열람`}</span></> : <><b>🔒 열람권이 없어요</b><span>{mode === "free3" ? `무료로 볼 수 있는 병원 ${free}곳 남았어요. ` : ""}다니는(다녔던) 병원 하나 체크하면 6개월간 모든 병원 정보가 열려요</span><Link href="/hospitals/check" className="btn">🔎 체크하고 열기</Link></>}</div>
+    <div className={"my-pass" + (unlocked ? " on" : "")}>{unlocked ? <><b>🎫 열람권 사용 중</b><span>{s.role === "admin" ? "관리자" : mode === "off" && left <= 0 ? "지금은 모든 병원 정보가 열려 있어요" : `${left}일 남았어요 · 모든 병원 리뷰·급여·면접 열람`}</span></> : <><b>🔒 열람권이 없어요</b><span>{mode === "free3" ? `무료로 볼 수 있는 병원 ${free}곳 남았어요. ` : ""}다니는(다녔던) 병원 하나 제보하면 6개월간 모든 병원 정보가 열려요</span><Link href="/hospitals/check" className="btn">🔎 체크하고 열기</Link></>}</div>
     <div className="my-stats">{[["⭐", "병원 리뷰", checks.length + (revs ?? []).length], ["🎤", "면접 후기", ivs.length], ["🏆", "자랑", brags.length], ["💼", "올린 공고", (jobs ?? []).length]].map(([i, t, n]) => <div key={t as string}><b>{n as number}</b><span>{i} {t}</span></div>)}</div>
     <section className="my-sec"><h3>내 활동</h3>
       {checks.map(c => { const id = Number(String(c.game).slice(6)); return <Row key={c.game} href={`/hospitals/check?id=${id}`} icon="🔎" t={hn(id)} sub={`병원 리뷰 · ${c.updated_at.slice(0, 10)}`} />; })}
@@ -36,7 +36,7 @@ export default async function MyPage() {
       {ivs.map(c => { const id = Number(String(c.game).slice(6)); return <Row key={c.game} href={`/hospitals/interview?id=${id}`} icon="🎤" t={hn(id)} sub="면접 후기" />; })}
       {brags.map(c => { const id = Number(String(c.game).slice(5)); return <Row key={c.game} href={`/hospitals/brag/new?id=${id}`} icon="🏆" t={hn(id)} sub="자랑" />; })}
       {(jobs ?? []).map(j => <Row key={j.id} href={`/jobs/${j.id}`} icon="💼" t={`${j.hospital} · ${j.dept}`} sub={j.closed ? "마감" : "모집 중"} />)}
-      {!rows.length && !(revs ?? []).length && !(jobs ?? []).length && <div className="emp"><p>아직 활동이 없어요. 다녔던 병원부터 체크해보세요.</p><Link href="/hospitals/check" className="btn sm">🔎 다녔던 병원 체크하기 <small>+50 XP</small></Link></div>}
+      {!rows.length && !(revs ?? []).length && !(jobs ?? []).length && <div className="emp"><p>아직 활동이 없어요. 다녔던 병원부터 제보해보세요.</p><Link href="/hospitals/check" className="btn sm">🔎 다녔던 병원 제보하기 <small>+50 XP</small></Link></div>}
     </section>
     <section className="my-sec"><h3>인증</h3>
       <Row href="/badge" icon="🥇" t="면허 인증 (골드뱃지)" sub={me?.blue_badge ? "완료" : "의료인 면허로 인증"} />

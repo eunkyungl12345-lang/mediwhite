@@ -15,8 +15,8 @@ export default async function FocusCard() {
   return <div className="fc">
     <div className="fc-h"><b>📍 {f.label} 병원 실체 지도</b><span>{open} / {f.goal}곳 공개</span></div>
     <div className="fc-bar"><i style={{ width: `${Math.max(2, pct)}%` }} /></div>
-    <small>{f.label} 병원·약국마다 {MIN_N}명이 체크하면 실수령·분위기·리스크가 열려요. 같이 채워요!</small>
+    <small>{f.label} 병원·약국마다 {MIN_N}명이 제보하면 실수령·분위기·리스크가 열려요. 같이 채워요!</small>
     {near.length > 0 && <div className="fc-near">{near.map(h => <Link key={h.id} href={`/hospitals/check?id=${h.id}`}><b>{h.name}</b><em>{MIN_N - (facts[h.id]?.n ?? 0)}명만 더!</em></Link>)}</div>}
-    <Link href="/hospitals/check" className="btn">🔎 내가 아는 {f.label} 병원 체크하기</Link>
+    <Link href="/hospitals/check" className="btn">🔎 내가 아는 {f.label} 병원 제보하기</Link>
   </div>;
 }

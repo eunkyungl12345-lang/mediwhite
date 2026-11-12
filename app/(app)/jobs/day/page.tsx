@@ -49,7 +49,7 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
 
     <div className="dy-cmp"><Col t="대학·종합병원" g={cmp.shift} icon="🌙" /><div className="dy-vs">VS</div><Col t="로컬 의원·치과·약국" g={cmp.day} icon="☀️" /></div>
     {!ready ? <div className="fb fb-wait"><b>📊 비교 데이터가 모이는 중이에요</b><p>대학·종합병원과 로컬 각각 {MIN_N}명 이상 모이면 공개돼요. 다니는(다녔던) 병원을 체크해주세요.</p><Link href="/hospitals/check" className="btn">🔎 내 병원 체크하고 비교 열기</Link></div>
-      : !contributed ? <div className="fb-lockmsg"><b>🔒 체크 하나 남기고 6개월간 비교 자유롭게</b><span>다녔던 병원 하나만 체크하면 이 비교와 모든 병원 정보가 열려요.</span><Link href="/hospitals/check" className="btn">🔎 체크하고 보기</Link></div> : null}
+      : !contributed ? <div className="fb-lockmsg"><b>🔒 제보 하나 남기고 6개월간 비교 자유롭게</b><span>다녔던 병원 하나만 제보하면 이 비교와 모든 병원 정보가 열려요.</span><Link href="/hospitals/check" className="btn">🔎 체크하고 보기</Link></div> : null}
 
     <h3 className="dy-h">☀️ 상근·칼퇴 공고 <small>{open.length}</small></h3>
     {open.length ? <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={(j.author as any)?.username === "mw_bot"} locked={!contributed} />)}</div>
@@ -58,7 +58,7 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
     <h3 className="dy-h">🏠 로컬 병원·의원 {focus && <small>{focus.label} 먼저</small>}</h3>
     {hlist.length ? <div className="jb2-list">{hlist.map(h => <Link key={h.id} href={`/hospitals/${h.id}`} className="jb2-card"><div className="jb2-h"><div className="jb2-hn"><b>{h.name}</b><small>{h.region}{dist[h.id] ? ` ${dist[h.id]}` : ""} · {h.kind}{inFocus(h) ? " · 📍" : ""}</small></div></div>
       <PosBadges list={posBadges(facts[h.id])} max={3} />{factLine(facts[h.id], !contributed).length > 0 ? <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[h.id], !contributed).map(x => <span key={x}>{x}</span>)}</div> : <div className="jb2-facts none">🔎 {facts[h.id]?.n ?? 0}명 체크 · {MIN_N}명 모이면 공개</div>}</Link>)}</div>
-      : <p className="muted" style={{ fontSize: 13 }}>상근으로 일하는 병원을 체크하면 여기에 모여요.</p>}
+      : <p className="muted" style={{ fontSize: 13 }}>상근으로 일하는 병원을 제보하면 여기에 모여요.</p>}
 
     <Link href="/hospitals/check" className="dy-cta"><b>🙋 3교대에서 탈출해봤어요</b><span>예전 병원과 지금 병원을 각각 체크해주면, 다음 사람이 "탈출하면 얼마나 달라지는지" 알 수 있어요</span></Link>
   </div>;

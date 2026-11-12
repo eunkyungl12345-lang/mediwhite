@@ -9,7 +9,7 @@ export default function SalaryCurve({ ranges, byDept, depts, myDept, myPay, minN
   const pi = ranges.indexOf(pay), below = pi >= 0 ? c.slice(0, pi).reduce((a, b) => a + b, 0) + c[pi] / 2 : 0, top = n && pi >= 0 ? Math.max(1, Math.round((1 - below / n) * 100)) : null;
   return <div className="sc">
     <div className="sc-tabs">{["전체", ...depts].map(d => <button key={d} type="button" className={dept === d ? "on" : ""} onClick={() => setDept(d)}>{d}</button>)}</div>
-    {n < minN ? <div className="fb fb-wait"><b>{dept} 급여 데이터가 모이는 중이에요 ({n}명)</b><p>{minN}명 이상 모이면 분포가 열려요. 내 병원 체크하면서 실수령을 알려주세요.</p></div> : <>
+    {n < minN ? <div className="fb fb-wait"><b>{dept} 급여 데이터가 모이는 중이에요 ({n}명)</b><p>{minN}명 이상 모이면 분포가 열려요. 내 병원 제보하면서 실수령을 알려주세요.</p></div> : <>
       <svg viewBox={`-10 0 ${W + 20} ${H + 24}`} className="sc-svg" role="img" aria-label="실수령 분포">
         <defs><linearGradient id="scg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#3CC07A" stopOpacity=".45" /><stop offset="1" stopColor="#3CC07A" stopOpacity="0" /></linearGradient></defs>
         <path d={`${path} L ${W} ${H} L 0 ${H} Z`} fill="url(#scg)" /><path d={path} fill="none" stroke="#2EAF6A" strokeWidth="2.5" strokeLinejoin="round" />

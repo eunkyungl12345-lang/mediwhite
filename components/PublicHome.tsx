@@ -63,7 +63,7 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
     {open.length > 0 && <section className="pub-sec"><h2>💼 메디화이트 채용 공고</h2>
       <div className="pub-jobs">{open.map(j => <Link key={j.id} href={login(`/jobs/${j.id}`)}><b>{(j.author as any)?.username === "mw_bot" ? (j.welfare || `${j.dept} 채용`) : `${j.dept} ${j.emp_type} 모집`}</b><small>{j.hospital} · {j.region}</small><em>{dday(j.deadline)}</em></Link>)}</div>
       <Link href={login("/jobs")} className="btn ghost" style={{ justifySelf: "start" }}>전체 공고·필터 보기 (로그인)</Link></section>}
-    <section className="pub-cta"><b>다녀본 병원, 30초만 알려주세요</b><p>병원 하나 체크하면 6개월간 모든 병원의 실수령·분위기·리스크가 열려요. 아이디·닉네임만으로 가입, 실명·전화번호 안 받아요.</p><Link href={signup("/hospitals/check")} className="btn">가입하고 병원 체크하기</Link></section>
+    <section className="pub-cta"><b>다녀본 병원, 10초만 알려주세요</b><p>병원 하나 제보하면 6개월간 모든 병원의 실수령·분위기·리스크가 열려요. 아이디·닉네임만으로 가입, 실명·전화번호 안 받아요.</p><Link href={signup("/hospitals/check")} className="btn">가입하고 병원 제보하기</Link></section>
     <footer className="pub-f"><Link href="/about">소개</Link><Link href="/rules">이용규칙</Link><Link href="/terms">이용약관</Link><Link href="/privacy"><b>개인정보처리방침</b></Link><Link href="/contact">문의</Link></footer>
   </main></div></div>;
 }

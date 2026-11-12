@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { reportContent } from "@/lib/actions";
 import { REPORT_REASONS } from "@/lib/safety";
 
-export default function ReportButton({ kind, id }: { kind: "post" | "comment" | "job" | "review" | "fact"; id: string }) {
+export default function ReportButton({ kind, id }: { kind: "post" | "comment" | "job" | "review" | "fact" | "extra"; id: string }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<string>("defame");
   const [detail, setDetail] = useState("");
@@ -17,7 +17,7 @@ export default function ReportButton({ kind, id }: { kind: "post" | "comment" | 
       {open && createPortal(
         <div className="ob" onClick={() => setOpen(false)}>
           <div className="ob-card" style={{ textAlign: "left", gap: 8 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 17 }}>🚩 {({ post: "글", comment: "댓글", job: "채용공고", review: "리뷰", fact: "한줄평" } as Record<string, string>)[kind]} 신고</h3>
+            <h3 style={{ fontSize: 17 }}>🚩 {({ post: "글", comment: "댓글", job: "채용공고", review: "리뷰", fact: "한줄평", extra: "후기" } as Record<string, string>)[kind]} 신고</h3>
             <div className="muted" style={{ fontSize: 12 }}>신고가 접수되면 운영팀이 검토하며, 허위 신고 시 이용이 제한될 수 있습니다.</div>
             <div className="rp-list">{REPORT_REASONS.map(([k, n]) => <label key={k} className={"rp" + (reason === k ? " on" : "")}><input type="radio" name="reason" checked={reason === k} onChange={() => setReason(k)} /><span>{n}</span></label>)}</div>
             <textarea value={detail} onChange={e => setDetail(e.target.value)} maxLength={500} placeholder="(선택) 어떤 부분이 문제인지" style={{ minHeight: 60 }} />

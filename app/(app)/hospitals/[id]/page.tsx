@@ -93,10 +93,10 @@ export default async function HospitalPage({ params, searchParams }: { params: {
           <div className="rv2-grid">{recOk && <div className="fb-donut" style={{ ["--p" as any]: fa.recPct }}><i><b>{fa.recPct}%</b></i><span>추천률</span></div>}
             <div className="rv2-bars">{statBars.map(x => <div key={x.name}><span>{x.name}</span><i><em style={{ width: `${x.avg / 5 * 100}%` }} /></i><b>★ {x.avg.toFixed(1)}</b></div>)}</div></div>
           {fa.starN > 0 && fa.starN < need && <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>항목별 별점은 {need}명이 모이면 보여요 (지금 {fa.starN}명)</p>}
-        </> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>아직 평가가 없어요. 바로 아래 <b>30초 체크</b>가 첫 리뷰가 돼요.</p>}
+        </> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>아직 평가가 없어요. 바로 아래 <b>10초 제보</b>가 첫 리뷰가 돼요.</p>}
       </section>
       <FactBox a={fa} hid={id} mine={!!myFact} vstat={vstat} locked={locked} hideTop />
-      <ExtraReviews hid={id} locked={locked} done={searchParams.xdone} />
+      <ExtraReviews hid={id} locked={locked} done={searchParams.xdone} me={s.id} />
       {myHidden && <div className="card fb-wait"><b>🔎 내 리뷰는 신고가 들어와 검토 중이에요</b><p>운영팀이 확인하는 동안(최대 30일) 다른 사람에게 보이지 않고, 수정도 잠시 막혀요. 결과는 알림으로 알려드려요.</p></div>}
       {mine && !myHidden && <details id="review-edit" className="card ss-details" open={!!searchParams.write}><summary><b>✏️ 예전에 쓴 내 리뷰 수정</b></summary><ReviewForm hospital={{ id: h.id, name: h.name, region: h.region }} dept={s.dept} mine={mine} proofState={proofState as any} /></details>}
       {(blindN ?? 0) > 0 && <div className="rv-blind">🔒 신고·권리침해 요청으로 <b>{blindN}개</b> 리뷰가 운영팀 검토 중이라 잠시 가려져 있어요 (최대 30일). 검토 후 다시 보이거나 삭제돼요.</div>}

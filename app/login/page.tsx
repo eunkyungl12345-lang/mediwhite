@@ -27,7 +27,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { ref?
       <h1><Link href="/about" style={{ color: "inherit", textDecoration: "none" }}>메디화이트</Link></h1>
       <p className="one-line">이직 전에 그 병원 실수령 확인하는 곳</p>
       <div className="muted">다녀본 병원 직원들이 익명으로 알려줘요 — 통장 실수령·원장 성향·실제 퇴근. 아이디와 닉네임만 있으면 돼요.</div>
-      {searchParams.from === "pay" && <p className="from-pay">💳 방금 본 실수령 카드의 <b>‘같은 직종 상위 몇 %’</b>는 가입하고 다녔던 병원 1곳을 체크하면 열려요. (1분)</p>}
+      {searchParams.from === "pay" && <p className="from-pay">💳 방금 본 실수령 카드의 <b>‘같은 직종 상위 몇 %’</b>는 가입하고 다녔던 병원 1곳을 제보하면 열려요. (1분)</p>}
       {searchParams.mode !== "signup" && <OpenPromo />}
       <AuthForm refCode={ref || undefined} next={next || undefined} initialMode={searchParams.mode === "signup" ? "signup" : undefined} promoUntil={promo} oauthError={OAUTH_ERROR[searchParams.error ?? ""]} />
       <div className="muted" style={{ textAlign: "center" }}><Link href="/about">메디화이트가 뭐예요?</Link></div>
