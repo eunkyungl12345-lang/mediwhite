@@ -55,7 +55,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const cnt: Record<string, number> = {}; for (const r of deptCounts ?? []) cnt[r.dept] = (cnt[r.dept] ?? 0) + 1;
   const byPay = searchParams.sort === "pay";
   const link = (o: Record<string, string>) => { const p = new URLSearchParams(Object.entries({ region, dept, src, q: kw, t: tg, g3: searchParams.g3 === "1" ? "1" : "", sort: byPay ? "pay" : "", th, ...o }).filter(([, v]) => v)); return `/jobs${p.toString() ? "?" + p : ""}`; };
-  const EXK: Record<string, string> = { 간호: "간호사", 간호조무사: "간호조무사", 방사선: "방사선", 물리치료: "물리치료", 임상병리: "임상병리", 원무: "원무", 총괄: "총괄" };
+  const EXK: Record<string, string> = { 간호: "간호사", 간호조무사: "간호조무사", 방사선: "방사선", 물리치료: "물리치료", 임상병리: "임상병리", 원무: "원무", 총괄: "총괄", 치과위생사: "치과위생사" };
   const exReg = (a: string) => a.startsWith("서울") ? "서울" : /고양|파주|의정부|남양주|구리|양주|동두천|포천|연천|김포/.test(a) ? "경기 북부" : a.startsWith("경기") ? "경기 남부" : "";
   const ext = (!src || src === "ext") && !soonOnly ? openExtJobs().filter(e => (!dept || EXK[e.k] === dept) && (!region || exReg(e.area) === region) && (!kw || e.h.includes(kw)) && (!tg || extTags(e.id).includes(tg)) && (searchParams.g3 !== "1" || isG3(e)) && extTheme(e)).sort((a, b) => byPay ? parsePay(b.pay) - parsePay(a.pay) : Number(isG3(b)) - Number(isG3(a))) : [];
   if (byPay) open.sort((a, b) => parsePay(b.pay ?? "") - parsePay(a.pay ?? ""));
