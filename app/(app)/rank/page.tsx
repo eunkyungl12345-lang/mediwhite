@@ -2,7 +2,7 @@ import Link from "next/link";
 import BlueBadge from "@/components/BlueBadge";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
-import { RANKS, QUESTS, PRIVILEGES, REPEAT, signupBonus, can } from "@/lib/ranks";
+import { RANKS, QUESTS, PRIVILEGES, REPEAT, signupBonus, can, questDone } from "@/lib/ranks";
 import { deptLeaders, rankFor, deptCommanders } from "@/lib/ranksvc";
 import { HOSPITAL_DEPTS as DEPTS, display } from "@/lib/depts";
 import RankBadge from "@/components/RankBadge";
@@ -69,7 +69,8 @@ export default async function RankPage() {
           매일: 채팅 {REPEAT.chat.each}×(최대 {REPEAT.chat.dailyCap}) · 글 {REPEAT.post.each}×(최대 {REPEAT.post.dailyCap}) · 댓글 {REPEAT.comment.each}×(최대 {REPEAT.comment.dailyCap}). 하루 열심히 하면 약 100 XP → 일병 하루, 하사 열흘, 소위 한 달 반, 소령 넉 달, 참모총장 1년 반.</div>
         <div className="quests">
           <div className="quest done"><span>가입하기</span><span>+{me ? signupBonus(me.join_order ?? 999) : 0}</span></div>
-          {QUESTS.map(q => <div key={q.key} className={"quest" + (doneKeys.has(q.key) ? " done" : "")}><span>{q.title}</span><span>+{q.xp}</span></div>)}
+          {QUESTS.map(q => <div key={q.key} className={"quest" + (questDone(q, doneKeys) ? " done" : "")}><span>{q.title}</span><span>+{q.xp}</span></div>)}
+          <div className="quest"><span>7일 연속 출석</span><span>+{STREAK_BONUS}</span></div>
         </div>
       </div>
 

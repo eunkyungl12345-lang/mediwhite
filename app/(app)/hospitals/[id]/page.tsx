@@ -98,7 +98,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       <FactBox a={fa} hid={id} mine={!!myFact} vstat={vstat} locked={locked} hideTop />
       <ExtraReviews hid={id} locked={locked} done={searchParams.xdone} />
       {myHidden && <div className="card fb-wait"><b>🔎 내 리뷰는 신고가 들어와 검토 중이에요</b><p>운영팀이 확인하는 동안(최대 30일) 다른 사람에게 보이지 않고, 수정도 잠시 막혀요. 결과는 알림으로 알려드려요.</p></div>}
-      {mine && !myHidden && <details className="card ss-details" open={!!searchParams.write}><summary><b>✏️ 예전에 쓴 내 리뷰 수정</b></summary><ReviewForm hospital={{ id: h.id, name: h.name, region: h.region }} dept={s.dept} mine={mine} proofState={proofState as any} /></details>}
+      {mine && !myHidden && <details id="review-edit" className="card ss-details" open={!!searchParams.write}><summary><b>✏️ 예전에 쓴 내 리뷰 수정</b></summary><ReviewForm hospital={{ id: h.id, name: h.name, region: h.region }} dept={s.dept} mine={mine} proofState={proofState as any} /></details>}
       {(blindN ?? 0) > 0 && <div className="rv-blind">🔒 신고·권리침해 요청으로 <b>{blindN}개</b> 리뷰가 운영팀 검토 중이라 잠시 가려져 있어요 (최대 30일). 검토 후 다시 보이거나 삭제돼요.</div>}
       <div className="rv2-head"><b>리뷰 <em>{list.length}</em></b>{vN + fa.verified > 0 && <small>✅ 인증 {vN + fa.verified}</small>}</div>
       {!list.length ? <div className="fb fb-wait"><b>아직 공개된 리뷰가 없어요</b><p>{fa.n ? `${fa.n}명이 남겼어요 — ${need}명이 모이면 한줄평·장단점이 공개돼요.` : "이 병원을 다녀봤다면 첫 리뷰를 남겨주세요. 딱 세 가지면 돼요."}</p><Link href={`/hospitals/check?id=${id}`} className="btn">＋ 리뷰 작성</Link></div>
@@ -110,7 +110,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         {(x.pros || x.cons) && (locked && !x.mine ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 솔직한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>
           : <More long={(x.pros?.length ?? 0) + (x.cons?.length ?? 0) + (x.tip?.length ?? 0) > 140}>{x.pros && <p className="rf-pc"><em className="g">장점</em>{x.pros}</p>}{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</More>)}
         <div className="rv2-foot"><HelpBtn hid={id} k={x.key} n={help.get(x.key)?.n ?? 0} on={!!help.get(x.key)?.me} />
-          <RevMark /><span className="rv2-act">{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : null}</span></div>
+          <RevMark /><span className="rv2-act">{x.mine && <Link href={x.rid ? `/hospitals/${id}?write=1#review-edit` : `/hospitals/check?id=${id}`} className="rv2-edit">✏️ 수정</Link>}{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : null}</span></div>
       </article>)}</div>}
       </>}
       {t === "pay" && <>

@@ -22,8 +22,9 @@ const KW = [
 ] as const;
 type Item = { key: string; hid: number; title: string; pros?: string; cons?: string; star: number; meta: string[]; dept?: string; cat?: string; rec3?: number; at: string; v?: boolean; uid?: string; status?: string };
 
-export default async function HospitalsPage({ searchParams }: { searchParams: { tab?: string; kw?: string; sort?: string; region?: string; st?: string } }) {
+export default async function HospitalsPage({ searchParams }: { searchParams: { tab?: string; kw?: string; sort?: string; region?: string; st?: string; q?: string } }) {
   const s = (await getSession())!; const d = db();
+  const q = (searchParams.q ?? "").trim().slice(0, 30), qn = q.replace(/\s/g, "").toLowerCase(), hit = (name: string) => !qn || name.replace(/\s/g, "").toLowerCase().includes(qn);
   const tab = ["mine", "my", "rank"].includes(searchParams.tab ?? "") ? searchParams.tab! : "all", kw = KW.find(x => x.k === searchParams.kw) ?? KW[0];
   const sort = searchParams.sort === "top" ? "top" : searchParams.sort === "low" ? "low" : "new", region = JOB_REGIONS.includes(searchParams.region as any) ? searchParams.region! : "", st = ["재직", "퇴사"].includes(searchParams.st ?? "") ? searchParams.st! : "";
   const [{ data: revs }, { data: hfs }, contributed] = await Promise.all([
@@ -41,15 +42,17 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
     ...(hfs ?? []).map(f => ({ f, hid: Number(String(f.game).slice(6)) })).filter(({ f, hid }) => ((f.state as any)?.last || (f.state as any)?.pros || (f.state as any)?.cons) && (facts[hid]?.n ?? 0) >= (facts[hid]?.need ?? MIN_N))
       .map(({ f, hid }) => ({ key: "f" + f.user_id + hid, hid, title: (f.state as any).last ?? "", pros: (f.state as any).pros, cons: (f.state as any).cons, star: (f.state as any).overall ?? 0, meta: [], dept: (f.state as any).dept, cat: hireChip((f.state as any).regular) ?? (f.state as any).cat, rec3: (f.state as any).rec3, at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
   ].filter(x => H.has(x.hid)) as any[];
-  let feed = items.filter((x: any) => (tab !== "mine" || x.dept === s.dept) && (tab !== "my" || myH.has(x.hid)) && (!region || H.get(x.hid)!.region === region) && (!st || x.status === st));
+  let feed = items.filter((x: any) => hit(H.get(x.hid)!.name) && (tab !== "mine" || x.dept === s.dept) && (tab !== "my" || myH.has(x.hid)) && (!region || H.get(x.hid)!.region === region) && (!st || x.status === st));
   feed.sort((a, b) => sort === "top" ? b.star - a.star : sort === "low" ? a.star - b.star : b.at.localeCompare(a.at)); feed = feed.slice(0, 60);
   // 키워드 TOP 카드: 그 키워드가 장점에 나온 리뷰
   const kwCards = items.filter(x => x.pros && kw.re.test(x.pros)).sort((a, b) => b.star - a.star);
   const seen = new Set<number>(), kwTop = kwCards.filter(x => !seen.has(x.hid) && seen.add(x.hid)).slice(0, 6);
   // 병원 순위
   const rank = Array.from(H.values()).map(h => { const rs = (revs ?? []).filter(r => r.hospital_id === h.id), a = facts[h.id], ok = a && a.starN >= (a.need ?? MIN_N);
-    return { h, n: rs.length + (a?.n ?? 0), score: ok ? a!.overallAvg : rs.length ? overall(rs) : 0 }; }).filter(x => x.n).sort((a, b) => b.score - a.score || b.n - a.n);
-  const link = (p: Record<string, string>) => `/hospitals?${new URLSearchParams(Object.entries({ tab: tab === "all" ? "" : tab, kw: kw.k === "pay" ? "" : kw.k, sort: sort === "new" ? "" : sort, region, st, ...p }).filter(([, v]) => v))}`;
+    return { h, n: rs.length + (a?.n ?? 0), score: ok ? a!.overallAvg : rs.length ? overall(rs) : 0 }; }).filter(x => x.n && hit(x.h.name)).sort((a, b) => b.score - a.score || b.n - a.n);
+  // 🔎 검색: 리뷰가 아직 없는 병원도 이름이 맞으면 바로 갈 수 있게
+  const { data: found } = q ? await d.from("hospitals").select("id,name,region,kind").ilike("name", `%${q.replace(/[%_]/g, "")}%`).order("name").limit(8) : { data: [] as any[] };
+  const link = (p: Record<string, string>) => `/hospitals?${new URLSearchParams(Object.entries({ tab: tab === "all" ? "" : tab, kw: kw.k === "pay" ? "" : kw.k, sort: sort === "new" ? "" : sort, region, st, q, ...p }).filter(([, v]) => v))}`;
   const Stars = ({ n }: { n: number }) => <span className="rf-stars">{[1, 2, 3, 4, 5].map(i => <i key={i} className={n >= i - .25 ? "on" : ""}>★</i>)}</span>;
   return (
     <div className="rf">
@@ -60,6 +63,12 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
           <div className="rh-h"><span>🏥</span><div><strong>{h.name}</strong><small>{h.kind} · {h.region}</small></div></div></Link>; })}</div>
           : <p className="muted" style={{ fontSize: 13 }}>아직 ‘{kw.name}’ 이야기가 담긴 리뷰가 없어요.</p>}
       </section>
+
+      <form action="/hospitals" className="rf-search" role="search">{tab !== "all" && <input type="hidden" name="tab" value={tab} />}{region && <input type="hidden" name="region" value={region} />}{st && <input type="hidden" name="st" value={st} />}
+        <input name="q" defaultValue={q} placeholder="궁금한 병원을 검색해 보세요" aria-label="병원 이름 검색" autoComplete="off" /><button className="btn">검색</button></form>
+      {q && <div className="rf-found"><div className="rf-found-h"><b>‘{q}’ 병원 {found?.length ?? 0}곳</b><Link href={link({ q: "" })}>✕ 검색 해제</Link></div>
+        {found?.length ? found.map((h: any) => <Link key={h.id} href={`/hospitals/${h.id}`} className="rf-found-r"><span>🏥</span><div><b>{h.name}</b><small>{h.kind} · {h.region}{facts[h.id]?.n ? ` · 평가 ${facts[h.id].n}` : " · 아직 평가 없음"}</small></div><em>›</em></Link>)
+          : <p className="muted" style={{ margin: 0, fontSize: 13 }}>찾는 병원이 없어요. <Link href="/hospitals/check">리뷰를 쓰면서 새 병원을 등록</Link>할 수 있어요.</p>}</div>}
 
       <nav className="rf-tabs"><Link href={link({ tab: "" })} className={tab === "all" ? "on" : ""}>전체</Link><Link href={link({ tab: "mine" })} className={tab === "mine" ? "on" : ""}>내 직종</Link><Link href={link({ tab: "my" })} className={tab === "my" ? "on" : ""}>내 병원</Link><Link href={link({ tab: "rank" })} className={tab === "rank" ? "on" : ""}>병원 순위</Link></nav>
 

@@ -469,20 +469,22 @@ export async function reportContent(kind: "post" | "comment" | "job" | "review",
   const { data: dup } = await s.from("reports").select("id").eq("kind", kind).eq("target_id", targetId).eq("reporter_id", u.id).eq("status", "open").maybeSingle();
   if (dup) return { error: "이미 신고했어요. 운영팀이 확인 중이에요" };
   await s.from("reports").insert({ kind, target_id: targetId, reporter_id: u.id, reason, detail: clean(detail, 500) || null });
-  // 임시조치(최대 30일): 권리침해 당사자의 게시중단 요청·운영자 신고는 즉시, 일반 신고는 서로 다른 3명이 신고하면 블라인드. 운영팀 판단 후 복구/삭제
-  const { count: nRep } = await s.from("reports").select("id", { count: "exact", head: true }).eq("kind", kind).eq("target_id", targetId).eq("status", "open");
-  const hideNow = reason === "rights" || u.role === "admin" || (nRep ?? 0) >= 3;
+  // 임시조치(최대 30일): 한 사람의 신고로는 가려지지 않아요 (신고 테러 방지). 서로 다른 3명이 신고하거나, 관리자가 신고함에서 블라인드할 때만.
+  // 권리침해(게시중단 요청)는 법상 지체 없이 조치해야 해서 관리자에게 '긴급'으로 알림
+  const { data: reps } = await s.from("reports").select("reporter_id").eq("kind", kind).eq("target_id", targetId).eq("status", "open");
+  const hideNow = new Set((reps ?? []).map(x => x.reporter_id)).size >= 3;
   if (!t.hidden && hideNow) await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", targetId);
   const { data: admins } = await s.from("users").select("id").eq("role", "admin");
-  if (admins?.length) pushToUsers(admins.map(a => a.id), { title: "🚨 신고 접수", body: `${REPORT_LABEL[kind] ?? "글"} 신고 · ${REPORT_REASONS.find(r => r[0] === reason)?.[1]}`, url: "/admin", tag: "report" }).catch(() => {});
+  if (admins?.length) pushToUsers(admins.map(a => a.id), { title: reason === "rights" ? "🚨 [긴급] 게시중단 요청 · 바로 확인해 주세요" : "🚨 신고 접수", body: `${REPORT_LABEL[kind] ?? "글"} 신고 · ${REPORT_REASONS.find(r => r[0] === reason)?.[1]}${hideNow ? " · 3명 이상 신고로 자동 블라인드" : ""}`, url: "/admin", tag: "report" }).catch(() => {});
   revalidatePath("/board"); if (kind === "post") revalidatePath(`/board/${targetId}`); if (kind === "job") revalidatePath(`/jobs/${targetId}`); if (kind === "review") revalidatePath("/hospitals");
   return { ok: true, hidden: hideNow };
 }
-export async function resolveReport(id: number, action: "restore" | "delete") {
+export async function resolveReport(id: number, action: "restore" | "delete" | "hide") {
   await requireAdmin();
   const s = db();
   const { data: r } = await s.from("reports").select("kind,target_id").eq("id", id).maybeSingle(); if (!r) return;
   const table = REPORT_TABLE[r.kind] ?? "comments";
+  if (action === "hide") { await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", r.target_id); revalidatePath("/admin"); revalidatePath("/board"); revalidatePath("/hospitals"); return; } // 검토 중 임시 블라인드 (신고는 계속 대기)
   if (action === "delete") await s.from(table).delete().eq("id", r.target_id);
   else await s.from(table).update({ hidden: false, hidden_at: null }).eq("id", r.target_id);
   await s.from("reports").update({ status: action === "delete" ? "deleted" : "restored", resolved_at: new Date().toISOString() }).eq("kind", r.kind).eq("target_id", r.target_id).eq("status", "open");

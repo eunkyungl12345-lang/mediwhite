@@ -44,13 +44,14 @@ export default async function PostPage({ params }: { params: { id: string } }) {
       <Link className="link" href={p.category === "썸" ? "/ssum" : `/board?cat=${encodeURIComponent(p.category)}${p.board_id ? `&tab=${p.board_id}` : ""}`}>← {p.category}{(p as any).board?.name ? ` › ${(p as any).board.name}` : ""}</Link>
       <div className="meta" style={{ marginTop: 10 }}>
         {p.pinned && <span className="pin">📌 공지</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{!p.pinned && <span className="tag">{p.category}</span>}<Link href={`/board?topic=${(p as any).topic ?? "free"}`} className="topic-tag">{topicOf((p as any).topic).icon} {topicOf((p as any).topic).name}</Link>
-        {a ? <Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} badge={a.blue_badge} /> : <span>탈퇴한 회원</span>}<span className="time">{fmt(p.created_at)}</span><LiveViewers kind="post" id={p.id} /><span className="time">· 조회 {((p as any).views ?? 0) + (counted ? 1 : 0)}</span>
+        <span className="time">{fmt(p.created_at)}</span><LiveViewers kind="post" id={p.id} /><span className="time">· 조회 {((p as any).views ?? 0) + (counted ? 1 : 0)}</span>
         {admin && <form action={togglePin.bind(null, p.id, !p.pinned)}><button className="link">{p.pinned ? "고정 해제" : "상단 고정"}</button></form>}
         {mine && <form action={boostPost.bind(null, p.id, !p.boosted)}><button className="link">{p.boosted ? "밀어올리기 해제" : "밀어올리기"}</button></form>}
         {(admin || mine) && <form action={deletePost.bind(null, p.id)}><button className="link">글 삭제</button></form>}
         {!mine && <ReportButton kind="post" id={p.id} />}
         {p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드 중</span>}
       </div>
+      <div className={"pd-by" + (a && r.tier > 0 ? ` rkb rk${r.tier}` : "")}>{a ? <><Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} badge={a.blue_badge} size={16} /><em className="cm-rk">{r.name}</em></> : <span>탈퇴한 회원</span>}</div>
       <h2>{p.title}</h2>
       <div className="body"><Linkify text={p.body} /></div>
       <Reactions kind="post" id={p.id} {...agg("post", p.id)} />

@@ -45,38 +45,19 @@ export const PERK = {
   hearts: (r: Rank) => (can(r, "준장") ? Infinity : can(r, "소령") ? 5 : 3),        // 하루 셀소 하트(💗) 수
 };
 
-export const QUESTS: { key: string; title: string; xp: number }[] = [
-  { key: "first_chat", title: "첫 채팅 보내기", xp: 50 },
-  { key: "first_post", title: "게시판에 첫 글 올리기", xp: 100 },
-  { key: "first_comment", title: "첫 댓글 달기", xp: 50 },
+/** 1회성 퀘스트 — 지금 있는 기능만. prefix: 병원마다 받는 보상은 '첫 1곳'으로 표시 */
+export const QUESTS: { key: string; title: string; xp: number; prefix?: boolean }[] = [
   { key: "bio", title: "한줄소개 쓰기", xp: 50 },
-  { key: "roulette_1", title: "커피 룰렛 돌려보기", xp: 30 },
-  { key: "dodge_10", title: "총알 피하기 10초 버티기", xp: 100 },
-  { key: "dodge_20", title: "총알 피하기 20초 버티기", xp: 200 },
-  { key: "dodge_30", title: "총알 피하기 30초 버티기", xp: 400 },
-  { key: "defense_5", title: "병동 사수 1-5 클리어", xp: 150 },
-  { key: "defense_10", title: "병동 사수 1-10 클리어", xp: 400 },
-  { key: "defense_20", title: "병동 사수 2-10 클리어", xp: 800 },
-  { key: "plant_harvest_1", title: "화분 첫 수확", xp: 300 },
-  { key: "plant_harvest_3", title: "화분 3번째 수확", xp: 500 },
-  { key: "lightning_10", title: "번개 모드 10개 클리어", xp: 150 },
-  { key: "lightning_25", title: "번개 모드 25개 클리어", xp: 400 },
-  { key: "runner_700", title: "복도 질주 700m", xp: 150 },
-  { key: "runner_1500", title: "복도 질주 1500m (복도의 치타)", xp: 400 },
-  { key: "trivia_300", title: "상식 퀴즈 300점", xp: 150 },
-  { key: "trivia_500", title: "상식 퀴즈 500점 (상식왕)", xp: 400 },
-  { key: "econ_300", title: "경제 뉴스 300점", xp: 150 },
-  { key: "econ_500", title: "경제 뉴스 500점 (경제통)", xp: 400 },
-  { key: "sword_5", title: "검 +5 강화 성공", xp: 100 },
-  { key: "sword_10", title: "검 +10 강화 성공", xp: 300 },
-  { key: "sword_15", title: "검 +15 강화 성공", xp: 700 },
-  { key: "tycoon_100m", title: "우리 병원 누적 매출 100만원", xp: 150 },
-  { key: "tycoon_1000m", title: "우리 병원 누적 매출 1,000만원", xp: 400 },
-  { key: "tycoon_1eok", title: "우리 병원 누적 매출 1억원", xp: 800 },
-  { key: "omok_win_1", title: "온라인 오목 첫 승리", xp: 100 },
+  { key: "hfact:", title: "첫 병원 팩트 제보하기", xp: 50, prefix: true },
+  { key: "hverify:", title: "병원 재직·퇴사 인증 받기", xp: 50, prefix: true },
+  { key: "hwel:", title: "병원 복지 평가하기", xp: 30, prefix: true },
+  { key: "first_post", title: "커뮤니티에 첫 글 올리기", xp: 100 },
+  { key: "first_comment", title: "첫 댓글 달기", xp: 50 },
+  { key: "first_chat", title: "실시간 채팅 첫 인사", xp: 50 },
+  { key: "job:", title: "채용 공고 제보하기", xp: 20, prefix: true },
   { key: "food_1", title: "병원 앞 맛집 첫 등록", xp: 50 },
-  { key: "draw_win_1", title: "그림 맞히기 첫 1등", xp: 100 },
 ];
+export const questDone = (q: { key: string; prefix?: boolean }, keys: Set<string> | string[]) => { const a = Array.from(keys); return q.prefix ? a.some(k => k.startsWith(q.key)) : a.includes(q.key); };
 /** 반복 보상: 1건당 XP와 하루 상한 */
 export const REPEAT: Record<string, { each: number; dailyCap: number }> = {
   chat: { each: 2, dailyCap: 30 },

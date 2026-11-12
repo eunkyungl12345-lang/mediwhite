@@ -10,7 +10,7 @@ export default function ReportButton({ kind, id }: { kind: "post" | "comment" | 
   const [detail, setDetail] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
-  const send = async () => { setBusy(true); const r = await reportContent(kind, id, reason, detail); setBusy(false); if (r?.error) setMsg(r.error); else { setMsg((r as any)?.hidden ? "신고 접수 · 임시 블라인드 처리됐어요 (최대 30일). 운영팀이 확인합니다." : "신고 접수됐어요. 운영팀이 확인합니다."); setTimeout(() => setOpen(false), 1500); } };
+  const send = async () => { setBusy(true); const r = await reportContent(kind, id, reason, detail); setBusy(false); if (r?.error) setMsg(r.error); else { setMsg((r as any)?.hidden ? "신고가 접수되었습니다. 여러 명이 신고해 임시로 가려졌고, 운영팀이 검토할 예정입니다." : "신고가 접수되었습니다. 운영팀이 검토할 예정입니다."); setTimeout(() => setOpen(false), 1500); } };
   return (
     <>
       <button type="button" className="link" style={{ color: "var(--muted)" }} onClick={() => { setOpen(true); setMsg(""); }}>🚩 신고</button>
@@ -18,7 +18,7 @@ export default function ReportButton({ kind, id }: { kind: "post" | "comment" | 
         <div className="ob" onClick={() => setOpen(false)}>
           <div className="ob-card" style={{ textAlign: "left", gap: 8 }} onClick={e => e.stopPropagation()}>
             <h3 style={{ fontSize: 17 }}>🚩 {({ post: "글", comment: "댓글", job: "채용공고", review: "리뷰" } as Record<string, string>)[kind]} 신고</h3>
-            <div className="muted" style={{ fontSize: 12 }}>신고하면 즉시 가려지고(임시조치), 운영팀이 확인 후 복구하거나 삭제해요. 허위 신고가 반복되면 신고 기능이 제한돼요.</div>
+            <div className="muted" style={{ fontSize: 12 }}>신고가 접수되면 운영팀이 검토하며, 허위 신고 시 이용이 제한될 수 있습니다.</div>
             <div className="rp-list">{REPORT_REASONS.map(([k, n]) => <label key={k} className={"rp" + (reason === k ? " on" : "")}><input type="radio" name="reason" checked={reason === k} onChange={() => setReason(k)} /><span>{n}</span></label>)}</div>
             <textarea value={detail} onChange={e => setDetail(e.target.value)} maxLength={500} placeholder="(선택) 어떤 부분이 문제인지" style={{ minHeight: 60 }} />
             {msg && <div className={msg.includes("접수") ? "muted" : "error"}>{msg}</div>}

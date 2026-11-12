@@ -61,10 +61,10 @@ export default async function AdminPage() {
   const { data: reports } = await db().from("reports").select("id,kind,target_id,reason,detail,status,created_at,reporter:users!reports_reporter_id_fkey(nickname,dept)").order("created_at", { ascending: false }).limit(50);
   const openR = (reports ?? []).filter(r => r.status === "open");
   const rPosts = openR.filter(r => r.kind === "post").map(r => r.target_id), rComs = openR.filter(r => r.kind === "comment").map(r => Number(r.target_id));
-  const [{ data: rp }, { data: rc }] = await Promise.all([rPosts.length ? db().from("posts").select("id,title,body").in("id", rPosts) : Promise.resolve({ data: [] as any[] }), rComs.length ? db().from("comments").select("id,text").in("id", rComs) : Promise.resolve({ data: [] as any[] })]);
+  const [{ data: rp }, { data: rc }] = await Promise.all([rPosts.length ? db().from("posts").select("id,title,body,hidden").in("id", rPosts) : Promise.resolve({ data: [] as any[] }), rComs.length ? db().from("comments").select("id,text,hidden").in("id", rComs) : Promise.resolve({ data: [] as any[] })]);
   const rJobs = openR.filter(r => r.kind === "job").map(r => Number(r.target_id)), rRevs = openR.filter(r => r.kind === "review").map(r => Number(r.target_id));
-  const [{ data: rj }, { data: rr }] = await Promise.all([rJobs.length ? db().from("jobs").select("id,hospital,body").in("id", rJobs) : Promise.resolve({ data: [] as any[] }), rRevs.length ? db().from("hospital_reviews").select("id,pros,cons,hospital:hospitals(name)").in("id", rRevs) : Promise.resolve({ data: [] as any[] })]);
-  const preview = (r: any) => r.kind === "post" ? (rp ?? []).find((p: any) => p.id === r.target_id) : r.kind === "job" ? (() => { const j = (rj ?? []).find((x: any) => String(x.id) === r.target_id); return j ? { title: `[채용] ${j.hospital}`, body: j.body } : null; })() : r.kind === "review" ? (() => { const v: any = (rr ?? []).find((x: any) => String(x.id) === r.target_id); return v ? { title: `[리뷰] ${v.hospital?.name ?? ""}`, body: `장점: ${v.pros}\n단점: ${v.cons}` } : null; })() : (rc ?? []).find((c: any) => String(c.id) === r.target_id);
+  const [{ data: rj }, { data: rr }] = await Promise.all([rJobs.length ? db().from("jobs").select("id,hospital,body,hidden").in("id", rJobs) : Promise.resolve({ data: [] as any[] }), rRevs.length ? db().from("hospital_reviews").select("id,pros,cons,hidden,hospital:hospitals(name)").in("id", rRevs) : Promise.resolve({ data: [] as any[] })]);
+  const preview = (r: any) => r.kind === "post" ? (rp ?? []).find((p: any) => p.id === r.target_id) : r.kind === "job" ? (() => { const j = (rj ?? []).find((x: any) => String(x.id) === r.target_id); return j ? { title: `[채용] ${j.hospital}`, body: j.body, hidden: j.hidden } : null; })() : r.kind === "review" ? (() => { const v: any = (rr ?? []).find((x: any) => String(x.id) === r.target_id); return v ? { title: `[리뷰] ${v.hospital?.name ?? ""}`, body: `장점: ${v.pros}\n단점: ${v.cons}`, hidden: v.hidden } : null; })() : (rc ?? []).find((c: any) => String(c.id) === r.target_id);
   const KINDL: Record<string, string> = { post: "글", comment: "댓글", job: "채용공고", review: "병원 리뷰" };
   const [{ data: users }, leaders, bank, { rows: pools }, { data: pending }] = await Promise.all([
     db().from("users").select("id,username,nickname,dept,xp,role,stealth,seq,join_order,created_at").order("seq"), deptLeaders(), bankInfo(), deptPools(),
@@ -163,13 +163,13 @@ export default async function AdminPage() {
       </div>
       <div className="card">
         <h3 id="a-rep">🚩 신고함 — 처리 대기 {openR.length}건</h3>
-        <div className="muted">신고 즉시 블라인드돼요. 복구하면 다시 보이고, 삭제하면 영구 삭제. 30일 지나면 자동 복구.</div>
+        <div className="muted">한 명 신고로는 가려지지 않아요. 서로 다른 3명이 신고하면 자동 블라인드, 그 전엔 여기서 직접 블라인드할 수 있어요. 🚨 게시중단 요청(권리침해)은 법상 지체 없이 조치해야 하니 먼저 확인하세요.</div>
         {!openR.length && <div className="muted">대기 중인 신고가 없어요.</div>}
         <div className="quests">{openR.map((r: any) => { const t = preview(r); return <div key={r.id} className="quest" style={{ display: "grid", gap: 6 }}>
           <div className="meta"><span className="tag">{KINDL[r.kind] ?? r.kind}</span><b>{REPORT_REASONS.find(x => x[0] === r.reason)?.[1] ?? r.reason}</b><span>신고자 {r.reporter ? `[${r.reporter.dept}]${r.reporter.nickname}` : "-"}</span><span className="time">{fmt(r.created_at)}</span></div>
           {r.detail && <div className="muted">사유: {r.detail}</div>}
           <div style={{ whiteSpace: "pre-wrap", background: "var(--bg)", borderRadius: 8, padding: 8, fontSize: 13 }}>{t ? (r.kind !== "comment" ? <><b>{t.title}</b><br />{String(t.body).slice(0, 300)}</> : t.text) : "(이미 삭제됨)"}{r.kind === "post" && t && <> · <Link href={`/board/${r.target_id}`}>열기</Link></>}</div>
-          <div className="row"><form action={resolveReport.bind(null, r.id, "restore")}><button className="btn ghost" style={{ padding: "6px 12px" }}>문제없음 · 복구</button></form><form action={resolveReport.bind(null, r.id, "delete")}><button className="btn" style={{ padding: "6px 12px", background: "#E2574C" }}>삭제 확정</button></form></div>
+          <div className="row">{t && !t.hidden && <form action={resolveReport.bind(null, r.id, "hide")}><button className="btn ghost" style={{ padding: "6px 12px" }}>🙈 블라인드(검토 중)</button></form>}<form action={resolveReport.bind(null, r.id, "restore")}><button className="btn ghost" style={{ padding: "6px 12px" }}>문제없음 · 복구</button></form><form action={resolveReport.bind(null, r.id, "delete")}><button className="btn" style={{ padding: "6px 12px", background: "#E2574C" }}>삭제 확정</button></form></div>
         </div>; })}</div>
       </div>
       <div className="card">

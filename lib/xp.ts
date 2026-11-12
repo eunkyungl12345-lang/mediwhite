@@ -12,7 +12,7 @@ async function grant(userId: string, amount: number, key: string | null, kind: s
   const { old_xp, new_xp, granted } = data[0] as { old_xp: number; new_xp: number; granted: number };
   if (!granted) return 0;
   // 퀘스트 달성 이벤트 (본인에게만 팝업)
-  if (key) { const q = QUESTS.find(q => q.key === key); if (q) await s.from("events").insert({ kind: "quest", user_id: userId, text: `${q.title}|${granted}|${key}` }); }
+  if (key) { const q = QUESTS.find(q => !q.prefix && q.key === key); if (q) await s.from("events").insert({ kind: "quest", user_id: userId, text: `${q.title}|${granted}|${key}` }); }
   const bi = rankOf(old_xp).index, ai = rankOf(new_xp).index;
   if (ai > bi) {
     const { data: u } = await s.from("users").select("id,nickname,dept,username").eq("id", userId).single();
