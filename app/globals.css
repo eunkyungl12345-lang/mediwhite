@@ -2724,3 +2724,16 @@ body{letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 .jbx-th{margin:0;padding:2px 0 4px;min-width:0;max-width:100%}.jb2>*{min-width:0}
 .jb2-fold{min-width:0;max-width:100%;overflow:hidden}.jb2-quick{max-width:100%;overflow-x:auto;scrollbar-width:none}
 .ex-iv{margin-top:6px;background:#fff;color:var(--ink);border:1.5px solid #BFE3D5;box-shadow:none}.ex-iv small{color:var(--muted)}.ex-iv:hover{background:var(--scrub-soft)}
+
+/* 💬 공고 익명 댓글 */
+.jc{display:grid;gap:10px;padding:18px 20px;border-radius:18px;background:var(--surface);border:1px solid var(--hair);box-shadow:var(--shadow);scroll-margin-top:72px}
+.jc h3{margin:0;font-size:17px}.jc h3 small{color:var(--scrub-hover);font-size:14px}.jc-d{margin:-4px 0 0;font-size:13px;color:var(--muted);line-height:1.55}
+.jc-form{display:grid;gap:8px}.jc-hints{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.jc-hints button{all:unset;cursor:pointer;flex:none;font-size:12.5px;font-weight:600;padding:7px 11px;border-radius:999px;background:var(--scrub-soft);color:#0B5E49;white-space:nowrap}
+.jc-form textarea{width:100%;box-sizing:border-box;min-height:64px;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);font:inherit;font-size:15px;resize:vertical;background:var(--surface);color:var(--ink)}.jc-form textarea:focus{outline:0;border-color:var(--scrub)}
+.jc-f{display:flex;justify-content:space-between;align-items:center;gap:8px}.jc-f small{font-size:12px;color:var(--muted)}.jc-f .btn{min-height:42px;padding:0 16px}
+.jc-list{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:8px}.jc-list li{padding:12px 14px;border-radius:14px;background:var(--bg)}.jc-list li.mine{background:var(--scrub-soft)}
+.jc-h{display:flex;justify-content:space-between;align-items:center;font-size:13px}.jc-h b{font-weight:700}.jc-h em{font-style:normal;font-size:11px;margin-left:6px;padding:1px 6px;border-radius:999px;background:#fff;color:var(--scrub-hover)}.jc-h span{color:var(--muted);font-size:12px}
+.jc-list p{margin:6px 0 0;font-size:14.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.jc-act{display:flex;justify-content:flex-end;margin-top:4px}.jc-del{all:unset;cursor:pointer;font-size:12px;color:var(--muted);padding:6px 4px}
+.jc-empty{margin:0;font-size:13px;color:var(--muted)}
+.jc-cnt{display:inline-block;font-weight:700;color:var(--scrub-hover);text-decoration:none;cursor:pointer}.jc-cnt:not(.on){color:var(--muted)}
+.jd-kv{display:grid;gap:6px;font-size:14.5px}.jd-kv b{display:inline-block;width:52px;color:var(--muted);font-weight:600}

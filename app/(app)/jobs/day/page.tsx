@@ -8,12 +8,14 @@ import { loadFacts, hasContributed, shiftCompare } from "@/lib/hospFactsDb";
 import { loadDistricts } from "@/lib/districtDb";
 import { getFocus } from "@/lib/focus";
 import JobCard from "@/components/jobs/JobCard";
+import { jobCommentCounts } from "@/lib/jobComments";
 import { openExtJobs, EXT_SRC, extSrc, extTags, isG3, splitArea, extCheckedLabel } from "@/lib/extJobs";
 import { QUICK, tagLabel } from "@/lib/jobTags";
 export const metadata = { title: "저녁 약속 잡을 수 있는 알짜 병원" };
 export const dynamic = "force-dynamic";
 /** ☀️ 3교대 탈출 — 나이트 없는 삶, 실수령은 얼마나 줄까? (교대 vs 상근 비교 · 상근 공고 · 상근 병원) */
 export default async function DayPage({ searchParams }: { searchParams: { k?: string; c?: string; g3?: string } }) {
+  const jcn = await jobCommentCounts();
   const s = (await getSession())!; const d = db();
   const [cmp, contributed, focus, { data: jobs }] = await Promise.all([shiftCompare(), hasContributed(s.id, s.role), getFocus(),
     d.from("jobs").select("id,hospital,region,dept,emp_type,pay,hours,welfare,deadline,views,closed,created_at,contact,body,author:users!jobs_author_id_fkey(nickname,dept,username)").eq("hidden", false).eq("closed", false).or("body.ilike.%#상근%,body.ilike.%#주4일%,hours.ilike.%상근%,hours.ilike.%평일%").order("created_at", { ascending: false }).limit(60)]);
@@ -44,7 +46,7 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
       <div className="ex-meta">{e.dept} · {splitArea(e.area).r}{splitArea(e.area).st && <span className="ex-sta">🚇 {splitArea(e.area).st}</span>}</div>
       <div className="ex-row"><span>⏰ {e.time}</span><span>💰 {e.pay}</span></div>
       {extTags(e.id).length > 0 && <div className="ex-tags">{extTags(e.id).map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}<p className="ex-note">☀️ {e.note}</p>{e.warn && <p className="ex-warn">⚠️ {e.warn}</p>}
-      <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC}에서 보고 지원 ↗</a><Link href={EH.get(e.h) ? `/hospitals/${EH.get(e.h)}` : `/search?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="btn ghost">👀 이 병원 진짜 분위기 보기</Link></div>
+      <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC}에서 보고 지원 ↗</a><Link href={`/jobs/ext/${e.id}#jc`} className="btn ghost">{jcn[`x${e.id}`] ? `💬 댓글 ${jcn[`x${e.id}`]}` : "💬 질문하기"}</Link><Link href={EH.get(e.h) ? `/hospitals/${EH.get(e.h)}` : `/search?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="btn ghost">👀 이 병원 진짜 분위기 보기</Link></div>
     </div>)}</div>
 
     <div className="dy-cmp"><Col t="대학·종합병원" g={cmp.shift} icon="🌙" /><div className="dy-vs">VS</div><Col t="로컬 의원·치과·약국" g={cmp.day} icon="☀️" /></div>
@@ -52,7 +54,7 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
       : !contributed ? <div className="fb-lockmsg"><b>🔒 제보 하나 남기고 6개월간 비교 자유롭게</b><span>다녔던 병원 하나만 제보하면 이 비교와 모든 병원 정보가 열려요.</span><Link href="/hospitals/check" className="btn">🔎 체크하고 보기</Link></div> : null}
 
     <h3 className="dy-h">☀️ 상근·칼퇴 공고 <small>{open.length}</small></h3>
-    {open.length ? <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={(j.author as any)?.username === "mw_bot"} locked={!contributed} />)}</div>
+    {open.length ? <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={(j.author as any)?.username === "mw_bot"} locked={!contributed} nc={jcn[`j${j.id}`] ?? 0} />)}</div>
       : <div className="jb2-empty"><span>☀️</span><b>아직 상근 공고가 없어요</b><p>단톡방에서 상근·평일 근무 공고 봤다면 제보해주세요. 공고 올릴 때 '상근(데이)'·'주4일' 태그를 고르면 여기에 모여요.</p><Link href="/jobs/new?tip=1" className="btn">🤫 상근 공고 제보</Link></div>}
 
     <h3 className="dy-h">🏠 로컬 병원·의원 {focus && <small>{focus.label} 먼저</small>}</h3>

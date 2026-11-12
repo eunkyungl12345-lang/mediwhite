@@ -6,8 +6,9 @@ import Avatar from "@/components/Avatar";
 import { splitTags, tagLabel, SHARE_TAG, splitMeta } from "@/lib/jobTags";
 import { factLine, posBadges, type FactAgg } from "@/lib/hospFacts";
 import PosBadges from "@/components/jobs/PosBadges";
+import JcJump from "@/components/jobs/JcJump";
 /** 💼 공고 카드 (채용 목록·3교대 탈출 공용) */
-export default function JobCard({ j, pub, rv, fa, locked }: { j: any; pub: boolean; rv?: { id: number; avg: number; n: number }; fa?: FactAgg; locked?: boolean }) {
+export default function JobCard({ j, pub, rv, fa, locked, nc }: { j: any; pub: boolean; rv?: { id: number; avg: number; n: number }; fa?: FactAgg; locked?: boolean; nc?: number }) {
   const dd = j.closed ? "마감" : dday(j.deadline), hot = dd === "오늘 마감" || (dd.startsWith("D-") && Number(dd.slice(2)) <= 3), isNew = Date.now() - Date.parse(j.created_at) < 2 * 86400000;
   const title = pub ? (j.welfare || `${deptLabel(j.dept)} 채용`) : `${deptLabel(j.dept)} ${j.emp_type} 모집`;
   const sp = splitTags(j.body), net = splitMeta(sp.rest).meta["실수령"], tags = sp.tags, share = !pub && tags.includes(SHARE_TAG), ft = tags.filter(t => t !== SHARE_TAG).slice(0, 4);
@@ -21,6 +22,6 @@ export default function JobCard({ j, pub, rv, fa, locked }: { j: any; pub: boole
     {(ft.length > 0 || (!pub && j.welfare)) && <div className="jb3-tags">{ft.map(t => <span key={t}>{tagLabel(t)}</span>)}{!pub && j.welfare && <span>🎁 {j.welfare}</span>}</div>}
     <PosBadges list={posBadges(fa)} max={3} />
     {facts.length > 0 && <div className={"jb2-facts" + (locked ? " lock" : "")}>{facts.map(x => <span key={x}>{x}</span>)}</div>}
-    <div className="jb3-f">{pub ? "공공 채용" : share ? "📢 회원 제보" : "🏥 병원 직접 등록"} · {ago(j.created_at)}</div>
+    <div className="jb3-f">{pub ? "공공 채용" : share ? "📢 회원 제보" : "🏥 병원 직접 등록"} · {ago(j.created_at)}{nc !== undefined && <> · <JcJump href={`/jobs/${j.id}#jc`} n={nc} /></>}</div>
   </Link>;
 }

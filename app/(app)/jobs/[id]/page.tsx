@@ -13,6 +13,8 @@ import LiveViewers from "@/components/LiveViewers";
 import { JobOwnerButtons } from "@/components/jobs/Buttons";
 import Avatar from "@/components/Avatar";
 import { deptLabel } from "@/lib/depts";
+import JobComments from "@/components/jobs/JobComments";
+import { jobKey } from "@/lib/jobComments";
 export const dynamic = "force-dynamic";
 
 export default async function JobPage({ params }: { params: { id: string } }) {
@@ -52,6 +54,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
         {hosp && fa && <FactBox a={fa} hid={hosp.id} mine={false} locked={!contributed} />}</section>
       <div className="jd-meta"><span>{pub ? "출처: 잡알리오(공공기관 채용정보)" : shared ? "회원 제보" : j.author ? `[${j.author.dept}]${j.author.nickname}` : "회원"} · {fmt(j.created_at)} · 조회 {j.views}</span><LiveViewers kind="job" id={String(id)} /></div>
       <div className="row" style={{ gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>{mine ? <JobOwnerButtons id={id} closed={j.closed} /> : <span />}<ReportButton kind="job" id={String(id)} /></div>
+      <JobComments jk={jobKey("j", id)} me={s.id} admin={s.role === "admin"} back={`/jobs/${id}`} />
       <div className="muted" style={{ fontSize: 12 }}>⚠️ 지원 전 근로계약서·급여 조건을 꼭 서면으로 확인하세요. 선입금·개인정보(계좌·신분증) 먼저 요구하면 신고해주세요.</div>
       {!j.closed && (link ? <div className="jd-apply"><a href={`/api/jobout?id=${id}`} target="_blank" rel="noopener noreferrer" className="btn">{pub ? "원문 공고에서 지원하기" : "지원하기"}</a></div>
         : hosp ? <div className="jd-apply"><Link href={`/hospitals/${hosp.id}`} className="btn ghost">병원 리뷰 먼저 보기</Link></div> : null)}
