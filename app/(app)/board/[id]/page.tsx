@@ -59,7 +59,7 @@ export default async function PostPage({ params, searchParams }: { params: { id:
         {mine && (p.boosted ? <form action={boostPost.bind(null, p.id, false)}><button className="link">밀어올리기 해제</button></form>
           : bLeft > 0 ? <form action={boostPost.bind(null, p.id, true)}><button className="link" disabled={bWait}>{bWait ? "⏳ 내일 다시 끌어올릴 수 있어요" : `⬆ 밀어올리기 (${bLeft}/${BOOST_MAX}회)`}</button></form>
           : <span className="muted" style={{ fontSize: 13 }}>밀어올리기 3회를 다 썼어요</span>)}
-        {(admin || mine) && <Link href={`/board/${p.id}/edit`} className="link">✏️ 글 수정</Link>}
+        {mine && <Link href={`/board/${p.id}/edit`} className="link">✏️ 글 수정</Link>}
         {(admin || mine) && <form action={deletePost.bind(null, p.id)}><ConfirmSubmit msg="이 글을 삭제할까요? 되돌릴 수 없어요.">🗑️ 글 삭제</ConfirmSubmit></form>}
         {!mine && <ReportButton kind="post" id={p.id} />}
       </div>

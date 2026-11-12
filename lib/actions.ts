@@ -199,12 +199,12 @@ export async function boostPost(postId: string, on: boolean) {
   revalidatePath("/board"); revalidatePath(back);
   if (on) redirect(`${back}?bm=ok`);
 }
-/** ✏️ 글 수정 — 본인(또는 관리자)만. 새 글과 같은 실명·장소 검사를 다시 해요 */
+/** ✏️ 글 수정 — 작성자 본인만 (관리자도 남의 글은 수정 불가 — 삭제·블라인드만). 새 글과 같은 실명·장소 검사를 다시 해요 */
 export async function updatePost(_: FormState, fd: FormData): Promise<FormState> {
   const u = await requireUser(); const id = clean(fd.get("id"), 40), title = clean(fd.get("title"), 80), body = clean(fd.get("body"), 4000);
   if (!title || !body) return { error: "제목과 내용을 적어주세요" };
   const s = db(); const { data: p } = await s.from("posts").select("id,author_id,category").eq("id", id).maybeSingle();
-  if (!p || (p.author_id !== u.id && u.role !== "admin")) return { error: "내 글만 수정할 수 있어요" };
+  if (!p || (p.author_id !== u.id)) return { error: "내 글만 수정할 수 있어요" };
   const pm = personMention(title + " " + body), plm = p.category === SSUM_CAT || p.category === ANON_CAT ? placeMention(title + " " + body) : null;
   if (plm) return { error: `"${plm}" — 병원명·병동·층·부서는 쓸 수 없어요. 누군지 특정될 수 있어요.` };
   if (pm && (p.category === SSUM_CAT || p.category === ANON_CAT)) return { error: `"${pm}" — 실명은 쓸 수 없어요. 초성으로 바꿔주세요.` };
