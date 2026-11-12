@@ -5,7 +5,7 @@ export type ExtSrc = "사람인" | "잡코리아" | "메디잡";
 export type ExtJob = { id: number; h: string; dept: string; k: "간호" | "간호조무사" | "방사선" | "물리치료" | "임상병리" | "원무" | "총괄"; area: string; time: string; pay: string; until?: string; note: string; warn?: string; src?: ExtSrc; url?: string };
 export const EXT_SRC = "메디잡";
 /** 마지막으로 원문을 확인한 날. '채용 시 마감' 공고는 이 날부터 30일 지나면 자동으로 숨겨요 (새 파일로 갱신하면 날짜만 바꾸기) */
-export const EXT_CHECKED = "2026-11-12";
+export const EXT_CHECKED = "2026-11-13";
 export const extCheckedLabel = () => `${Number(EXT_CHECKED.slice(5, 7))}/${Number(EXT_CHECKED.slice(8))} 확인`;
 export const extUrl = (id: number) => `https://www.medijob.cc/com/cpn/com_cpn_100_view_02?recruitSeqno=${id}`;
 export const extSrc = (j: ExtJob): ExtSrc => j.src ?? "메디잡";
@@ -51,6 +51,9 @@ export const EXT_JOBS: ExtJob[] = [
   { id: 3770403, h: "리젠솔루션", dept: "정형통증 총괄실장", k: "총괄", area: "경기 남부(수원·오산)", time: "주5일 · 9~18시", pay: "실수령 450~550만", note: "컨설팅 연계 정형통증의원 총괄, C-arm/진료 전반 총괄" },
   { id: 3735619, h: "메디피움 분당의원", dept: "공단검진 총괄팀장", k: "총괄", area: "경기 성남 분당", time: "주5일 · 8~17시", pay: "연 4,200~5,000만", note: "대형 검진센터 공단검진팀 총괄 관리자" },
   // 🤖 자동 수집 (메디잡 검색: 총괄·실장·팀장, 2026-11-12)
+  { id: 3772741, h: "리핌성형외과", dept: "수술실 팀장", k: "총괄", area: "서울 강남구 · 압구정역 도보 1분", time: "주5일근무 · 평일 10:00~19:00 · 토요일 10:00~16:00", pay: "월급 250~330만원 (면접 후 결정)", note: "★[압구정역/주5일]★ 리핌성형외과 수술실 팀장급 경력직 선생님 모집(경력필수) ·…", warn: "경력 1년 이상" },
+  { id: 3772815, h: "경희백한방병원", dept: "대외협력팀 팀장", k: "총괄", area: "인천 · 인하대역", time: "주5일", pay: "면접시 협의 (경력 우대)", note: "대외협력/업무협약/협력기관 및 단체관리 · 경력 5년", warn: "경력 5년 이상" },
+  { id: 3772624, h: "거북섬 한방병원", dept: "대외협력 팀장", k: "총괄", area: "경기 시흥시 · 오이도역 도보 45분", time: "협의가능", pay: "월급 300~700만원 (면접 후 결정)", note: "대외협력 팀장 모집" },
   { id: 3772844, h: "척바른병원", dept: "간호 팀장", k: "총괄", area: "서울 서초구 · 내방역 도보 1분", time: "주5일 + 토요일격주근무", pay: "회사 내규", note: "외래 보조, 관리 · 경력 3년", warn: "경력 3년 이상" },
   { id: 3773359, h: "홍한의원", dept: "총괄실장", k: "총괄", area: "경기 안산시 단원구 · 선부역 도보 4분", time: "주5일 · 월·목 9~18시 · 화·금 9~20시 · 토 9~15시", pay: "회사 내규+피부 인센", note: "26년 9월 연 피부미용클리닉 총괄, 시술 구성·상담·관리자 채용까지", warn: "경력 2년 이상" },
   { id: 3770520, h: "프라임성모안과의원", dept: "총괄실장", k: "총괄", area: "경기 광명시 · 광명사거리역 도보 1분", time: "주5일 · 9~18시 · 토 ~15시", pay: "연 4,000~5,000만", note: "27년 1월 개원 안과, 데스크·행정·심사청구·CS 총괄", warn: "안과 경력 3년 이상" },
