@@ -19,7 +19,7 @@ export default async function RightRail({ rank, xp, nick, dept, fresh }: { rank:
       <div className="rail-h">{hot.length ? "🔥 지금 인기글" : "📝 최근 글"}</div>
       <ol className="rail-hot">{list.map((p: any, i: number) => <li key={p.id}><Link href={`/board/${p.id}`}><em>{i + 1}</em><span>{p.title}</span><small>{ago(p.created_at)} · 조회 {p.views ?? 0}</small></Link></li>)}</ol>
     </div>}
-    {fresh ? <Link href="/hospitals/check" className="rail-card rail-chk"><b>🔎 다녔던 병원 1분 체크</b><small>체크 1곳이면 모든 병원 실수령·분위기를 계속 볼 수 있어요</small></Link> : <div className="rail-card">
+    {fresh ? <Link href="/hospitals/check" className="rail-card rail-chk"><b>🛡️ 다녔던 병원 10초 제보</b><small>1곳만 제보하면 모든 병원의 고용 현실·실수령이 열려요</small></Link> : <div className="rail-card">
       <div className="rail-h">🎮 잠깐 쉬어가기</div>
       <div className="rail-games">{[["/rest", "🛋️", "당직실"]].map(([h, ic, n]) => <Link key={h} href={h}><span>{ic}</span>{n}</Link>)}</div>
     </div>}

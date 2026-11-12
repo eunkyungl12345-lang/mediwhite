@@ -2684,3 +2684,6 @@ body{letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 .f3-btn{background:#1FA97A;color:#fff}.f3-note{color:var(--muted)}
 .q1-tabs button.on{background:var(--scrub-soft);color:var(--scrub-hover)}
 .fc-fd{background:linear-gradient(120deg,#E8F7F2,#F6FBF9);color:var(--ink);border-color:#BFE3D5}.fc-fd small{color:var(--muted)}.fb-thanks.fd{background:var(--scrub-soft);color:var(--ink)}.fb-thanks.fd b{color:var(--scrub-hover)}
+
+/* QA: 대비 낮은 버튼·태그 */
+.jd-apply .btn{background:var(--scrub-hover);color:#fff}.jd-dd{color:#B45F00}

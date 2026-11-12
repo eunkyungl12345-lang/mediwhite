@@ -67,7 +67,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   type LI = { key: string; rid?: number; dept?: string; status?: string; cat?: string; rec3?: number; meta: string[]; star: number; title?: string; pros?: string; cons?: string; tip?: string; v?: boolean; mine: boolean; at: string };
   const list: LI[] = [
     ...rs.map(r => ({ key: "r" + r.id, rid: r.id, dept: r.dept, status: r.status, meta: [h.region, ym(r.created_at)], star: overall([r]), pros: r.pros, cons: r.cons, tip: r.tip, v: r.verified, mine: r.user_id === s.id, at: r.created_at })),
-    ...(fa.n >= need ? (hfFull ?? []).filter(r => { const x = r.state as any; return x?.last || x?.pros || x?.cons; }).map(r => { const x = r.state as any; return { key: factPubKey(r.user_id, id), dept: x.dept, status: x.status === "퇴사" ? "퇴사" : "재직", cat: hireChip(x.regular) ?? x.cat, rec3: x.rec3, meta: [ym(x.at)], star: x.overall ?? 0, title: x.last, pros: x.pros, cons: x.cons, v: x.v, mine: r.user_id === s.id, at: x.at ?? "" }; }) : []),
+    ...(fa.n >= need ? (hfFull ?? []).filter(r => { const x = r.state as any; return !x?.textHidden && (x?.last || x?.pros || x?.cons); }).map(r => { const x = r.state as any; return { key: factPubKey(r.user_id, id), dept: x.dept, status: x.status === "퇴사" ? "퇴사" : "재직", cat: hireChip(x.regular) ?? x.cat, rec3: x.rec3, meta: [ym(x.at)], star: x.overall ?? 0, title: x.last, pros: x.pros, cons: x.cons, v: x.v, mine: r.user_id === s.id, at: x.at ?? "" }; }) : []),
   ].sort((a, b) => Number(!!b.v) - Number(!!a.v) || b.at.localeCompare(a.at));
   const recOk = fa.recN >= need, statBars = fa.starN >= need ? fa.stars.map(x => ({ name: x.name, avg: x.avg })) : rs.length ? RATING_KEYS.map(k => ({ name: k.name, avg: avg(rs, k.key) })).sort((a, b) => Number(/분위기/.test(b.name)) - Number(/분위기/.test(a.name))) : [];
   const tabHref = (k: string) => `/hospitals/${id}${k === "rev" ? "" : `?t=${k}`}`;
@@ -110,7 +110,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         {(x.pros || x.cons) && (locked && !x.mine ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 솔직한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>
           : <More long={(x.pros?.length ?? 0) + (x.cons?.length ?? 0) + (x.tip?.length ?? 0) > 140}>{x.pros && <p className="rf-pc"><em className="g">장점</em>{x.pros}</p>}{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</More>)}
         <div className="rv2-foot"><HelpBtn hid={id} k={x.key} n={help.get(x.key)?.n ?? 0} on={!!help.get(x.key)?.me} />
-          <RevMark /><span className="rv2-act">{x.mine && <Link href={x.rid ? `/hospitals/${id}?write=1#review-edit` : `/hospitals/check?id=${id}`} className="rv2-edit">✏️ 수정</Link>}{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : null}</span></div>
+          <RevMark /><span className="rv2-act">{x.mine && <Link href={x.rid ? `/hospitals/${id}?write=1#review-edit` : `/hospitals/check?id=${id}`} className="rv2-edit">✏️ 수정</Link>}{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : !x.mine ? <ReportButton kind="fact" id={`${id}:${x.key}`} /> : null}</span></div>
       </article>)}</div>}
       </>}
       {t === "pay" && <>

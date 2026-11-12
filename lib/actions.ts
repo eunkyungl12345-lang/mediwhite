@@ -458,12 +458,25 @@ export async function toggleReaction(kind: "post" | "comment", targetId: string,
 
 /* ---------- 신고·임시조치 (정보통신망법 44조의2) ---------- */
 const REPORT_TABLE: Record<string, string> = { post: "posts", comment: "comments", job: "jobs", review: "hospital_reviews" };
-const REPORT_LABEL: Record<string, string> = { post: "글", comment: "댓글", job: "채용공고", review: "병원 리뷰" };
-export async function reportContent(kind: "post" | "comment" | "job" | "review", targetId: string, reason: string, detail: string) {
+const REPORT_LABEL: Record<string, string> = { post: "글", comment: "댓글", job: "채용공고", review: "병원 리뷰", fact: "병원 제보 한줄평" };
+/** 병원 팩트 제보(한줄평)는 game_state에 있어서 '병원id:공개키'로 찾아요. 작성자 id는 화면에 내려가지 않아요 */
+async function findFact(targetId: string) {
+  const [hidS, key] = String(targetId).split(":"), hid = Number(hidS); if (!hid || !key) return null;
+  const { factPubKey } = await import("./helpKey");
+  const { data } = await db().from("game_state").select("user_id,game,state").eq("game", `hfact:${hid}`).limit(2000);
+  const row = (data ?? []).find(r => factPubKey(r.user_id, hid) === key); return row ? { ...row, hid } : null;
+}
+async function setFactText(row: { user_id: string; game: string; state: any }, mode: "hide" | "show" | "wipe") {
+  const st = { ...(row.state ?? {}) }; if (mode === "hide") { st.textHidden = true; st.textHiddenAt = new Date().toISOString(); } else if (mode === "show") { delete st.textHidden; delete st.textHiddenAt; } else { delete st.last; delete st.pros; delete st.cons; delete st.textHidden; delete st.textHiddenAt; }
+  await db().from("game_state").update({ state: st }).eq("user_id", row.user_id).eq("game", row.game);
+  const m = await import("./memo"); m.memoDel("facts_"); m.memoDel("hosp_feed");
+}
+export async function reportContent(kind: "post" | "comment" | "job" | "review" | "fact", targetId: string, reason: string, detail: string) {
   const u = await requireUser();
   if (!REPORT_REASONS.some(r => r[0] === reason)) return { error: "사유를 골라주세요" };
-  const s = db(), table = REPORT_TABLE[kind] ?? "posts", ownerCol = kind === "review" ? "user_id" : "author_id";
-  const { data: t } = await s.from(table).select(`id,${ownerCol},hidden`).eq("id", targetId).maybeSingle() as any;
+  const s = db(), table = REPORT_TABLE[kind] ?? "posts", ownerCol = kind === "review" || kind === "fact" ? "user_id" : "author_id";
+  const fact = kind === "fact" ? await findFact(targetId) : null;
+  const { data: t } = kind === "fact" ? { data: fact ? { user_id: fact.user_id, hidden: !!fact.state?.textHidden } : null } as any : await s.from(table).select(`id,${ownerCol},hidden`).eq("id", targetId).maybeSingle() as any;
   if (!t) return { error: "대상이 없어요" };
   if (t[ownerCol] === u.id) return { error: "내 글은 신고할 수 없어요(삭제하세요)" };
   const { data: dup } = await s.from("reports").select("id").eq("kind", kind).eq("target_id", targetId).eq("reporter_id", u.id).eq("status", "open").maybeSingle();
@@ -473,10 +486,10 @@ export async function reportContent(kind: "post" | "comment" | "job" | "review",
   // 권리침해(게시중단 요청)는 법상 지체 없이 조치해야 해서 관리자에게 '긴급'으로 알림
   const { data: reps } = await s.from("reports").select("reporter_id").eq("kind", kind).eq("target_id", targetId).eq("status", "open");
   const hideNow = new Set((reps ?? []).map(x => x.reporter_id)).size >= 3;
-  if (!t.hidden && hideNow) await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", targetId);
+  if (!t.hidden && hideNow) { if (fact) await setFactText(fact, "hide"); else await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", targetId); }
   const { data: admins } = await s.from("users").select("id").eq("role", "admin");
   if (admins?.length) pushToUsers(admins.map(a => a.id), { title: reason === "rights" ? "🚨 [긴급] 게시중단 요청 · 바로 확인해 주세요" : "🚨 신고 접수", body: `${REPORT_LABEL[kind] ?? "글"} 신고 · ${REPORT_REASONS.find(r => r[0] === reason)?.[1]}${hideNow ? " · 3명 이상 신고로 자동 블라인드" : ""}`, url: "/admin", tag: "report" }).catch(() => {});
-  revalidatePath("/board"); if (kind === "post") revalidatePath(`/board/${targetId}`); if (kind === "job") revalidatePath(`/jobs/${targetId}`); if (kind === "review") revalidatePath("/hospitals");
+  revalidatePath("/board"); if (kind === "post") revalidatePath(`/board/${targetId}`); if (kind === "job") revalidatePath(`/jobs/${targetId}`); if (kind === "review" || kind === "fact") revalidatePath("/hospitals");
   return { ok: true, hidden: hideNow };
 }
 export async function resolveReport(id: number, action: "restore" | "delete" | "hide") {
@@ -484,6 +497,9 @@ export async function resolveReport(id: number, action: "restore" | "delete" | "
   const s = db();
   const { data: r } = await s.from("reports").select("kind,target_id").eq("id", id).maybeSingle(); if (!r) return;
   const table = REPORT_TABLE[r.kind] ?? "comments";
+  if (r.kind === "fact") { const row = await findFact(r.target_id); if (row) await setFactText(row, action === "hide" ? "hide" : action === "delete" ? "wipe" : "show");
+    if (action !== "hide") await s.from("reports").update({ status: action === "delete" ? "deleted" : "restored", resolved_at: new Date().toISOString() }).eq("kind", "fact").eq("target_id", r.target_id).eq("status", "open");
+    revalidatePath("/admin"); revalidatePath("/hospitals"); return; }
   if (action === "hide") { await s.from(table).update({ hidden: true, hidden_at: new Date().toISOString() }).eq("id", r.target_id); revalidatePath("/admin"); revalidatePath("/board"); revalidatePath("/hospitals"); return; } // 검토 중 임시 블라인드 (신고는 계속 대기)
   if (action === "delete") await s.from(table).delete().eq("id", r.target_id);
   else await s.from(table).update({ hidden: false, hidden_at: null }).eq("id", r.target_id);
