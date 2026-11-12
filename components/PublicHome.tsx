@@ -55,7 +55,7 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
         <PayCalc pay={e.pay} signup={signup(EHP.get(e.h) ? `/hospitals/${EHP.get(e.h)}` : "/hospitals/check")} />
         {extTags(e.id).length > 0 && <div className="ex-tags">{extTags(e.id).map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}
         <p className="ex-note">☀️ {e.note}</p>{e.warn && <p className="ex-warn">⚠️ {e.warn}</p>}
-        <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{EXT_SRC}에서 보고 지원 ↗</a><Link href={EHP.get(e.h) ? `/h/${EHP.get(e.h)}` : `/?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="btn ghost">👀 이 병원 진짜 분위기 보기</Link></div>
+        <div className="ex-acts"><a href={`/login?mode=signup&next=/jobs/ext/${e.id}`} className="btn">🔒 가입하고 지원 링크 보기</a><Link href={EHP.get(e.h) ? `/h/${EHP.get(e.h)}` : `/?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="btn ghost">👀 이 병원 진짜 분위기 보기</Link></div>
       </div>)}</div>
       {ext.length > 6 && <Link href={signup("/jobs/day")} className="btn ghost jb2-more">🌙 가입하고 {ext.length}곳 전부 보기 ›</Link>}
       <p className="muted" style={{ fontSize: 12, margin: 0 }}>🔄 {extCheckedLabel()} · {EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 지원 전 원문을 꼭 확인하세요.</p>

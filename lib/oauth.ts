@@ -87,7 +87,7 @@ export const NEXT_COOKIE = "mw_next";
 export function safeNext(value: string | undefined | null) {
   try {
     const n = decodeURIComponent(value ?? "");
-    return /^\/(hospitals|jobs)\/[\w-]+(\?id=\d+)?$/.test(n) ? n : "/home";
+    return /^\/(hospitals|jobs)\/([\w-]+(\?id=\d+)?|ext\/\d+)$/.test(n) ? n : "/home";
   } catch { return "/home"; }
 }
 

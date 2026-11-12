@@ -19,7 +19,7 @@ const OAUTH_ERROR: Record<string, string> = {
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: { ref?: string; next?: string; mode?: string; from?: string; error?: string } }) {
-  const next = /^\/(hospitals|jobs)\/[\w-]+(\?id=\d+)?$/.test(searchParams.next ?? "") ? searchParams.next! : "";
+  const next = /^\/(hospitals|jobs)\/([\w-]+(\?id=\d+)?|ext\/\d+)$/.test(searchParams.next ?? "") ? searchParams.next! : "";
   const ref = (searchParams.ref || "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
   const promo = await promoUntil();
   return (

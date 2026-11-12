@@ -13,7 +13,7 @@ export default async function VerifyPage({ searchParams }: { searchParams: { id?
   const vs = v?.state as VState | undefined, kind0 = (f?.state as any)?.status === "퇴사" ? "exit" : "work";
   return <div className="detail hc-page"><Link className="link" href={`/hospitals/${id}`}>← {h.name}</Link>
     <h2 style={{ margin: "8px 0 4px" }}>✅ {h.name} 인증</h2>
-    <p className="muted" style={{ margin: "0 0 12px", fontSize: 13.5, lineHeight: 1.6 }}>인증하면 내 실체 체크·리뷰·자랑에 ✅ 마크가 붙어서 훨씬 믿을 만한 정보가 돼요. 닉네임은 여전히 안 보여요.</p>
+    <p className="muted" style={{ margin: "0 0 12px", fontSize: 13.5, lineHeight: 1.6 }}>인증하면 내 실체 체크·리뷰에 ✅ 마크가 붙어서 훨씬 믿을 만한 정보가 돼요. 닉네임은 여전히 안 보여요.</p>
     {vs?.status === "approved" ? <div className="fb-thanks">{V_LABEL[vs.kind]} 완료된 병원이에요 🙌</div> : vs?.status === "pending" ? <div className="fb-thanks">⏳ 심사 중이에요. 확인되면 알림으로 알려드려요.</div> : null}
     {vs?.status === "rejected" && <div className="error">이전 신청이 승인되지 않았어요{vs.reason ? `: ${vs.reason}` : ""}. 다시 신청할 수 있어요.</div>}
     {vs?.status !== "pending" && vs?.status !== "approved" && <div className="card"><VerifyForm hid={id} nick={s.nickname} kind0={kind0} /></div>}

@@ -12,8 +12,6 @@ import LiveViewers from "@/components/LiveViewers";
 import { ReviewDelete } from "@/components/jobs/Buttons";
 import FactBox from "@/components/jobs/FactBox";
 import ExtraReviews from "@/components/jobs/ExtraReviews";
-import BragCard from "@/components/jobs/BragCard";
-import { loadBrags } from "@/lib/bragDb";
 import { loadFacts, hasContributed, founderOf } from "@/lib/hospFactsDb";
 import ShareHosp from "@/components/jobs/ShareHosp";
 export async function generateMetadata({ params }: { params: { id: string } }) { const { data } = await db().from("hospitals").select("name").eq("id", Number(params.id)).maybeSingle(); return { title: data?.name ? `${data.name} 리뷰 — 실수령·분위기` : "병원 리뷰" }; }
@@ -55,7 +53,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const vN = rs.filter(r => r.verified).length;
   const { data: myJobs } = await d.from("jobs").select("id,dept,emp_type,deadline,welfare,author:users!jobs_author_id_fkey(username)").eq("closed", false).eq("hidden", false).eq("hospital", h.name).eq("region", h.region).limit(30);
   const cur = rs.filter(r => r.status === "재직").length;
-  const [facts, { data: myFact }, brags] = await Promise.all([loadFacts([id]), d.from("game_state").select("user_id").eq("user_id", s.id).eq("game", factKey(id)).maybeSingle(), loadBrags(s.id, { hid: id })]);
+  const [facts, { data: myFact }] = await Promise.all([loadFacts([id]), d.from("game_state").select("user_id").eq("user_id", s.id).eq("game", factKey(id)).maybeSingle()]);
   const { data: myV } = await d.from("game_state").select("state").eq("user_id", s.id).eq("game", vKey(id)).maybeSingle(); const vstat = (myV?.state as any)?.status ?? null; const [contributed, distm, npsm] = await Promise.all([hasContributed(s.id, s.role, id), loadDistricts([id]), loadNps([id])]); const nps = npsm[id]; const locked = !contributed, gu = distm[id], founderNo = searchParams.checked ? await founderOf(s.id, true) : null; const fa = facts[id] ?? aggregate([]); const score = fa.starN >= (fa.need ?? MIN_N) ? fa.overallAvg : rs.length ? overall(rs) : 0;
   const t = ["pay", "intv", "welfare", "note", "jobs"].includes(searchParams.t ?? "") ? searchParams.t! : "rev";
   const [{ data: ivRows }, { data: hfFull }] = await Promise.all([d.from("game_state").select("user_id,state").eq("game", ivKey(id)).limit(500), d.from("game_state").select("user_id,state").eq("game", factKey(id)).limit(1000)]);
@@ -144,9 +142,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
           </> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>{wa.n ? `${wa.n}명이 평가했어요. ${need - wa.n}명만 더 모이면 공개돼요.` : "진료비 감면, 기숙사, 식당, 보수교육비… 실제로 써본 복지를 처음 알려주세요."}</p>}
           <Link href={`/hospitals/welfare?id=${id}`} className="btn" style={{ justifySelf: "start" }}>{myWel ? "✏️ 내 복지 평가 수정" : "🎁 복지 평가하기"}</Link>
         </section>
-        <div className="fb-head">{welfStar && fa.starN >= need && <div><b>{welfStar.avg.toFixed(1)}</b><span>🎁 복지 별점(체크)</span></div>}{rs.length > 0 && <div><b>{revWelf.toFixed(1)}</b><span>🎁 복지 별점(리뷰)</span></div>}<div><b>{brags.length}</b><span>🏆 자랑</span></div></div>
-      <div className="bg-sec" id="brag"><div className="bg-sec-h"><b>🏆 현직자 자랑 {brags.length || ""}</b><Link href={`/hospitals/brag/new?id=${id}`} className="link">📸 자랑하기</Link></div>
-        {brags.length ? <div className="bg-row">{brags.map(b => <BragCard key={b.owner} b={b} me={s.id} admin={s.role === "admin"} showHosp={false} />)}</div> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>이 병원 다니는데 자랑할 게 있다면 사진 한 장 올려주세요.</p>}</div>
+        <div className="fb-head">{welfStar && fa.starN >= need && <div><b>{welfStar.avg.toFixed(1)}</b><span>🎁 복지 별점(체크)</span></div>}{rs.length > 0 && <div><b>{revWelf.toFixed(1)}</b><span>🎁 복지 별점(리뷰)</span></div>}</div>
       </>}
       {t === "note" && <NoteBoard hid={id} me={s.id} admin={s.role === "admin"} />}
       {t === "jobs" && <div className="sal-list">{myJobs?.length ? myJobs.map((j: any) => <Link key={j.id} href={`/jobs/${j.id}`} className="sal-row"><b>💼</b><div><strong>{(j.author as any)?.username === "mw_bot" ? (j.welfare || j.dept) : `${j.dept} ${j.emp_type} 모집`}</strong><small>{j.dept} · {j.emp_type}</small></div><em>{dday(j.deadline)}</em></Link>)

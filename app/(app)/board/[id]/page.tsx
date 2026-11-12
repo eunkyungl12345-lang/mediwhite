@@ -5,6 +5,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { fmt } from "@/lib/format";
 import { togglePin, deletePost, deleteComment, boostPost } from "@/lib/actions";
+import { boostInfo, BOOST_MAX } from "@/lib/boost";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { can } from "@/lib/ranks";
 import Name from "@/components/Name";
@@ -19,7 +20,7 @@ import LiveViewers from "@/components/LiveViewers";
 import { memoOnce } from "@/lib/memo";
 export const dynamic = "force-dynamic";
 
-export default async function PostPage({ params }: { params: { id: string } }) {
+export default async function PostPage({ params, searchParams }: { params: { id: string }; searchParams: { bm?: string } }) {
   if (!/^[0-9a-f-]{36}$/i.test(params.id)) notFound();
   const s = (await getSession())!;
   const d = db();
@@ -35,6 +36,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const rx = [...(rxp ?? []), ...(rxc ?? [])];
   const agg = (kind: string, id: string) => { const counts: Record<string, number> = {}; let mine: string | null = null; for (const r of rx ?? []) if (r.kind === kind && String(r.target_id) === id) { counts[r.emoji] = (counts[r.emoji] ?? 0) + 1; if (r.user_id === s.id) mine = r.emoji; } return { counts, mine }; };
   const admin = s.role === "admin", mine = p.author_id === s.id;
+  const bi = mine ? await boostInfo(s.id, p.id) : { n: 0, at: null }, bLeft = Math.max(0, BOOST_MAX - bi.n), bWait = !!bi.at && Date.now() - new Date(bi.at).getTime() < 24 * 3600e3;
   if (p.hidden && !admin && !mine) return <div className="detail"><Link className="link" href="/board">← 게시판</Link><div className="empty" style={{ marginTop: 20 }}>🚩 신고가 접수되어 임시로 가려진 글이에요.<br /><span className="muted">운영팀 확인 후 복구되거나 삭제돼요 (최대 30일).</span></div></div>;
   const counted = memoOnce(`pv:${p.id}:${s.id}`, 6 * 3600_000);
   if (counted) d.rpc("bump_view", { p_id: p.id }).then(() => {}, () => {});
@@ -51,9 +53,12 @@ export default async function PostPage({ params }: { params: { id: string } }) {
       <h2>{p.title}</h2>
       <div className={"pd-by" + (a && r.tier > 0 ? ` rkb rk${r.tier}` : "")}>{a ? <><Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} badge={a.blue_badge} size={16} /><em className="cm-rk">{r.name}</em></> : <span>탈퇴한 회원</span>}</div>
       <div className="body"><Linkify text={p.body} /></div>
+      {mine && searchParams.bm && <div className="bm-msg" style={{ margin: "8px 0", fontSize: 13, padding: "8px 12px", borderRadius: 10, background: searchParams.bm === "ok" ? "#E8F7F0" : "#FFF4E5", color: searchParams.bm === "ok" ? "#12805B" : "#8A5A00" }}>{searchParams.bm === "ok" ? `⬆ 밀어올렸어요! 남은 횟수 ${bLeft}/${BOOST_MAX}회 · 다음은 24시간 뒤에 가능해요` : searchParams.bm === "cd" ? "⏳ 내일 다시 끌어올릴 수 있어요 (한 번 올리면 24시간 쿨타임)" : `이 글은 밀어올리기 ${BOOST_MAX}회를 다 썼어요`}</div>}
       <div className="pd-acts">
         {admin && <form action={togglePin.bind(null, p.id, !p.pinned)}><button className="link">{p.pinned ? "고정 해제" : "상단 고정"}</button></form>}
-        {mine && <form action={boostPost.bind(null, p.id, !p.boosted)}><button className="link">{p.boosted ? "밀어올리기 해제" : "밀어올리기"}</button></form>}
+        {mine && (p.boosted ? <form action={boostPost.bind(null, p.id, false)}><button className="link">밀어올리기 해제</button></form>
+          : bLeft > 0 ? <form action={boostPost.bind(null, p.id, true)}><button className="link" disabled={bWait}>{bWait ? "⏳ 내일 다시 끌어올릴 수 있어요" : `⬆ 밀어올리기 (${bLeft}/${BOOST_MAX}회)`}</button></form>
+          : <span className="muted" style={{ fontSize: 13 }}>밀어올리기 3회를 다 썼어요</span>)}
         {(admin || mine) && <Link href={`/board/${p.id}/edit`} className="link">✏️ 글 수정</Link>}
         {(admin || mine) && <form action={deletePost.bind(null, p.id)}><ConfirmSubmit msg="이 글을 삭제할까요? 되돌릴 수 없어요.">🗑️ 글 삭제</ConfirmSubmit></form>}
         {!mine && <ReportButton kind="post" id={p.id} />}

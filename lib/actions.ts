@@ -2,6 +2,7 @@
 import { gameEvent } from "./feed";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { boostInfo, BOOST_MAX } from "./boost";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { db } from "./supabase";
@@ -32,7 +33,7 @@ async function requireAdmin(): Promise<Session> { const s = await requireUser();
 
 /* ---------- 가입/로그인 ---------- */
 /** 공유 링크(/h/<id>)로 들어와 가입·로그인하면 원래 보려던 병원으로 */
-async function afterLogin() { const { cookies } = await import("next/headers"); const c = cookies(); const n = decodeURIComponent(c.get("mw_next")?.value ?? ""); if (n) c.delete("mw_next"); return /^\/(hospitals|jobs)\/[\w-]+(\?id=\d+)?$/.test(n) ? n : "/home"; }
+async function afterLogin() { const { cookies } = await import("next/headers"); const c = cookies(); const n = decodeURIComponent(c.get("mw_next")?.value ?? ""); if (n) c.delete("mw_next"); return /^\/(hospitals|jobs)\/([\w-]+(\?id=\d+)?|ext\/\d+)$/.test(n) ? n : "/home"; }
 export async function signup(_: FormState, fd: FormData): Promise<FormState> {
   const username = clean(fd.get("username"), 20).toLowerCase();
   const password = String(fd.get("password") ?? "");
@@ -180,12 +181,23 @@ export async function togglePin(postId: string, pinned: boolean) {
   await db().from("posts").update({ pinned }).eq("id", postId);
   revalidatePath("/board"); revalidatePath(`/board/${postId}`);
 }
+/** ⬆ 밀어올리기(끌올) — 당근식 제한: 글당 최대 3회, 한 번 올리면 24시간 쿨타임. 횟수는 game_state boost:<글id> */
+const BOOST_CD = 24 * 3600e3;
 export async function boostPost(postId: string, on: boolean) {
   const u = await requireUser();
-  const s = db();
-  if (on) await s.from("posts").update({ boosted: false }).eq("author_id", u.id).eq("boosted", true);
-  await s.from("posts").update({ boosted: on }).eq("id", postId).eq("author_id", u.id);
-  revalidatePath("/board"); revalidatePath(`/board/${postId}`);
+  const s = db(); const back = `/board/${postId}`;
+  const { data: p } = await s.from("posts").select("id").eq("id", postId).eq("author_id", u.id).maybeSingle(); if (!p) return;
+  if (on) {
+    const b = await boostInfo(u.id, postId);
+    if (b.n >= BOOST_MAX) redirect(`${back}?bm=max`);
+    if (b.at && Date.now() - new Date(b.at).getTime() < BOOST_CD) redirect(`${back}?bm=cd`);
+    const now = new Date().toISOString();
+    await s.from("posts").update({ boosted: false }).eq("author_id", u.id).eq("boosted", true);
+    await s.from("posts").update({ boosted: true }).eq("id", postId).eq("author_id", u.id);
+    await s.from("game_state").upsert({ user_id: u.id, game: `boost:${postId}`, state: { n: b.n + 1, at: now }, updated_at: now });
+  } else await s.from("posts").update({ boosted: false }).eq("id", postId).eq("author_id", u.id);
+  revalidatePath("/board"); revalidatePath(back);
+  if (on) redirect(`${back}?bm=ok`);
 }
 /** ✏️ 글 수정 — 본인(또는 관리자)만. 새 글과 같은 실명·장소 검사를 다시 해요 */
 export async function updatePost(_: FormState, fd: FormData): Promise<FormState> {

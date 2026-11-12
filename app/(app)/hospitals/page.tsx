@@ -94,7 +94,6 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
             <div className="rc-foot"><Link href={`/hospitals/${x.hid}`} className="rf-more">이 병원 더보기 ›</Link><RevMark /></div>
           </article>; })}</div>}
       </>}
-      <Link href="/hospitals/brag" className="hc-banner gold"><span>🏆</span><div><b>천하제일 우리병원 자랑대회</b><small>휴게실·식당·뷰… 사진 한 장으로 우리 병원 자랑</small></div><em>+30</em></Link>
     </div>
   );
 }
