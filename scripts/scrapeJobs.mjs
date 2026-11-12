@@ -224,6 +224,8 @@ export function parseDetail(html = '', row = {}) {
 
   const noteParts = [duty || empType, career && career !== '경력무관' ? career : ''].filter(Boolean);
   const note = noteParts.join(' · ') || text(row.title);
+  const years = (career.match(/(\d+)\s*년/) ?? [])[1];
+  const warn = career.includes('무관') || !years ? undefined : `경력 ${years}년 이상`;
 
   return {
     pay,
@@ -231,6 +233,7 @@ export function parseDetail(html = '', row = {}) {
     time: hours || '공고 참조',
     dept: roleOf(row.title, row.jobs),
     note: note.length > 48 ? `${note.slice(0, 47).trim()}…` : note,
+    warn,
     empType,
     until,
   };
@@ -252,6 +255,7 @@ export function renderEntry(job) {
   ];
   if (job.until) parts.push(`until: ${q(job.until)}`);
   parts.push(`note: ${q(job.note)}`);
+  if (job.warn) parts.push(`warn: ${q(job.warn)}`);
   return `  { ${parts.join(', ')} },`;
 }
 
