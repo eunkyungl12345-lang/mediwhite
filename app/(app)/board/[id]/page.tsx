@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
@@ -45,15 +46,18 @@ export default async function PostPage({ params }: { params: { id: string } }) {
       <div className="meta" style={{ marginTop: 10 }}>
         {p.pinned && <span className="pin">📌 공지</span>}{p.boosted && !p.pinned && <span className="pin">⬆ 밀어올림</span>}{!p.pinned && <span className="tag">{p.category}</span>}<Link href={`/board?topic=${(p as any).topic ?? "free"}`} className="topic-tag">{topicOf((p as any).topic).icon} {topicOf((p as any).topic).name}</Link>
         <span className="time">{fmt(p.created_at)}</span><LiveViewers kind="post" id={p.id} /><span className="time">· 조회 {((p as any).views ?? 0) + (counted ? 1 : 0)}</span>
-        {admin && <form action={togglePin.bind(null, p.id, !p.pinned)}><button className="link">{p.pinned ? "고정 해제" : "상단 고정"}</button></form>}
-        {mine && <form action={boostPost.bind(null, p.id, !p.boosted)}><button className="link">{p.boosted ? "밀어올리기 해제" : "밀어올리기"}</button></form>}
-        {(admin || mine) && <form action={deletePost.bind(null, p.id)}><button className="link">글 삭제</button></form>}
-        {!mine && <ReportButton kind="post" id={p.id} />}
         {p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드 중</span>}
       </div>
-      <div className={"pd-by" + (a && r.tier > 0 ? ` rkb rk${r.tier}` : "")}>{a ? <><Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} badge={a.blue_badge} size={16} /><em className="cm-rk">{r.name}</em></> : <span>탈퇴한 회원</span>}</div>
       <h2>{p.title}</h2>
+      <div className={"pd-by" + (a && r.tier > 0 ? ` rkb rk${r.tier}` : "")}>{a ? <><Name r={r} dept={a.dept} nickname={a.nickname} username={a.username} badge={a.blue_badge} size={16} /><em className="cm-rk">{r.name}</em></> : <span>탈퇴한 회원</span>}</div>
       <div className="body"><Linkify text={p.body} /></div>
+      <div className="pd-acts">
+        {admin && <form action={togglePin.bind(null, p.id, !p.pinned)}><button className="link">{p.pinned ? "고정 해제" : "상단 고정"}</button></form>}
+        {mine && <form action={boostPost.bind(null, p.id, !p.boosted)}><button className="link">{p.boosted ? "밀어올리기 해제" : "밀어올리기"}</button></form>}
+        {(admin || mine) && <Link href={`/board/${p.id}/edit`} className="link">✏️ 글 수정</Link>}
+        {(admin || mine) && <form action={deletePost.bind(null, p.id)}><ConfirmSubmit msg="이 글을 삭제할까요? 되돌릴 수 없어요.">🗑️ 글 삭제</ConfirmSubmit></form>}
+        {!mine && <ReportButton kind="post" id={p.id} />}
+      </div>
       <Reactions kind="post" id={p.id} {...agg("post", p.id)} />
       <div className="comments-head"><b>댓글 {comments?.length ?? 0}</b></div>
       <CommentThread postId={p.id} meId={s.id} admin={admin} items={(comments ?? []).map((c: any) => { const ag = agg("comment", String(c.id)); return { id: c.id, author_id: c.author_id, text: c.text, created: fmt(c.created_at), hidden: !!c.hidden, parent_id: c.parent_id ?? null, r: rankFor(c.author, leaders), author: c.author ? { dept: c.author.dept, nickname: c.author.nickname, username: c.author.username, blue_badge: c.author.blue_badge } : null, counts: ag.counts, mine: ag.mine } as CItem; })} />

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
@@ -37,7 +38,8 @@ export default async function AnonPostPage({ params }: { params: { id: string } 
       {back}
       <div className="meta" style={{ marginTop: 10 }}>
         <span className="topic-tag">{t.icon} {t.name}</span><span className="an-who">🕶️ 익명</span><span className="time">{fmt(p.created_at)}</span><span className="time">· 조회 {(p.views ?? 0) + (counted ? 1 : 0)}</span>
-        {(admin || mine) && <form action={deletePost.bind(null, p.id)}><button className="link">글 삭제</button></form>}
+        {(admin || mine) && <Link href={`/board/${p.id}/edit`} className="link">✏️ 글 수정</Link>}
+        {(admin || mine) && <form action={deletePost.bind(null, p.id)}><ConfirmSubmit msg="이 글을 삭제할까요? 되돌릴 수 없어요.">🗑️ 글 삭제</ConfirmSubmit></form>}
         {!mine && <ReportButton kind="post" id={p.id} />}
         {p.hidden && <span className="tag" style={{ background: "#E2574C", color: "#fff" }}>블라인드 중</span>}
       </div>

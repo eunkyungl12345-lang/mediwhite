@@ -187,6 +187,20 @@ export async function boostPost(postId: string, on: boolean) {
   await s.from("posts").update({ boosted: on }).eq("id", postId).eq("author_id", u.id);
   revalidatePath("/board"); revalidatePath(`/board/${postId}`);
 }
+/** ✏️ 글 수정 — 본인(또는 관리자)만. 새 글과 같은 실명·장소 검사를 다시 해요 */
+export async function updatePost(_: FormState, fd: FormData): Promise<FormState> {
+  const u = await requireUser(); const id = clean(fd.get("id"), 40), title = clean(fd.get("title"), 80), body = clean(fd.get("body"), 4000);
+  if (!title || !body) return { error: "제목과 내용을 적어주세요" };
+  const s = db(); const { data: p } = await s.from("posts").select("id,author_id,category").eq("id", id).maybeSingle();
+  if (!p || (p.author_id !== u.id && u.role !== "admin")) return { error: "내 글만 수정할 수 있어요" };
+  const pm = personMention(title + " " + body), plm = p.category === SSUM_CAT || p.category === ANON_CAT ? placeMention(title + " " + body) : null;
+  if (plm) return { error: `"${plm}" — 병원명·병동·층·부서는 쓸 수 없어요. 누군지 특정될 수 있어요.` };
+  if (pm && (p.category === SSUM_CAT || p.category === ANON_CAT)) return { error: `"${pm}" — 실명은 쓸 수 없어요. 초성으로 바꿔주세요.` };
+  if (pm && fd.get("confirm_anon") !== "on") return { error: `"${pm}" — 특정 개인을 가리키는 표현 같아요. 실명·식별 정보가 없다면 아래 확인에 체크하고 다시 저장해주세요.` };
+  const { error } = await s.from("posts").update({ title, body }).eq("id", id); if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
+  revalidatePath("/board"); revalidatePath(`/board/${id}`); revalidatePath(`/anon/${id}`); revalidatePath("/anon"); revalidatePath("/ssum");
+  redirect(p.category === SSUM_CAT || p.category === ANON_CAT ? `/anon/${id}` : `/board/${id}`);
+}
 export async function deletePost(postId: string) {
   const u = await requireUser();
   const q = db().from("posts").delete().eq("id", postId); if (u.role !== "admin") q.eq("author_id", u.id);
@@ -472,6 +486,13 @@ async function setFactText(row: { user_id: string; game: string; state: any }, m
   const st = { ...(row.state ?? {}) }; if (mode === "hide") { st.textHidden = true; st.textHiddenAt = new Date().toISOString(); } else if (mode === "show") { delete st.textHidden; delete st.textHiddenAt; } else { for (const k of ["last", "pros", "cons", "word", "work", "note", "text", "textHidden", "textHiddenAt"]) delete st[k]; }
   await db().from("game_state").update({ state: st }).eq("user_id", row.user_id).eq("game", row.game);
   const m = await import("./memo"); m.memoDel("facts_"); m.memoDel("hosp_feed"); m.memoDel("jc_counts");
+}
+/** 🗑️ 병원 제보 카드 삭제 — 본인: 내 제보 전체 삭제 / 관리자: 남의 한줄평 글만 지움(평가 숫자는 남김) */
+export async function deleteFactCard(hid: number, key: string) {
+  const u = await requireUser(); const { factPubKey } = await import("./helpKey");
+  if (factPubKey(u.id, hid) === key) await db().from("game_state").delete().eq("user_id", u.id).eq("game", `hfact:${hid}`);
+  else if (u.role === "admin") { const row = await findFact(`${hid}:${key}`); if (row) await setFactText(row, "wipe"); } else return;
+  const m = await import("./memo"); m.memoDel("facts_"); m.memoDel("hosp_feed"); m.memoDel("fresh:" + u.id); revalidatePath(`/hospitals/${hid}`); revalidatePath("/hospitals");
 }
 export async function reportContent(kind: "post" | "comment" | "job" | "review" | "fact" | "extra" | "jobc", targetId: string, reason: string, detail: string) {
   const u = await requireUser();

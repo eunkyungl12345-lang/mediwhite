@@ -5,6 +5,8 @@ import { getSession } from "@/lib/auth";
 import { fmt } from "@/lib/format";
 import { RATING_KEYS, avg, overall, stars } from "@/lib/jobs";
 import ReviewForm from "@/components/jobs/ReviewForm";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
+import { deleteFactCard } from "@/lib/actions";
 import ReportButton from "@/components/ReportButton";
 import LiveViewers from "@/components/LiveViewers";
 import { ReviewDelete } from "@/components/jobs/Buttons";
@@ -110,7 +112,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         {(x.pros || x.cons) && (locked && !x.mine ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 솔직한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>
           : <More long={(x.pros?.length ?? 0) + (x.cons?.length ?? 0) + (x.tip?.length ?? 0) > 140}>{x.pros && <p className="rf-pc"><em className="g">장점</em>{x.pros}</p>}{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</More>)}
         <div className="rv2-foot"><HelpBtn hid={id} k={x.key} n={help.get(x.key)?.n ?? 0} on={!!help.get(x.key)?.me} />
-          <RevMark /><span className="rv2-act">{x.mine && <Link href={x.rid ? `/hospitals/${id}?write=1#review-edit` : `/hospitals/check?id=${id}`} className="rv2-edit">✏️ 수정</Link>}{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : !x.mine ? <ReportButton kind="fact" id={`${id}:${x.key}`} /> : null}</span></div>
+          <RevMark /><span className="rv2-act">{x.mine && <Link href={x.rid ? `/hospitals/${id}?write=1#review-edit` : `/hospitals/check?id=${id}`} className="rv2-edit">✏️ 수정</Link>}{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : x.mine || s.role === "admin" ? <form action={deleteFactCard.bind(null, id, x.key)}><ConfirmSubmit className="rv2-del" msg={x.mine ? "내 제보를 삭제할까요? 신호등·실수령 집계에서도 빠지고 되돌릴 수 없어요." : "이 한줄평 글을 지울까요? (평가 숫자는 남아요)"}>🗑️ 삭제</ConfirmSubmit></form> : null}{!x.mine && !x.rid && <ReportButton kind="fact" id={`${id}:${x.key}`} />}</span></div>
       </article>)}</div>}
       </>}
       {t === "pay" && <>
