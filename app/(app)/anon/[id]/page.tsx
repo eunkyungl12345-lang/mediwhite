@@ -4,7 +4,7 @@ import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
 import { fmt } from "@/lib/format";
 import { deletePost, deleteComment } from "@/lib/actions";
-import { ANON_CAT, ANON_TOPICS } from "@/lib/depts";
+import { ANON_CAT, ANON_TOPICS, SSUM_CAT, SSUM_TOPICS } from "@/lib/depts";
 import CommentForm from "@/components/CommentForm";
 import LiveViewers from "@/components/LiveViewers";
 import CommentThread, { type CItem } from "@/components/CommentThread";
@@ -18,10 +18,10 @@ export const dynamic = "force-dynamic";
 /** 글마다 다른 익명 번호: 글쓴이는 '글쓴이', 댓글러는 등장 순서대로 익명1, 익명2… (같은 사람은 같은 번호) */
 export default async function AnonPostPage({ params }: { params: { id: string } }) {
   const s = (await getSession())!; const d = db();
-  const { data: p } = await d.from("posts").select("id,title,body,topic,created_at,views,hidden,author_id,category").eq("id", params.id).eq("category", ANON_CAT).maybeSingle();
+  const { data: p } = await d.from("posts").select("id,title,body,topic,created_at,views,hidden,author_id,category").eq("id", params.id).in("category", [ANON_CAT, SSUM_CAT]).maybeSingle();
   if (!p) notFound();
-  const admin = s.role === "admin", mine = p.author_id === s.id;
-  if (p.hidden && !admin && !mine) return <div className="detail"><Link className="link" href="/anon">← 익명 게시판</Link><div className="empty" style={{ marginTop: 20 }}>🚩 신고가 접수되어 임시로 가려진 글이에요.</div></div>;
+  const admin = s.role === "admin", mine = p.author_id === s.id, ssum = p.category === SSUM_CAT, back = ssum ? <Link className="link" href="/ssum">← 썸·소개팅</Link> : <Link className="link" href="/anon">← 익명 게시판</Link>;
+  if (p.hidden && !admin && !mine) return <div className="detail">{back}<div className="empty" style={{ marginTop: 20 }}>🚩 신고가 접수되어 임시로 가려진 글이에요.</div></div>;
   const counted = memoOnce(`pv:${p.id}:${s.id}`, 6 * 3600_000); if (counted) d.rpc("bump_view", { p_id: p.id }).then(() => {}, () => {});
   const { data: comments } = await d.from("comments").select("id,author_id,text,created_at,hidden,parent_id").eq("post_id", p.id).order("created_at").limit(300);
   const cids = (comments ?? []).map(c => String(c.id));
@@ -31,10 +31,10 @@ export default async function AnonPostPage({ params }: { params: { id: string } 
   const order: string[] = []; const label = (uid: string) => { if (uid === p.author_id) return "글쓴이"; let i = order.indexOf(uid); if (i < 0) { order.push(uid); i = order.length - 1; } return `익명${i + 1}`; };
   const COLORS = ["#6E5BB8", "#2E7D6B", "#C2185B", "#F2A900", "#3D7DD8", "#8E3B3B", "#4FB59A", "#7A5B12"];
   const col = (uid: string) => uid === p.author_id ? "#2B2420" : COLORS[Math.max(0, order.indexOf(uid)) % COLORS.length];
-  const t = ANON_TOPICS.find(x => x.key === p.topic) ?? ANON_TOPICS[0];
+  const TP: readonly { key: string; icon: string; name: string }[] = ssum ? SSUM_TOPICS as any : ANON_TOPICS; const t = TP.find(x => x.key === p.topic) ?? TP[0];
   return (
     <div className="detail pd an-detail">
-      <Link className="link" href="/anon">← 익명 게시판</Link>
+      {back}
       <div className="meta" style={{ marginTop: 10 }}>
         <span className="topic-tag">{t.icon} {t.name}</span><span className="an-who">🕶️ 익명</span><span className="time">{fmt(p.created_at)}</span><span className="time">· 조회 {(p.views ?? 0) + (counted ? 1 : 0)}</span>
         {(admin || mine) && <form action={deletePost.bind(null, p.id)}><button className="link">글 삭제</button></form>}

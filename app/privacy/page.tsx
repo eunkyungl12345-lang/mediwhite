@@ -42,10 +42,10 @@ export default async function Privacy() {
         <h3>5. 처리 위탁 및 국외 이전</h3>
         <p>서비스 운영을 위해 아래 업체의 클라우드를 이용해요. 정보는 암호화된 통신으로 저장·전송돼요.</p>
         <table><tbody>
-          <tr><th>Supabase Inc.</th><td>회원·게시물 데이터베이스, 인증 사진 임시 저장 · 서비스 이용 기간 동안</td></tr>
-          <tr><th>Vercel Inc.</th><td>웹사이트 호스팅 · 서비스 이용 기간 동안</td></tr>
+          <tr><th>Supabase Inc.</th><td>회원·게시물 데이터베이스, 인증 사진 임시 저장 · <b>서울 리전(대한민국)</b> 서버에 저장 · 서비스 이용 기간 동안</td></tr>
+          <tr><th>Vercel Inc.</th><td>웹사이트 호스팅 · 서버 처리는 서울 리전(icn1)에서 실행 · 서비스 이용 기간 동안</td></tr>
         </tbody></table>
-        <p className="muted">두 업체의 서버는 해외에 있을 수 있어요. 국외 이전을 원하지 않으면 가입하지 않거나 탈퇴할 수 있지만, 이 경우 서비스를 이용할 수 없어요.</p>
+        <p className="muted">회원 정보와 게시물은 대한민국(서울) 서버에 저장돼요. 다만 Vercel은 미국 회사라 화면 전송(CDN)과 접속 기록 일부가 해외에서 처리될 수 있어요. 원하지 않으면 가입하지 않거나 탈퇴할 수 있지만, 이 경우 서비스를 이용할 수 없어요.</p>
 
         <h3>6. 만 14세 미만 아동</h3>
         <p>서비스는 만 14세 미만의 가입을 받지 않아요. 가입할 때 만 14세 이상인지 확인해요.</p>
@@ -62,7 +62,7 @@ export default async function Privacy() {
         </ul>
 
         <h3>9. 개인정보 보호책임자</h3>
-        <p>개인정보 보호책임자: 메디화이트 운영자<br />연락처: {mail ? <a href={`mailto:${mail}`}>{mail}</a> : <Link href="/contact">문의하기</Link>}</p>
+        <p>개인정보 보호책임자: 이은경 (운영자)<br />연락처: {mail ? <a href={`mailto:${mail}`}>{mail}</a> : <Link href="/contact">문의하기</Link>}</p>
         <p className="muted">개인정보 침해에 대한 상담·신고는 아래 기관에도 할 수 있어요: 개인정보침해신고센터(국번없이 118, privacy.kisa.or.kr), 개인정보분쟁조정위원회(1833-6972, kopico.go.kr), 대검찰청 사이버수사과(국번없이 1301), 경찰청 사이버수사국(국번없이 182)</p>
 
         <h3>10. 변경 안내</h3>

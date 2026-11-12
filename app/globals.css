@@ -2692,3 +2692,15 @@ body{letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 .btn{background:var(--btn)}.btn.ghost{background:transparent}
 .lp-cta{background:#12805B}.lp-cta:hover{background:#0F7A57}.f3-btn{background:#12805B}
 .xr-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.xr-foot .rc-mark{margin-left:0}
+
+/* 📒 포켓 도감 */
+.pk-entry{display:flex;gap:12px;align-items:center;padding:14px 16px;margin:0 0 12px;border-radius:16px;background:var(--scrub-soft);color:var(--ink);text-decoration:none;border:1px solid #BFE3D5}.pk-entry>span{font-size:26px}.pk-entry div{flex:1;display:grid;gap:2px;min-width:0}.pk-entry small{color:var(--muted);font-size:12.5px}.pk-entry em{font-style:normal;color:var(--muted)}
+.pk-nav{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 6px}.pk-nav a{font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink);text-decoration:none}
+.pk-sec{display:grid;gap:10px;margin-top:16px}.pk-sec h3{margin:0;font-size:16px}
+.pk-card{background:var(--surface);border:1px solid var(--hair);border-radius:18px;box-shadow:var(--shadow);padding:0}
+.pk-card summary{cursor:pointer;list-style:none;display:grid;gap:3px;padding:16px 18px}.pk-card summary::-webkit-details-marker{display:none}.pk-card summary b{font-size:15.5px}.pk-card summary small{color:var(--muted);font-size:13px;line-height:1.5}
+.pk-card[open] summary{border-bottom:1px solid var(--line)}
+.pk-card dl{display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px 10px;margin:0;padding:14px 18px;font-size:14px;line-height:1.6}.pk-card dt{font-weight:700;color:var(--muted);font-size:13px}.pk-card dd{margin:0;word-break:keep-all}.pk-card ul{margin:0;padding-left:18px}
+.pk-tip{margin:0 14px 14px;padding:12px 14px;border-radius:12px;background:#FFF7E0;font-size:14px;line-height:1.6;word-break:keep-all}.pk-tip b{display:block;margin-bottom:2px;color:#7A5200}
+@media (max-width:420px){.pk-card dl{grid-template-columns:1fr;gap:2px}.pk-card dd{margin-bottom:8px}}
+.ss-anon{font-size:14px}

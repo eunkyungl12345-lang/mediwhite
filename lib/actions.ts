@@ -154,7 +154,7 @@ export async function createPost(_: FormState, fd: FormData): Promise<FormState>
   if (pm && fd.get("confirm_anon") !== "on") return { error: `"${pm}" — 특정 개인을 가리키는 표현 같아요. 실명·식별 정보가 없다면 아래 확인에 체크하고 다시 올려주세요.` };
   const s = db();
   if (boardId) { const { data: b } = await s.from("boards").select("dept").eq("id", boardId).maybeSingle(); if (!b || b.dept !== category) return { error: "탭이 맞지 않아요" }; }
-  const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: category === ANON_CAT ? null : u.dept, title, body, board_id: boardId, topic }).select("id").single();
+  const { data, error } = await s.from("posts").insert({ author_id: u.id, category, dept: category === ANON_CAT || category === SSUM_CAT ? null : u.dept, title, body, board_id: boardId, topic }).select("id").single();
   if (error || !data) return { error: "올리지 못했어요" };
   await Promise.all([awardXp(u.id, 100, "first_post"), repeatXp(u.id, "post"), bump(u.id, "write")]);
   if (category === ANON_CAT) { revalidatePath("/anon"); redirect(`/anon/${data.id}`); }
@@ -165,7 +165,7 @@ export async function addComment(postId: string, text: string, parentId?: number
   const t = text.trim().slice(0, 500); if (!t) return;
   const s = db();
   const { data: post0 } = await s.from("posts").select("author_id,title,category").eq("id", postId).maybeSingle();
-  const anon = post0?.category === ANON_CAT;
+  const anon = post0?.category === ANON_CAT || post0?.category === SSUM_CAT;
   if (anon) { const pm = personMention(t); if (pm) return; }
   let parent: { id: number; author_id: string } | null = null;
   if (parentId) { const { data: pc } = await s.from("comments").select("id,author_id,parent_id").eq("id", parentId).eq("post_id", postId).maybeSingle(); if (pc) parent = { id: pc.parent_id ?? pc.id, author_id: pc.author_id }; }

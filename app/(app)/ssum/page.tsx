@@ -76,7 +76,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
   if (tab === "lounge") {
     const sub = searchParams.sub || "all";
     const [{ data: posts }] = await Promise.all([
-      d.from("posts").select("id,title,body,topic,created_at,hidden,author:users(id,username,nickname,dept,xp,blue_badge)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(60),
+      d.from("posts").select("id,title,body,topic,created_at,hidden,author:users(id)").eq("category", "썸").eq("hidden", false).order("created_at", { ascending: false }).limit(60),
     ]);
     const pids = (posts ?? []).map((p: any) => p.id);
     const [{ data: cc }, { data: rc }] = pids.length ? await Promise.all([d.from("comments").select("post_id").in("post_id", pids), d.from("reactions").select("target_id").eq("kind", "post").in("target_id", pids)]) : [{ data: [] as any[] }, { data: [] as any[] }];
@@ -101,7 +101,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
       {filtered.length ? (
         <div className="ss-feed-list">
           {filtered.map((p: any) => (
-            <Link key={p.id} href={`/board/${p.id}`} className="ss-feed-card">
+            <Link key={p.id} href={`/anon/${p.id}`} className="ss-feed-card">
               <div className="ss-feed-top">
                 <span className={`ss-topic-chip ${p.topic}`}>
                   {topicOf(p.topic).icon} {topicOf(p.topic).name}
@@ -112,7 +112,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
               {p.body && <p className="ss-feed-body">{p.body}</p>}
               <div className="ss-feed-foot">
                 <span className="ss-feed-author">
-                  {p.author ? display(p.author.dept, p.author.nickname) : "회원"}
+                  🕶️ 익명
                 </span>
                 <div className="ss-feed-stats">
                   <span>💬 {nC[p.id] ?? 0}</span>
@@ -165,7 +165,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
       <div className="ss-cards">
         {(profs ?? []).filter((p: any) => !p.user.stealth).map((p: any) => (
           <Card key={p.user_id} p={p} see={admin || mutualWith(p.user_id)}
-            head={<Name r={rankFor(p.user, leaders)} dept={p.user.dept} nickname={p.user.nickname} username={p.user.username} badge={p.user.blue_badge} />}
+            head={<b className="ss-anon">🕶️ [{p.user.dept}] 익명</b>}
             foot={<><LikeButton kind="profile" target={p.user_id} liked={liked("profile", p.user_id)} /><DmRequestButton to={p.user_id} left={quota.left} total={quota.total} state={reqState(p.user_id)} />{admin && <PickSolo userId={p.user_id} />}</>} />
         ))}
         {(intros ?? []).map((p: any) => (
@@ -193,7 +193,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
         <span className={"mt-ico" + (m.kind === "coffeechat" ? " cc" : "")}>{m.kind === "coffeechat" ? <BlueBadge size={30} /> : k.icon}</span>
         <div className="mt-body"><Link href={`/ssum/meet/${m.id}`} className="mt-title">{m.title}</Link>
           <div className="mt-meta"><b>{whenLabel(m.when_at)}</b> · {m.area}{m.place ? ` · ${m.place}` : ""}{m.gender ? ` · ${m.gender}성만` : ""}</div>
-          <div className="mt-meta muted">{m.host ? display(m.host.dept, m.host.nickname) : "회원"}{m.host?.blue_badge ? <BlueBadge size={13} className="bb" /> : null} 주최 · <span className={c >= m.cap ? "" : "mt-open"}>{c}/{m.cap}명{c < m.cap ? ` · ${m.cap - c}자리 남음` : ""}</span></div></div>
+          <div className="mt-meta muted">{m.host ? `[${m.host.dept}] 익명` : "회원"}{m.host?.blue_badge ? <BlueBadge size={13} className="bb" /> : null} 주최 · <span className={c >= m.cap ? "" : "mt-open"}>{c}/{m.cap}명{c < m.cap ? ` · ${m.cap - c}자리 남음` : ""}</span></div></div>
         <JoinButton id={m.id} joined={mine.has(m.id)} pending={pend.has(m.id)} host={m.host_id === s.id} full={c >= m.cap} closed={closed} waiting={w(m.id)} />
       </div>); };
     body = <>
@@ -298,7 +298,7 @@ export default async function SsumPage({ searchParams }: { searchParams: { tab?:
           <p className="ss-hero-desc">병원 사람끼리 전하는 설렘 ∙ 셀소 하트(💗)로 1:1 대화 연결</p>
         </div>
       </div>
-      {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<Name r={rankFor(solo.user, leaders)} dept={solo.user.dept} nickname={solo.user.nickname} username={solo.user.username} badge={solo.user.blue_badge} />} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
+      {solo && <div className="ss-solo"><div className="ss-solo-tag">⭐ 오늘의 솔로 · 요미 픽</div><Card p={solo} see={admin || solo.user_id === s.id || mutualWith(solo.user_id)} head={<b className="ss-anon">🕶️ [{solo.user.dept}] 익명</b>} foot={<>{solo.comment && <span className="muted">요미: “{solo.comment}”</span>}{solo.user_id !== s.id && <LikeButton kind="profile" target={solo.user_id} liked={liked("profile", solo.user_id)} />}</>} /></div>}
       <div className="cats" style={{ paddingBottom: 0 }}>{TABS.map(([k, n]) => <Link key={k} href={`/ssum?tab=${k}`} aria-current={tab === k ? "true" : undefined}>{n}</Link>)}</div>
       {tab === "meet" && <a className="ss-out" href="https://ssumcenter.vercel.app" target="_blank" rel="noopener noreferrer"><span className="ss-out-ico" aria-hidden="true">🍷</span><div><b>이번 주말, 병원 밖에서 만나요</b><small>병원 밖 2030과 함께하는 프라이빗 파티 · 11/14 Friendsgiving 홈파티 (의료인 &amp; 일반 직장인 누구나 환영!)</small></div><em aria-hidden="true">↗</em></a>}
       {(tab === "me" || tab === "box") && <a className="ss-out" href="https://ssumcenter.vercel.app" target="_blank" rel="noopener noreferrer"><span className="ss-out-ico" aria-hidden="true">💌</span><div><b>사내연애 걱정 없는 1:1 소개팅</b><small>3교대·교대근무 이해해 주는 대기업·IT·전문직 일반 직장인과의 맞춤 매칭 (썸류센터 x 메디화이트 특별 매칭)</small></div><em aria-hidden="true">↗</em></a>}
