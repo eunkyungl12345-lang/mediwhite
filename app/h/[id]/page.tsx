@@ -16,7 +16,7 @@ async function load(id: number) {
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const x = await load(Number(params.id)); if (!x) return { title: "메디화이트" };
   const n = x.a?.n ?? 0, desc = `${x.h.region} ${x.h.kind} · ${n ? `현직자·퇴사자 ${n}명이 알려준 ` : ""}실수령·내부 분위기·입사해야만 아는 리스크. 병원 직원 익명 커뮤니티 메디화이트`;
-  return { title: `${x.h.name} — 실수령·분위기·리스크`, description: desc, alternates: { canonical: `/h/${x.h.id}` }, openGraph: { title: `${x.h.name}, 입사 전에 알고 가세요`, description: desc, images: [{ url: "/og.jpg", width: 1200, height: 630 }] } };
+  return { title: `${x.h.name} — 실수령·분위기·리스크`, description: desc, alternates: { canonical: `/h/${x.h.id}` }, openGraph: { title: `${x.h.name} — 이직 전에 실수령액부터 확인해요`, description: "다녀본 직원이 익명으로 알려주는 통장 실수령·실제 퇴근시간·고용안정성 팩트", images: [{ url: `/api/public/og?h=${x.h.id}`, width: 1200, height: 630, alt: `${x.h.name} 이직 전 팩트체크` }] }, twitter: { card: "summary_large_image", images: [`/api/public/og?h=${x.h.id}`] } };
 }
 export default async function PublicHosp({ params }: { params: { id: string } }) {
   const x = await load(Number(params.id)); if (!x) notFound(); const next = `/hospitals/${params.id}`;
