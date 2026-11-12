@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HospMarquee from "@/components/HospMarquee";
 import BrandLogo from "@/components/BrandLogo";
 import { db } from "@/lib/supabase";
 import { openExtJobs, isG3, extTags, EXT_SRC, splitArea, extCheckedLabel } from "@/lib/extJobs";
@@ -24,11 +25,13 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
   const login = (next: string) => `/login?next=${encodeURIComponent(next)}`, signup = (next: string) => `/login?mode=signup&next=${encodeURIComponent(next)}`;
   return <div className="pub-bg"><div className="app"><main className="pub">
     <header className="pub-h"><Link href="/" className="pub-brand" aria-label="메디화이트 홈"><BrandLogo /></Link><Link href="/login" className="btn">로그인 · 가입</Link></header>
-    <section className="pub-hero"><small className="pub-kicker">📍 강남 3구부터</small><h1>이직 전에<br />그 병원 실수령<br />확인하는 곳</h1><p>다녀본 직원이 알려주는 <b>통장 실수령</b>·<b>원장 성향</b>·<b>실제 퇴근 시간</b>. 입사하기 전에 확인하고 가세요.</p>
-      <div className="pub-pts"><span>💰 통장 실수령</span><span>🙆 원장 성향</span><span>⏰ 실제 퇴근</span><span>😶 태움</span><span>🌴 연차 방식</span></div>
+    <section className="pub-hero" id="find"><h1>병원 이직 전,<br />채용공고 뒤에 숨은<br /><em>실체</em>를 확인하세요</h1>
+      <div className="lp-badges sm"><div className="lp-badge"><span aria-hidden="true">🛡️</span><div><b>익명 보장</b><small>실명·전화번호 수집 0%</small></div></div><div className="lp-badge"><span aria-hidden="true">📊</span><div><b>공고에 없는 팩트</b><small>정규직 전환율 & 세후 실수령</small></div></div></div>
+      <p>계약직 전환율, <b>세후 실수령</b>, <b>실제 퇴근 시간</b>까지. 다녀본 선배들의 진짜 병원 데이터를 지원 전에 확인하세요.</p>
       <form action="/" className="jb2-search"><input name="q" defaultValue={kw} placeholder="지원할 병원 이름 검색 (예: 연세, 정형외과)" /><button className="btn">검색</button></form>
       {kw && <div className="pub-hosp">{(hs ?? []).length ? (hs ?? []).map(h => <Link key={h.id} href={`/h/${h.id}`}><b>🏥 {h.name}</b><small>{h.region} · {h.kind}</small></Link>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>‘{kw}’ 병원이 아직 없어요. <Link href={signup("/hospitals/check")} className="link">처음 등록하고 리뷰 남기기</Link></p>}</div>}
     </section>
+    {!kw && <HospMarquee />}
     <section className="f3" aria-label="공고에는 없는 3가지 팩트"><span className="f3-kick">공고에는 절대 안 나오는 3가지</span>
       <div className="f3-list">
         <Link href={signup("/hospitals")} className="f3-c r"><em>01</em><b>2년 뒤,<br />정규직 될까?</b><p>“전환 가능”이라 써놓고 2년마다 물갈이하는 병원. 다녀본 사람이 알려줘요.</p>
