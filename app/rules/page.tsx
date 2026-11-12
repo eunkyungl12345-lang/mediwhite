@@ -3,7 +3,7 @@ export const metadata = { title: "커뮤니티 규칙" };
 export default function Rules() {
   return (
     <div className="app" style={{ padding: "24px 16px 60px" }}>
-      <h1 style={{ fontFamily: "var(--f-display)", fontWeight: 400 }}>메디화이트 커뮤니티 규칙</h1>
+      <h1 style={{ fontWeight: 800, letterSpacing: "-.02em" }}>메디화이트 커뮤니티 규칙</h1>
       <div className="card" style={{ lineHeight: 1.65 }}>
         <h3>1. 익명이지만 책임은 글쓴이에게</h3>
         <p>메디화이트는 아이디·닉네임만으로 활동하는 익명 라운지예요. 다만 게시물의 법적 책임은 작성자 본인에게 있고, 수사기관의 적법한 요청이 있으면 접속 기록이 제공될 수 있어요.</p>

@@ -20,7 +20,7 @@ export default function BurnPaper({ text, onDone, onSound }: { text: string; onD
     const paper = document.createElement("canvas"); paper.width = W * dpr; paper.height = H * dpr; const p = paper.getContext("2d")!; p.setTransform(dpr, 0, 0, dpr, 0, 0);
     const g = p.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#FBF6EA"); g.addColorStop(1, "#F1E7D2"); p.fillStyle = g; p.beginPath(); p.roundRect(0, 0, W, H, 6); p.fill();
     p.strokeStyle = "rgba(120,160,200,.25)"; p.lineWidth = 1; for (let y = 64; y < H - 20; y += 30) { p.beginPath(); p.moveTo(18, y); p.lineTo(W - 18, y); p.stroke(); } p.strokeStyle = "rgba(220,90,90,.3)"; p.beginPath(); p.moveTo(42, 20); p.lineTo(42, H - 20); p.stroke();
-    p.fillStyle = "#3a2f28"; p.font = "600 15px 'Nanum Pen Script', 'IBM Plex Sans KR', system-ui"; p.textBaseline = "alphabetic";
+    p.fillStyle = "#3a2f28"; p.font = "600 15px 'Nanum Pen Script', Pretendard, system-ui"; p.textBaseline = "alphabetic";
     p.fillStyle = "#9a8a7a"; p.font = "700 12px system-ui"; p.fillText("오늘 태워버릴 걱정 한 장", 52, 40);
     p.fillStyle = "#2f2620"; p.font = "500 18px 'IBM Plex Sans KR', system-ui"; const words = Array.from(text); let line = "", y = 88; const maxW = W - 70;
     for (const ch of words) { const t = line + ch; if (ch === "\n" || p.measureText(t).width > maxW) { p.fillText(line, 52, y); line = ch === "\n" ? "" : ch; y += 30; if (y > H - 30) break; } else line = t; } if (line && y <= H - 30) p.fillText(line, 52, y);

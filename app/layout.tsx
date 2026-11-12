@@ -17,15 +17,14 @@ export const metadata: Metadata = {
   icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
   twitter: { card: "summary_large_image", title: "메디화이트", description: "이직 전에 그 병원 실수령 확인하는 곳", images: ["/og.jpg"] },
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#2C6B5E" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#1FA97A" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
       </head>
       <body>{children}<VersionGuard /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", name: "메디화이트", alternateName: ["메디화이트웹", "MediWhite"], url: SITE, description: "이직 전에 그 병원 실수령 확인하는 곳 — 병원 직원 익명 커뮤니티", potentialAction: { "@type": "SearchAction", target: `${SITE}/?q={q}`, "query-input": "required name=q" } }) }} /></body>
     </html>
