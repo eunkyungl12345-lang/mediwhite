@@ -85,11 +85,12 @@ export default async function BoardPage({ searchParams }: { searchParams: { cat?
       {notices.length > 0 && <div className="cm-notice">{notices.map((p: any) => <Link key={p.id} href={`/board/${p.id}`}><em>공지</em>{p.title}</Link>)}</div>}
       <div className="cm-list">
         {!posts.length && <div className="empty">{kw ? "검색 결과가 없어요." : fresh ? "최근 24시간 새글이 없어요." : "아직 글이 없어요. 첫 글을 올려보세요."}</div>}
-        {posts.map((p: any) => <Link key={p.id} href={`/board/${p.id}`} className="cm-row">
+        {posts.map((p: any) => <Link key={p.id} href={`/board/${p.id}`} className={"cm-row" + (p.author && p.r?.tier > 0 ? ` rk${p.r.tier}` : "")}>
           <div className="cm-tags"><span>{topicOf(p.topic).name}</span>{p.category !== "전체" && p.category !== NOTICE_CAT && <span className="g">{p.category}</span>}{isHot(p) && <span className="h">HOT</span>}{p.hidden && <span>🔒 블라인드</span>}</div>
           <h3>{p.title}{(live[p.id] ?? 0) >= 2 && <span className="live-eye sm"><i /> {live[p.id]}명 보는 중</span>}</h3>
           {p.body && <p>{p.body}</p>}
-          <div className="cm-cnt"><span>👍 {p.nr}</span><span>💬 {p.nc}</span><span>👁 {p.views ?? 0}</span><span className="r">{p.author?.dept ? `${p.author.dept} · ` : ""}{ago(p.created_at)}</span></div>
+          <div className="cm-by">{p.author ? <><Name r={p.r} dept={p.author.dept} nickname={p.author.nickname} badge={p.author.blue_badge} size={13} /><em className="cm-rk">{p.r.name}</em></> : <span>탈퇴한 회원</span>}</div>
+          <div className="cm-cnt"><span>👍 {p.nr}</span><span>💬 {p.nc}</span><span>👁 {p.views ?? 0}</span><span className="r">{ago(p.created_at)}</span></div>
         </Link>)}
       </div>
     </div>
