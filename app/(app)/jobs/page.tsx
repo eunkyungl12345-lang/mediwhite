@@ -69,6 +69,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
         <h2>공고만 보지 말고,<br />그 병원 실체까지 확인하세요</h2>
         <p>단순 공고를 넘어 실제 퇴근시간과 고용안정성(정규직 전환율) 팩트까지 함께 검증하세요.</p></section>
       <Link href="/jobs/new" className="jbx-hr"><span aria-hidden="true">📢</span><div><b>병원 채용 담당자이신가요?</b><small>전국 의료기사 타깃 공고 무료 등록하기</small></div><em>›</em></Link>
+      <Link href="/jobs/seek" className="jbx-seek"><span aria-hidden="true">🙋</span><div><b>저 구해요 — 익명 구직 프로필</b><small>이름 없이 경력만 올리면 병원이 먼저 제안해요 · 병원은 인재 찾기</small></div><em>›</em></Link>
       <nav className="jbx-th" aria-label="테마별 큐레이션">{TH.map(x => <Link key={x.k} href={link({ th: th === x.k ? "" : x.k })} className={th === x.k ? "on" : ""} aria-current={th === x.k ? "true" : undefined}>{x.n}</Link>)}</nav>
       <Link href="/jobs/day" className="day-banner"><span>🌙</span><div><b>저녁 약속 잡을 수 있는 알짜 병원</b><small>나이트 없는 상근·낮 근무 {openExtJobs().length}곳 · 3교대 탈출관</small></div><em>›</em></Link>
       <form className="jb2-search" action="/jobs">{dept && <input type="hidden" name="dept" value={dept} />}{region && <input type="hidden" name="region" value={region} />}<input name="q" defaultValue={kw} placeholder="병원 이름으로 찾기 (예: 서울대, 의료원)" /><button className="btn">검색</button></form>

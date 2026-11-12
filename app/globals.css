@@ -2745,3 +2745,22 @@ body{letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 .pd-by.rkb[class*=" rk"]{margin:0 0 6px;padding:6px 12px 6px 8px;border-radius:999px;box-shadow:none;animation:none;border-width:1.5px}
 .pd-by .cm-rk{font-size:11px}
 .pd-acts{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:flex-end;align-items:center;margin:4px 0 2px;font-size:13px;color:var(--muted)}.pd-acts form{display:inline}.pd-acts .link,.pd-acts button{font-size:13px}
+/* 🙋 저 구해요 */
+.sk-hero{padding:18px 0 10px}.sk-hero h2{margin:8px 0 4px;font-size:22px;letter-spacing:-.4px}.sk-hero p{margin:0;font-size:14px;line-height:1.6}
+.sk-badge{display:inline-block;background:#E8F7F0;color:#12805B;font-weight:700;font-size:12.5px;padding:4px 10px;border-radius:99px}
+.sk-form{display:grid;gap:10px}.sk-form label{display:grid;gap:4px;font-size:13px;font-weight:600}.sk-form input:not([type=checkbox]),.sk-form select,.sk-form textarea{width:100%;min-width:0}
+.sk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sk-ok{color:#12805B;font-size:13px;font-weight:600}
+.sk-me{border:1.5px solid #BFE8D6}
+.sk-filter{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}.sk-filter select{flex:1;min-width:120px}
+.sk-list{display:grid;gap:10px}.sk-card{display:grid;gap:8px}
+.sk-top{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.sk-top b{font-size:15px;margin-right:2px}.sk-top span{font-size:12px;background:#F3F5F7;border-radius:8px;padding:3px 8px;color:#4B5563}
+.sk-skills{font-size:13.5px;font-weight:600}.sk-intro{margin:0;font-size:14px;line-height:1.6;color:#374151;white-space:pre-wrap}
+.sk-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.sk-offer{width:100%;margin-top:4px}
+.sk-offer-in{border-top:1px solid #EEF0F2;padding:10px 0}.sk-offer-in:first-of-type{border-top:0;padding-top:0}
+.sk-contact{font-size:14px;font-weight:700;color:#12805B;background:#E8F7F0;border-radius:10px;padding:8px 10px;word-break:break-all}
+.jbx-seek{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:#F0FAF5;border:1px solid #CDEFDF;color:inherit;text-decoration:none;margin-top:8px}.jbx-seek div{flex:1;display:grid}.jbx-seek small{color:#4B5563;font-size:12.5px}.jbx-seek em{font-style:normal;color:#12805B;font-weight:700}
+.sk-form label.sk-chk{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:500}.sk-chk input{width:auto}
+.sk-sum{cursor:pointer;display:grid;gap:2px;list-style:none}.sk-sum::-webkit-details-marker{display:none}.sk-sum span{font-size:13px}
+.sk>section+section{margin-top:12px}
