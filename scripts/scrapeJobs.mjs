@@ -248,7 +248,7 @@ export function renderEntry(job) {
     `id: ${job.id}`,
     `h: ${q(job.h)}`,
     `dept: ${q(job.dept)}`,
-    'k: "총괄"',
+    `k: ${q(job.k || "총괄")}`,
     `area: ${q(job.area)}`,
     `time: ${q(job.time)}`,
     `pay: ${q(job.pay)}`,
