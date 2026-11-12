@@ -1,0 +1,52 @@
+name: Daily General Manager Jobs Scraper
+
+# 매일 새벽 5시(한국시간)에 메디잡에서 관리자급(총괄·실장·팀장) 공고를 모아 lib/extJobs.ts 에 커밋해요.
+# 깃허브 웹 > Actions 탭에서 [Run workflow] 로 직접 돌릴 수도 있어요.
+#
+# ⚠️ 이 파일은 아직 `.github/workflows/daily-jobs.yml` 로 올라가 있지 않아요.
+#    (Pickle 앱의 깃허브 연결에 'Actions' 쓰기 권한이 없어 워크플로우 파일을 푸시할 수 없습니다)
+#    깃허브 웹에서 새 파일로 `.github/workflows/daily-jobs.yml` 을 만들고 이 내용을 붙여넣으면 동작해요.
+#    다만 실행기가 있는 곳(미국·유럽 데이터센터)에서는 메디잡이 403 을 돌려줘요 — 한국 IP에서만 열리는 사이트예요.
+
+on:
+  schedule:
+    - cron: '0 20 * * *' # UTC 20:00 = KST 05:00
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-general-manager-jobs
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    name: 메디잡 관리자급 공고 수집
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Seoul
+    steps:
+      - name: 저장소 받기
+        uses: actions/checkout@v4
+
+      - name: Node.js 20 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 공고 수집
+        run: node scripts/scrapeJobs.mjs
+
+      - name: 변경사항 커밋·푸시
+        run: |
+          if [ -z "$(git status -s lib/extJobs.ts)" ]; then
+            echo "변경사항 없음 — 오늘은 새 공고가 없어요."
+            exit 0
+          fi
+          git config user.name "mediwhite-bot"
+          git config user.email "bot@mediwhite.kr"
+          git add lib/extJobs.ts
+          git commit -m "chore(jobs): 일일 메디잡 총괄·실장·팀장 공고 자동 수집"
+          git pull --rebase --autostash origin main
+          git push origin main
