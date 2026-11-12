@@ -64,7 +64,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   return (
     <div className="jb2">
       <section className="jbx"><span className="jbx-badge">🏥 의료기사 전용 채용관 · 공공·대학병원 공고 자동 수집</span>
-        <h2>사람인, 잡코리아 뒤지기 전에<br />여기서 먼저 확인하세요</h2>
+        <h2>공고만 보지 말고,<br />그 병원 실체까지 확인하세요</h2>
         <p>단순 공고를 넘어 실제 퇴근시간과 고용안정성(정규직 전환율) 팩트까지 함께 검증하세요.</p></section>
       <Link href="/jobs/new" className="jbx-hr"><span aria-hidden="true">📢</span><div><b>병원 채용 담당자이신가요?</b><small>전국 의료기사 타깃 공고 무료 등록하기</small></div><em>›</em></Link>
       <nav className="jbx-th" aria-label="테마별 큐레이션">{TH.map(x => <Link key={x.k} href={link({ th: th === x.k ? "" : x.k })} className={th === x.k ? "on" : ""} aria-current={th === x.k ? "true" : undefined}>{x.n}</Link>)}</nav>
