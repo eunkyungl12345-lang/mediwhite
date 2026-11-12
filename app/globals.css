@@ -2723,3 +2723,4 @@ body{letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 .ex-card{border-radius:20px}
 .jbx-th{margin:0;padding:2px 0 4px;min-width:0;max-width:100%}.jb2>*{min-width:0}
 .jb2-fold{min-width:0;max-width:100%;overflow:hidden}.jb2-quick{max-width:100%;overflow-x:auto;scrollbar-width:none}
+.ex-iv{margin-top:6px;background:#fff;color:var(--ink);border:1.5px solid #BFE3D5;box-shadow:none}.ex-iv small{color:var(--muted)}.ex-iv:hover{background:var(--scrub-soft)}

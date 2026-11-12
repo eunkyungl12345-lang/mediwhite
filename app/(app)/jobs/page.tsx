@@ -30,7 +30,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const isShare = (j: any) => !isPublic(j) && splitTags(j.body).tags.includes(SHARE_TAG);
   let jobs = (all ?? []).filter(j => src === "public" ? isPublic(j) : src === "member" ? !isPublic(j) : src === "share" ? isShare(j) : true).filter(j => searchParams.g3 !== "1" || /강남|서초|송파|잠실|역삼|신사|압구정|양재|방배|반포|문정|가락/.test(`${j.hospital} ${j.body ?? ""} ${j.welfare ?? ""}`));
   // 🎯 테마 큐레이션 — 공고에 적힌 글자 기준으로만 골라요 (모르는 건 넣지 않음)
-  const TH = [{ k: "day", n: "☀️ 3교대 탈출관" }, { k: "univ", n: "🏛️ 대학·상급병원관" }, { k: "pay", n: "💰 고연봉·인센티브" }, { k: "new", n: "🎯 신규·초보 환영" }, { k: "head", n: "👑 총괄·실장관" }] as const;
+  const TH = [{ k: "head", n: "👑 총괄·실장관" }, { k: "day", n: "☀️ 3교대 탈출관" }, { k: "univ", n: "🏛️ 대학·상급병원관" }, { k: "pay", n: "💰 고연봉·인센티브" }, { k: "new", n: "🎯 신규·초보 환영" }] as const;
   const th = TH.some(x => x.k === searchParams.th) ? searchParams.th! : "";
   const txt = (j: any) => `${j.hospital ?? ""} ${j.emp_type ?? ""} ${j.hours ?? ""} ${j.pay ?? ""} ${j.welfare ?? ""} ${j.body ?? ""}`;
   const RX = { day: /상근|주간\s*근무|낮\s*근무|나이트\s*(없|X|x)|야간\s*(없|X|x)|당직\s*(없|X|x)|3교대\s*(없|X|x)|오프\s*고정/, univ: /대학교?병원|대병원|상급종합|의료원|세브란스|아산병원|삼성서울|성모병원|국립.*병원|암센터|보훈병원|원자력/, pay: /인센|C-?arm|초음파\s*수당/, head: /총괄|실장|팀장|관리자|과장|부장/, new: /신입|졸업\s*예정|졸예|국시|면허\s*취득\s*예정|경력\s*무관|경력무관|신규\s*(간호사|방사선사|임상병리사)?\s*(가능|환영)/ } as Record<string, RegExp>;
