@@ -24,12 +24,12 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const s = (await getSession())!; const d = db();
   const region = JOB_REGIONS.includes(searchParams.region as any) ? searchParams.region! : "", dept = JOB_DEPTS.includes(searchParams.dept as any) ? searchParams.dept! : "";
   const src = ["public", "member", "share", "ext"].includes(searchParams.src ?? "") ? searchParams.src! : "", tg = QUICK.some(x => x.id === searchParams.t) ? searchParams.t! : "", kw = (searchParams.q ?? "").trim().slice(0, 30);
-  let q = d.from("jobs").select("id,hospital,region,dept,emp_type,pay,hours,welfare,deadline,views,closed,created_at,contact,body,author:users!jobs_author_id_fkey(nickname,dept,username)").eq("hidden", false).order("closed").order("created_at", { ascending: false }).limit(150);
-  if (region) q = q.eq("region", region); if (dept) q = q.eq("dept", dept); if (kw) q = q.ilike("hospital", `%${kw}%`); if (tg) q = q.ilike("body", `%#${tg}%`);
-  const [{ data: all }, { count: hospN }, { data: hosps }, { data: deptCounts }, { data: voices }] = await Promise.all([q, d.from("hospital_reviews").select("id", { count: "exact", head: true }), d.from("hospitals").select("id,name,region"), d.from("jobs").select("dept").eq("hidden", false).eq("closed", false).limit(1000), d.from("events").select("user_id,text").eq("kind", "jobvoice").limit(2000)]);
+  let q = d.from("jobs").select("id,hospital,region,dept,emp_type,pay,hours,welfare,deadline,views,closed,created_at,contact,body,author:users!jobs_author_id_fkey(nickname,dept,username)").eq("hidden", false).order("closed").order("created_at", { ascending: false }).limit(600);
+  if (region) q = q.eq("region", region); if (kw) q = q.ilike("hospital", `%${kw}%`); if (tg) q = q.ilike("body", `%#${tg}%`);
+  const [{ data: all }, { count: hospN }, { data: hosps }, { data: voices }] = await Promise.all([q, d.from("hospital_reviews").select("id", { count: "exact", head: true }), d.from("hospitals").select("id,name,region"), d.from("events").select("user_id,text").eq("kind", "jobvoice").limit(2000)]);
   const isPublic = (j: any) => j.author?.username === "mw_bot";
   const isShare = (j: any) => !isPublic(j) && splitTags(j.body).tags.includes(SHARE_TAG);
-  let jobs = (all ?? []).filter(j => src === "public" ? isPublic(j) : src === "member" ? !isPublic(j) : src === "share" ? isShare(j) : true).filter(j => searchParams.g3 !== "1" || /강남|서초|송파|잠실|역삼|신사|압구정|양재|방배|반포|문정|가락/.test(`${j.hospital} ${j.body ?? ""} ${j.welfare ?? ""}`));
+  let jobs = (all ?? []).filter(j => src === "public" ? isPublic(j) : src === "member" ? !isPublic(j) : src === "share" ? isShare(j) : src === "ext" ? false : true).filter(j => searchParams.g3 !== "1" || /강남|서초|송파|잠실|역삼|신사|압구정|양재|방배|반포|문정|가락/.test(`${j.hospital} ${j.body ?? ""} ${j.welfare ?? ""}`));
   // 🎯 테마 큐레이션 — 4대 핵심관으로 1줄 정돈 (신규·초보는 필터로 이동)
   const TH = [{ k: "head", n: "👑 총괄·실장관" }, { k: "day", n: "☀️ 3교대 탈출관" }, { k: "univ", n: "🏛️ 대학·상급병원관" }, { k: "pay", n: "💰 고연봉·인센티브" }] as const;
   const th = (TH.some(x => x.k === searchParams.th) || searchParams.th === "new") ? searchParams.th! : "";
@@ -38,6 +38,8 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const themeOk = (j: any) => !th ? true : th === "day" ? RX.day.test(txt(j)) : th === "univ" ? isPublic(j) || RX.univ.test(txt(j)) : th === "pay" ? parsePay(j.pay ?? "") >= 4500 || RX.pay.test(txt(j)) : th === "head" ? j.dept === "총괄" || RX.head.test(`${j.hospital ?? ""} ${j.emp_type ?? ""} ${(j.body ?? "").slice(0, 120)}`) : RX.new.test(txt(j));
   const extTheme = (e: any) => !th ? true : th === "day" ? true : th === "univ" ? RX.univ.test(e.h) : th === "pay" ? parsePay(e.pay) >= 4500 || RX.pay.test(`${e.pay} ${e.note}`) : th === "head" ? e.k === "총괄" || RX.head.test(e.dept) : RX.new.test(`${e.note} ${e.warn ?? ""} ${e.dept}`) || /경험 없어도|나이 무관/.test(e.note);
   jobs = jobs.filter(themeOk);
+  const baseJobs = jobs; // 직군 탭 숫자용 — 직군만 빼고 나머지 조건은 리스트와 똑같이
+  jobs = jobs.filter(j => !dept || j.dept === dept);
   // 설문 집계
   const vN = (voices ?? []).length, vc: Record<string, number> = {}; for (const v of voices ?? []) for (const id of String(v.text).split("|")[0].split(",").filter(Boolean)) vc[id] = (vc[id] ?? 0) + 1;
   const vTop = vN >= 3 ? VOICE_OPTS.map(o => ({ label: o.label, pct: Math.round((vc[o.id] ?? 0) / vN * 100) })).sort((a, b) => b.pct - a.pct).slice(0, 3) : [];
@@ -52,7 +54,6 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
     for (const h of matched) { const rv = (revs ?? []).filter(r => r.hospital_id === h.id); hmap[nk(h.name, h.region)] = { id: h.id, avg: overall(rv), n: rv.length }; } }
   const [facts, contributed] = await Promise.all([loadFacts(matched.map(h => h.id)), hasContributed(s.id, s.role)]); const fmap: Record<string, FactAgg> = {};
   for (const [k, v] of Object.entries(hmap)) if (facts[v.id]) fmap[k] = facts[v.id];
-  const cnt: Record<string, number> = {}; for (const r of deptCounts ?? []) cnt[r.dept] = (cnt[r.dept] ?? 0) + 1;
   const byPay = searchParams.sort === "pay";
   const link = (o: Record<string, string>) => { const p = new URLSearchParams(Object.entries({ region, dept, src, q: kw, t: tg, g3: searchParams.g3 === "1" ? "1" : "", sort: byPay ? "pay" : "", th, ...o }).filter(([, v]) => v)); return `/jobs${p.toString() ? "?" + p : ""}`; };
   const EXK: Record<string, string> = { 간호: "간호사", 간호조무사: "간호조무사", 방사선: "방사선", 물리치료: "물리치료", 임상병리: "임상병리", 원무: "원무", 총괄: "총괄", 치과위생사: "치과위생사" };
@@ -77,19 +78,15 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
     return false;
   };
   const exReg = (a: string) => a.startsWith("서울") ? "서울" : /고양|파주|의정부|남양주|구리|양주|동두천|포천|연천|김포/.test(a) ? "경기 북부" : a.startsWith("경기") ? "경기 남부" : "";
-  const ext = (!src || src === "ext") && !soonOnly ? openExtJobs().filter(e => matchDept(e, dept) && (!region || exReg(e.area) === region) && (!kw || e.h.includes(kw)) && (!tg || extTags(e.id).includes(tg)) && (searchParams.g3 !== "1" || isG3(e)) && extTheme(e)).sort((a, b) => byPay ? parsePay(b.pay) - parsePay(a.pay) : Number(isG3(b)) - Number(isG3(a))) : [];
+  const extBase = (!src || src === "ext") && !soonOnly ? openExtJobs().filter(e => (!region || exReg(e.area) === region) && (!kw || e.h.includes(kw)) && (!tg || extTags(e.id).includes(tg)) && (searchParams.g3 !== "1" || isG3(e)) && extTheme(e)) : [];
+  const ext = extBase.filter(e => matchDept(e, dept)).sort((a, b) => byPay ? parsePay(b.pay) - parsePay(a.pay) : Number(isG3(b)) - Number(isG3(a)));
   if (byPay) open.sort((a, b) => parsePay(b.pay ?? "") - parsePay(a.pay ?? ""));
   const { data: exH } = ext.length ? await d.from("hospitals").select("id,name").in("name", Array.from(new Set(ext.map(e => e.h)))) : { data: [] as any[] }; const EXH = new Map((exH ?? []).map(h => [h.name, h.id])); const exF = EXH.size ? await loadFacts(Array.from(EXH.values())) : {};
+  // 탭 뱃지 = 그 탭을 눌렀을 때 '모집 중'에 실제로 보이는 개수 (리스트와 같은 조건·같은 데이터)
+  const isOpenNow = (j: any) => !j.closed && dday(j.deadline) !== "마감" && (!soonOnly || isSoon(j));
   const tabCounts: Record<string, number> = {};
-  for (const r of deptCounts ?? []) {
-    if (!th) tabCounts[r.dept] = (tabCounts[r.dept] ?? 0) + 1;
-  }
-  for (const e of openExtJobs()) {
-    if (!extTheme(e)) continue;
-    for (const x of JOB_DEPTS) {
-      if (matchDept(e, x)) tabCounts[x] = (tabCounts[x] ?? 0) + 1;
-    }
-  }
+  for (const j of baseJobs) if (isOpenNow(j)) tabCounts[j.dept] = (tabCounts[j.dept] ?? 0) + 1;
+  for (const e of extBase) for (const x of JOB_DEPTS) if (matchDept(e, x)) tabCounts[x] = (tabCounts[x] ?? 0) + 1;
   const jcn = await jobCommentCounts();
   const soon = open.filter(j => { const x = dday(j.deadline); return x === "오늘 마감" || (x.startsWith("D-") && Number(x.slice(2)) <= 3); }).length;
   return (
