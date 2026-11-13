@@ -1842,6 +1842,11 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 }
 /* 💼 채용 v2 (의료계의 블라인드) */
 .jb2{display:grid;gap:12px}
+.jb2-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 2px 2px}
+.jb2-head h2{margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em}
+.jb2-head p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+.jb2-head-links{display:flex;gap:6px;flex-shrink:0}
+.jb2-head-links .btn{padding:6px 12px;font-size:13px;font-weight:700;border-radius:999px;white-space:nowrap}
 .jb2-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.jb2-hero h2{margin:0;font-size:22px;letter-spacing:-.4px}.jb2-hero p{margin:4px 0 0;font-size:13px;color:var(--muted)}.jb2-hero .btn{white-space:nowrap}
 .jb2-switch{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}.jb2-switch a{text-align:center;padding:11px;font-weight:800;color:var(--muted);text-decoration:none;font-size:14.5px}.jb2-switch a.on{background:var(--ink);color:var(--bg)}.jb2-switch small{font-weight:600;opacity:.7;margin-left:3px}
 .jb2-search{display:flex;gap:6px}.jb2-search input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);color:var(--ink);font:inherit}.jb2-search .btn{padding:8px 14px}
@@ -1856,6 +1861,11 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 }
 .jb2-tabs a{flex:none;position:relative;padding:9px 11px 11px;font-size:15.5px;font-weight:700;color:var(--muted);text-decoration:none;white-space:nowrap}.jb2-tabs a small{font-size:11px;margin-left:3px;color:var(--scrub);font-weight:800}
 .jb2-tabs a.on{color:var(--ink)}.jb2-tabs a.on::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2.5px;border-radius:2px;background:var(--ink)}
+.jb2-toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0}
+.jb2-toolbar .btn-tag{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;font-size:13px;font-weight:600}
+.jb2-toolbar .btn-tag.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.jb2-count{margin-left:auto;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.jb2-count b{color:var(--ink);font-weight:700}
 .jb2-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.jb2-filters a{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;font-size:13px;font-weight:600}.jb2-filters a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .jb2-region{margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px}
 .jb2-rgform{display:none}
