@@ -111,7 +111,6 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
         <RegionSelect value={region} />
         <Link href={link({ sort: byPay ? "" : "pay" })} className={"btn-tag" + (byPay ? " on" : "")} aria-pressed={byPay}>💰 급여순</Link>
         <Link href={link({ th: th === "new" ? "" : "new" })} className={"btn-tag" + (th === "new" ? " on" : "")}>🌱 초보환영</Link>
-        <Link href={link({ g3: searchParams.g3 === "1" ? "" : "1" })} className={"btn-tag" + (searchParams.g3 === "1" ? " on" : "")}>📍 강남 3구</Link>
         <span className="jb2-count">모집 중 <b>{(src === "ext" ? 0 : open.length) + ext.length}</b></span>
       </div>
       {s.role === "admin" && <ImportButton />}
