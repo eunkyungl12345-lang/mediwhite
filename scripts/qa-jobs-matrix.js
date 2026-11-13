@@ -9,11 +9,11 @@ const HEAD = /총괄|실장|팀장|관리자|과장|부장/;
   await p.goto(B + '/login?mode=signup'); await p.fill('input[name=username]', 'zz_wf_qa' + (Date.now() % 100000)); await p.fill('input[name=password]', 'pass1234!');
   await p.selectOption('select[name=dept]', '방사선').catch(() => {}); await p.fill('input[name=nickname]', 'QA' + Date.now() % 1000); await p.check('input[name=age14]'); await p.check('input[name=agree]');
   await p.click('button:has-text("가입하고 입장")'); await p.waitForURL(/(home|hospitals)/);
-  const read = async () => { await p.waitForSelector('.jb2-sum b'); return p.evaluate(() => {
+  const read = async () => { await p.waitForSelector('.jb2-count b'); return p.evaluate(() => {
     const vis = [...document.querySelectorAll('.jb2-list')].filter(l => !l.closest('.jb2-closed'));
     const cards = vis.flatMap(l => [...l.children]).map(c => ({ ext: c.classList.contains('ex-card'), t: c.querySelector('.jb3-t')?.textContent?.trim() ?? '', h: c.querySelector('.jb3-h')?.textContent?.trim() ?? '' }));
     const badges = {}; for (const a of document.querySelectorAll('.jb2-tabs a')) { const u = new URL(a.href); const d = u.searchParams.get('dept') ?? ''; badges[d] = Number(a.querySelector('small')?.textContent ?? 0); }
-    return { cards, badges, empty: !!document.querySelector('.jb2-empty'), sum: Number(document.querySelector('.jb2-sum b')?.textContent ?? -1), closed: document.querySelectorAll('.jb2-closed .jb3').length };
+    return { cards, badges, empty: !!document.querySelector('.jb2-empty'), sum: Number(document.querySelector('.jb2-count b')?.textContent ?? -1), closed: document.querySelectorAll('.jb2-closed .jb3').length };
   }); };
   const rows = [];
   for (const th of TH) {
