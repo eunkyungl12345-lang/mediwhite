@@ -56,11 +56,33 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
   const byPay = searchParams.sort === "pay";
   const link = (o: Record<string, string>) => { const p = new URLSearchParams(Object.entries({ region, dept, src, q: kw, t: tg, g3: searchParams.g3 === "1" ? "1" : "", sort: byPay ? "pay" : "", th, ...o }).filter(([, v]) => v)); return `/jobs${p.toString() ? "?" + p : ""}`; };
   const EXK: Record<string, string> = { 간호: "간호사", 간호조무사: "간호조무사", 방사선: "방사선", 물리치료: "물리치료", 임상병리: "임상병리", 원무: "원무", 총괄: "총괄", 치과위생사: "치과위생사" };
+  const matchDept = (e: any, d: string) => {
+    if (!d) return true;
+    if (EXK[e.k] === d) return true;
+    const dt = `${e.dept ?? ""} ${e.note ?? ""}`;
+    if (d === "방사선" && /방사선|영상의학|C-?arm|X-?ray/i.test(dt)) return true;
+    if (d === "간호사" && /간호|수술실|외래/i.test(dt)) return true;
+    if (d === "물리치료" && /물리치료|도수/i.test(dt)) return true;
+    if (d === "치과위생사" && /치과|위생사/i.test(dt)) return true;
+    if (d === "임상병리" && /임상병리|진단검사/i.test(dt)) return true;
+    if (d === "원무" && /원무|행정|보험청구|상담/i.test(dt)) return true;
+    if (d === "총괄" && (e.k === "총괄" || /총괄|실장|팀장|관리자|과장|부장/.test(dt))) return true;
+    return false;
+  };
   const exReg = (a: string) => a.startsWith("서울") ? "서울" : /고양|파주|의정부|남양주|구리|양주|동두천|포천|연천|김포/.test(a) ? "경기 북부" : a.startsWith("경기") ? "경기 남부" : "";
-  const ext = (!src || src === "ext") && !soonOnly ? openExtJobs().filter(e => (!dept || EXK[e.k] === dept) && (!region || exReg(e.area) === region) && (!kw || e.h.includes(kw)) && (!tg || extTags(e.id).includes(tg)) && (searchParams.g3 !== "1" || isG3(e)) && extTheme(e)).sort((a, b) => byPay ? parsePay(b.pay) - parsePay(a.pay) : Number(isG3(b)) - Number(isG3(a))) : [];
+  const ext = (!src || src === "ext") && !soonOnly ? openExtJobs().filter(e => matchDept(e, dept) && (!region || exReg(e.area) === region) && (!kw || e.h.includes(kw)) && (!tg || extTags(e.id).includes(tg)) && (searchParams.g3 !== "1" || isG3(e)) && extTheme(e)).sort((a, b) => byPay ? parsePay(b.pay) - parsePay(a.pay) : Number(isG3(b)) - Number(isG3(a))) : [];
   if (byPay) open.sort((a, b) => parsePay(b.pay ?? "") - parsePay(a.pay ?? ""));
   const { data: exH } = ext.length ? await d.from("hospitals").select("id,name").in("name", Array.from(new Set(ext.map(e => e.h)))) : { data: [] as any[] }; const EXH = new Map((exH ?? []).map(h => [h.name, h.id])); const exF = EXH.size ? await loadFacts(Array.from(EXH.values())) : {};
-  const exCnt: Record<string, number> = {}; for (const e of openExtJobs()) { const k = EXK[e.k]; if (k) exCnt[k] = (exCnt[k] ?? 0) + 1; }
+  const tabCounts: Record<string, number> = {};
+  for (const r of deptCounts ?? []) {
+    if (!th) tabCounts[r.dept] = (tabCounts[r.dept] ?? 0) + 1;
+  }
+  for (const e of openExtJobs()) {
+    if (!extTheme(e)) continue;
+    for (const x of JOB_DEPTS) {
+      if (matchDept(e, x)) tabCounts[x] = (tabCounts[x] ?? 0) + 1;
+    }
+  }
   const jcn = await jobCommentCounts();
   const soon = open.filter(j => { const x = dday(j.deadline); return x === "오늘 마감" || (x.startsWith("D-") && Number(x.slice(2)) <= 3); }).length;
   return (
@@ -71,9 +93,26 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
       <Link href="/jobs/new" className="jbx-hr"><span aria-hidden="true">📢</span><div><b>병원 채용 담당자이신가요?</b><small>전국 의료기사 타깃 공고 무료 등록하기</small></div><em>›</em></Link>
       <Link href="/jobs/seek" className="jbx-seek"><span aria-hidden="true">🙋</span><div><b>저 구해요 — 익명 구직 프로필</b><small>이름 없이 경력만 올리면 병원이 먼저 제안해요 · 병원은 인재 찾기</small></div><em>›</em></Link>
       <nav className="jbx-th" aria-label="테마별 큐레이션">{TH.map(x => <Link key={x.k} href={link({ th: th === x.k ? "" : x.k })} className={th === x.k ? "on" : ""} aria-current={th === x.k ? "true" : undefined}>{x.n}</Link>)}</nav>
-      <Link href="/jobs/day" className="day-banner"><span>🌙</span><div><b>저녁 약속 잡을 수 있는 알짜 병원</b><small>나이트 없는 상근·낮 근무 {openExtJobs().length}곳 · 3교대 탈출관</small></div><em>›</em></Link>
+      {th === "head" ? (
+        <div className="day-banner" style={{ background: "linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)", borderColor: "#a7f3d0" }}>
+          <span>👑</span>
+          <div>
+            <b style={{ color: "#065f46" }}>병원 총괄실장·팀장 채용관</b>
+            <small style={{ color: "#047857" }}>방사선·간호·도수·원무 총괄관리자 및 상담실장 엄선 {openExtJobs().filter(extTheme).length}곳</small>
+          </div>
+        </div>
+      ) : (
+        <Link href="/jobs/day" className="day-banner">
+          <span>🌙</span>
+          <div>
+            <b>저녁 약속 잡을 수 있는 알짜 병원</b>
+            <small>나이트 없는 상근·낮 근무 {openExtJobs().length}곳 · 3교대 탈출관</small>
+          </div>
+          <em>›</em>
+        </Link>
+      )}
       <form className="jb2-search" action="/jobs">{dept && <input type="hidden" name="dept" value={dept} />}{region && <input type="hidden" name="region" value={region} />}<input name="q" defaultValue={kw} placeholder="병원 이름으로 찾기 (예: 서울대, 의료원)" /><button className="btn">검색</button></form>
-      <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].filter(x => !x || x === dept || (cnt[x] ?? 0) + (exCnt[x] ?? 0) > 0).map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && (cnt[x] ?? 0) + (exCnt[x] ?? 0) ? <small>{(cnt[x] ?? 0) + (exCnt[x] ?? 0)}</small> : null}</Link>)}</div>
+      <div className="jb2-tabs" role="tablist">{["", ...JOB_DEPTS].filter(x => !x || x === dept || (tabCounts[x] ?? 0) > 0).map(x => <Link key={x} href={link({ dept: x })} className={dept === x ? "on" : ""}>{x ? deptLabel(x) : "전체"}{x && (tabCounts[x] ?? 0) ? <small>{tabCounts[x]}</small> : null}</Link>)}</div>
       <div className="jb2-filters">
         <Link href={link({ src: "" })} className={!src ? "on" : ""}>전체</Link><Link href={link({ src: "public" })} className={src === "public" ? "on" : ""}>🏛️ 대학·공공병원</Link><Link href={link({ src: "member" })} className={src === "member" ? "on" : ""}>👤 회원 공고</Link><Link href={link({ src: "share" })} className={src === "share" ? "on" : ""}>🤫 히든 공고</Link><Link href={link({ src: "ext" })} className={src === "ext" ? "on" : ""}>☀️ 상근 공고(외부)</Link>
         <RegionSelect value={region} />
@@ -82,9 +121,8 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
         <div className="jb2-quick"><Link href={link({ g3: searchParams.g3 === "1" ? "" : "1" })} className={"g3" + (searchParams.g3 === "1" ? " on" : "")}>📍 강남 3구</Link>{QUICK.map(x => <Link key={x.id} href={link({ t: tg === x.id ? "" : x.id })} className={tg === x.id ? "on" : ""}>{x.label}</Link>)}</div></details>
       <div className="jb2-sum"><Link href={link({ sort: byPay ? "" : "pay" })} className={"jb2-sort" + (byPay ? " on" : "")} aria-pressed={byPay}>💰 급여순</Link><span>모집 중 <b>{(src === "ext" ? 0 : open.length) + ext.length}</b></span>{soon > 0 && <span className="hot">⏰ 3일 안에 마감 {soon}</span>}{kw && <span>‘{kw}’ 검색 · <Link href={link({ q: "" })}>해제</Link></span>}{th && <span>{TH.find(x => x.k === th)?.n} · <Link href={link({ th: "" })}>해제</Link></span>}</div>
       {s.role === "admin" && <ImportButton />}
-      {ext.length > 0 && <><h3 className="dy-h" style={{ margin: "4px 0 0" }}>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h3><div className="jb2-list">{ext.slice(0, 4).map(e => <ExtCard key={e.id} e={e} hid={EXH.get(e.h)} fa={EXH.get(e.h) ? exF[EXH.get(e.h)!] : undefined} nc={jcn[`x${e.id}`] ?? 0} />)}</div>{ext.length > 4 && <Link href="/jobs/day" className="btn ghost jb2-more">🌙 알짜 병원 {ext.length}곳 전부 보기 ›</Link>}</>}
-      {src === "ext" ? null : open.length === 0 ? <div className="jb2-empty"><span>💼</span><b>{dept ? `${deptLabel(dept)} 공고가 아직 없어요` : "아직 올라온 공고가 없어요"}</b><p>단톡방에서 본 공고, 우리 병원 구인 — 첫 공고를 올려주세요. 공공병원 공고는 자동 수집이 켜지면 여기에 모여요.</p></div>
-        : <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={isPublic(j)} rv={hmap[nk(j.hospital, j.region)]} fa={fmap[nk(j.hospital, j.region)]} locked={!contributed} nc={jcn[`j${j.id}`] ?? 0} />)}</div>}
+      {ext.length > 0 && <><h3 className="dy-h" style={{ margin: "4px 0 0" }}>{th === "head" ? "👑 엄선 총괄·실장 알짜 공고" : th === "univ" ? "🏛️ 상급·대학병원 공고" : th === "pay" ? "💰 고연봉·인센티브 공고" : "🌙 저녁 약속 잡을 수 있는 알짜 병원"} <small>{ext.length}</small></h3><div className="jb2-list">{(th || dept ? ext : ext.slice(0, 4)).map(e => <ExtCard key={e.id} e={e} hid={EXH.get(e.h)} fa={EXH.get(e.h) ? exF[EXH.get(e.h)!] : undefined} nc={jcn[`x${e.id}`] ?? 0} />)}</div>{!th && !dept && ext.length > 4 && <Link href="/jobs/day" className="btn ghost jb2-more">🌙 알짜 병원 {ext.length}곳 전부 보기 ›</Link>}</>}
+      {open.length > 0 ? <div className="jb2-list">{open.map(j => <JobCard key={j.id} j={j} pub={isPublic(j)} rv={hmap[nk(j.hospital, j.region)]} fa={fmap[nk(j.hospital, j.region)]} locked={!contributed} nc={jcn[`j${j.id}`] ?? 0} />)}</div> : ext.length === 0 && src !== "ext" ? <div className="jb2-empty"><span>💼</span><b>{dept ? `${deptLabel(dept)} 공고가 아직 없어요` : "아직 올라온 공고가 없어요"}</b><p>단톡방에서 본 공고, 우리 병원 구인 — 첫 공고를 올려주세요. 공공병원 공고는 자동 수집이 켜지면 여기에 모여요.</p></div> : null}
       {closed.length > 0 && src !== "ext" && <details className="jb2-closed"><summary>마감된 공고 {closed.length}개</summary><div className="jb2-list">{closed.map(j => <JobCard key={j.id} j={j} pub={isPublic(j)} rv={hmap[nk(j.hospital, j.region)]} />)}</div></details>}
       <JobVoice n={vN} top={vTop} answered={answered} />
     </div>
