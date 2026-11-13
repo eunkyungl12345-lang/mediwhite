@@ -6,13 +6,22 @@ import { getSession } from "./auth";
 import { awardXp } from "./xp";
 import { personMention } from "./safety";
 import { textProblem } from "./textQuality";
-import { JOB_DEPTS } from "./jobs";
+import { JOB_DEPTS, JOB_REGIONS } from "./jobs";
+import { EXT_JOBS } from "./extJobs";
+import { guessKind } from "./interview";
 import { IV_ROUTE, IV_STEPS, IV_RESULT, IV_FOLLOW, ivKey } from "./interview";
 type R = { error?: string } | undefined;
 const clean = (v: FormDataEntryValue | null, n: number) => String(v ?? "").trim().slice(0, n);
 export async function submitInterview(_: R, fd: FormData): Promise<R> {
   const u = await getSession(); if (!u) redirect("/login"); const s = db();
-  const hid = Number(fd.get("hid")) || 0; const { data: h } = await s.from("hospitals").select("id").eq("id", hid).maybeSingle(); if (!h) return { error: "병원을 찾을 수 없어요" };
+  let hid = Number(fd.get("hid")) || 0;
+  if (!hid && fd.get("ext")) { // 🔗 외부 공고에서 들어온 병원 — 이름으로 찾고, 없으면 새로 등록
+    const e = EXT_JOBS.find(x => x.id === Number(fd.get("ext"))); const region = clean(fd.get("region"), 10);
+    if (!e) return { error: "공고를 찾을 수 없어요" }; if (!(JOB_REGIONS as readonly string[]).includes(region)) return { error: "병원 지역을 골라주세요" };
+    const { data: ex } = await s.from("hospitals").select("id").eq("name", e.h).limit(1).maybeSingle();
+    if (ex) hid = ex.id; else { const { data: nh, error } = await s.from("hospitals").insert({ name: e.h, region, kind: guessKind(e.h), created_by: u.id }).select("id").single(); if (error || !nh) return { error: "병원 등록에 실패했어요" }; hid = nh.id; }
+  }
+  const { data: h } = await s.from("hospitals").select("id").eq("id", hid).maybeSingle(); if (!h) return { error: "병원을 찾을 수 없어요" };
   const dept = clean(fd.get("dept"), 10), year = clean(fd.get("year"), 4), route = clean(fd.get("route"), 10), result = clean(fd.get("result"), 20);
   const steps = fd.getAll("step").map(String).filter(x => (IV_STEPS as readonly string[]).includes(x)), level = Number(fd.get("level")), feel = Number(fd.get("feel"));
   const q = clean(fd.get("q"), 1000), tip = clean(fd.get("tip"), 500), follow = IV_FOLLOW[result] ? clean(fd.get("follow"), 500) : "", wait = Math.round(Number(fd.get("wait")) || 0);

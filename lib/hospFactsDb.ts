@@ -42,9 +42,9 @@ export async function hasContributed(userId: string, role?: string, hid?: number
   const since = new Date(Date.now() - 183 * 86400000).toISOString();
   const gs = (p: string, from?: string) => { const q = d.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", userId).like("game", p); return from ? q.gte("updated_at", from) : q; };
   const rv = (from?: string) => { const q = d.from("hospital_reviews").select("id", { count: "exact", head: true }).eq("user_id", userId); return from ? q.gte("created_at", from) : q; };
-  const [{ count: a }, { count: b }, { count: c }, { count: x }, { count: ea }, { count: eb }, { count: ex }] = await Promise.all([gs("hfact:%", since), rv(since), gs("hwel:%", since), gs("hx:%", since), gs("hfact:%"), rv(), gs("hx:%")]);
-  if ((ea ?? 0) + (eb ?? 0) + (ex ?? 0) > 0 && await grantFounder(userId)) return true; // 모집 중에 제보가 있으면 창립 멤버로
-  if ((a ?? 0) + (b ?? 0) + (c ?? 0) + (x ?? 0) > 0) return true;
+  const [{ count: a }, { count: b }, { count: c }, { count: x }, { count: ea }, { count: eb }, { count: ex }, { count: iv }, { count: eiv }] = await Promise.all([gs("hfact:%", since), rv(since), gs("hwel:%", since), gs("hx:%", since), gs("hfact:%"), rv(), gs("hx:%"), gs("hintv:%", since), gs("hintv:%")]);
+  if ((ea ?? 0) + (eb ?? 0) + (ex ?? 0) + (eiv ?? 0) > 0 && await grantFounder(userId)) return true; // 모집 중에 제보가 있으면 창립 멤버로
+  if ((a ?? 0) + (b ?? 0) + (c ?? 0) + (x ?? 0) + (iv ?? 0) > 0) return true;
   const mode = await lockMode(); if (mode === "off") return true;
   if (mode !== "free3" || !hid) return false;
   const { data: g } = await d.from("game_state").select("state").eq("user_id", userId).eq("game", "hseen").maybeSingle(); const ids: number[] = (g?.state as any)?.ids ?? [];

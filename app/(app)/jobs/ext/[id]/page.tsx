@@ -20,6 +20,7 @@ export default async function ExtJobPage({ params }: { params: { id: string } })
       {extTags(e.id).length > 0 && <div className="jb3-tags" style={{ marginTop: 8 }}>{extTags(e.id).map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}
       <p style={{ margin: "10px 0 0" }}>☀️ {e.note}{e.warn ? ` · ⚠️ ${e.warn}` : ""}</p></section>
     <Link href={h ? `/hospitals/${h.id}` : `/search?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="ex-real"><span aria-hidden="true">👀</span><div><b>이 병원 세후 실수령 & 고용안정성 신호등 보기</b><small>다녀본 사람들의 정규직 전환율·실수령·퇴근 시간</small></div><em>›</em></Link>
+    <Link href={h ? `/hospitals/${h.id}?t=intv` : `/hospitals/interview?ext=${e.id}`} className="ex-real ex-iv"><span aria-hidden="true">🎤</span><div><b>이 병원 면접 질문 & 분위기 후기</b><small>면접 가봤다면 1분 만에 후기 남기기 · 합격/불합격/대기중</small></div><em>›</em></Link>
     <div className="jd-apply"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{extSrc(e)} 원문 지원하기 ↗</a></div>
     <JobComments jk={jobKey("x", e.id)} me={s.id} admin={s.role === "admin"} back={`/jobs/ext/${e.id}`} />
     <div className="muted" style={{ fontSize: 12 }}>공고 내용은 {extSrc(e)} 원문을 요약한 거예요. 지원 전 원문과 근로계약서를 꼭 확인하세요.</div>

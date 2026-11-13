@@ -9,8 +9,18 @@ export const IV_FOLLOW: Record<string, { q: string; ph: string; tag: string }> =
   "불합격": { q: "다음 지원자에게 조언 한마디", ph: "예) 술기 시험 비중이 커요. 활력징후·IV 연습하고 가세요", tag: "조언" },
 };
 export const isPass = (r: string) => r.startsWith("합격");
+/** 화면 표시용 결과 칩 — 합격 / 불합격 / 대기중 */
+export const IV_RESULT_LABEL: Record<string, string> = { "합격 후 입사": "✅ 합격 · 입사함", "합격했지만 입사 안 함": "✅ 합격 · 입사 안 함", "불합격": "❌ 불합격", "결과 대기": "⏳ 대기중" };
+export const ivResultTone = (r: string) => r.startsWith("합격") ? "ok" : r === "불합격" ? "no" : "wait";
 export const IV_WAIT = [3, 7, 14, 30, 60] as const;
 export const IV_FEEL = ["😊 좋았어요", "😐 보통", "😣 별로였어요"] as const;
 export const IV_LEVEL = ["매우 쉬움", "쉬움", "보통", "어려움", "매우 어려움"] as const;
 export type Interview = { dept: string; year: string; route: string; steps: string[]; level: number; result: string; feel: number; q: string; tip?: string; follow?: string; wait?: number; at: string };
 export const ivKey = (hid: number) => `hintv:${hid}`;
+
+/** 외부 공고 주소("서울 광진 · 건대입구역") → 채용 지역 추정. 모르면 "" (직접 고르게) */
+export const guessRegion = (area: string, regions: readonly string[]) => { const t = area.split(/\s/)[0];
+  if (t === "경기") return /고양|파주|의정부|남양주|구리|양주|동두천|포천|연천|가평|김포/.test(area) ? "경기 북부" : "경기 남부";
+  if (/충[남북]|충청/.test(t)) return "충청"; if (/전[남북]|전라/.test(t)) return "전라"; if (/경[남북]|경상/.test(t)) return "경상";
+  return regions.includes(t) ? t : ""; };
+export const guessKind = (name: string) => /치과/.test(name) ? "치과" : /한의원|한방/.test(name) ? "한방병원" : /요양병원/.test(name) ? "요양병원" : /종합병원|의료원/.test(name) ? "종합병원" : /의원$|의원\s/.test(name) ? "의원" : /병원/.test(name) ? "병원" : "기타";

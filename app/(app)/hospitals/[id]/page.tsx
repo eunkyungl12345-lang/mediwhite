@@ -23,7 +23,7 @@ import { loadNps } from "@/lib/nps";
 import { memoOnce } from "@/lib/memo";
 import NpsBox from "@/components/jobs/NpsBox";
 import NpsAdmin from "@/components/jobs/NpsAdmin";
-import { ivKey, IV_LEVEL, IV_FEEL, IV_FOLLOW, isPass, type Interview } from "@/lib/interview";
+import { ivKey, IV_LEVEL, IV_FEEL, IV_FOLLOW, isPass, type Interview, IV_RESULT_LABEL, ivResultTone } from "@/lib/interview";
 import { PAY } from "@/lib/hospFacts";
 import { dday } from "@/lib/jobs";
 import { welAgg, welKey, type Welfare } from "@/lib/welfare";
@@ -107,7 +107,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <div className="rf-meta">{x.meta.join("  |  ")}{x.v ? <em>✅ 인증</em> : null}{x.mine ? <em className="me">내 리뷰</em> : null}</div>
         {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><span className="rf-stars">{[1, 2, 3, 4, 5].map(i => <i key={i} className={x.star >= i - .25 ? "on" : ""}>★</i>)}</span>{typeof x.rec3 === "number" && <span className={"rc-rec r" + x.rec3}>{REC3[x.rec3]}</span>}</div>}
         {x.title && <h3 className="rf-title">{x.title}</h3>}
-        {(x.pros || x.cons) && (locked && !x.mine ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 솔직한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>
+        {(x.pros || x.cons) && (locked && !x.mine ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 솔직한 이야기</p><Link href={`/hospitals/check?id=${id}`} className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>
           : <More long={(x.pros?.length ?? 0) + (x.cons?.length ?? 0) + (x.tip?.length ?? 0) > 140}>{x.pros && <p className="rf-pc"><em className="g">장점</em>{x.pros}</p>}{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</More>)}
         <div className="rv2-foot"><HelpBtn hid={id} k={x.key} n={help.get(x.key)?.n ?? 0} on={!!help.get(x.key)?.me} />
           <RevMark /><span className="rv2-act">{x.mine && <Link href={x.rid ? `/hospitals/${id}?write=1#review-edit` : `/hospitals/check?id=${id}`} className="rv2-edit">✏️ 수정</Link>}{x.rid ? (x.mine || s.role === "admin" ? <ReviewDelete id={x.rid} /> : <ReportButton kind="review" id={String(x.rid)} />) : x.mine || s.role === "admin" ? <form action={deleteFactCard.bind(null, id, x.key)}><ConfirmSubmit className="rv2-del" msg={x.mine ? "내 제보를 삭제할까요? 신호등·실수령 집계에서도 빠지고 되돌릴 수 없어요." : "이 한줄평 글을 지울까요? (평가 숫자는 남아요)"}>🗑️ 삭제</ConfirmSubmit></form> : null}{!x.mine && !x.rid && <ReportButton kind="fact" id={`${id}:${x.key}`} />}</span></div>
@@ -117,7 +117,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       <NpsBox n={nps} />
       {s.role === "admin" && <NpsAdmin hid={id} linked={!!nps} />}
         <div className="fb"><div className="fb-h"><b>💰 직종별 세후 실수령</b><span>{need}명 이상 모인 직종만</span></div>
-          {payByDept.length ? (locked ? <div className="fb-lockmsg"><b>🔒 체크 하나 남기고 6개월간 모든 병원 급여 보기</b><Link href="/hospitals/check" className="btn">🔎 체크하고 보기</Link></div>
+          {payByDept.length ? (locked ? <div className="fb-lockmsg"><b>🔒 체크 하나 남기고 6개월간 모든 병원 급여 보기</b><Link href={`/hospitals/check?id=${id}`} className="btn">🔎 체크하고 보기</Link></div>
             : payByDept.map(x => <div key={x.dept} className="fb-risk" style={{ background: "var(--bg)" }}><span>{x.dept} <small className="muted">({x.n}명 · {x.lo}~{x.hi})</small></span><em style={{ color: "#1F7A4C" }}>보통 {x.mid}만</em></div>))
             : <p className="muted" style={{ margin: 0, fontSize: 13 }}>아직 직종별로 공개할 만큼 모이지 않았어요.</p>}
           <Link href={`/hospitals/check?id=${id}`} className="btn ghost" style={{ justifySelf: "start" }}>💰 내 실수령 알려주기</Link></div>
@@ -126,9 +126,9 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         {ivs.length > 0 && <div className="fb-head"><div><b>{(ivs.reduce((a, b) => a + b.level, 0) / ivs.length).toFixed(1)}</b><span>난이도 (5점)</span></div><div><b>{Math.round(ivs.filter(x => isPass(x.result)).length / ivs.length * 100)}%</b><span>합격 후기</span></div>{ivs.some(x => x.wait) && <div><b>{(() => { const w = ivs.filter(x => x.wait).map(x => x.wait!).sort((a, b) => a - b); const m = w[Math.floor((w.length - 1) / 2)]; return m >= 60 ? "한 달+" : `${m}일`; })()}</b><span>결과 발표까지</span></div>}<div><b>{Math.round(ivs.filter(x => x.feel === 0).length / ivs.length * 100)}%</b><span>😊 좋은 경험</span></div></div>}
         <Link href={`/hospitals/interview?id=${id}`} className="btn">{myIv ? "✏️ 내 면접 후기 수정" : "🎤 면접 후기 남기기"}</Link>
         {!ivs.length ? <p className="muted" style={{ fontSize: 13 }}>아직 면접 후기가 없어요. 면접 본 적 있다면 받은 질문을 남겨주세요. 다음 지원자에게 제일 큰 도움이 돼요.</p>
-          : ivs.map((x, i) => <article key={i} className="rf-item"><div className="rf-meta">{[x.dept, `${x.year}년`, x.route, x.result].join("  |  ")}</div>
+          : ivs.map((x, i) => <article key={i} className="rf-item"><div className="rf-meta"><span className={"iv-chip " + ivResultTone(x.result)}>{IV_RESULT_LABEL[x.result] ?? x.result}</span>{[x.dept, `${x.year}년`, x.route].join("  |  ")}</div>
             <div className="iv-tags"><span>난이도 {IV_LEVEL[x.level - 1]}</span><span>{IV_FEEL[x.feel]}</span>{x.steps.map(st => <span key={st}>{st}</span>)}</div>
-            {locked && x.uid !== s.id ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">질문</em>1분 자기소개와 지원 동기, 그리고 이 병원만의 단골 질문이 여기에 있어요</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 면접 후기 보기</Link></div>
+            {locked && x.uid !== s.id ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">질문</em>1분 자기소개와 지원 동기, 그리고 이 병원만의 단골 질문이 여기에 있어요</p><Link href={`/hospitals/interview?id=${id}`} className="btn">🎤 면접 후기 남기고 전부 보기</Link></div>
               : <><p className="rf-pc"><em className="g">질문</em><span style={{ whiteSpace: "pre-wrap" }}>{x.q}</span></p>{x.follow && IV_FOLLOW[x.result] && <p className="rf-pc"><em className="b">{IV_FOLLOW[x.result].tag}</em>{x.follow}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</>}
           <div className="rc-foot"><span /><RevMark /></div></article>)}
       </div>}
@@ -137,7 +137,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <section className="rv2-stat"><h3>🎁 직원들이 실제로 쓴 복지 <small>({wa.n}명)</small></h3>
           {wa.n >= need ? <>
             <div className="wf-agg">{wa.items.slice(0, 12).map(x => <div key={x.name}><span>{x.cat ?? "➕"} {x.name}</span><i><em style={{ width: `${x.n / wa.n * 100}%` }} /></i><small>{x.n}명 써봤어요</small><b>★ {x.avg.toFixed(1)}</b></div>)}</div>
-            {wa.texts.length > 0 && (locked ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">후기</em>복지를 실제로 신청해 본 과정과 조건에 대한 이야기</p><Link href="/hospitals/check" className="btn">체크 하나 남기고 복지 후기 보기</Link></div>
+            {wa.texts.length > 0 && (locked ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">후기</em>복지를 실제로 신청해 본 과정과 조건에 대한 이야기</p><Link href={`/hospitals/check?id=${id}`} className="btn">체크 하나 남기고 복지 후기 보기</Link></div>
               : <div className="wf-texts">{wa.texts.map((x, k) => <More key={k} long={x.length > 140}><p className="rf-pc"><em className="g">후기</em>{x}</p></More>)}</div>)}
           </> : <p className="muted" style={{ fontSize: 13, margin: 0 }}>{wa.n ? `${wa.n}명이 평가했어요. ${need - wa.n}명만 더 모이면 공개돼요.` : "진료비 감면, 기숙사, 식당, 보수교육비… 실제로 써본 복지를 처음 알려주세요."}</p>}
           <Link href={`/hospitals/welfare?id=${id}`} className="btn" style={{ justifySelf: "start" }}>{myWel ? "✏️ 내 복지 평가 수정" : "🎁 복지 평가하기"}</Link>

@@ -15,7 +15,7 @@ export default function ExtCard({ e, hid, fa, nc }: { e: ExtJob; hid?: number; f
     <PosBadges list={posBadges(fa)} max={3} />
     <div className="jb3-f">☀️ {e.note}{e.warn ? ` · ⚠️ ${e.warn}` : ""}{nc !== undefined && <> · <Link href={`/jobs/ext/${e.id}#jc`} className={"jc-cnt" + (nc ? " on" : "")}>{nc ? `💬 댓글 ${nc}` : "💬 질문하기"}</Link></>}</div>
     <Link href={hid ? `/hospitals/${hid}` : `/search?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="ex-real"><span aria-hidden="true">👀</span><div><b>이 병원 세후 실수령 & 고용안정성 신호등 보기</b><small>사람인엔 없는, 다녀본 사람들의 정규직 전환율·실수령·퇴근 시간</small></div><em>›</em></Link>
-    <Link href={hid ? `/hospitals/${hid}?t=intv` : `/search?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="ex-real ex-iv"><span aria-hidden="true">🎤</span><div><b>이 병원 면접 질문 & 분위기 후기</b><small>면접 가봤다면 1분 만에 후기 남기기</small></div><em>›</em></Link>
+    <Link href={hid ? `/hospitals/${hid}?t=intv` : `/hospitals/interview?ext=${e.id}`} className="ex-real ex-iv"><span aria-hidden="true">🎤</span><div><b>이 병원 면접 질문 & 분위기 후기</b><small>면접 가봤다면 1분 만에 후기 남기기</small></div><em>›</em></Link>
     <div className="ex-acts"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn ghost">원문 지원하기 ↗</a></div>
   </div>;
 }
