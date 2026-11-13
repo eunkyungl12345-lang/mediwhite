@@ -5,7 +5,7 @@ export type ExtSrc = "사람인" | "잡코리아" | "메디잡";
 export type ExtJob = { id: number; h: string; dept: string; k: "간호" | "간호조무사" | "방사선" | "물리치료" | "임상병리" | "원무" | "총괄" | "치과위생사"; area: string; time: string; pay: string; until?: string; note: string; warn?: string; src?: ExtSrc; url?: string };
 export const EXT_SRC = "메디잡";
 /** 마지막으로 원문을 확인한 날. '채용 시 마감' 공고는 이 날부터 30일 지나면 자동으로 숨겨요 (새 파일로 갱신하면 날짜만 바꾸기) */
-export const EXT_CHECKED = "2026-11-13";
+export const EXT_CHECKED = "2026-11-14";
 export const extCheckedLabel = () => `${Number(EXT_CHECKED.slice(5, 7))}/${Number(EXT_CHECKED.slice(8))} 확인`;
 export const extUrl = (id: number) => `https://www.medijob.cc/com/cpn/com_cpn_100_view_02?recruitSeqno=${id}`;
 export const extSrc = (j: ExtJob): ExtSrc => j.src ?? "메디잡";
@@ -81,6 +81,10 @@ export const EXT_JOBS: ExtJob[] = [
   { id: 3770403, h: "리젠솔루션", dept: "정형통증 총괄실장", k: "총괄", area: "경기 남부(수원·오산)", time: "주5일 · 9~18시", pay: "실수령 450~550만", note: "컨설팅 연계 정형통증의원 총괄, C-arm/진료 전반 총괄" },
   { id: 3735619, h: "메디피움 분당의원", dept: "공단검진 총괄팀장", k: "총괄", area: "경기 성남 분당", time: "주5일 · 8~17시", pay: "연 4,200~5,000만", note: "대형 검진센터 공단검진팀 총괄 관리자" },
   // 🤖 자동 수집 (메디잡 검색: 총괄·실장·팀장, 2026-11-12)
+  { id: 3774491, h: "신영통마디척척의원", dept: "방사선사 팀장", k: "총괄", area: "경기 화성시 · 망포역 도보 15분", time: "월~토 근무/ 매월 4회 휴무", pay: "연봉 7,500~7,500만원", note: "병원 전반 운영 및 관리 총괄 · 경력 3년", warn: "경력 3년 이상" },
+  { id: 3774045, h: "강북으뜸병원", dept: "원무행정", k: "총괄", area: "서울 · 미아사거리역 도보 1분", time: "주5일", pay: "연봉 5,000~5,000만원 (면접 후 결정)", note: "원무 행정 총괄 · 경력 5년", warn: "경력 5년 이상" },
+  { id: 3774114, h: "영등포넘버원정형외과의원", dept: "방사선사", k: "방사선", area: "서울 영등포구 · 영등포역 도보 3분", time: "주6일 · 평일 09:00~18:00 · 토요일 09:00~13:00", pay: "연봉 5,400~5,500만원", note: "X-ray, C-arm (BMD 없음, 약재기 없음) · 경력 1년", warn: "경력 1년 이상" },
+  { id: 3774226, h: "의료법인 사과나무의료재단 사과나무치과병원", dept: "치과위생사", k: "치과위생사", area: "경기 고양시 일산서구 · 주엽역 도보 3분", time: "주5일", pay: "회사 내규", until: "2026-11-22", note: "치과 진료실 업무" },
   { id: 3772741, h: "리핌성형외과", dept: "수술실 팀장", k: "총괄", area: "서울 강남구 · 압구정역 도보 1분", time: "주5일근무 · 평일 10:00~19:00 · 토요일 10:00~16:00", pay: "월급 250~330만원 (면접 후 결정)", note: "★[압구정역/주5일]★ 리핌성형외과 수술실 팀장급 경력직 선생님 모집(경력필수) ·…", warn: "경력 1년 이상" },
   { id: 3772815, h: "경희백한방병원", dept: "대외협력팀 팀장", k: "총괄", area: "인천 · 인하대역", time: "주5일", pay: "면접시 협의 (경력 우대)", note: "대외협력/업무협약/협력기관 및 단체관리 · 경력 5년", warn: "경력 5년 이상" },
   { id: 3772624, h: "거북섬 한방병원", dept: "대외협력 팀장", k: "총괄", area: "경기 시흥시 · 오이도역 도보 45분", time: "협의가능", pay: "월급 300~700만원 (면접 후 결정)", note: "대외협력 팀장 모집" },
