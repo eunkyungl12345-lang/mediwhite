@@ -1845,7 +1845,15 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .jb2-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.jb2-hero h2{margin:0;font-size:22px;letter-spacing:-.4px}.jb2-hero p{margin:4px 0 0;font-size:13px;color:var(--muted)}.jb2-hero .btn{white-space:nowrap}
 .jb2-switch{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}.jb2-switch a{text-align:center;padding:11px;font-weight:800;color:var(--muted);text-decoration:none;font-size:14.5px}.jb2-switch a.on{background:var(--ink);color:var(--bg)}.jb2-switch small{font-weight:600;opacity:.7;margin-left:3px}
 .jb2-search{display:flex;gap:6px}.jb2-search input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);color:var(--ink);font:inherit}.jb2-search .btn{padding:8px 14px}
-.jb2-tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);gap:2px}.jb2-tabs::-webkit-scrollbar{display:none}
+.jb2-tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--line);gap:2px;-webkit-overflow-scrolling:touch}
+@media (max-width:719px){.jb2-tabs{scrollbar-width:none}.jb2-tabs::-webkit-scrollbar{display:none}}
+@media (min-width:720px){.jb2-tabs{flex-wrap:wrap;row-gap:4px;overflow-x:visible}}
+@media (hover:hover) and (pointer:fine){
+  .jb2-tabs{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .jb2-tabs::-webkit-scrollbar{height:4px;display:block}
+  .jb2-tabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .jb2-tabs::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+}
 .jb2-tabs a{flex:none;position:relative;padding:9px 11px 11px;font-size:15.5px;font-weight:700;color:var(--muted);text-decoration:none;white-space:nowrap}.jb2-tabs a small{font-size:11px;margin-left:3px;color:var(--scrub);font-weight:800}
 .jb2-tabs a.on{color:var(--ink)}.jb2-tabs a.on::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2.5px;border-radius:2px;background:var(--ink)}
 .jb2-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.jb2-filters a{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;font-size:13px;font-weight:600}.jb2-filters a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -2276,7 +2284,6 @@ body:has(.r3.full) .rs-xp{position:fixed;left:50%;bottom:calc(120px + env(safe-a
 .hd-mob{display:none}.hd-chat{position:relative}.hd-dot{position:absolute;top:2px;right:0;min-width:16px;height:16px;border-radius:8px;background:#E5484D;color:#fff;font-size:10px;font-style:normal;font-weight:800;display:grid;place-items:center;padding:0 3px}
 @media (max-width:719px){.hd-mob{display:inline-flex}.chat-fab{display:none!important}}
 .jb2-fold{border:1px solid var(--line);border-radius:12px;background:var(--surface)}.jb2-fold summary{cursor:pointer;list-style:none;padding:10px 14px;font-size:14px;font-weight:800}.jb2-fold summary::-webkit-details-marker{display:none}.jb2-fold summary small{font-weight:500;color:var(--muted);margin-left:6px}.jb2-fold summary b{color:#1F9D63}.jb2-fold .jb2-quick{padding:0 12px 12px}
-.jb2-tabs{scrollbar-width:none}.jb2-tabs::-webkit-scrollbar{display:none}
 /* 색 역할 정리: 초록=좋음·주요 행동, 파랑=위치(강남 3구·역), 주황=오픈 기념만 */
 .ex-sta{background:#E8F0FF;color:#2F5BB5}
 @media (min-width:999999px){.ex-sta{background:#1E2A44;color:#9CC0FF}}
