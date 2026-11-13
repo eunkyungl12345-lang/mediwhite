@@ -39,7 +39,7 @@ export default async function DayPage({ searchParams }: { searchParams: { k?: st
     <h3 className="dy-h" id="ext">🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext0.length}</small></h3>
     <p className="muted" style={{ fontSize: 12.5, margin: "-4px 0 0", lineHeight: 1.55 }}>🔄 {extCheckedLabel()} · {EXT_SRC}에 공개된 공고 중 낮 근무만 골라 핵심만 적었어요. 조건은 바뀔 수 있으니 <b>지원 전 원문을 꼭 확인</b>하세요.</p>
     <div className="dtab">{[["", "전체", ext0.length] as const, ...["간호", "간호조무사", "방사선", "물리치료", "임상병리", "원무"].filter(k => kinds.includes(k as any)).map(k => [k, ({ 간호: "간호사", 방사선: "방사선사", 물리치료: "물리치료사", 임상병리: "임상병리사" } as Record<string, string>)[k] ?? k, ext0.filter(e => e.k === k).length] as const)].map(([k, n, cnt]) => <Link key={k} href={dl({ k })} className={ek === k ? "on" : ""} scroll={false}>{n} <small>{cnt}</small></Link>)}</div>
-    <div className="rf-kw ex-conds"><Link href={dl({ g3: g3 ? "" : "1" })} className={"g3" + (g3 ? " on" : "")} scroll={false}>📍 강남 3구 {ext0.filter(isG3).length}</Link>{CONDS.map(c => <Link key={c} href={dl({ c: ec === c ? "" : c })} className={ec === c ? "on" : ""} scroll={false}>{QUICK.find(q => q.id === c)?.label ?? c}</Link>)}</div>
+    <div className="rf-kw ex-conds">{CONDS.map(c => <Link key={c} href={dl({ c: ec === c ? "" : c })} className={ec === c ? "on" : ""} scroll={false}>{QUICK.find(q => q.id === c)?.label ?? c}</Link>)}</div>
     {!ext.length && <p className="muted" style={{ fontSize: 13 }}>이 조건에 맞는 공고가 지금은 없어요.</p>}
     <div className="ex-list">{ext.map(e => <div key={e.id} className="ex">
       <div className="ex-top"><b>{e.h}</b>{e.until && <span className="ex-dd">~{e.until.slice(5).replace("-", "/")}</span>}</div>

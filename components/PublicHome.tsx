@@ -47,9 +47,9 @@ export default async function PublicHome({ q, c, k, g3 }: { q?: string; c?: stri
     <OpenPromo href="/login?mode=signup" />
     <section id="ext" className="pub-sec"><h2>🌙 저녁 약속 잡을 수 있는 알짜 병원 <small>{ext.length}</small></h2><div className="pb-ex"><small>다녀본 사람 리뷰가 모이면 이런 뱃지가 붙어요 <b>(예시)</b></small><PosBadges list={["⏰ 정시 퇴근", "🙆 원장 터치 적음", "🌴 주5일 + 연차 따로"]} /></div>
       <div className="dtab">{[["", "전체", all.length] as const, ...kinds.map(x => [x, DL[x], all.filter(e => e.k === x).length] as const)].map(([x, n, cnt]) => <Link key={x} href={qs({ k: x })} className={ek === x ? "on" : ""} scroll={false}>{n} <small>{cnt}</small></Link>)}</div>
-      <div className="rf-kw ex-conds"><Link href={qs({ g3: g3 ? "" : "1" })} className={"ex-g3chip" + (g3 ? " on" : "")} scroll={false}>📍 강남 3구만 <small>{g3n}</small></Link>{CONDS.map(x => <Link key={x} href={qs({ c: c === x ? "" : x })} className={c === x ? "on" : ""} scroll={false}>{tagLabel(x)}</Link>)}</div>
+      <div className="rf-kw ex-conds">{CONDS.map(x => <Link key={x} href={qs({ c: c === x ? "" : x })} className={c === x ? "on" : ""} scroll={false}>{tagLabel(x)}</Link>)}</div>
       <div className="ex-list">{ext.slice(0, 6).map(e => <div key={e.id} className="ex">
-        <div className="ex-top"><b>{e.h}</b>{isG3(e) && <span className="ex-g3">강남 3구</span>}</div>
+        <div className="ex-top"><b>{e.h}</b></div>
         <div className="ex-meta">{e.dept} · {splitArea(e.area).r}{splitArea(e.area).st && <span className="ex-sta">🚇 {splitArea(e.area).st}</span>}</div>
         <div className="ex-row"><span>⏰ {e.time}</span><span>💰 {e.pay}</span></div>
         <PayCalc pay={e.pay} signup={signup(EHP.get(e.h) ? `/hospitals/${EHP.get(e.h)}` : "/hospitals/check")} />
