@@ -136,7 +136,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
             </div>}
             <footer className="mc-foot"><Link href={`/hospitals/${r.hid}?t=intv`} className="mc-more">면접 후기 전체 보기 ›</Link><RevMark /></footer>
           </article>; })}</div>
-          : <div className="fb fb-wait"><b>{q && ivAny ? `‘${q}’ 병원 면접 후기가 없어요` : region && ivHit.length ? "이 지역엔 면접 후기가 아직 없어요" : "아직 면접 후기가 없어요"}</b><p>{q && ivAny ? "다른 병원 이름으로 검색하거나, 전체 면접 후기를 보세요." : region && ivHit.length ? `다른 지역엘 ${ivHit.length}건이 있어요.` : "면접 봤던 병원 하나만 골라 질문·분위기 한 줄만 남겨주세요. 다음 지원자의 하루가 달라져요."}</p>
+          : <div className="fb fb-wait"><b>{q && ivAny ? `‘${q}’ 병원 면접 후기가 없어요` : region && ivHit.length ? "이 지역엔 면접 후기가 아직 없어요" : "아직 면접 후기가 없어요"}</b><p>{q && ivAny ? "다른 병원 이름으로 검색하거나, 전체 면접 후기를 보세요." : region && ivHit.length ? `다른 지역엔 ${ivHit.length}건이 있어요.` : "면접 봤던 병원 하나만 골라 질문·분위기 한 줄만 남겨주세요. 다음 지원자의 하루가 달라져요."}</p>
             <div className="row" style={{ justifyContent: "center" }}>{q && ivAny ? <Link href={link({ q: "", region: "" })} className="btn ghost">전체 면접 후기 보기</Link> : region && ivHit.length > 0 ? <Link href={link({ region: "" })} className="btn ghost">전체 지역 면접 후기 보기</Link> : null}<Link href="/hospitals/interview" className="btn">🎤 면접 후기 남기기</Link></div></div>}
       </> : <>
         <div className="rf-filters">
