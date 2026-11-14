@@ -7,8 +7,8 @@ import { createReview, searchHospitals } from "@/lib/jobActions";
 import { JOB_REGIONS, JOB_DEPTS, HOSP_KINDS, RATING_KEYS } from "@/lib/jobs";
 import { shrinkImage } from "@/lib/shrink";
 
-function Stars({ name, label, icon }: { name: string; label: string; icon: string }) {
-  const [v, setV] = useState(0), [h, setH] = useState(0);
+function Stars({ name, label, icon, def }: { name: string; label: string; icon: string; def?: number }) {
+  const [v, setV] = useState(def ?? 0), [h, setH] = useState(0);
   return <div className="rv-star-row"><span className="rv-star-lab">{icon} {label}</span>
     <span className="rv-stars" onMouseLeave={() => setH(0)}>{[1, 2, 3, 4, 5].map(n => <button key={n} type="button" className={"rv-star" + ((h || v) >= n ? " on" : "")} onMouseEnter={() => setH(n)} onClick={() => setV(n)} aria-label={`${n}점`}>★</button>)}</span>
     <span className="rv-star-val">{v ? ["", "별로", "아쉬움", "보통", "좋음", "최고"][v] : ""}</span>
@@ -35,7 +35,7 @@ export default function ReviewForm({ hospital, dept, mine, proofState }: { hospi
       <label className="jb-lab">내 직종 *<select name="dept" defaultValue={mine?.dept ?? (JOB_DEPTS.includes(dept as any) ? dept : "간호사")}>{JOB_DEPTS.map(r => <option key={r}>{r}</option>)}</select></label>
       <label className="jb-lab">상태 *<select name="status" defaultValue={mine?.status ?? "재직"}><option>재직</option><option>퇴사</option></select></label>
     </div>
-    <div className="rv-starbox">{RATING_KEYS.map(k => <Stars key={k.key} name={k.key} label={k.name} icon={k.icon} />)}</div>
+    <div className="rv-starbox">{RATING_KEYS.map(k => <Stars key={k.key} name={k.key} label={k.name} icon={k.icon} def={Number((mine as any)?.[k.key]) || 0} />)}</div>
     <label className="jb-lab">👍 장점 *<textarea name="pros" maxLength={600} rows={3} required defaultValue={mine?.pros ?? ""} placeholder="예: 연차 눈치 안 보고 씀, 점심 제공, 선배들이 잘 가르쳐줌" /></label>
     <label className="jb-lab">👎 단점 *<textarea name="cons" maxLength={600} rows={3} required defaultValue={mine?.cons ?? ""} placeholder="예: 토요일 격주 근무, 인력이 빠듯해서 연차 겹치면 힘듦" /></label>
     {proofState === "verified" ? <div className="rv-proof ok">✅ 이 리뷰는 재직 인증이 완료됐어요</div> : proofState === "pending" ? <div className="rv-proof wait">⏳ 재직 인증 심사 중 — 운영팀 확인 후 ✅ 마크가 붙어요</div> : <label className="rv-proof"><b>📎 재직 인증 서류 (선택 · 강력 추천)</b><small className="muted">건강보험 자격득실확인서 · 재직증명서 · 사원증 · 급여명세서(금액 가려도 OK) 중 1장. 운영팀만 보고 심사 즉시 삭제돼요. 인증되면 리뷰에 <b>✅ 재직 인증</b> 마크가 붙고 더 신뢰받아요.</small><input type="file" name="proof" accept="image/*" onChange={async e => { const inp = e.target, f = inp.files?.[0]; if (!f) return; const small = await shrinkImage(f); try { const dt = new DataTransfer(); dt.items.add(small); inp.files = dt.files; } catch {} }} /></label>}

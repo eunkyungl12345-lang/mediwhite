@@ -1,6 +1,6 @@
 import Link from "next/link";
 import TakedownPublic from "@/components/TakedownPublic";
-export const metadata = { title: "게시중단·반론 요청 · 메디화이트", description: "메디화이트 게시물로 권리를 침해받았다면 회원가입 없이 게시중단(임시조치)이나 반론을 요청할 수 있어요." };
+export const metadata = { title: "게시중단·반론 요청", description: "메디화이트 게시물로 권리를 침해받았다면 회원가입 없이 게시중단(임시조치)이나 반론을 요청할 수 있어요." };
 /** 🏥 게시중단·반론 요청 — 비회원(병원 관계자·당사자)도 바로 접수. 정보통신망법 제44조의2 임시조치 절차 */
 export default function TakedownPage({ searchParams }: { searchParams: { h?: string; u?: string } }) {
   return <main className="app legal td-page" style={{ padding: "24px 16px 60px" }}>

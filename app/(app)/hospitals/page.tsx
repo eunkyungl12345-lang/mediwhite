@@ -6,6 +6,7 @@ import { memo } from "@/lib/memo";
 import { getSession } from "@/lib/auth";
 import { JOB_REGIONS, overall } from "@/lib/jobs";
 import { loadFacts, hasContributed } from "@/lib/hospFactsDb";
+import { factPubKey, ivPubKey } from "@/lib/helpKey";
 import { MIN_N, factLine, posBadges, hireSignal } from "@/lib/hospFacts";
 import PosBadges from "@/components/jobs/PosBadges";
 import HospFilterSelect from "@/components/jobs/HospFilterSelect";
@@ -57,7 +58,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
   const items: Item[] = [
     ...(revs ?? []).map(r => ({ key: "r" + r.id, hid: r.hospital_id, title: r.pros.split(/[.!?\n]/)[0].slice(0, 60), pros: r.pros, cons: r.cons, star: overall([r]), meta: [], dept: r.dept, at: r.created_at, v: r.verified, uid: r.user_id, status: r.status })),
     ...(hfs ?? []).map(f => ({ f, hid: Number(String(f.game).slice(6)) })).filter(({ f, hid }) => !(f.state as any)?.textHidden && ((f.state as any)?.last || (f.state as any)?.pros || (f.state as any)?.cons) && (facts[hid]?.n ?? 0) >= (facts[hid]?.need ?? MIN_N))
-      .map(({ f, hid }) => ({ key: "f" + f.user_id + hid, hid, title: (f.state as any).last ?? "", pros: (f.state as any).pros, cons: (f.state as any).cons, star: (f.state as any).overall ?? 0, meta: [], dept: (f.state as any).dept, cat: hireChip((f.state as any).regular) ?? (f.state as any).cat, rec3: (f.state as any).rec3, at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
+      .map(({ f, hid }) => ({ key: factPubKey(String(f.user_id), hid), hid, title: (f.state as any).last ?? "", pros: (f.state as any).pros, cons: (f.state as any).cons, star: (f.state as any).overall ?? 0, meta: [], dept: (f.state as any).dept, cat: hireChip((f.state as any).regular) ?? (f.state as any).cat, rec3: (f.state as any).rec3, at: (f.state as any).at ?? f.updated_at, uid: f.user_id, status: (f.state as any).status })),
   ].filter(x => H.has(x.hid)) as any[];
   // 🚦 메디화이트 시그널 칩 — 병원 단위 조건
   const sigOk = (hid: number): boolean => sig === "" ? true
@@ -108,7 +109,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
         <div className="rf-filters"><HospFilterSelect value={region} /><span className="iv-filter-n" style={{ marginLeft: "auto" }}>면접 후기 <b>{ivCards.length}</b>건{ivCards.length !== ivHit.length && <> <em>/ 전체 {ivHit.length}건</em></>}</span></div>
         {ivCards.length ? <div className="mc-list">{ivCards.map(r => { const h = H.get(r.hid)!; const ok = contributed || r.uid === s.id; const F = IV_FOLLOW[r.x.result];
           const clip = (t?: string, n = 170) => { const v = (t ?? "").trim(); return v.length > n ? v.slice(0, n).trimEnd() + "…" : v; };
-          return <article key={`${r.uid}:${r.hid}`} className="mc-card mc-iv">
+          return <article key={ivPubKey(String(r.uid), r.hid)} className="mc-card mc-iv">
             {/* 머리 — 병원명(→ 면접 탭 직행) + 결과 배지 · 난이도 */}
             <header className="mc-head">
               <Link href={`/hospitals/${r.hid}?t=intv`} className="mc-hosp">🏥 {h.name}</Link>
@@ -162,7 +163,7 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
                 <PosBadges list={posBadges(facts[x.hid])} max={3} />
                 {sigChips(x.hid).map(c => <span key={c.t} className={"mc-chip " + c.k}>{c.t}</span>)}
               </div>
-              {x.title && <h3 className="mc-title">{x.title}</h3>}
+              {(contributed || x.uid === s.id) && x.title && <h3 className="mc-title">{x.title}</h3>}
               {/* 본문 — 좋았던 점 / 아쉬운 점 (좌측 컬러 라인) */}
               {(x.pros || x.cons) && (contributed || x.uid === s.id
                 ? <div className="mc-body">{x.pros && <p className="mc-p good"><span className="mc-k">✨ 좋았던 점</span><span className="mc-v">{x.pros}</span></p>}{x.cons && <p className="mc-p bad"><span className="mc-k">⚠️ 아쉬운 점</span><span className="mc-v">{x.cons}</span></p>}</div>

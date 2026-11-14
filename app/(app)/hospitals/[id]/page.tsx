@@ -29,7 +29,7 @@ import HsWriteBtn from "@/components/jobs/HsWriteBtn";
 import { PAY } from "@/lib/hospFacts";
 import { dday } from "@/lib/jobs";
 import { welAgg, welKey, type Welfare } from "@/lib/welfare";
-import { factPubKey } from "@/lib/helpKey";
+import { factPubKey, ivPubKey } from "@/lib/helpKey";
 import { HelpBtn, More } from "@/components/jobs/RvBits";
 import NoteBoard from "@/components/jobs/NoteBoard";
 import { RevHead, RevMark } from "@/components/jobs/RevCardParts";
@@ -61,8 +61,8 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const [{ data: ivRows }, { data: hfFull }] = await Promise.all([d.from("game_state").select("user_id,state").eq("game", ivKey(id)).limit(500), d.from("game_state").select("user_id,state").eq("game", factKey(id)).limit(1000)]);
   const ivs = (ivRows ?? []).map(r => ({ uid: r.user_id, ...(r.state as Interview) })).sort((a, b) => b.at.localeCompare(a.at)), myIv = ivs.some(x => x.uid === s.id);
   // 🎤 면접 탭 — 잠금 상태면 남의 후기 본문은 서버에서 아예 빼고 내려보낸다 (블러 예시 카드만)
-  const ivItems: IvItem[] = ivs.map((x, i) => { const ok = !locked || x.uid === s.id; return {
-    key: `${x.uid}-${i}`, dept: x.dept, year: x.year, route: x.route, steps: Array.isArray(x.steps) ? x.steps : [], level: x.level, result: x.result, feel: x.feel,
+  const ivItems: IvItem[] = ivs.map(x => { const ok = !locked || x.uid === s.id; return {
+    key: ivPubKey(String(x.uid), id), dept: x.dept, year: x.year, route: x.route, steps: Array.isArray(x.steps) ? x.steps : [], level: x.level, result: x.result, feel: x.feel,
     wait: ok ? x.wait : undefined, q: ok ? x.q : undefined, tip: ok ? x.tip : undefined, follow: ok ? x.follow : undefined, fair: x.fair, gap: x.gap,
     at: x.at, mine: x.uid === s.id, locked: !ok }; });
   // 🏥 같은 지역(없으면 같은 종별) 병원 추천 — 실제 DB만 조회, 후기 수는 실제 집계
@@ -130,7 +130,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <RevHead hospital={h.name} dept={x.dept} status={x.status} cat={x.cat} />
         <div className="rf-meta">{x.meta.join("  |  ")}{x.v ? <em>✅ 인증</em> : null}{x.mine ? <em className="me">내 리뷰</em> : null}</div>
         {x.star > 0 && <div className="rf-score"><b>{x.star.toFixed(1)}</b><span className="rf-stars">{[1, 2, 3, 4, 5].map(i => <i key={i} className={x.star >= i - .25 ? "on" : ""}>★</i>)}</span>{typeof x.rec3 === "number" && <span className={"rc-rec r" + x.rec3}>{REC3[x.rec3]}</span>}</div>}
-        {x.title && <h3 className="rf-title">{x.title}</h3>}
+        {x.title && (x.mine || !locked) && <h3 className="rf-title">{x.title}</h3>}
         {(x.pros || x.cons) && (locked && !x.mine ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">장점</em>이 병원에서 일하며 좋았던 점에 대한 솔직한 이야기</p><Link href={`/hospitals/check?id=${id}`} className="btn">체크 하나 남기고 6개월간 모든 리뷰 보기</Link></div>
           : <More long={(x.pros?.length ?? 0) + (x.cons?.length ?? 0) + (x.tip?.length ?? 0) > 140}>{x.pros && <p className="rf-pc"><em className="g">장점</em>{x.pros}</p>}{x.cons && <p className="rf-pc"><em className="b">단점</em>{x.cons}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</More>)}
         <div className="rv2-foot"><HelpBtn hid={id} k={x.key} n={help.get(x.key)?.n ?? 0} on={!!help.get(x.key)?.me} />
