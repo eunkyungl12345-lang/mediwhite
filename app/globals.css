@@ -3051,3 +3051,9 @@ body.wfab-lock{overflow:hidden}
   .hfs{height:34px;padding:0 28px 0 12px}
 }
 @media (prefers-reduced-motion:reduce){.mc-card::before{background:rgba(31,169,122,.45)}}
+
+/* ✍️ 병원 목록(/hospitals) 리뷰 작성 시트 — 버튼형 항목(검색으로 안내) */
+button.wfab-item{width:100%;border:0;background:none;font:inherit;text-align:left;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.wfab-item:active{background:var(--scrub-soft)}
+/* 시트에서 '병원 찾아 쓰기'를 고르면 검색창이 잠깐 빛나며 포커스 */
+.rf-search.spot{border-color:var(--scrub);box-shadow:0 0 0 4px rgba(31,169,122,.16)}
