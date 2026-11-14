@@ -39,7 +39,7 @@ export async function sendOffer(_: R, fd: FormData): Promise<R> {
   if (t.uid === u.id) return { error: "내 프로필에는 보낼 수 없어요" };
   const s = db(), since = new Date(Date.now() - 24 * 3600e3).toISOString();
   const { count } = await s.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", u.id).like("game", "soffer:%").gte("updated_at", since);
-  if ((count ?? 0) >= 10) return { error: "제안은 하루 10건까지 보낼 수 있어요" };
+  if ((count ?? 0) >= 10 && u.role !== "admin") return { error: "제안은 하루 10건까지 보낼 수 있어요" };
   const now = new Date().toISOString();
   const { error } = await s.from("game_state").upsert({ user_id: u.id, game: `soffer:${key}`, state: { hosp, msg, contact, at: now }, updated_at: now });
   if (error) return { error: "보내지 못했어요. 잠시 후 다시" };

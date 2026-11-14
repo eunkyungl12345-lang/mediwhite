@@ -21,7 +21,7 @@ export async function addRestaurant(_: R, fd: FormData): Promise<R> {
   const price = clean(fd.get("price"), 20), tags = fd.getAll("tags").map(String).filter(t => FOOD_TAGS.some(x => x.key === t));
   const s = db();
   const { count } = await s.from("restaurants").select("id", { count: "exact", head: true }).eq("author_id", u.id).gte("created_at", new Date(Date.now() - 86400000).toISOString());
-  if ((count ?? 0) >= 10) return { error: "하루 10곳까지 올릴 수 있어요" };
+  if ((count ?? 0) >= 10 && u.role !== "admin") return { error: "하루 10곳까지 올릴 수 있어요" };
   await s.from("restaurants").insert({ author_id: u.id, region, district, station: clean(fd.get("station"), 20) || null, name, menu: clean(fd.get("menu"), 40) || null, price: PRICES.includes(price) ? price : null, comment, tags });
   await Promise.all([awardXp(u.id, 50, "food_1"), repeatXp(u.id, "comment"), bump(u.id, "write")]);
   revalidatePath("/food"); return { ok: `${name} 등록 완료! 🍚` };

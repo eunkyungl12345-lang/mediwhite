@@ -12,7 +12,7 @@ export async function postJobComment(_: R, fd: FormData): Promise<R> {
   if (!text) return { error: "내용을 적어주세요" }; const p = reviewProblem(text); if (p) return { error: p };
   const s = db(), since = new Date(Date.now() - 10 * 60000).toISOString();
   const { count } = await s.from("game_state").select("user_id", { count: "exact", head: true }).eq("user_id", u.id).like("game", "jc:%").gte("updated_at", since);
-  if ((count ?? 0) >= 5) return { error: "잠시 후 다시 써주세요 (10분에 5개까지)" };
+  if ((count ?? 0) >= 5 && u.role !== "admin") return { error: "잠시 후 다시 써주세요 (10분에 5개까지)" };
   const now = new Date().toISOString(), key = `jc:${jk}:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const { error } = await s.from("game_state").insert({ user_id: u.id, game: key, state: { dept: u.dept, text, at: now }, updated_at: now });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };

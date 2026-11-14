@@ -189,8 +189,9 @@ export async function boostPost(postId: string, on: boolean) {
   const { data: p } = await s.from("posts").select("id").eq("id", postId).eq("author_id", u.id).maybeSingle(); if (!p) return;
   if (on) {
     const b = await boostInfo(u.id, postId);
-    if (b.n >= BOOST_MAX) redirect(`${back}?bm=max`);
-    if (b.at && Date.now() - new Date(b.at).getTime() < BOOST_CD) redirect(`${back}?bm=cd`);
+    // 👑 관리자는 끌올 횟수·쿨타임 제한 없음 (초기 콘텐츠 작업용)
+    if (u.role !== "admin" && b.n >= BOOST_MAX) redirect(`${back}?bm=max`);
+    if (u.role !== "admin" && b.at && Date.now() - new Date(b.at).getTime() < BOOST_CD) redirect(`${back}?bm=cd`);
     const now = new Date().toISOString();
     await s.from("posts").update({ boosted: false }).eq("author_id", u.id).eq("boosted", true);
     await s.from("posts").update({ boosted: true }).eq("id", postId).eq("author_id", u.id);

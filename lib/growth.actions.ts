@@ -27,7 +27,7 @@ export async function requestTakedown(_: R, fd: FormData): Promise<R> {
   if (detail.length < 20) return { error: "어떤 내용이 왜 사실과 다르거나 권리를 침해하는지 20자 이상 적어주세요" };
   const ip = headers().get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
   const since = new Date(Date.now() - 3600e3).toISOString(); const { count: recent } = await db().from("events").select("id", { count: "exact", head: true }).eq("kind", "takedown").gte("created_at", since).like("text", `%"ipk":"${ip.slice(0, 40)}"%`);
-  if ((recent ?? 0) >= 5) return { error: "요청이 너무 많아요. 잠시 후 다시 보내주세요" };
+  if ((recent ?? 0) >= 5 && u?.role !== "admin") return { error: "요청이 너무 많아요. 잠시 후 다시 보내주세요" };
   const h = hid ? (await db().from("hospitals").select("name").eq("id", hid).maybeSingle()).data : { name: hname }; if (!h) return { error: "병원을 찾을 수 없어요" };
   await db().from("events").insert({ kind: "takedown", user_id: u?.id ?? null, text: JSON.stringify({ hid, hospital: h.name, who, contact, what, detail, url, ipk: ip.slice(0, 40), status: "접수", at: new Date().toISOString() }) });
   const { data: admins } = await db().from("users").select("id").eq("role", "admin");

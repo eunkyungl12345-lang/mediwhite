@@ -36,7 +36,7 @@ export default async function PostPage({ params, searchParams }: { params: { id:
   const rx = [...(rxp ?? []), ...(rxc ?? [])];
   const agg = (kind: string, id: string) => { const counts: Record<string, number> = {}; let mine: string | null = null; for (const r of rx ?? []) if (r.kind === kind && String(r.target_id) === id) { counts[r.emoji] = (counts[r.emoji] ?? 0) + 1; if (r.user_id === s.id) mine = r.emoji; } return { counts, mine }; };
   const admin = s.role === "admin", mine = p.author_id === s.id;
-  const bi = mine ? await boostInfo(s.id, p.id) : { n: 0, at: null }, bLeft = Math.max(0, BOOST_MAX - bi.n), bWait = !!bi.at && Date.now() - new Date(bi.at).getTime() < 24 * 3600e3;
+  const bi = mine ? await boostInfo(s.id, p.id) : { n: 0, at: null }, bLeft = admin ? BOOST_MAX : Math.max(0, BOOST_MAX - bi.n), bWait = !admin && !!bi.at && Date.now() - new Date(bi.at).getTime() < 24 * 3600e3;
   if (p.hidden && !admin && !mine) return <div className="detail"><Link className="link" href="/board">← 게시판</Link><div className="empty" style={{ marginTop: 20 }}>🚩 신고가 접수되어 임시로 가려진 글이에요.<br /><span className="muted">운영팀 확인 후 복구되거나 삭제돼요 (최대 30일).</span></div></div>;
   const counted = memoOnce(`pv:${p.id}:${s.id}`, 6 * 3600_000);
   if (counted) d.rpc("bump_view", { p_id: p.id }).then(() => {}, () => {});
