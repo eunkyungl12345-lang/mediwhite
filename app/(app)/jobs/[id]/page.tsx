@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
-import { fmt } from "@/lib/format";
+import { fmt, ago } from "@/lib/format";
 import { dday, overall } from "@/lib/jobs";
 import { memoOnce } from "@/lib/memo";
 import { splitTags, tagLabel, SHARE_TAG, splitMeta, META } from "@/lib/jobTags";
@@ -15,6 +15,8 @@ import Avatar from "@/components/Avatar";
 import { deptLabel } from "@/lib/depts";
 import JobComments from "@/components/jobs/JobComments";
 import { jobKey } from "@/lib/jobComments";
+import { loadResume, loadApply, loadApplicants, contactHref, type Applicant } from "@/lib/resume";
+import { ApplyBox, ApplicantStatus } from "@/components/jobs/ResumeForms";
 export const dynamic = "force-dynamic";
 
 export default async function JobPage({ params }: { params: { id: string } }) {
@@ -27,6 +29,13 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const { data: revs } = hosp ? await d.from("hospital_reviews").select("r_welfare,r_balance,r_pay,r_culture,r_growth").eq("hospital_id", hosp.id).eq("hidden", false) : { data: [] as any[] };
   const [facts, contributed] = await Promise.all([hosp ? loadFacts([hosp.id]) : Promise.resolve({} as Record<number, any>), hasContributed(s.id, s.role, hosp?.id)]);
   const dd = dday(j.deadline), mine = j.author_id === s.id || s.role === "admin";
+  // 🚀 직접 구인 공고(공공 자동수집·제보 아님)만 간편 지원 — 내 글·마감 공고 제외
+  const canApply = !pub && !shared && j.author_id !== s.id && !j.closed;
+  const [resume, apply, applicants] = await Promise.all([
+    canApply ? loadResume(s.id) : Promise.resolve(null),
+    canApply ? loadApply(id, s.id) : Promise.resolve(null),
+    mine ? loadApplicants(id) : Promise.resolve([] as Applicant[]),
+  ]);
   const { meta, text: rest2 } = splitMeta(rest);
   const bodyText = pub ? rest2.split("\n").filter(l => !/^🏛️ 공공기관 채용정보|^📌 /.test(l.trim())).join("\n").trim() : rest2;
   const ftags = tags.filter(t => t !== SHARE_TAG), career = ftags.includes("신규가능") ? "신규 가능" : ftags.includes("경력만") ? "경력만" : null;
@@ -47,6 +56,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
       {Object.keys(meta).length > 0 && <section className="jd-facts">{META.filter(m => meta[m.k]).map(m => <div key={m.k}><span>{m.icon} {m.label}</span><b>{meta[m.k]}</b></div>)}</section>}
       <section className="jd-sum"><h3>요약</h3>{rows.filter(r => r[2]).map(([d, k, v]) => <div key={k} className="jd-row">{I(d)}<span>{k}</span><div>{v}</div></div>)}
         {ftags.filter(t => t !== "신규가능" && t !== "경력만").length > 0 && <div className="jd-tags">{ftags.filter(t => t !== "신규가능" && t !== "경력만").map(t => <span key={t}>{tagLabel(t)}</span>)}</div>}</section>
+      {canApply && <section className="jd-ap"><h3>🚀 내 이력서로 간편 지원</h3><ApplyBox jobId={id} resume={resume} apply={apply} /></section>}
       {bodyText.trim() && <section className="jd-body"><h3>상세 내용</h3><div style={{ whiteSpace: "pre-wrap" }}>{bodyText}</div></section>}
       {j.contact && !link && <section className="jd-body"><h3>지원 방법</h3><div style={{ whiteSpace: "pre-wrap" }}>{j.contact}</div></section>}
       <section className="jd-body"><h3>이 병원은 어때요?</h3>
@@ -54,10 +64,23 @@ export default async function JobPage({ params }: { params: { id: string } }) {
         {hosp && fa && <FactBox a={fa} hid={hosp.id} mine={false} locked={!contributed} />}</section>
       <div className="jd-meta"><span>{pub ? "출처: 잡알리오(공공기관 채용정보)" : shared ? "회원 제보" : j.author ? `[${j.author.dept}]${j.author.nickname}` : "회원"} · {fmt(j.created_at)} · 조회 {j.views}</span><LiveViewers kind="job" id={String(id)} /></div>
       <div className="row" style={{ gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>{mine ? <JobOwnerButtons id={id} closed={j.closed} /> : <span />}<ReportButton kind="job" id={String(id)} /></div>
+      {mine && <section className="jd-apps">
+        <h3>📩 받은 지원서 <b>{applicants.length}명</b></h3>
+        {applicants.length ? applicants.map(a => <article key={a.key} className="jd-app">
+          <div className="jd-app-top"><b>{a.name}</b><span>{deptLabel(a.dept)} · {a.years}{a.region ? ` · 📍 ${a.region}` : ""}</span><small className="muted">{ago(a.at)}</small></div>
+          <div className="jd-app-contact">{contactHref(a.contact) ? <a href={contactHref(a.contact)}>{a.contact}</a> : a.contact}</div>
+          {a.want && <div className="jd-app-line">🕘 희망 근무 {a.want}</div>}
+          {a.skills && <div className="jd-app-line">💪 {a.skills}</div>}
+          {a.career && <p className="jd-app-career">{a.career}</p>}
+          {a.msg && <p className="jd-app-msg">“{a.msg}”</p>}
+          <ApplicantStatus jobId={id} k={a.key} status={a.status} />
+        </article>) : <p className="muted" style={{ margin: 0, fontSize: 13 }}>아직 지원서가 없어요. 직접 올린 공고는 구직자가 이력서로 버튼 한 번에 지원할 수 있어요.</p>}
+        {applicants.length > 0 && <p className="muted" style={{ fontSize: 12, margin: 0 }}>지원자 정보는 이 공고를 관리하는 작성자에게만 보여요. 상태를 바꾸면 지원자에게 알림이 가요.</p>}
+      </section>}
       <JobComments jk={jobKey("j", id)} me={s.id} admin={s.role === "admin"} back={`/jobs/${id}`} />
       <div className="muted" style={{ fontSize: 12 }}>⚠️ 지원 전 근로계약서·급여 조건을 꼭 서면으로 확인하세요. 선입금·개인정보(계좌·신분증) 먼저 요구하면 신고해주세요.</div>
-      {!j.closed && (link ? <div className="jd-apply"><a href={`/api/jobout?id=${id}`} target="_blank" rel="noopener noreferrer" className="btn">{pub ? "원문 공고에서 지원하기" : "지원하기"}</a></div>
-        : hosp ? <div className="jd-apply"><Link href={`/hospitals/${hosp.id}`} className="btn ghost">병원 리뷰 먼저 보기</Link></div> : null)}
+      {!j.closed && (link ? <div className="jd-apply"><a href={`/api/jobout?id=${id}`} target="_blank" rel="noopener noreferrer" className={"btn" + (pub ? "" : " ghost")}>{pub ? "원문 공고에서 지원하기" : "공고에 적힌 외부 링크로 지원 ↗"}</a></div>
+        : !canApply && hosp ? <div className="jd-apply"><Link href={`/hospitals/${hosp.id}`} className="btn ghost">병원 리뷰 먼저 보기</Link></div> : null)}
     </div>
   );
 }

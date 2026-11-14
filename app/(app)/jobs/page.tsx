@@ -98,6 +98,7 @@ export default async function JobsPage({ searchParams }: { searchParams: { regio
         </div>
         <div className="jb2-head-links">
           <Link href="/jobs/seek" className="btn ghost sm">🙋 구직 프로필</Link>
+          <Link href="/jobs/resume" className="btn ghost sm">📄 내 이력서</Link>
           <Link href="/jobs/new" className="btn sm">공고 등록</Link>
         </div>
       </div>

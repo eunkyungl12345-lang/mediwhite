@@ -2783,3 +2783,52 @@ body{letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 .sk>section+section{margin-top:12px}
 /* 🎤 면접 결과 칩 */
 .iv-chip{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;margin-right:8px}.iv-chip.ok{background:#E8F7F0;color:#12805B}.iv-chip.no{background:#FDECEC;color:#C0392B}.iv-chip.wait{background:#FFF4E5;color:#8A5A00}
+/* 📄 내 이력서 · 간편 지원 */
+.cv-back{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between;background:#F0FAF5;border:1px solid #CDEFDF;border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:13px;line-height:1.5}
+.cv-back .link{font-weight:700;white-space:nowrap}
+.cv-tools{display:flex;justify-content:flex-end;margin-top:10px;font-size:13px}
+.cv-copy{display:grid;gap:8px;margin-top:8px}
+.cv-pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13.5px;line-height:1.65;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-height:260px;overflow:auto}
+.cv-copy .btn{justify-self:start;width:auto}
+.cv-apps{display:grid;gap:8px}
+.cv-app{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:inherit;background:var(--surface)}
+.cv-app:hover,.cv-app:focus-visible{border-color:var(--scrub)}
+.cv-app-t{display:grid;min-width:0}.cv-app-t b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cv-app-t span{font-size:12px;color:var(--muted)}
+.cv-app-f{display:grid;justify-items:end;gap:2px;flex-shrink:0}.cv-app-f small{font-size:11.5px}
+.cv-fold{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.cv-fold summary{cursor:pointer;font-size:13.5px;font-weight:600;color:var(--scrub);list-style:none}
+.cv-fold summary::-webkit-details-marker{display:none}
+.cv-fold summary::before{content:"＋ ";}
+.cv-fold[open] summary::before{content:"－ "}
+/* 🚀 간편 지원 카드 */
+.jd-ap{background:#F0FAF5;border:1.5px solid #BFE8D6;border-radius:14px;padding:12px 14px;margin:10px 0 0;color:var(--ink)}
+.jd-ap h3{margin:0 0 8px;font-size:15px}
+.jd-ap-in{display:grid;gap:8px}
+.jd-ap-who{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px}.jd-ap-who b{font-size:14.5px}.jd-ap-who span{color:#4B5563}.jd-ap-who .link{margin-left:auto;font-size:12.5px}
+.jd-ap-sk{font-size:13px;font-weight:600}
+.jd-ap-career{margin:0;font-size:13px;line-height:1.6;color:#374151;white-space:pre-wrap}
+.jd-ap-msg-in{background:var(--surface)}
+.jd-ap .btn{display:block}
+.jd-ap-done{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;font-size:12.5px;color:var(--muted)}.jd-ap-done b{font-size:15px;color:#12805B}
+.jd-ap-msg{margin:0;font-size:13.5px;background:var(--surface);border-radius:10px;padding:8px 10px;border:1px solid #DCEFE5}
+.jd-ap-foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.jd-ap-foot button{margin-left:auto}
+/* 📩 받은 지원서 (공고 작성자) */
+.jd-apps{margin:12px 0 0}.jd-apps h3{font-size:15px;margin:0 0 8px}.jd-apps h3 b{color:#12805B}
+.jd-app{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface);display:grid;gap:5px}
+.jd-app-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}.jd-app-top b{font-size:14.5px}.jd-app-top span{font-size:12px;color:#4B5563}.jd-app-top small{margin-left:auto;font-size:11.5px}
+.jd-app-contact{font-size:13.5px;font-weight:700;word-break:break-all}.jd-app-contact a{color:#12805B;text-decoration:none}
+.jd-app-line{font-size:13px}
+.jd-app-career{margin:0;font-size:13px;line-height:1.6;color:#374151;white-space:pre-wrap;border-top:1px dashed var(--line);padding-top:6px}
+.jd-app-msg{margin:0;font-size:13px;background:var(--bg);border-radius:8px;padding:6px 8px}
+.jd-app-st{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;align-items:center}
+.jd-st{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.jd-st.on{background:var(--scrub-soft);border-color:#BFE8D6;color:#12805B}
+/* 초슬림 채용관 헤더 — 링크 3개가 모바일에서도 한 줄에 (좁으면 두 줄) */
+@media (max-width:520px){
+  .jb2-head{flex-wrap:wrap}
+  .jb2-head-links{width:100%;justify-content:flex-end;flex-wrap:wrap}
+  .jb2-head-links .btn{padding:5px 10px;font-size:12.5px}
+}
+.cv-head{display:grid;gap:2px;margin:0 0 8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.cv-head b{font-size:15px}.cv-head span{font-size:12.5px}
+.cv-body{display:block}

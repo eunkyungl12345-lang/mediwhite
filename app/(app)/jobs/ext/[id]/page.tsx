@@ -7,11 +7,14 @@ import { tagLabel } from "@/lib/jobTags";
 import Avatar from "@/components/Avatar";
 import JobComments from "@/components/jobs/JobComments";
 import { jobKey } from "@/lib/jobComments";
+import { loadResume, resumeText } from "@/lib/resume";
+import { ResumeCopy } from "@/components/jobs/ResumeForms";
 export const dynamic = "force-dynamic";
 export function generateMetadata({ params }: { params: { id: string } }) { const e = EXT_JOBS.find(x => x.id === Number(params.id)); return { title: e ? `${e.h} ${e.dept} 공고` : "공고" }; }
 /** 🔗 외부(메디잡 등) 공고 요약 + 익명 댓글. 지원은 원문으로 */
 export default async function ExtJobPage({ params }: { params: { id: string } }) {
   const s = (await getSession())!; const e = EXT_JOBS.find(x => x.id === Number(params.id)); if (!e) notFound();
+  const cv = await loadResume(s.id);
   const { data: h } = await db().from("hospitals").select("id").eq("name", e.h).maybeSingle(); const a = splitArea(e.area);
   return <div className="detail jd">
     <Link className="link" href="/jobs">← 채용</Link>
@@ -22,6 +25,10 @@ export default async function ExtJobPage({ params }: { params: { id: string } })
     <Link href={h ? `/hospitals/${h.id}` : `/search?q=${encodeURIComponent(e.h.replace(/\s.*$/, ""))}`} className="ex-real"><span aria-hidden="true">👀</span><div><b>이 병원 세후 실수령 & 고용안정성 신호등 보기</b><small>다녀본 사람들의 정규직 전환율·실수령·퇴근 시간</small></div><em>›</em></Link>
     <Link href={h ? `/hospitals/${h.id}?t=intv` : `/hospitals/interview?ext=${e.id}`} className="ex-real ex-iv"><span aria-hidden="true">🎤</span><div><b>이 병원 면접 질문 & 분위기 후기</b><small>면접 가봤다면 1분 만에 후기 남기기 · 합격/불합격/대기중</small></div><em>›</em></Link>
     <div className="jd-apply"><a href={`/api/extout?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="btn">{extSrc(e)} 원문 지원하기 ↗</a></div>
+    <details className="cv-fold">
+      <summary>📋 {cv ? "내 이력서 복사해서 원문 지원서에 붙여넣기" : "내 이력서 만들어두고 원문 지원에 쓰기"}</summary>
+      {cv ? <ResumeCopy text={resumeText(cv)} /> : <p className="muted" style={{ margin: "8px 0 0", fontSize: 13 }}>이름·연락처·경력을 1분 만에 저장해두면, 다음부터는 복사만 하면 돼요. <Link href={`/jobs/resume?back=/jobs/ext/${e.id}`} className="link">📄 이력서 만들기 ›</Link></p>}
+    </details>
     <JobComments jk={jobKey("x", e.id)} me={s.id} admin={s.role === "admin"} back={`/jobs/ext/${e.id}`} />
     <div className="muted" style={{ fontSize: 12 }}>공고 내용은 {extSrc(e)} 원문을 요약한 거예요. 지원 전 원문과 근로계약서를 꼭 확인하세요.</div>
   </div>;
