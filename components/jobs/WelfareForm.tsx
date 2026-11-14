@@ -1,4 +1,5 @@
 "use client";
+import Pledge from "@/components/jobs/Pledge";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitWelfare } from "@/lib/welfare.actions";
@@ -39,6 +40,7 @@ export default function WelfareForm({ hid, name, mine }: { hid: number; name: st
       <textarea name="text" rows={6} maxLength={1000} value={text} onChange={e => setText(e.target.value)} placeholder={"예) 본인 진료비는 50% 감면인데 비급여는 안 돼요. 기숙사는 신규 1년만 되고 2인 1실이에요."} />
       <small className="muted" style={{ textAlign: "right" }}><b style={{ color: text.trim().length >= 20 ? "#1F9D63" : "#D33" }}>{text.length}</b> / 최대 1,000자</small></div>}
     {(err || st?.error) && <div className="error">{err || st?.error}</div>}
+    {last && <Pledge />}
     <div className="wz-nav">{i > 0 && <button type="button" className="btn ghost wz-prev" onClick={() => { setErr(""); setI(i - 1); }}>이전으로</button>}
       {last ? <Send edit={!!mine} /> : <button type="button" className="btn wz-next" onClick={next}>다음</button>}</div>
   </form>;

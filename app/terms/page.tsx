@@ -45,7 +45,7 @@ export default function Terms() {
         <p>약관을 바꾸면 시행 7일 전(회원에게 불리한 변경은 30일 전)에 공지해요. 분쟁은 대한민국 법을 따르고, 관할 법원은 민사소송법에 따라 정해요.</p>
         <p><b>시행일: 2026년 11월 12일</b></p>
       </div>
-      <p className="muted" style={{ textAlign: "center" }}><Link href="/privacy">개인정보처리방침</Link> · <Link href="/rules">커뮤니티 규칙</Link> · <Link href="/">처음으로</Link></p>
+      <p className="muted" style={{ textAlign: "center" }}><Link href="/privacy">개인정보처리방침</Link> · <Link href="/rules">커뮤니티 규칙</Link> · <Link href="/takedown">게시중단 요청</Link> · <Link href="/">처음으로</Link></p>
     </div>
   );
 }

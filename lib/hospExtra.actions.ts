@@ -1,4 +1,5 @@
 "use server";
+import { pledgeGate } from "./pledge";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "./supabase";
@@ -15,6 +16,7 @@ const inList = (list: readonly string[], v: string) => list.includes(v);
 /** 💰 연봉 리뷰 · ⏱ 알바 리뷰 저장 (병원은 고르거나 새로 등록) */
 export async function submitHospExtra(_: R, fd: FormData): Promise<R> {
   const u = await getSession(); if (!u) redirect("/login"); const s = db();
+  { const pg = await pledgeGate(u.id, fd); if (pg) return { error: pg }; }
   const kind = clean(fd.get("xkind"), 6); if (kind !== "pay" && kind !== "alba") return { error: "리뷰 종류를 골라주세요" };
   let hid = Number(fd.get("hospital_id")) || 0; const name = clean(fd.get("name"), 40), region = clean(fd.get("region"), 10), hk = clean(fd.get("kind"), 10);
   const dept = clean(fd.get("dept"), 10); if (!inList(JOB_DEPTS, dept)) return { error: "직종을 골라주세요" };
@@ -60,6 +62,7 @@ export async function submitHospExtra(_: R, fd: FormData): Promise<R> {
  *  병원 체크(hfact)와 같은 자리에 저장하고, 예전에 자세히 체크한 내용은 그대로 둬요 */
 export async function submitQuickReview(_: R, fd: FormData): Promise<R> {
   const u = await getSession(); if (!u) redirect("/login"); const s = db();
+  { const pg = await pledgeGate(u.id, fd); if (pg) return { error: pg }; }
   let hid = Number(fd.get("hospital_id")) || 0; const name = clean(fd.get("name"), 40), region = clean(fd.get("region"), 10), hk = clean(fd.get("kind"), 10);
   const dept = clean(fd.get("dept"), 10), status = clean(fd.get("status"), 4);
   const pros = clean(fd.get("pros"), 500), cons = clean(fd.get("cons"), 500);

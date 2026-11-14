@@ -3,6 +3,7 @@ import AdminHVerify from "@/components/AdminHVerify";
 import { XrayPhotoAdmin } from "@/components/XrayGallery";
 import { pendingXrayPhotos } from "@/lib/xrayPhotoDb";
 import AdminFocus from "@/components/AdminGrowth";
+import { setTakedownStatus } from "@/lib/growth.actions";
 import AdminLock from "@/components/AdminLock";
 import AdminTen from "@/components/AdminTen";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
@@ -81,7 +82,7 @@ export default async function AdminPage() {
   const { data: badgeReqs } = await db().from("badge_requests").select("id,user_id,id_path,lic_path,note,created_at,user:users(nickname,dept,username)").eq("status", "pending").order("created_at");
   const hvReqs = await hverifyPending();
   const ago7 = new Date(Date.now() - 7 * 86400000).toISOString(), day7 = new Date(Date.now() + 9 * 3600000 - 7 * 86400000).toISOString().slice(0, 10);
-  const [focus, { data: hf }, { data: wv }, { count: sign7 }, { data: hvAll }, { count: out7 }, { data: tds }, { data: hvU }, { data: gold }] = await Promise.all([getFocus(), db().from("game_state").select("game,updated_at").like("game", "hfact:%").limit(10000), db().from("visits").select("user_id").gte("day", day7).limit(20000), db().from("users").select("id", { count: "exact", head: true }).gte("created_at", ago7), db().from("game_state").select("state").like("game", "hverify:%").limit(10000), db().from("events").select("id", { count: "exact", head: true }).eq("kind", "jobout").gte("created_at", ago7), db().from("events").select("id,text,created_at").eq("kind", "takedown").order("created_at", { ascending: false }).limit(20), db().from("game_state").select("user_id,state").like("game", "hverify:%").limit(10000), db().from("users").select("id").eq("blue_badge", true)]);
+  const [focus, { data: hf }, { data: wv }, { count: sign7 }, { data: hvAll }, { count: out7 }, { data: tds }, { data: hvU }, { data: gold }] = await Promise.all([getFocus(), db().from("game_state").select("game,updated_at").like("game", "hfact:%").limit(10000), db().from("visits").select("user_id").gte("day", day7).limit(20000), db().from("users").select("id", { count: "exact", head: true }).gte("created_at", ago7), db().from("game_state").select("state").like("game", "hverify:%").limit(10000), db().from("events").select("id", { count: "exact", head: true }).eq("kind", "jobout").gte("created_at", ago7), db().from("events").select("id,text,created_at,user_id").eq("kind", "takedown").order("created_at", { ascending: false }).limit(20), db().from("game_state").select("user_id,state").like("game", "hverify:%").limit(10000), db().from("users").select("id").eq("blue_badge", true)]);
   const perH: Record<string, number> = {}; for (const r of hf ?? []) perH[r.game] = (perH[r.game] ?? 0) + 1;
   const kpi = { wau: new Set((wv ?? []).map(v => v.user_id)).size, sign7: sign7 ?? 0, checks: (hf ?? []).length, checks7: (hf ?? []).filter(r => r.updated_at >= ago7).length, openH: Object.values(perH).filter(n => n >= MIN_N).length, anyH: Object.keys(perH).length, vOk: (hvAll ?? []).filter(v => (v.state as any)?.status === "approved").length, vAll: (hvAll ?? []).length, out7: out7 ?? 0, verifiedPeople: new Set([...(hvU ?? []).filter(v => (v.state as any)?.status === "approved").map(v => v.user_id), ...(gold ?? []).map(g => g.id)]).size };
   const wk = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -112,7 +113,10 @@ export default async function AdminPage() {
       <div className="card" id="takedown">
         <h3 id="a-td">🏥 병원 반론·게시중단 요청 {tds?.length ? <span className="mt-wait">{tds.length}</span> : null}</h3>
         {(tds ?? []).length === 0 ? <div className="muted">들어온 요청이 없어요.</div> : (tds ?? []).map(t => { let x: any = {}; try { x = JSON.parse(t.text); } catch {} return <div key={t.id} className="card" style={{ padding: 10, display: "grid", gap: 4, fontSize: 13 }}>
-          <b><a className="link" href={`/hospitals/${x.hid}`}>{x.hospital}</a> · {x.what}</b><span>{x.who} · 연락처 {x.contact}</span><span style={{ whiteSpace: "pre-wrap" }}>{x.detail}</span><small className="muted">{new Date(t.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · 해당 리뷰는 병원 페이지에서 신고(권리침해)로 바로 임시 블라인드할 수 있어요</small></div>; })}
+          <b><a className="link" href={`/hospitals/${x.hid}`}>{x.hospital}</a> · {x.what}</b><span>{x.who} · 연락처 {x.contact}</span><span style={{ whiteSpace: "pre-wrap" }}>{x.detail}</span>{x.url && <a className="link" href={x.url} target="_blank" rel="noreferrer" style={{ wordBreak: "break-all" }}>🔗 {x.url}</a>}<small className="muted">{new Date(t.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })} · {t.user_id ? "회원" : "비회원"} 요청 · 대상 글은 병원 페이지에서 🙈 블라인드로 가리면 돼요</small>
+          <div className="td-st"><b className={"td-b " + (x.status ?? "접수")}>{x.status ?? "접수"}</b>{x.status === "임시조치" && x.tempAt && <span className="muted">임시조치 {Math.max(0, 30 - Math.floor((Date.now() - +new Date(x.tempAt)) / 86400000))}일 남음 — 그 안에 작성자 소명 받고 복원/삭제 결정</span>}</div>
+          <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>{["검토중", "임시조치", "복원", "삭제", "반려"].map(st => <form key={st} action={setTakedownStatus.bind(null, t.id, st)}><button className="btn ghost" style={{ padding: "4px 10px", fontSize: 12 }} disabled={x.status === st}>{st}</button></form>)}</div>
+          {x.log?.length > 0 && <small className="muted">{x.log.map((l: any) => `${l.status} ${new Date(l.at).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}`).join(" → ")}</small>}</div>; })}
       </div>
       <div className="card" id="hverify">
         <h3 id="a-hv">✅ 병원 재직·퇴사 인증 {hvReqs.length ? <span className="mt-wait">{hvReqs.length}</span> : null}</h3>

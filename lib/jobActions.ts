@@ -1,4 +1,5 @@
 "use server";
+import { pledgeGate } from "./pledge";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "./supabase";
@@ -57,6 +58,7 @@ export async function deleteJob(id: number) {
 /* ---------- 병원 리뷰 ---------- */
 export async function createReview(_: R, fd: FormData): Promise<R> {
   const u = await me(); const s = db();
+  { const pg = await pledgeGate(u.id, fd); if (pg) return { error: pg }; }
   let hospitalId = Number(fd.get("hospital_id")) || 0;
   const name = clean(fd.get("name"), 40), region = clean(fd.get("region"), 10), kind = clean(fd.get("kind"), 10);
   const dept = clean(fd.get("dept"), 10), status = clean(fd.get("status"), 4), pros = clean(fd.get("pros"), 600), cons = clean(fd.get("cons"), 600), tip = clean(fd.get("tip"), 300);
@@ -126,6 +128,7 @@ export async function submitJobVoice(_: R, fd: FormData): Promise<R> {
 /* ---------- 🔎 병원 실체 체크 (실수령·분위기·치명적 리스크, 익명·탭만) ---------- */
 export async function submitHospFact(_: R, fd: FormData): Promise<R> {
   const u = await me(); const s = db();
+  { const pg = await pledgeGate(u.id, fd); if (pg) return { error: pg }; }
   let hid = Number(fd.get("hospital_id")) || 0; const name = clean(fd.get("name"), 40), region = clean(fd.get("region"), 10), kind = clean(fd.get("kind"), 10);
   if (!hid) {
     if (!name || !inList(JOB_REGIONS, region) || !inList(HOSP_KINDS, kind)) return { error: "병원을 찾거나, 새 병원 이름·지역·종류를 골라주세요" };

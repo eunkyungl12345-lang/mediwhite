@@ -36,5 +36,6 @@ export default async function PublicHosp({ params }: { params: { id: string } })
       </>}
       <small className="muted">아이디·닉네임만으로 가입 · 실명·전화번호 안 받아요</small>
     </div>}
+    {x && <p style={{ textAlign: "center", fontSize: 12, marginTop: 16 }}><Link href={`/takedown?h=${encodeURIComponent(x.h.name ?? "")}&u=${encodeURIComponent(`https://mediwhite.vercel.app/h/${params.id}`)}`} className="muted">이 병원 관계자이신가요? 게시중단·반론 요청</Link></p>}
   </main></div></div>;
 }

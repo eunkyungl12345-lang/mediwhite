@@ -1,4 +1,5 @@
 "use client";
+import Pledge from "@/components/jobs/Pledge";
 import RegionPick from "./RegionPick";
 import { useFormState, useFormStatus } from "react-dom";
 import { useState } from "react";
@@ -41,6 +42,7 @@ export default function ReviewForm({ hospital, dept, mine, proofState }: { hospi
     <label className="jb-lab">💡 면접·입사 팁 (선택)<textarea name="tip" maxLength={300} rows={2} defaultValue={mine?.tip ?? ""} placeholder="예: 면접 때 교대 가능 여부 꼭 물어봄, 수습 3개월" /></label>
     <div className="muted" style={{ fontSize: 12, lineHeight: 1.6 }}>🕶️ 리뷰는 <b>닉네임 없이 직종·재직여부만</b> 표시돼요 · 병원 1곳당 1개(다시 쓰면 덮어써요) · 사람 이름·호칭(○○실장님 등)은 금지 — 사람이 아니라 병원·제도에 대한 후기만 · 허위·비방은 신고 시 블라인드 처리돼요.</div>
     {st?.error && <div className="error">{st.error}</div>}
+    <Pledge />
     <Submit />
   </form>;
 }

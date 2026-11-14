@@ -1,4 +1,5 @@
 "use client";
+import Pledge from "@/components/jobs/Pledge";
 import RegionPick from "./RegionPick";
 import { useFormState, useFormStatus } from "react-dom";
 import { useRef, useState } from "react";
@@ -70,6 +71,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
       <div className="hc-q"><b>⭐ 총평점</b><Star5 name="st_overall" def={mine?.overall} big /></div></div>
 
     <div style={show("fork")} className="wz-step wz-fork"><h3>🙌 여기까지만 해도 충분해요!</h3><p>저장하면 바로 모든 병원의 실수령·고용 현실이 열려요.</p>
+      {cur === "fork" && <Pledge />}
       <Send edit={!!mine} label={mine ? "✏️ 이대로 수정 완료" : "✅ 여기까지 저장하기"} />
       <button type="button" className="btn ghost wz-more" onClick={() => { setMore(true); setI(i + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}>💬 분위기·원장 스타일·연차까지 더 알려주기</button>
       <small className="muted">더 알려주면 정시 퇴근·원장 터치 적음 같은 초록 뱃지가 더 빨리 붙어요.</small></div>
@@ -107,6 +109,7 @@ export default function HospCheck({ hospital, dept, mine }: { hospital?: { id: n
       <input name="last" maxLength={100} value={txt} onChange={e => setTxt(e.target.value)} placeholder="예: 배울 건 많지만 신규한텐 버거운 곳" />
       <small className="muted" style={{ textAlign: "right" }}><b style={{ color: "#1F9D63" }}>{txt.length}</b> / 최대 100자</small></div>
 
+    {last && cur !== "fork" && <Pledge />}
     {(err || st?.error) && <div className="error">{err || st?.error}</div>}
     <div className="wz-nav">{i > 0 && <button type="button" className="btn ghost wz-prev" onClick={() => { setErr(""); setI(i - 1); }}>이전으로</button>}
       {cur === "fork" ? null : last ? <Send edit={!!mine} label={more ? (mine ? "✏️ 수정 완료" : "🔎 익명으로 체크 완료") : undefined} /> : <button type="button" className="btn wz-next" onClick={next}>다음</button>}</div>

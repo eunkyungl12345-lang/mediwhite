@@ -12,3 +12,9 @@ export async function purgeOldVerifyPhotos(): Promise<{ hverify: number; badge: 
   for (const b of bs ?? []) { await s.storage.from("badges").remove([b.id_path, b.lic_path].filter(Boolean) as string[]); await s.from("badge_requests").update({ status: "rejected", reason: "심사 기간(30일)이 지나 사진을 삭제했어요", decided_at: new Date().toISOString(), id_path: null, lic_path: null }).eq("id", b.id); bg++; }
   return { hverify: hv, badge: bg };
 }
+
+/** 🧹 게시중단 요청 기록(요청자 소속·연락처)은 접수 1년 뒤 지워요 — 개인정보처리방침 약속 */
+export async function purgeOldTakedowns(): Promise<number> {
+  const { data } = await db().from("events").delete().eq("kind", "takedown").lt("created_at", new Date(Date.now() - 365 * 86400000).toISOString()).select("id");
+  return data?.length ?? 0;
+}

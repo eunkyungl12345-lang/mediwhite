@@ -1,4 +1,5 @@
 "use server";
+import { pledgeGate } from "./pledge";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "./supabase";
@@ -11,6 +12,7 @@ type R = { error?: string } | undefined;
 const ALL = WEL_CATS.flatMap(c => c.items as readonly string[]);
 export async function submitWelfare(_: R, fd: FormData): Promise<R> {
   const u = await getSession(); if (!u) redirect("/login"); const s = db();
+  { const pg = await pledgeGate(u.id, fd, false); if (pg) return { error: pg }; }
   const hid = Number(fd.get("hid")) || 0; const { data: h } = await s.from("hospitals").select("id").eq("id", hid).maybeSingle(); if (!h) return { error: "병원을 찾을 수 없어요" };
   let raw: Record<string, number> = {}; try { raw = JSON.parse(String(fd.get("items") ?? "{}")); } catch {}
   const items: Record<string, number> = {};

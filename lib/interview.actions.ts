@@ -1,4 +1,5 @@
 "use server";
+import { pledgeGate } from "./pledge";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "./supabase";
@@ -14,6 +15,7 @@ type R = { error?: string } | undefined;
 const clean = (v: FormDataEntryValue | null, n: number) => String(v ?? "").trim().slice(0, n);
 export async function submitInterview(_: R, fd: FormData): Promise<R> {
   const u = await getSession(); if (!u) redirect("/login"); const s = db();
+  { const pg = await pledgeGate(u.id, fd); if (pg) return { error: pg }; }
   let hid = Number(fd.get("hid")) || 0;
   if (!hid && fd.get("ext")) { // 🔗 외부 공고에서 들어온 병원 — 이름으로 찾고, 없으면 새로 등록
     const e = EXT_JOBS.find(x => x.id === Number(fd.get("ext"))); const region = clean(fd.get("region"), 10);
