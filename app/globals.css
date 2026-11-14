@@ -2832,3 +2832,141 @@ body{letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 .cv-head{display:grid;gap:2px;margin:0 0 8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .cv-head b{font-size:15px}.cv-head span{font-size:12.5px}
 .cv-body{display:block}
+
+/* ============================================================
+   🎤 면접 탭 — 메디화이트 문진 차트 (iv-dash · iv-filter · iv-card · iv-rel)
+   ============================================================ */
+.ivb{display:grid;gap:14px;margin-top:12px}
+.ivb-cta{display:flex}
+.ivb-cta .btn{flex:1;min-height:44px;display:grid;place-items:center}
+@media (min-width:720px){.ivb-cta .btn{flex:none;min-width:180px;justify-self:start}}
+
+/* 진단 차트 카드 */
+.iv-dash{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--hair);border-radius:20px;box-shadow:var(--shadow);padding:18px;display:grid;gap:15px}
+.iv-dash::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,#B7EEDB,#1FA97A 42%,#F2B558 74%,#E2574C)}
+.iv-dash-top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.iv-dash-lab{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.01em}
+.iv-dash-lab em{font-style:normal;font-weight:700;font-size:11.5px;color:#146B4E;background:var(--scrub-soft);border-radius:999px;padding:2px 8px}
+.iv-dash-grade{margin:3px 0 0;font-size:23px;font-weight:800;letter-spacing:-.03em;line-height:1.15}
+.iv-dash-grade small{margin-left:7px;font-size:12.5px;font-weight:700;color:var(--muted);letter-spacing:0;font-variant-numeric:tabular-nums}
+.iv-meter{flex:1;min-width:180px;max-width:330px;display:grid;gap:5px;margin-top:2px}
+.iv-meter-bar{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:22px}
+.iv-meter-bar i{display:block;height:12px;border-radius:5px;opacity:.32;transition:opacity .2s,transform .2s}
+.iv-meter-bar i.s1{background:#B7EEDB}.iv-meter-bar i.s2{background:#7FDDBC}.iv-meter-bar i.s3{background:#1FA97A}
+.iv-meter-bar i.s4{background:#F2B558}.iv-meter-bar i.s5{background:#E2574C}
+.iv-meter-bar i.on{opacity:1;transform:scaleY(1.35)}
+.iv-meter-bub{position:absolute;top:-21px;transform:translateX(-50%);background:#12241F;color:#8CE9BF;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap;font-variant-numeric:tabular-nums;box-shadow:0 3px 10px rgba(18,36,31,.22)}
+.iv-meter-bub::after{content:"";position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);width:7px;height:7px;background:#12241F;border-radius:1px}
+.iv-meter-ends{display:flex;justify-content:space-between}
+.iv-meter-ends small{font-size:11px;color:var(--muted);font-weight:600}
+.iv-steps{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.iv-steps-lab{font-size:11.5px;font-weight:800;color:var(--muted)}
+.iv-steps span{font-size:11.5px;font-weight:700;color:#146B4E;background:var(--scrub-soft);border:1px solid rgba(31,169,122,.18);border-radius:999px;padding:3px 9px}
+.iv-steps span b{font-weight:800;opacity:.6;font-size:10.5px;margin-left:2px}
+.iv-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px}
+.iv-metric{display:grid;gap:1px;justify-items:center;text-align:center;padding:11px 6px;border-radius:14px;background:var(--bg)}
+.iv-metric b{font-size:19px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.iv-metric span{font-size:11.5px;font-weight:600;color:var(--muted)}
+
+/* 필터 칩 */
+.iv-filter{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.iv-sel{position:relative;display:inline-flex;align-items:center}
+.iv-sel select{-webkit-appearance:none;appearance:none;width:auto;min-width:0;padding:9px 30px 9px 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:700;cursor:pointer}
+.iv-sel select.on{border-color:rgba(31,169,122,.5);background:var(--scrub-soft);color:#146B4E}
+.iv-sel::after{content:"⌄";position:absolute;right:12px;top:50%;transform:translateY(-58%);font-size:13px;color:var(--muted);pointer-events:none}
+.iv-filter-n{margin-left:auto;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.iv-filter-n b{font-size:13.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+.iv-filter-n em{font-style:normal}
+
+/* Q·A 면접 카드 */
+.iv-list{display:grid;gap:11px}
+.iv-card{display:grid;gap:10px;padding:16px 18px;background:var(--surface);border:1px solid var(--hair);border-radius:18px;box-shadow:var(--shadow)}
+.iv-card.mine{border-color:rgba(31,169,122,.35);background:linear-gradient(180deg,rgba(31,169,122,.055),transparent 46%),var(--surface)}
+.iv-card-h{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.iv-card-h .iv-chip{margin:0}
+.iv-card-when{display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:600;color:var(--muted);text-align:right}
+.iv-card-me{font-style:normal;font-size:11px;font-weight:800;color:#146B4E;background:var(--scrub-soft);border-radius:6px;padding:2px 7px}
+.iv-card-tags{display:flex;gap:5px;flex-wrap:wrap}
+.iv-card-tags span{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--bg);border-radius:7px;padding:3px 8px;white-space:nowrap}
+.iv-card-tags .t-dept{font-weight:800;color:#146B4E;background:var(--scrub-soft)}
+.iv-qa{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start}
+.iv-qb,.iv-ab{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:900;line-height:1;font-family:var(--f-mono);letter-spacing:0}
+.iv-qb{background:var(--scrub);color:#FFF;box-shadow:0 3px 9px rgba(31,169,122,.28)}
+.iv-ab{background:#FFF4DC;color:#8A5A00;border:1px solid #F3DCAE}
+.iv-q{margin:1px 0 0;font-size:15px;font-weight:600;line-height:1.6;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.iv-a{margin:5px 0 0;font-size:14px;line-height:1.62;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.iv-atag{display:inline-block;font-style:normal;font-size:11px;font-weight:800;color:#8A5A00;background:#FFF4DC;border-radius:6px;padding:2px 7px}
+.iv-tip{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start;padding:9px 11px;border-radius:12px;background:linear-gradient(90deg,rgba(31,169,122,.10),rgba(31,169,122,0))}
+.iv-tip>span{font-size:14px;line-height:1.5;text-align:center}
+.iv-tip p{margin:1px 0 0;font-size:13.5px;font-weight:600;line-height:1.6;color:#146B4E;overflow-wrap:anywhere}
+.iv-fold-in{position:relative;display:grid;gap:10px;max-height:150px;overflow:hidden}
+.iv-fold.open .iv-fold-in{max-height:none}
+.iv-fold.open .iv-fold-in::after{content:none}
+.iv-fold:not(.open) .iv-fold-in::after{content:"";position:absolute;left:0;right:0;bottom:0;height:52px;background:linear-gradient(rgba(255,255,255,0),var(--surface));pointer-events:none}
+.iv-fold.mine .iv-fold-in::after{background:linear-gradient(rgba(255,255,255,0),var(--surface))}
+.iv-fold-btn{align-self:start;margin-top:2px;padding:0;border:0;background:none;font:inherit;font-size:12.5px;font-weight:800;color:var(--scrub);cursor:pointer}
+.iv-lock{display:grid;gap:10px}
+.iv-lock .iv-qa{filter:blur(4.5px);opacity:.7;pointer-events:none;user-select:none}
+.iv-lock-b{justify-self:start}
+.iv-lock-b:hover{background:var(--scrub-hover)}
+
+/* 빈 상태 */
+.iv-empty{display:grid;gap:8px;justify-items:start;padding:26px 20px;border:1px dashed var(--line);border-radius:18px;background:var(--surface)}
+.iv-empty b{font-size:15px}
+.iv-empty p{margin:0;font-size:13px;line-height:1.6;color:var(--muted)}
+
+/* 같은 지역 병원 추천 */
+.iv-rel{display:grid;gap:9px;margin-top:4px}
+.iv-rel h4{margin:0;font-size:13.5px;font-weight:800;letter-spacing:-.01em}
+.iv-rel-row{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 6px;scroll-snap-type:x mandatory}
+.iv-rel-row::-webkit-scrollbar{display:none}
+.iv-rel-c{flex:none;width:186px;scroll-snap-align:start;display:grid;gap:2px;padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);color:var(--ink);text-decoration:none;transition:border-color .15s,transform .12s}
+.iv-rel-c:hover{border-color:rgba(31,169,122,.45);transform:translateY(-1px)}
+.iv-rel-c b{font-size:14px;font-weight:800;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iv-rel-c small{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iv-rel-c em{justify-self:start;margin-top:4px;font-style:normal;font-size:11px;font-weight:800;color:#146B4E;background:var(--scrub-soft);border-radius:6px;padding:2px 7px;font-variant-numeric:tabular-nums}
+
+/* 병원 상세 작성 시트 · 떠 있는 버튼 */
+.hh-top-r{display:flex;gap:8px;align-items:center}
+.hs-wbtn{display:none}
+@media (min-width:1080px){
+  .hs-wbtn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:999px;border:1px solid rgba(31,169,122,.32);background:rgba(31,169,122,.10);color:#146B4E;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+  .hs-wbtn:hover{background:rgba(31,169,122,.18)}
+}
+button.wfab{border:0;font-family:var(--f-body);cursor:pointer}
+.wfab.wfab-hosp{background:#12241F;color:#8CE9BF;border:1px solid rgba(31,169,122,.45);box-shadow:0 10px 26px rgba(18,36,31,.28)}
+.wfab.wfab-hosp:hover{background:#16302A}
+body.wfab-lock{overflow:hidden}
+.wfab-sl{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center}
+.wfab-sheet-bg{position:absolute;inset:0;width:100%;border:0;margin:0;padding:0;background:rgba(10,22,18,.44);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);cursor:default;animation:wsFade .16s ease-out}
+.wfab-sheet{position:relative;width:100%;max-width:470px;display:grid;gap:2px;background:var(--surface);border-radius:22px 22px 0 0;padding:6px 14px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -14px 44px rgba(0,0,0,.2);animation:wsUp .24s cubic-bezier(.2,.85,.32,1)}
+.wfab-sheet-grab{width:38px;height:4px;border-radius:999px;background:var(--line);justify-self:center;margin:4px 0 10px}
+.wfab-sheet-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px}
+.wfab-sheet-h b{font-size:16.5px;font-weight:800;letter-spacing:-.02em}
+.wfab-sheet-x{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer}
+.wfab-sheet-sub{margin:1px 4px 6px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.wfab-sheet-list{display:grid;gap:1px}
+.wfab-item{display:grid;grid-template-columns:40px minmax(0,1fr) 12px;align-items:center;gap:12px;padding:11px 8px;border-radius:14px;color:var(--ink);text-decoration:none;-webkit-tap-highlight-color:transparent}
+.wfab-item:hover{background:var(--bg)}
+.wfab-item:active{background:var(--scrub-soft)}
+.wfab-ico{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:var(--scrub-soft);font-size:19px;border:1px solid rgba(31,169,122,.14)}
+.wfab-item div{display:grid;gap:1px;min-width:0}
+.wfab-item b{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.wfab-item small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wfab-item .chev{font-size:15px;color:var(--muted);text-align:center}
+@keyframes wsUp{from{transform:translateY(28px);opacity:.5}to{transform:none;opacity:1}}
+@keyframes wsFade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.wfab-sheet,.wfab-sheet-bg{animation:none}}
+@media (min-width:720px){.wfab-sheet{border-radius:22px;margin-bottom:24px;max-width:430px;box-shadow:0 18px 50px rgba(0,0,0,.24)}}
+@media (max-width:420px){
+  .iv-card{padding:14px 15px}
+  .iv-dash{padding:16px 15px}
+  .iv-metric b{font-size:17.5px}
+  .wfab-item{padding:10px 6px;gap:10px}
+}
+@media (min-width:999999px){
+  .iv-ab,.iv-atag{background:#3A3216;color:#F2D27A;border-color:#5A4A1E}
+  .iv-tip{background:linear-gradient(90deg,rgba(61,203,152,.14),rgba(61,203,152,0))}
+  .iv-tip p,.iv-dash-lab em,.iv-card-me,.iv-card-tags .t-dept,.iv-rel-c em,.iv-steps span,.hs-wbtn{color:#8CE9BF}
+  .iv-fold:not(.open) .iv-fold-in::after{background:linear-gradient(rgba(26,32,30,0),var(--surface))}
+}

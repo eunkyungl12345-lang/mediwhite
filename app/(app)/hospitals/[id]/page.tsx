@@ -23,7 +23,9 @@ import { loadNps } from "@/lib/nps";
 import { memoOnce } from "@/lib/memo";
 import NpsBox from "@/components/jobs/NpsBox";
 import NpsAdmin from "@/components/jobs/NpsAdmin";
-import { ivKey, IV_LEVEL, IV_FEEL, IV_FOLLOW, isPass, type Interview, IV_RESULT_LABEL, ivResultTone } from "@/lib/interview";
+import { ivKey, type Interview } from "@/lib/interview";
+import InterviewBoard, { type IvItem, type IvRel } from "@/components/jobs/InterviewBoard";
+import HsWriteBtn from "@/components/jobs/HsWriteBtn";
 import { PAY } from "@/lib/hospFacts";
 import { dday } from "@/lib/jobs";
 import { welAgg, welKey, type Welfare } from "@/lib/welfare";
@@ -58,6 +60,28 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   const t = ["pay", "intv", "welfare", "note", "jobs"].includes(searchParams.t ?? "") ? searchParams.t! : "rev";
   const [{ data: ivRows }, { data: hfFull }] = await Promise.all([d.from("game_state").select("user_id,state").eq("game", ivKey(id)).limit(500), d.from("game_state").select("user_id,state").eq("game", factKey(id)).limit(1000)]);
   const ivs = (ivRows ?? []).map(r => ({ uid: r.user_id, ...(r.state as Interview) })).sort((a, b) => b.at.localeCompare(a.at)), myIv = ivs.some(x => x.uid === s.id);
+  // 🎤 면접 탭 — 잠금 상태면 남의 후기 본문은 서버에서 아예 빼고 내려보낸다 (블러 예시 카드만)
+  const ivItems: IvItem[] = ivs.map((x, i) => { const ok = !locked || x.uid === s.id; return {
+    key: `${x.uid}-${i}`, dept: x.dept, year: x.year, route: x.route, steps: Array.isArray(x.steps) ? x.steps : [], level: x.level, result: x.result, feel: x.feel,
+    wait: ok ? x.wait : undefined, q: ok ? x.q : undefined, tip: ok ? x.tip : undefined, follow: ok ? x.follow : undefined,
+    at: x.at, mine: x.uid === s.id, locked: !ok }; });
+  // 🏥 같은 지역(없으면 같은 종별) 병원 추천 — 실제 DB만 조회, 후기 수는 실제 집계
+  let rels: IvRel[] = []; const relTitle = `🏥 ${h.region || h.kind}의 다른 병원도 확인해 보세요`;
+  if (t === "intv") {
+    const { data: sameR } = await d.from("hospitals").select("id,name,region,kind").eq("region", h.region).neq("id", id).order("name").limit(12);
+    let cand = sameR ?? [];
+    if (cand.length < 6) { const { data: sameK } = await d.from("hospitals").select("id,name,region,kind").eq("kind", h.kind).neq("id", id).order("name").limit(12); const seen = new Set(cand.map(c => c.id)); cand = [...cand, ...(sameK ?? []).filter(c => !seen.has(c.id))]; }
+    cand = cand.slice(0, 6);
+    if (cand.length) { const cids = cand.map(c => c.id);
+      const [{ data: rvC }, { data: ivC }] = await Promise.all([
+        d.from("hospital_reviews").select("hospital_id").in("hospital_id", cids).eq("hidden", false).limit(3000),
+        d.from("game_state").select("game").in("game", cids.map(c => ivKey(c))).limit(3000),
+      ]);
+      const rc = new Map<number, number>(); (rvC ?? []).forEach(r => rc.set(r.hospital_id, (rc.get(r.hospital_id) ?? 0) + 1));
+      const ic = new Map<number, number>(); (ivC ?? []).forEach(r => { const k = Number(String(r.game).split(":")[1]); ic.set(k, (ic.get(k) ?? 0) + 1); });
+      rels = cand.map(c => ({ ...c, rv: rc.get(c.id) ?? 0, iv: ic.get(c.id) ?? 0 })).sort((a, b) => (b.iv + b.rv) - (a.iv + a.rv) || a.name.localeCompare(b.name));
+    }
+  }
   const need = fa.need ?? MIN_N, payByDept = Object.entries((hfFull ?? []).map(r => r.state as any).filter(x => x?.pay).reduce((m: Record<string, string[]>, x) => ((m[x.dept ?? "기타"] ??= []).push(x.pay), m), {})).filter(([, v]) => v.length >= Math.max(need, 2))
     .map(([k, v]) => { const idx = v.map(p => PAY.indexOf(p as any)).sort((a, b) => a - b); return { dept: k, n: v.length, mid: PAY[idx[Math.floor((idx.length - 1) / 2)]], lo: PAY[idx[0]], hi: PAY[idx[idx.length - 1]] }; });
   const [{ data: welRows }, { data: helpRows }] = await Promise.all([d.from("game_state").select("user_id,state").eq("game", welKey(id)).limit(1000), d.from("events").select("user_id,text").eq("kind", "rvhelp").like("text", `${id}:%`).limit(5000)]);
@@ -75,7 +99,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   return (
     <div className="detail hs-detail">
       <div className="hh">
-        <div className="hh-top"><Link href="/hospitals" className="hh-back" aria-label="뒤로">‹</Link><ShareHosp hid={id} name={h.name} /></div>
+        <div className="hh-top"><Link href="/hospitals" className="hh-back" aria-label="뒤로">‹</Link><span className="hh-top-r"><HsWriteBtn /><ShareHosp hid={id} name={h.name} /></span></div>
         <div className="hh-badges">{!!myJobs?.length && <a href={tabHref("jobs")} className="hh-b job">💼 채용 중 {myJobs.length}</a>}{(fa.verified + vN) > 0 && <span className="hh-b vf">✅ 인증 {fa.verified + vN}</span>}</div>
         <div className="hh-name"><span className="hh-logo">🏥</span><div><h2>{h.name}</h2><small>{h.region}{gu ? ` ${gu}` : ""} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></small></div></div>
         <HireSignal a={fa} hid={id} locked={locked} after2={[0, 1, 2].map(k => (hfFull ?? []).filter(r => (r.state as any)?.after2 === k).length)} />
@@ -122,16 +146,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
             : <p className="muted" style={{ margin: 0, fontSize: 13 }}>아직 직종별로 공개할 만큼 모이지 않았어요.</p>}
           <Link href={`/hospitals/check?id=${id}`} className="btn ghost" style={{ justifySelf: "start" }}>💰 내 실수령 알려주기</Link></div>
       </>}
-      {t === "intv" && <div className="iv-sec">
-        {ivs.length > 0 && <div className="fb-head"><div><b>{(ivs.reduce((a, b) => a + b.level, 0) / ivs.length).toFixed(1)}</b><span>난이도 (5점)</span></div><div><b>{Math.round(ivs.filter(x => isPass(x.result)).length / ivs.length * 100)}%</b><span>합격 후기</span></div>{ivs.some(x => x.wait) && <div><b>{(() => { const w = ivs.filter(x => x.wait).map(x => x.wait!).sort((a, b) => a - b); const m = w[Math.floor((w.length - 1) / 2)]; return m >= 60 ? "한 달+" : `${m}일`; })()}</b><span>결과 발표까지</span></div>}<div><b>{Math.round(ivs.filter(x => x.feel === 0).length / ivs.length * 100)}%</b><span>😊 좋은 경험</span></div></div>}
-        <Link href={`/hospitals/interview?id=${id}`} className="btn">{myIv ? "✏️ 내 면접 후기 수정" : "🎤 면접 후기 남기기"}</Link>
-        {!ivs.length ? <p className="muted" style={{ fontSize: 13 }}>아직 면접 후기가 없어요. 면접 본 적 있다면 받은 질문을 남겨주세요. 다음 지원자에게 제일 큰 도움이 돼요.</p>
-          : ivs.map((x, i) => <article key={i} className="rf-item"><div className="rf-meta"><span className={"iv-chip " + ivResultTone(x.result)}>{IV_RESULT_LABEL[x.result] ?? x.result}</span>{[x.dept, `${x.year}년`, x.route].join("  |  ")}</div>
-            <div className="iv-tags"><span>난이도 {IV_LEVEL[x.level - 1]}</span><span>{IV_FEEL[x.feel]}</span>{x.steps.map(st => <span key={st}>{st}</span>)}</div>
-            {locked && x.uid !== s.id ? <div className="rf-lock"><p className="rf-pc fb-blur"><em className="g">질문</em>1분 자기소개와 지원 동기, 그리고 이 병원만의 단골 질문이 여기에 있어요</p><Link href={`/hospitals/interview?id=${id}`} className="btn">🎤 면접 후기 남기고 전부 보기</Link></div>
-              : <><p className="rf-pc"><em className="g">질문</em><span style={{ whiteSpace: "pre-wrap" }}>{x.q}</span></p>{x.follow && IV_FOLLOW[x.result] && <p className="rf-pc"><em className="b">{IV_FOLLOW[x.result].tag}</em>{x.follow}</p>}{x.tip && <p className="rf-pc"><em className="t">팁</em>{x.tip}</p>}</>}
-          <div className="rc-foot"><span /><RevMark /></div></article>)}
-      </div>}
+      {t === "intv" && <InterviewBoard hid={id} items={ivItems} mine={myIv} rels={rels} relTitle={relTitle} />}
       {t === "welfare" && <>
         {searchParams.done && <div className="fb-thanks">🙏 복지 평가 고마워요!</div>}
         <section className="rv2-stat"><h3>🎁 직원들이 실제로 쓴 복지 <small>({wa.n}명)</small></h3>
