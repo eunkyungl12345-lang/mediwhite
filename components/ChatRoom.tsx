@@ -7,10 +7,11 @@ import type { Session } from "@/lib/auth";
 import { display } from "@/lib/depts";
 import Insignia from "./Insignia";
 import { tierOf } from "@/lib/ranks";
+import { fromWire, sameAuthor, type ChatMsg } from "@/lib/chatMsg";
 
-export type Msg = { id: number; nickname: string; dept: string; text: string; created_at: string; user_id: string | null; rank?: string | null };
+export type Msg = ChatMsg;
 
-export default function ChatRoom({ me, initial, onNew, myRank, official = {}, room = "all" }: { me: Session; initial: Msg[]; onNew?: (m: Msg) => void; myRank?: string; official?: Record<string, string>; room?: string }) {
+export default function ChatRoom({ me, initial, onNew, myRank, room = "all" }: { me: Session; initial: Msg[]; onNew?: (m: Msg) => void; myRank?: string; room?: string }) {
   const [msgs, setMsgs] = useState<Msg[]>(initial);
   const [text, setText] = useState(""); const [busy, setBusy] = useState(false);
   const feed = useRef<HTMLDivElement>(null);
@@ -26,7 +27,8 @@ export default function ChatRoom({ me, initial, onNew, myRank, official = {}, ro
     first.current = false;
     const c = rt(); if (!c) return;
     const ch = c.channel(room === "all" ? "chat" : `chat:${room}`);
-    ch.on("broadcast", { event: "msg" }, ({ payload }) => { push(payload as Msg); onNew?.(payload as Msg); }).subscribe();
+    // 받은 payload는 남이 보낸 것이라 mine은 항상 false로 정리해서 넣어요 (user_id 같은 필드는 버림)
+    ch.on("broadcast", { event: "msg" }, ({ payload }) => { const m = fromWire(payload); push(m); onNew?.(m); }).subscribe();
     chRef.current = ch; return () => { c.removeChannel(ch); chRef.current = null; };
   }, [room]); // eslint-disable-line
   useEffect(() => { const f = feed.current; if (f) f.scrollTop = f.scrollHeight; }, [msgs]);
@@ -35,8 +37,8 @@ export default function ChatRoom({ me, initial, onNew, myRank, official = {}, ro
     e.preventDefault(); const t = text.trim(); if (!t || busy) return;
     setBusy(true); setText("");
     // 1) 내 화면과 다른 사람 화면에 즉시 뿌리고  2) 서버 저장은 뒤따라감
-    const tmp = `${me.id}-${Date.now()}`;
-    const optimistic: Msg & { tmp: string } = { id: -Date.now(), tmp, nickname: me.nickname, dept: me.dept, text: t, created_at: new Date().toISOString(), user_id: me.id, rank: myRank ?? null };
+    const tmp = `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`; // 내 user_id를 payload에 싣지 않으려고 랜덤 키
+    const optimistic: Msg & { tmp: string } = { id: -Date.now(), tmp, nickname: me.nickname, dept: me.dept, text: t, created_at: new Date().toISOString(), mine: true, rank: myRank ?? null };
     push(optimistic); chRef.current?.send({ type: "broadcast", event: "msg", payload: optimistic });
     setBusy(false);
     try { const saved = await sendMessage(t, room); if (saved) { push({ ...(saved as Msg), tmp }); chRef.current?.send({ type: "broadcast", event: "msg", payload: { ...saved, tmp } }); } }
@@ -46,10 +48,10 @@ export default function ChatRoom({ me, initial, onNew, myRank, official = {}, ro
     <div className="chat">
       <div className="feed" ref={feed} aria-live="polite">
         {msgs.length === 0 && <div className="empty">아직 대화가 없어요. 첫 인사를 남겨보세요.</div>}
-        {msgs.map((m, i) => { const mine = m.user_id === me.id; const ri = m.rank != null && /^\d+$/.test(String(m.rank)) ? Number(m.rank) : null;
-          const prev = msgs[i - 1]; const grouped = !!prev && prev.user_id === m.user_id && prev.user_id != null && new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 120000; return (
+        {msgs.map((m, i) => { const mine = !!m.mine; const ri = m.rank != null && /^\d+$/.test(String(m.rank)) ? Number(m.rank) : null;
+          const grouped = sameAuthor(msgs[i - 1], m); return (
           <div key={m.id} className={"msg" + (mine ? " mine" : "") + (grouped ? " grouped" : "")}>
-            {!grouped && <div className="who">{!mine && <>{m.user_id && official[m.user_id] ? <span className="tag off">{official[m.user_id]}</span> : ri != null && <span className={`ins t${tierOf(ri)}`}><Insignia index={ri} size={12} /></span>}<span>{display(m.dept, m.nickname)}</span></>}<span className="time">{fmt(m.created_at)}</span></div>}
+            {!grouped && <div className="who">{!mine && <>{m.official ? <span className="tag off">{m.official}</span> : ri != null && <span className={`ins t${tierOf(ri)}`}><Insignia index={ri} size={12} /></span>}<span>{display(m.dept, m.nickname)}</span></>}<span className="time">{fmt(m.created_at)}</span></div>}
             <div className="bubble">{m.text}</div>
           </div>); })}
       </div>

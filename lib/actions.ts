@@ -10,6 +10,7 @@ import { createSession, getSession, clearSession, type Session } from "./auth";
 import { DEPTS, CATS, NOTICE_CAT, EMOJIS, TOPICS, SSUM_CAT, SSUM_TOPICS, ANON_CAT, ANON_TOPICS, VENDOR_FIELDS } from "./depts";
 import { bump } from "./daily";
 import { validRoom } from "./chatRooms";
+import { toChatMsg, officialLabels, officialLabelOf } from "./chatServer";
 import { personMention, placeMention, REPORT_REASONS } from "./safety";
 import { awardXp, repeatXp } from "./xp";
 import { signupBonus, can, RANKS, rankOf, PERK } from "./ranks";
@@ -134,7 +135,9 @@ export async function sendMessage(text: string, room = "all") {
   await Promise.all([awardXp(u.id, 50, "first_chat"), repeatXp(u.id, "chat"), bump(u.id, "chat")]);
   const mentions = Array.from(t.matchAll(/@([^\s@\[\]]{1,12})/g)).map(m => m[1]);
   if (mentions.length) { const { data: targets } = await s.from("users").select("id").in("nickname", mentions).neq("id", u.id); if (targets?.length) pushToUsers(targets.map(x => x.id), { title: "채팅에서 나를 불렀어요", body: `[${u.dept}]${u.nickname}: ${t.slice(0, 60)}`, url: "/board", tag: "mention" }).catch(() => {}); }
-  return data;
+  // ⚠️ user_id(UUID)는 클라이언트로 보내지 않아요 — mine·official은 서버에서 판정해 불리언/라벨로만
+  const off = officialLabelOf(u.username);
+  return data ? toChatMsg(data, u.id, off ? { [u.id]: off } : {}) : null;
 }
 
 /* ---------- 게시판 ---------- */
@@ -547,7 +550,8 @@ export async function resolveReport(id: number, action: "restore" | "delete" | "
 export async function loadRoom(room: string) {
   const u = await requireUser(); if (!validRoom(room, u.dept)) room = "all";
   const { data } = await db().from("messages").select("id,nickname,dept,text,created_at,user_id,rank").eq("room", room).order("created_at", { ascending: false }).limit(40);
-  return (data ?? []).reverse();
+  const labels = await officialLabels();
+  return (data ?? []).reverse().map(r => toChatMsg(r, u.id, labels));
 }
 export async function adminSetChatRooms(on: boolean) {
   await requireAdmin(); await db().from("settings").upsert({ key: "chat_rooms", value: on ? "on" : "off" });

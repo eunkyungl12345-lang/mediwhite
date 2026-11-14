@@ -26,8 +26,8 @@ import { bump } from "@/lib/daily";
 import Name from "@/components/Name";
 import { deptLeaders, rankFor } from "@/lib/ranksvc";
 import { RANKS, GENERAL, rankOf } from "@/lib/ranks";
-import { OFFICIAL } from "@/lib/depts";
 import { db } from "@/lib/supabase";
+import { toChatMsg, officialLabels } from "@/lib/chatServer";
 import { Suspense } from "react";
 import TodayBar from "@/components/TodayBar";
 import OnlyOn from "@/components/OnlyOn";
@@ -40,16 +40,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   runSchedulers().catch(() => {});
   const newbie = await isFresh(s.id, s.role); // 첫 체크 전: 운세·시세·당직실 같은 곁가지는 숨기고 리뷰에 집중
   if (memoOnce("visit:" + s.id, 30 * 60_000)) { d.rpc("touch_visit", { p_user: s.id }).then(() => {}, () => {}); bump(s.id, "visit").catch(() => {}); }
-  const [{ data: me }, { data: msgs }, { pub }, { data: offs }, roomsOn] = await Promise.all([
+  const [{ data: me }, { data: msgs }, { pub }, official, roomsOn] = await Promise.all([
     d.from("users").select("id,dept,xp,stealth,onboarded,birth_date,birth_time,fortune_name").eq("id", s.id).maybeSingle(),
     d.from("messages").select("id,nickname,dept,text,created_at,user_id,rank").eq("room", "all").order("created_at", { ascending: false }).limit(40),
     vapid(),
-    memo("officials", 5 * 60_000, async () => d.from("users").select("id,username").in("username", Object.keys(OFFICIAL))),
+    officialLabels(),
     memo("chat_rooms", 60_000, async () => { const { data } = await d.from("settings").select("value").eq("key", "chat_rooms").maybeSingle(); return data?.value === "on"; }),
   ]);
   const { count: unread } = await d.from("notis").select("id", { count: "exact", head: true }).eq("user_id", s.id).eq("read", false);
   const fresh = await menuFresh();
-  const official = Object.fromEntries((offs ?? []).map(o => [o.id, OFFICIAL[o.username]]));
+  // ⚠️ 채팅 메시지의 user_id는 서버에만 두고, mine·official은 여기서 계산해 내려보내요
+  const chatInit = (msgs ?? []).reverse().map(m => toChatMsg(m, s.id, official));
   // 참모총장 후보일 때만 파트 1위 확인 (추가 조회 1번)
   const rank = me && me.xp >= RANKS[GENERAL][1] ? rankFor(me, await deptLeaders()) : rankOf(me?.xp ?? 0);
   return (
@@ -74,7 +75,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Onboarding show={!!me && !me.onboarded} />
       </div>
       <Suspense fallback={<aside className="rail" />}><RightRail rank={rank} xp={me?.xp ?? 0} nick={s.nickname} dept={s.dept} fresh={newbie} /></Suspense>
-      <ChatDock me={s} initial={(msgs ?? []).reverse()} myRank={String(rank.index)} official={official} online={<Presence user={s} stealth={!!me?.stealth} />} roomsOn={roomsOn} />
+      <ChatDock me={s} initial={chatInit} myRank={String(rank.index)} online={<Presence user={s} stealth={!!me?.stealth} />} roomsOn={roomsOn} />
     </div>
   );
 }

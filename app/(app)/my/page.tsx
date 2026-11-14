@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { logout } from "@/lib/actions";
 import { rankFor, deptLeaders } from "@/lib/ranksvc";
 import Avatar from "@/components/Avatar";
-import { lockMode, freeLeft } from "@/lib/hospFactsDb";
+import { lockMode, freeLeft, founderOf } from "@/lib/hospFactsDb";
 import { deptLabel } from "@/lib/depts";
 export const metadata = { title: "MY" };
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export default async function MyPage() {
   const s = (await getSession())!; const d = db(); const half = 183 * 86400000;
   const [{ data: me }, leaders, { data: gs }, { data: revs }, { data: jobs }, { count: unread }, { data: cvs }] = await Promise.all([
     d.from("users").select("id,nickname,dept,xp,blue_badge,created_at").eq("id", s.id).maybeSingle(), deptLeaders(),
-    d.from("game_state").select("game,state,updated_at").eq("user_id", s.id).or("game.like.hfact:%,game.like.hintv:%,game.like.hverify:%"),
+    d.from("game_state").select("game,state,updated_at").eq("user_id", s.id).or("game.like.hfact:%,game.like.hintv:%,game.like.hverify:%,game.like.hwel:%,game.like.hx:%"),
     d.from("hospital_reviews").select("id,hospital_id,created_at,hidden").eq("user_id", s.id),
     d.from("jobs").select("id,hospital,dept,closed,created_at").eq("author_id", s.id).order("created_at", { ascending: false }).limit(20),
     d.from("notis").select("id", { count: "exact", head: true }).eq("user_id", s.id).eq("read", false).then(r => r, () => ({ count: 0 } as any)),
@@ -24,14 +24,16 @@ export default async function MyPage() {
   const checks = of("hfact:"), ivs = of("hintv:"), vers = of("hverify:");
   const hids = Array.from(new Set([...rows.map(r => Number(String(r.game).split(":")[1])), ...(revs ?? []).map(r => r.hospital_id)])).filter(Boolean);
   const { data: hs } = hids.length ? await d.from("hospitals").select("id,name").in("id", hids) : { data: [] as any[] }; const hn = (id: number) => (hs ?? []).find(h => h.id === id)?.name ?? "병원";
-  const lastC = Math.max(0, ...checks.map(r => Date.parse(r.updated_at)), ...(revs ?? []).map(r => Date.parse(r.created_at)));
-  const [mode, free] = await Promise.all([lockMode(), freeLeft(s.id)]);
-  const left = lastC ? Math.ceil((lastC + half - Date.now()) / 86400000) : 0, unlocked = s.role === "admin" || left > 0 || mode === "off";
+  const [mode, free, founder] = await Promise.all([lockMode(), freeLeft(s.id), founderOf(s.id)]);
+  // 열람 권한은 병원 상세와 같은 기준: 🏅 창립 멤버 = 평생, 최근 6개월 제보·리뷰 = 그 기간, lock_mode=off = 전부 공개
+  const lastC = Math.max(0, ...checks.map(r => Date.parse(r.updated_at)), ...ivs.map(r => Date.parse(r.updated_at)), ...vers.map(r => Date.parse(r.updated_at)), ...(revs ?? []).map(r => Date.parse(r.created_at)));
+  const left = lastC ? Math.ceil((lastC + half - Date.now()) / 86400000) : 0;
+  const unlocked = s.role === "admin" || founder != null || left > 0 || mode === "off";
   const r = rankFor(me as any, leaders); const vOk = vers.filter(v => (v.state as any)?.status === "approved").length;
   const Row = ({ href, icon, t, sub }: { href: string; icon: string; t: string; sub?: string }) => <Link href={href} className="my-row"><span>{icon}</span><b>{t}</b>{sub && <small>{sub}</small>}<em>›</em></Link>;
   return <div className="my">
     <div className="my-prof"><Avatar name={me?.nickname ?? s.nickname} size={56} /><div><b>{me?.nickname ?? s.nickname}</b><small>{s.dept}{me?.blue_badge ? " · 🥇 골드뱃지" : ""}{vOk ? ` · ✅ 병원 인증 ${vOk}` : ""}</small><Link href="/rank" className="my-rank">{r.name} · {(me?.xp ?? 0).toLocaleString()} XP ›</Link></div></div>
-    <div className={"my-pass" + (unlocked ? " on" : "")}>{unlocked ? <><b>🎫 열람권 사용 중</b><span>{s.role === "admin" ? "관리자" : mode === "off" && left <= 0 ? "지금은 모든 병원 정보가 열려 있어요" : `${left}일 남았어요 · 모든 병원 리뷰·급여·면접 열람`}</span></> : <><b>🔒 열람권이 없어요</b><span>{mode === "free3" ? `무료로 볼 수 있는 병원 ${free}곳 남았어요. ` : ""}다니는(다녔던) 병원 하나 제보하면 6개월간 모든 병원 정보가 열려요</span><Link href="/hospitals/check" className="btn">🔎 체크하고 열기</Link></>}</div>
+    <div className={"my-pass" + (unlocked ? " on" : "")}>{founder != null ? <><b>👑 창립 멤버{founder ? ` ${founder}호` : ""} · 평생 전체 열람</b><span>모든 병원의 리뷰·급여·면접 정보를 평생 열람할 수 있어요</span></> : unlocked ? <><b>🎫 열람권 사용 중</b><span>{s.role === "admin" ? "관리자" : mode === "off" && left <= 0 ? "지금은 모든 병원 정보가 열려 있어요" : `${left}일 남았어요 · 모든 병원 리뷰·급여·면접 열람`}</span></> : <><b>🔒 열람권이 없어요</b><span>{mode === "free3" ? `무료로 볼 수 있는 병원 ${free}곳 남았어요. ` : ""}다니는(다녔던) 병원 하나 제보하면 6개월간 모든 병원 정보가 열려요</span><Link href="/hospitals/check" className="btn">🔎 체크하고 열기</Link></>}</div>
     <div className="my-stats">{[["⭐", "병원 리뷰", checks.length + (revs ?? []).length], ["🎤", "면접 후기", ivs.length], ["💼", "올린 공고", (jobs ?? []).length]].map(([i, t, n]) => <div key={t as string}><b>{n as number}</b><span>{i} {t}</span></div>)}</div>
     <section className="my-sec"><h3>내 활동</h3>
       <Row href="/jobs/resume" icon="📄" t="내 이력서 · 지원 현황" sub={cv ? `${deptLabel(String((cv.state as any)?.dept ?? ""))} · 지원 ${appN}건` : "1분 작성하고 공고에 바로 지원"} />

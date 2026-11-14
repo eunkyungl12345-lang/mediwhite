@@ -6,7 +6,7 @@ import type { Session } from "@/lib/auth";
 import { display } from "@/lib/depts";
 import { roomsFor } from "@/lib/chatRooms";
 
-export default function ChatDock({ me, initial, online, myRank, official, roomsOn = false }: { me: Session; initial: Msg[]; online: React.ReactNode; myRank?: string; official?: Record<string, string>; roomsOn?: boolean }) {
+export default function ChatDock({ me, initial, online, myRank, roomsOn = false }: { me: Session; initial: Msg[]; online: React.ReactNode; myRank?: string; roomsOn?: boolean }) {
   const [room, setRoom] = useState("all");
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -76,7 +76,7 @@ export default function ChatDock({ me, initial, online, myRank, official, roomsO
         </div>
         {roomsOn && <div className="dock-rooms">{roomsFor(me.dept).map(r => <button key={r.key} type="button" className={room === r.key ? "on" : ""} onClick={() => setRoom(r.key)}>{r.icon} {r.name}</button>)}</div>}
         <div className="dock-body" ref={bodyRef}>
-          <ChatRoom me={me} initial={initial} myRank={myRank} official={official} room={room} onNew={m => { setLast(m); if (!open && m.user_id !== me.id) setUnread(n => n + 1); }} />
+          <ChatRoom me={me} initial={initial} myRank={myRank} room={room} onNew={m => { setLast(m); if (!open && !m.mine) setUnread(n => n + 1); }} />
         </div>
       </div>
     </>
