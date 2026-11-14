@@ -3,7 +3,7 @@ import { MIN_N, BADGE_N, HIRE_DEPTS, hireSignal, isField, isReal, type FactAgg }
 /** 🔎 병원 실체 체크 집계 (병원 상세) */
 export default function FactBox({ a, hid, mine, vstat, locked, hideTop }: { a: FactAgg; hid: number; mine: boolean; vstat?: string | null; locked?: boolean; hideTop?: boolean }) {
   const cta = <Link href={`/hospitals/check?id=${hid}`} className="btn">{mine ? "✏️ 내 제보 수정" : "🔎 이 병원 다녀봤어요 · 10초 제보"}</Link>;
-  const vcta = mine && vstat !== "approved" ? <Link href={`/hospitals/verify?id=${hid}`} className="link fb-vlink">{vstat === "pending" ? "⏳ 인증 심사 중" : "✅ 내 응답 인증하기 (+50)"}</Link> : null;
+  const vcta = mine && vstat !== "approved" ? <Link href={`/hospitals/verify?id=${hid}`} className="link fb-vlink">{vstat === "pending" ? "⏳ 인증 심사 중" : "✅ 내 응답 인증하기"}</Link> : null;
   const M = a.need ?? MIN_N;
   if (a.n < M) return <div className="fb fb-wait"><b>🔎 입사해야 아는 것</b>{vcta}<p>{M > MIN_N ? `직원이 적은 곳이라 누가 썼는지 짐작되지 않게 ${M}명이 모여야 공개돼요. ` : ""}{a.n ? `${a.n}명이 알려줬어요. ${M - a.n}명만 더 모이면 실수령·실제 퇴근·분위기가 공개돼요.` : "실수령·실제 퇴근·분위기는 아직 아무도 안 알려줬어요. 딱 세 가지만 답하면 돼요."}</p>{cta}</div>;
   if (locked) return <div className="fb fb-lock">

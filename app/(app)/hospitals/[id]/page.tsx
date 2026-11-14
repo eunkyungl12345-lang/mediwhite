@@ -104,14 +104,14 @@ export default async function HospitalPage({ params, searchParams }: { params: {
         <div className="hh-name"><span className="hh-logo">🏥</span><div><h2>{h.name}</h2><small>{h.region}{gu ? ` ${gu}` : ""} · {h.kind} <LiveViewers kind="hospital" id={String(id)} /></small></div></div>
         <HireSignal a={fa} hid={id} locked={locked} after2={[0, 1, 2].map(k => (hfFull ?? []).filter(r => (r.state as any)?.after2 === k).length)} />
         <PosBadges list={posBadges(fa)} max={6} />
-        <div className="hh-score">★ <b>{score ? score.toFixed(1) : "-"}</b><small>{fa.n + rs.length ? `리뷰 ${fa.n + rs.length}` : "아직 평가 없음"}</small></div>
+        <div className="hh-score">★ <b>{score ? score.toFixed(1) : "-"}</b><small>{fa.n + rs.length ? `${fa.n + rs.length}명 평가` : "아직 평가 없음"}</small></div>
       </div>
-      <nav className="hh-tabs">{([["rev", `리뷰 ${rs.length + fa.n || ""}`], ["pay", "급여"], ["intv", `면접 ${ivs.length || ""}`], ["welfare", "복지"], ["note", "인계장"], ["jobs", `채용 ${myJobs?.length || ""}`]] as [string, string][]).map(([k, n]) => <Link key={k} href={tabHref(k)} className={t === k ? "on" : ""} scroll={false}>{n}</Link>)}</nav>
+      <nav className="hh-tabs">{([["rev", `리뷰 ${list.length || ""}`], ["pay", "급여"], ["intv", `면접 ${ivs.length || ""}`], ["welfare", "복지"], ["note", "인계장"], ["jobs", `채용 ${myJobs?.length || ""}`]] as [string, string][]).map(([k, n]) => <Link key={k} href={tabHref(k)} className={t === k ? "on" : ""} scroll={false}>{n}</Link>)}</nav>
       {searchParams.checked && founderNo && <div className="fb-thanks fd">🏅 <b>창립 멤버 {founderNo}호</b>가 되셨어요! 이제 모든 병원을 평생 볼 수 있어요.</div>}
       {searchParams.checked && <div className="fb-thanks">🙏 고마워요! 다음에 이 병원 지원할 누군가가 덕분에 덜 막막할 거예요.{vstat !== "approved" && <> · <Link href={`/hospitals/verify?id=${id}`} className="link"><b>✅ 명찰/서류로 인증하면 더 믿을 만해져요 →</b></Link></>}</div>}
       {t === "rev" && <>
       <section className="rv2-stat">
-        <h3><em>전체</em> 만족도 통계 <small>({rs.length + fa.n}개)</small></h3>
+        <h3><em>전체</em> 만족도 통계 <small>({rs.length + fa.n}명 응답)</small></h3>
         {statBars.length || score ? <>
           <div className="rv2-big"><b>{score ? score.toFixed(1) : "-"}</b><span className="rf-stars">{[1, 2, 3, 4, 5].map(i => <i key={i} className={score >= i - .25 ? "on" : ""}>★</i>)}</span></div>
           <div className="rv2-grid">{recOk && <div className="fb-donut" style={{ ["--p" as any]: fa.recPct }}><i><b>{fa.recPct}%</b></i><span>추천률</span></div>}
@@ -125,7 +125,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
       {mine && !myHidden && <details id="review-edit" className="card ss-details" open={!!searchParams.write}><summary><b>✏️ 예전에 쓴 내 리뷰 수정</b></summary><ReviewForm hospital={{ id: h.id, name: h.name, region: h.region }} dept={s.dept} mine={mine} proofState={proofState as any} /></details>}
       {(blindN ?? 0) > 0 && <div className="rv-blind">🔒 신고·권리침해 요청으로 <b>{blindN}개</b> 리뷰가 운영팀 검토 중이라 잠시 가려져 있어요 (최대 30일). 검토 후 다시 보이거나 삭제돼요.</div>}
       <div className="rv2-head"><b>리뷰 <em>{list.length}</em></b>{vN + fa.verified > 0 && <small>✅ 인증 {vN + fa.verified}</small>}</div>
-      {!list.length ? <div className="fb fb-wait"><b>아직 공개된 리뷰가 없어요</b><p>{fa.n ? `${fa.n}명이 남겼어요 — ${need}명이 모이면 한줄평·장단점이 공개돼요.` : "이 병원을 다녀봤다면 첫 리뷰를 남겨주세요. 딱 세 가지면 돼요."}</p><Link href={`/hospitals/check?id=${id}`} className="btn">＋ 리뷰 작성</Link></div>
+      {!list.length ? <div className="fb fb-wait"><b>아직 공개된 리뷰가 없어요</b><p>{fa.n >= need ? `체크는 ${fa.n}명이 남겼지만, 글로 쓴 한줄평·장단점은 아직 없어요. 다녀봤다면 한 줄만 남겨주세요.` : fa.n ? `${fa.n}명이 남겼어요 — ${need - fa.n}명만 더 모이면 한줄평·장단점이 공개돼요.` : "이 병원을 다녀봤다면 첫 리뷰를 남겨주세요. 딱 세 가지면 돼요."}</p><Link href={`/hospitals/check?id=${id}`} className="btn">＋ 리뷰 작성</Link></div>
       : <div className="rv2-list">{list.map(x => <article key={x.key} className={"rv2" + (x.mine ? " mine" : "")}>
         <RevHead hospital={h.name} dept={x.dept} status={x.status} cat={x.cat} />
         <div className="rf-meta">{x.meta.join("  |  ")}{x.v ? <em>✅ 인증</em> : null}{x.mine ? <em className="me">내 리뷰</em> : null}</div>
