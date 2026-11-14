@@ -31,7 +31,7 @@ export default async function ResumePage({ searchParams }: { searchParams: { bac
         ? <><b>📄 내 이력서 · {r.name}</b><span className="muted">{deptLabel(r.dept)} · {r.years} · {r.want} · {r.region}</span></>
         : <><b>📄 내 이력서</b><span className="muted">아직 없어요 — 1분이면 끝나요</span></>}</div>
       <h3 style={{ margin: "0 0 10px" }}>{r ? "이력서 수정" : "이력서 만들기"}</h3>
-      <div className="cv-body"><ResumeForm v={r} depts={JOB_DEPTS} regions={JOB_REGIONS} myDept={s.dept} back={back} /></div>
+      <div className="cv-body"><ResumeForm key={r ? "edit" : "new"} v={r} depts={JOB_DEPTS} regions={JOB_REGIONS} myDept={s.dept} back={back} /></div>
       {r && <div className="cv-tools">
         <form action={deleteResume}><ConfirmSubmit msg="이력서를 삭제할까요? 이미 보낸 지원서는 그대로 남아요.">🗑️ 이력서 삭제</ConfirmSubmit></form>
       </div>}
