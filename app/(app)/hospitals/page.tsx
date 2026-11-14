@@ -63,6 +63,14 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
     : !!facts[hid]?.hire.some(h => h.total > 0);
   let feed = items.filter((x: any) => hit(H.get(x.hid)!.name) && sigOk(x.hid) && (tab !== "mine" || x.dept === s.dept) && (tab !== "my" || myH.has(x.hid)) && (!region || H.get(x.hid)!.region === region) && (!st || x.status === st));
   feed.sort((a, b) => sort === "top" ? b.star - a.star : sort === "low" ? a.star - b.star : b.at.localeCompare(a.at)); feed = feed.slice(0, 60);
+  // 🎤 면접 후기 칩 — 후기가 있는 '병원'을 병원 단위로 (리뷰가 없어도 후기만 있으면 보여요)
+  let ivHosp: { id: number; name: string; region: string; kind: string; iv: number }[] = [];
+  if (sig === "intv") {
+    const cnt = new Map<number, number>(); for (const r of ivG ?? []) { const id = hidOf((r as any).game, "hintv:"); if (id > 0) cnt.set(id, (cnt.get(id) ?? 0) + 1); }
+    const ids = Array.from(cnt.keys());
+    const { data: ih } = ids.length ? await d.from("hospitals").select("id,name,region,kind").in("id", ids).limit(300) : { data: [] as any[] };
+    ivHosp = (ih ?? []).filter((h: any) => hit(h.name) && (!region || h.region === region)).map((h: any) => ({ ...h, iv: cnt.get(h.id) ?? 0 })).sort((a, b) => b.iv - a.iv || a.name.localeCompare(b.name)).slice(0, 60);
+  }
   // 병원 순위
   const rank = Array.from(H.values()).map(h => { const rs = (revs ?? []).filter(r => r.hospital_id === h.id), a = facts[h.id], ok = a && a.starN >= (a.need ?? MIN_N);
     return { h, n: rs.length + (a?.n ?? 0), score: ok ? a!.overallAvg : rs.length ? overall(rs) : 0 }; }).filter(x => x.n && hit(x.h.name) && sigOk(x.h.id)).sort((a, b) => b.score - a.score || b.n - a.n);
@@ -96,15 +104,18 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
 
       {tab === "rank" ? <div className="sal-list">{rank.length ? rank.slice(0, 50).map((x, i) => <Link key={x.h.id} href={`/hospitals/${x.h.id}`} className="sal-row"><b>{i + 1}</b><div><strong>{x.h.name}</strong><small>{x.h.kind} · {x.h.region}{dist[x.h.id] ? ` ${dist[x.h.id]}` : ""} · 평가 {x.n}</small>
           <PosBadges list={posBadges(facts[x.h.id])} max={3} />{factLine(facts[x.h.id], !contributed).length > 0 && <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[x.h.id], !contributed).map(t => <span key={t}>{t}</span>)}</div>}</div><em>{x.score ? `★ ${x.score.toFixed(1)}` : "-"}</em></Link>) : <p className="muted" style={{ padding: 14, margin: 0 }}>{sig ? "이 조건에 맞는 병원이 아직 없어요." : "아직 평가된 병원이 없어요."}</p>}</div>
-      : <>
+      : sig === "intv" ? <>
+        <div className="rf-filters"><HospFilterSelect value={region} /></div>
+        {ivHosp.length ? <div className="sal-list">{ivHosp.map(h => <Link key={h.id} href={`/hospitals/${h.id}`} className="sal-row"><b>🎤</b><div><strong>{h.name}</strong><small>{h.kind} · {h.region} · 면접 후기 {h.iv}건</small></div><em>›</em></Link>)}</div>
+          : <div className="fb fb-wait"><b>아직 면접 후기가 없어요</b><p>이 병원 면접을 봤다면 질문·분위기 한 줄만 남겨주세요. 다음 지원자의 하루가 달라져요.</p><Link href="/hospitals/interview" className="btn">🎤 면접 후기 남기기</Link></div>}
+      </> : <>
         <div className="rf-filters">
           <Link href={link({ sort: sort === "new" ? "top" : sort === "top" ? "low" : "" })} className="on">{sort === "new" ? "최신순" : sort === "top" ? "별점 높은순" : "별점 낮은순"} ⇅</Link>
           <HospFilterSelect value={region} />
           <Link href={link({ st: st === "재직" ? "퇴사" : st === "퇴사" ? "" : "재직" })} className={st ? "on" : ""}>{st ? (st === "재직" ? "현직원" : "전직원") : "재직 상태"}</Link>
         </div>
         {tab === "mine" && <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{s.dept} 직종이 쓴 리뷰만 보여요</p>}
-        {!feed.length ? <div className="fb fb-wait"><b>{sig ? "이 조건에 맞는 리뷰가 아직 없어요" : tab === "my" ? "내가 제보·리뷰한 병원이 아직 없어요" : "아직 리뷰가 없어요"}</b>
-          <p>{sig ? <>다른 조건으로 보거나, 다니는(다녔던) 병원을 제보하면 이 자리가 채워져요.</> : <>다니는(다녔던) 병원 하나만 제보하면 6개월간 모든 리뷰가 열려요.</>}</p>
+        {!feed.length ? <div className="fb fb-wait"><b>{sig ? "이 조건에 맞는 리뷰가 아직 없어요" : tab === "my" ? "내가 제보·리뷰한 병원이 아직 없어요" : "아직 리뷰가 없어요"}</b>          <p>{sig ? <>다른 조건으로 보거나, 다니는(다녔던) 병원을 제보하면 이 자리가 채워져요.</> : <>다니는(다녔던) 병원 하나만 제보하면 6개월간 모든 리뷰가 열려요.</>}</p>
           <div className="row" style={{ justifyContent: "center" }}>{sig && <Link href={link({ sig: "" })} className="btn ghost">전체 리뷰 보기</Link>}<Link href="/hospitals/check" className="btn">🔎 병원 제보하기</Link></div></div>
           : <div className="mc-list">{feed.map(x => { const h = H.get(x.hid)!; const now = x.status === "재직" || x.status === "현직원", lab = x.status ? (now ? "현직" : "전직") : "";
             return <article key={x.key} className="mc-card">
