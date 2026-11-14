@@ -13,6 +13,8 @@ export type ChatMsg = {
   official?: string | null;
   /** 같은 사람끼리 묶어 보여줄 때만 쓰는 익명 키 (user_id 해시) */
   ak?: string | null;
+  /** 보낸 사람이 붙인 임시 키 — 실시간으로 두 번 들어올 때 한 줄로 합치는 데만 씀 (랜덤값) */
+  tmp?: string;
 };
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -29,6 +31,7 @@ export function fromWire(p: any): ChatMsg {
     rank: typeof p?.rank === "string" ? p.rank : null,
     official: typeof p?.official === "string" ? p.official : null,
     ak: typeof p?.ak === "string" ? p.ak : null,
+    tmp: str(p?.tmp).slice(0, 40) || undefined,
     mine: false,
   };
 }
