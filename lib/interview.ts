@@ -12,6 +12,8 @@ export const isPass = (r: string) => r.startsWith("합격");
 /** 화면 표시용 결과 칩 — 합격 / 불합격 / 대기중 */
 export const IV_RESULT_LABEL: Record<string, string> = { "합격 후 입사": "✅ 합격 · 입사함", "합격했지만 입사 안 함": "✅ 합격 · 입사 안 함", "불합격": "❌ 불합격", "결과 대기": "⏳ 대기중" };
 export const ivResultTone = (r: string) => r.startsWith("합격") ? "ok" : r === "불합격" ? "no" : "wait";
+/** 목록 카드용 짧은 결과 배지 — ✅ 합격 / ❌ 불합격 / ⏳ 결과 대기 (입사 여부는 시그널 띠에 따로) */
+export const ivResultShort = (r: string) => r.startsWith("합격") ? "✅ 합격" : r === "불합격" ? "❌ 불합격" : "⏳ 결과 대기";
 export const IV_WAIT = [3, 7, 14, 30, 60] as const;
 export const IV_FEEL = ["😊 좋았어요", "😐 보통", "😣 별로였어요"] as const;
 /** 면접이 공정했는지 — '내정자 있고 나머지는 병풍' 후기가 반복돼서 */

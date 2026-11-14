@@ -13,10 +13,11 @@ const SHEET_ITEMS = (hid: string) => [
 ];
 /** 병원 목록(/hospitals) 시트 항목 — 아직 병원을 고르기 전, 무엇을 남길지만 고른다 */
 const LIST_ITEMS = [
+  { icon: "🎤", label: "면접 후기 쓰기", sub: "면접 질문 · 난이도 · 결과", href: "/hospitals/interview" },
   { icon: "🩺", label: "병원 근무 리뷰", sub: "별점 · 정규직 신호등 · 장단점", href: "/hospitals/check" },
   { icon: "💰", label: "실수령 급여 제보", sub: "직종별 세후 월급 · 수당", href: "/hospitals/check?t=pay" },
   { icon: "⏱️", label: "알바·단기 근무", sub: "시급 · 대타 분위기", href: "/hospitals/check?t=alba" },
-  { icon: "🔍", label: "병원 찾아 면접·복지 쓰기", sub: "병원 검색해서 면접 · 복지 남기기", search: true },
+  { icon: "🔍", label: "병원 찾아 복지·인계장 쓰기", sub: "병원 검색해서 복지 · 인계장 남기기", search: true },
 ] as const;
 /** 모바일 우하단 ‘✏️ 글쓰기’ 알약 버튼 — 홈·게시판 목록에서만
  *  병원 상세·병원 목록에서는 아래에서 올라오는 메디화이트 작성 시트를 연다. */

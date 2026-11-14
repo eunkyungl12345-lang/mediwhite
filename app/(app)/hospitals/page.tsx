@@ -10,6 +10,7 @@ import { MIN_N, factLine, posBadges, hireSignal } from "@/lib/hospFacts";
 import PosBadges from "@/components/jobs/PosBadges";
 import HospFilterSelect from "@/components/jobs/HospFilterSelect";
 import { loadDistricts } from "@/lib/districtDb";
+import { type Interview, IV_LEVEL, IV_FOLLOW, ivResultTone, ivResultShort } from "@/lib/interview";
 export const metadata = { title: "병원 리뷰 — 실수령·분위기 팩트체크" };
 export const dynamic = "force-dynamic";
 
@@ -38,13 +39,16 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
     hasContributed(s.id, s.role)]);
   // 🎤 면접 후기·💰 급여 제보 병원 집합 — 그 칩을 눌렀을 때만 조회
   const [{ data: ivG }, { data: payG }] = await Promise.all([
-    sig === "intv" ? d.from("game_state").select("game").like("game", "hintv:%").limit(3000) : Promise.resolve({ data: [] as any[] }),
+    sig === "intv" ? d.from("game_state").select("user_id,game,state,updated_at").like("game", "hintv:%").order("updated_at", { ascending: false }).limit(3000) : Promise.resolve({ data: [] as any[] }),
     sig === "pay" ? d.from("game_state").select("game").like("game", "hx:pay:%").limit(3000) : Promise.resolve({ data: [] as any[] }),
   ]);
   const hidOf = (g: string, p: string) => Number(String(g).slice(p.length));
-  const intvHids = new Set<number>((ivG ?? []).map((r: any) => hidOf(r.game, "hintv:")).filter(n => n > 0));
+  // 🎤 면접 후기 한 줄 = 후기 하나(사용자·병원). 병원 단위가 아니라 후기 단위로 카드를 그린다
+  const ivRows = (ivG ?? []).map((r: any) => ({ uid: String(r.user_id), hid: hidOf(r.game, "hintv:"), x: r.state as Interview, at: String((r.state as any)?.at ?? r.updated_at ?? "") }))
+    .filter(r => r.hid > 0 && r.x && r.x.result);
+  const intvHids = new Set<number>(ivRows.map(r => r.hid));
   const payHids = new Set<number>((payG ?? []).map((r: any) => hidOf(r.game, "hx:pay:")).filter(n => n > 0));
-  const hidsAll = Array.from(new Set([...(revs ?? []).map(r => r.hospital_id), ...(hfs ?? []).map(f => Number(String(f.game).slice(6)))]));
+  const hidsAll = Array.from(new Set([...(revs ?? []).map(r => r.hospital_id), ...(hfs ?? []).map(f => Number(String(f.game).slice(6))), ...Array.from(intvHids)]));
   const [{ data: hs }, facts, dist] = await Promise.all([hidsAll.length ? d.from("hospitals").select("id,name,region,kind").in("id", hidsAll) : Promise.resolve({ data: [] as any[] }), loadFacts(hidsAll), loadDistricts(hidsAll)]);
   const H = new Map((hs ?? []).map(h => [h.id, h]));
   const myH = new Set([...(revs ?? []).filter(r => r.user_id === s.id).map(r => r.hospital_id), ...(hfs ?? []).filter(f => f.user_id === s.id).map(f => Number(String(f.game).slice(6)))]);
@@ -63,14 +67,10 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
     : !!facts[hid]?.hire.some(h => h.total > 0);
   let feed = items.filter((x: any) => hit(H.get(x.hid)!.name) && sigOk(x.hid) && (tab !== "mine" || x.dept === s.dept) && (tab !== "my" || myH.has(x.hid)) && (!region || H.get(x.hid)!.region === region) && (!st || x.status === st));
   feed.sort((a, b) => sort === "top" ? b.star - a.star : sort === "low" ? a.star - b.star : b.at.localeCompare(a.at)); feed = feed.slice(0, 60);
-  // 🎤 면접 후기 칩 — 후기가 있는 '병원'을 병원 단위로 (리뷰가 없어도 후기만 있으면 보여요)
-  let ivHosp: { id: number; name: string; region: string; kind: string; iv: number }[] = [];
-  if (sig === "intv") {
-    const cnt = new Map<number, number>(); for (const r of ivG ?? []) { const id = hidOf((r as any).game, "hintv:"); if (id > 0) cnt.set(id, (cnt.get(id) ?? 0) + 1); }
-    const ids = Array.from(cnt.keys());
-    const { data: ih } = ids.length ? await d.from("hospitals").select("id,name,region,kind").in("id", ids).limit(300) : { data: [] as any[] };
-    ivHosp = (ih ?? []).filter((h: any) => hit(h.name) && (!region || h.region === region)).map((h: any) => ({ ...h, iv: cnt.get(h.id) ?? 0 })).sort((a, b) => b.iv - a.iv || a.name.localeCompare(b.name)).slice(0, 60);
-  }
+  // 🎤 면접 후기 칩 — 후기 하나를 '병원 차트' 카드로 (리뷰가 없어도 후기만 있으면 보여요)
+  const ivHit = intvHids.size ? ivRows.filter(r => H.has(r.hid) && hit(H.get(r.hid)!.name)).sort((a, b) => b.at.localeCompare(a.at)) : [];
+  const ivCards = ivHit.filter(r => !region || H.get(r.hid)!.region === region).slice(0, 40);
+  const ivAny = ivRows.filter(r => H.has(r.hid)).length;
   // 병원 순위
   const rank = Array.from(H.values()).map(h => { const rs = (revs ?? []).filter(r => r.hospital_id === h.id), a = facts[h.id], ok = a && a.starN >= (a.need ?? MIN_N);
     return { h, n: rs.length + (a?.n ?? 0), score: ok ? a!.overallAvg : rs.length ? overall(rs) : 0 }; }).filter(x => x.n && hit(x.h.name) && sigOk(x.h.id)).sort((a, b) => b.score - a.score || b.n - a.n);
@@ -105,9 +105,39 @@ export default async function HospitalsPage({ searchParams }: { searchParams: { 
       {tab === "rank" ? <div className="sal-list">{rank.length ? rank.slice(0, 50).map((x, i) => <Link key={x.h.id} href={`/hospitals/${x.h.id}`} className="sal-row"><b>{i + 1}</b><div><strong>{x.h.name}</strong><small>{x.h.kind} · {x.h.region}{dist[x.h.id] ? ` ${dist[x.h.id]}` : ""} · 평가 {x.n}</small>
           <PosBadges list={posBadges(facts[x.h.id])} max={3} />{factLine(facts[x.h.id], !contributed).length > 0 && <div className={"jb2-facts" + (!contributed ? " lock" : "")}>{factLine(facts[x.h.id], !contributed).map(t => <span key={t}>{t}</span>)}</div>}</div><em>{x.score ? `★ ${x.score.toFixed(1)}` : "-"}</em></Link>) : <p className="muted" style={{ padding: 14, margin: 0 }}>{sig ? "이 조건에 맞는 병원이 아직 없어요." : "아직 평가된 병원이 없어요."}</p>}</div>
       : sig === "intv" ? <>
-        <div className="rf-filters"><HospFilterSelect value={region} /></div>
-        {ivHosp.length ? <div className="sal-list">{ivHosp.map(h => <Link key={h.id} href={`/hospitals/${h.id}`} className="sal-row"><b>🎤</b><div><strong>{h.name}</strong><small>{h.kind} · {h.region} · 면접 후기 {h.iv}건</small></div><em>›</em></Link>)}</div>
-          : <div className="fb fb-wait"><b>아직 면접 후기가 없어요</b><p>이 병원 면접을 봤다면 질문·분위기 한 줄만 남겨주세요. 다음 지원자의 하루가 달라져요.</p><Link href="/hospitals/interview" className="btn">🎤 면접 후기 남기기</Link></div>}
+        <div className="rf-filters"><HospFilterSelect value={region} /><span className="iv-filter-n" style={{ marginLeft: "auto" }}>면접 후기 <b>{ivCards.length}</b>건{ivCards.length !== ivHit.length && <> <em>/ 전체 {ivHit.length}건</em></>}</span></div>
+        {ivCards.length ? <div className="mc-list">{ivCards.map(r => { const h = H.get(r.hid)!; const ok = contributed || r.uid === s.id; const F = IV_FOLLOW[r.x.result];
+          const clip = (t?: string, n = 170) => { const v = (t ?? "").trim(); return v.length > n ? v.slice(0, n).trimEnd() + "…" : v; };
+          return <article key={`${r.uid}:${r.hid}`} className="mc-card mc-iv">
+            {/* 머리 — 병원명(→ 면접 탭 직행) + 결과 배지 · 난이도 */}
+            <header className="mc-head">
+              <Link href={`/hospitals/${r.hid}?t=intv`} className="mc-hosp">🏥 {h.name}</Link>
+              <span className="mc-stamp"><em className={"mc-res " + ivResultTone(r.x.result)}>{ivResultShort(r.x.result)}</em><span className="mc-lv">난이도 {IV_LEVEL[Math.min(4, Math.max(0, (r.x.level || 3) - 1))]}</span></span>
+            </header>
+            <div className="mc-sub"><span>{h.region}{dist[r.hid] ? ` ${dist[r.hid]}` : ""} · {h.kind}</span><span>{r.x.year}년 · {r.x.route}</span>{r.uid === s.id && <em>내 후기</em>}<span className="mc-when">{r.at ? ym(r.at) : ""}</span></div>
+            {/* 시그널 띠 — 직종 · 입사 여부 · 내정자/조건 변경 경고 */}
+            <div className="mc-sig">
+              {r.x.dept && <span className="mc-dept">🪪 {r.x.dept}</span>}
+              {r.x.result?.startsWith("합격") && <span className={"mc-chip " + (r.x.result === "합격 후 입사" ? "ok" : "hire")}>{r.x.result === "합격 후 입사" ? "입사" : "입사 안 함"}</span>}
+              {typeof r.x.wait === "number" && r.x.wait > 0 && <span className="mc-chip hire">⏳ 발표 {r.x.wait >= 60 ? "한 달+" : `${r.x.wait}일`}</span>}
+              {r.x.fair === 2 && <span className="mc-chip warn">🙈 내정자·병풍</span>}
+              {r.x.gap && <span className="mc-chip warn">⚠️ 공고와 다른 조건</span>}
+            </div>
+            {/* 본문 — 잠금 정책은 리뷰와 동일: 제보했거나 내 후기만 열린다 */}
+            {ok ? <div className="mc-body">
+              {r.x.q && <div className="iv-qa"><span className="iv-qb">Q</span><p className="iv-q">{clip(r.x.q)}</p></div>}
+              {r.x.tip && <div className="iv-tip"><span aria-hidden>💡</span><p>{clip(r.x.tip, 140)}</p></div>}
+              {r.x.follow && F && <div className="iv-qa"><span className="iv-ab">A</span><div><em className="iv-atag">{F.tag}</em><p className="iv-a">{clip(r.x.follow, 140)}</p></div></div>}
+              {!r.x.q && !r.x.tip && !r.x.follow && <p className="muted" style={{ margin: 0, fontSize: 13 }}>질문 본문은 비어 있고, 위 시그널만 남겼어요.</p>}
+            </div> : <div className="iv-lock mc-lock">
+              <div className="iv-qa" aria-hidden><span className="iv-qb">Q</span><p className="iv-q">1분 자기소개와 지원 동기, 그리고 이 병원만의 단골 질문이 여기에 있어요</p></div>
+              <div className="iv-qa" aria-hidden><span className="iv-ab">A</span><div><em className="iv-atag">{F?.tag ?? "조언"}</em><p className="iv-a">면접 때 실제로 들은 처우·근무 조건에 대한 솔직한 이야기</p></div></div>
+              <Link href="/hospitals/check" className="btn">🎤 제보 하나 남기고 6개월간 모든 면접 후기 보기</Link>
+            </div>}
+            <footer className="mc-foot"><Link href={`/hospitals/${r.hid}?t=intv`} className="mc-more">면접 후기 전체 보기 ›</Link><RevMark /></footer>
+          </article>; })}</div>
+          : <div className="fb fb-wait"><b>{q && ivAny ? `‘${q}’ 병원 면접 후기가 없어요` : region && ivHit.length ? "이 지역엔 면접 후기가 아직 없어요" : "아직 면접 후기가 없어요"}</b><p>{q && ivAny ? "다른 병원 이름으로 검색하거나, 전체 면접 후기를 보세요." : region && ivHit.length ? `다른 지역엘 ${ivHit.length}건이 있어요.` : "면접 봤던 병원 하나만 골라 질문·분위기 한 줄만 남겨주세요. 다음 지원자의 하루가 달라져요."}</p>
+            <div className="row" style={{ justifyContent: "center" }}>{q && ivAny ? <Link href={link({ q: "", region: "" })} className="btn ghost">전체 면접 후기 보기</Link> : region && ivHit.length > 0 ? <Link href={link({ region: "" })} className="btn ghost">전체 지역 면접 후기 보기</Link> : null}<Link href="/hospitals/interview" className="btn">🎤 면접 후기 남기기</Link></div></div>}
       </> : <>
         <div className="rf-filters">
           <Link href={link({ sort: sort === "new" ? "top" : sort === "top" ? "low" : "" })} className="on">{sort === "new" ? "최신순" : sort === "top" ? "별점 높은순" : "별점 낮은순"} ⇅</Link>
