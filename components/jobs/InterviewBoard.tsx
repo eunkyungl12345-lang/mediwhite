@@ -50,7 +50,7 @@ export default function InterviewBoard({ hid, items, mine, rels, relTitle }: { h
         <div className="iv-meter">
           <div className="iv-meter-bar">
             <span className="iv-meter-bub" style={{ left: `${Math.min(94, Math.max(6, (avg / 5) * 100))}%` }}>{avg.toFixed(1)}</span>
-            {[1, 2, 3, 4, 5].map(k => <i key={k} className={"s" + k + (k === cell ? " on" : "")} />)}
+            {[1, 2, 3, 4, 5].map(k => <i key={k} className={"s" + k + (k <= cell ? " on" : "")} />)}
           </div>
           <div className="iv-meter-ends"><small>쉬움</small><small>어려움</small></div>
         </div>
