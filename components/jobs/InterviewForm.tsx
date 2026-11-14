@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitInterview } from "@/lib/interview.actions";
 import { JOB_DEPTS } from "@/lib/jobs";
-import { IV_ROUTE, IV_STEPS, IV_FEEL, IV_LEVEL, IV_FOLLOW, IV_WAIT, type Interview } from "@/lib/interview";
+import { IV_ROUTE, IV_STEPS, IV_FEEL, IV_FAIR, IV_LEVEL, IV_FOLLOW, IV_WAIT, type Interview } from "@/lib/interview";
 function Send({ edit }: { edit: boolean }) { const { pending } = useFormStatus(); return <button className="btn hc-send" disabled={pending}>{pending ? "저장 중…" : edit ? "✏️ 수정 완료" : "🎤 면접 후기 남기기"}</button>; }
 const R = ({ name, opts, def, values }: { name: string; opts: readonly string[]; def?: string | number; values?: (string | number)[] }) => <div className="hc-chips">{opts.map((o, i) => { const v = values ? values[i] : o; return <label key={o}><input type="radio" name={name} value={v} defaultChecked={def != null && String(def) === String(v)} /><span>{o}</span></label>; })}</div>;
 export default function InterviewForm({ hid, dept, mine, ext }: { hid: number; dept: string; mine?: Interview | null; ext?: { id: number; name: string; region: string; regions: readonly string[] } }) {
@@ -23,6 +23,8 @@ export default function InterviewForm({ hid, dept, mine, ext }: { hid: number; d
     {fo && <label className="hc-q iv-follow"><b>{fo.q} <small>(선택)</small></b><textarea name="follow" rows={3} maxLength={500} defaultValue={mine?.follow} placeholder={fo.ph} /></label>}
     {res && res !== "결과 대기" && <div className="hc-q"><b>결과 발표까지 걸린 시간 <small>(선택)</small></b><input type="hidden" name="wait" value={wait || ""} /><div className="hc-chips">{IV_WAIT.map(w => <label key={w}><input type="radio" checked={wait === w} onChange={() => setWait(w)} /><span>{w === 60 ? "한 달 이상" : w === 30 ? "한 달 안" : `${w}일 안`}</span></label>)}</div></div>}
     <div className="hc-q"><b>면접 경험</b><R name="feel" opts={IV_FEEL} values={[0, 1, 2]} def={mine?.feel} /></div>
+    <div className="hc-q"><b>면접이 공정했나요? <small>(선택)</small></b><R name="fair" opts={IV_FAIR} values={[0, 1, 2]} def={mine?.fair} />
+      <label className="iv-gap"><input type="checkbox" name="gap" defaultChecked={!!mine?.gap} /><span>면접에서 들은 업무·조건이 공고와 달랐어요 (IV·접수 같은 다른 일, 급여·근무형태 등)</span></label></div>
     <label className="hc-q"><b>받은 면접 질문</b><textarea name="q" rows={4} maxLength={1000} defaultValue={mine?.q} placeholder={"예) 1분 자기소개 / 간호사가 된 이유 / 투약 5Right / 갈등 상황에서 어떻게 할지 / 3교대 괜찮은지"} /></label>
     <label className="hc-q"><b>합격 팁·면접 분위기 <small>(선택)</small></b><textarea name="tip" rows={3} maxLength={500} defaultValue={mine?.tip} placeholder="예) 압박 질문은 없었고 술기 시험은 활력징후·IV 위주였어요" /></label>
     <Pledge />

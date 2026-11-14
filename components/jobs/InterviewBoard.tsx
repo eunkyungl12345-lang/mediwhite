@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { IV_FEEL, IV_FOLLOW, IV_LEVEL, IV_RESULT_LABEL, isPass } from "@/lib/interview";
+import { IV_FEEL, IV_FAIR, IV_FOLLOW, IV_LEVEL, IV_RESULT_LABEL, isPass } from "@/lib/interview";
 
 export type IvItem = {
   key: string; dept: string; year: string; route: string; steps: string[];
   level: number; result: string; feel: number; wait?: number;
-  q?: string; tip?: string; follow?: string; at: string;
+  q?: string; tip?: string; follow?: string; fair?: number; gap?: boolean; at: string;
   mine: boolean; locked: boolean;
 };
 export type IvRel = { id: number; name: string; region: string; kind: string; rv: number; iv: number };
@@ -24,12 +24,13 @@ function Fold({ long, children }: { long: boolean; children: React.ReactNode }) 
 }
 
 /** 🎤 면접 탭 — 메디화이트 '문진 차트'형 면접 진단 · 필터 · Q/A 카드 */
-export default function InterviewBoard({ hid, items, mine, rels, relTitle }: { hid: number; items: IvItem[]; mine: boolean; rels: IvRel[]; relTitle: string }) {
+export default function InterviewBoard({ hid, items, mine, rels, relTitle, big }: { hid: number; items: IvItem[]; mine: boolean; rels: IvRel[]; relTitle: string; big?: boolean }) {
   const [dept, setDept] = useState("all"), [res, setRes] = useState<"all" | "pass" | "no" | "wait">("all");
   const depts = useMemo(() => Array.from(new Set(items.map(i => i.dept).filter(Boolean))), [items]);
   const n = items.length;
   const avg = n ? items.reduce((a, b) => a + (b.level || 0), 0) / n : 0;
   const passN = items.filter(x => isPass(x.result)).length, feelN = items.filter(x => x.feel === 0).length;
+  const fairN = items.filter(x => typeof x.fair === "number").length, screenN = items.filter(x => x.fair === 2).length, gapN = items.filter(x => x.gap).length;
   const waits = items.map(x => x.wait).filter((w): w is number => typeof w === "number" && w > 0);
   const topSteps = useMemo(() => {
     const m = new Map<string, number>(); items.forEach(i => i.steps.forEach(st => m.set(st, (m.get(st) ?? 0) + 1)));
@@ -61,9 +62,10 @@ export default function InterviewBoard({ hid, items, mine, rels, relTitle }: { h
         {waits.length > 0 && <div className="iv-metric"><b>{waitLabel(median(waits))}</b><span>⏳ 결과 발표</span></div>}
         <div className="iv-metric"><b>{Math.round(feelN / n * 100)}%</b><span>😊 좋은 경험</span></div>
       </div>
+      {(screenN > 0 || gapN > 0) && <div className="iv-warn">{screenN > 0 && <span>🙈 <b>{screenN}명</b>이 "내정자 있는 듯·병풍 느낌"{fairN > screenN ? ` (응답 ${fairN}명 중)` : ""}</span>}{gapN > 0 && <span>⚠️ <b>{gapN}명</b>이 "면접에서 들은 업무·조건이 공고와 달랐어요"</span>}</div>}
     </section>}
 
-    <div className="ivb-cta"><Link href={`/hospitals/interview?id=${hid}`} className="btn">{mine ? "✏️ 내 면접 후기 수정" : "🎤 면접 후기 남기기"}</Link></div>
+    <div className="ivb-cta"><Link href={`/hospitals/interview?id=${hid}`} className="btn">{mine ? "✏️ 내 면접 후기 수정" : "🎤 면접 후기 남기기"}</Link>{big && <Link href="/study/interview#bank" className="btn ghost">📚 대병 단골 면접 질문</Link>}</div>
 
     {n > 0 && <div className="iv-filter">
       <label className="iv-sel"><select aria-label="직종" className={dept !== "all" ? "on" : ""} value={dept} onChange={e => setDept(e.target.value)}>
@@ -82,7 +84,7 @@ export default function InterviewBoard({ hid, items, mine, rels, relTitle }: { h
         const qLen = (i.q?.length ?? 0) + (i.follow?.length ?? 0) + (i.tip?.length ?? 0);
         return <article key={i.key} className={"iv-card" + (i.mine ? " mine" : "")}>
           <div className="iv-card-h"><span className={"iv-chip " + tone(i.result)}>{IV_RESULT_LABEL[i.result] ?? i.result}</span><span className="iv-card-when">{i.year}년 · {i.route}{i.mine && <em className="iv-card-me">내 후기</em>}</span></div>
-          <div className="iv-card-tags">{i.dept && <span className="t-dept">{i.dept}</span>}<span>난이도 {IV_LEVEL[(i.level || 3) - 1]}</span>{typeof i.feel === "number" && <span>{IV_FEEL[i.feel]}</span>}{typeof i.wait === "number" && i.wait > 0 && <span>발표 {waitLabel(i.wait)}</span>}{i.steps.map(st => <span key={st}>{st}</span>)}</div>
+          <div className="iv-card-tags">{i.dept && <span className="t-dept">{i.dept}</span>}<span>난이도 {IV_LEVEL[(i.level || 3) - 1]}</span>{typeof i.feel === "number" && <span>{IV_FEEL[i.feel]}</span>}{typeof i.wait === "number" && i.wait > 0 && <span>발표 {waitLabel(i.wait)}</span>}{i.fair === 2 && <span className="t-warn">{IV_FAIR[2]}</span>}{i.gap && <span className="t-warn">⚠️ 공고와 다른 조건</span>}{i.steps.map(st => <span key={st}>{st}</span>)}</div>
           {i.locked ? <div className="iv-lock">
             <div className="iv-qa" aria-hidden><span className="iv-qb">Q</span><p className="iv-q">1분 자기소개와 지원 동기, 그리고 이 병원만의 단골 질문이 여기에 있어요</p></div>
             <div className="iv-qa" aria-hidden><span className="iv-ab">A</span><div><em className="iv-atag">{F?.tag ?? "조언"}</em><p className="iv-a">면접 때 실제로 들은 처우·근무 조건에 대한 솔직한 이야기</p></div></div>

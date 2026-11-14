@@ -63,7 +63,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
   // 🎤 면접 탭 — 잠금 상태면 남의 후기 본문은 서버에서 아예 빼고 내려보낸다 (블러 예시 카드만)
   const ivItems: IvItem[] = ivs.map((x, i) => { const ok = !locked || x.uid === s.id; return {
     key: `${x.uid}-${i}`, dept: x.dept, year: x.year, route: x.route, steps: Array.isArray(x.steps) ? x.steps : [], level: x.level, result: x.result, feel: x.feel,
-    wait: ok ? x.wait : undefined, q: ok ? x.q : undefined, tip: ok ? x.tip : undefined, follow: ok ? x.follow : undefined,
+    wait: ok ? x.wait : undefined, q: ok ? x.q : undefined, tip: ok ? x.tip : undefined, follow: ok ? x.follow : undefined, fair: x.fair, gap: x.gap,
     at: x.at, mine: x.uid === s.id, locked: !ok }; });
   // 🏥 같은 지역(없으면 같은 종별) 병원 추천 — 실제 DB만 조회, 후기 수는 실제 집계
   let rels: IvRel[] = []; const relTitle = `🏥 ${h.region || h.kind}의 다른 병원도 확인해 보세요`;
@@ -146,7 +146,7 @@ export default async function HospitalPage({ params, searchParams }: { params: {
             : <p className="muted" style={{ margin: 0, fontSize: 13 }}>아직 직종별로 공개할 만큼 모이지 않았어요.</p>}
           <Link href={`/hospitals/check?id=${id}`} className="btn ghost" style={{ justifySelf: "start" }}>💰 내 실수령 알려주기</Link></div>
       </>}
-      {t === "intv" && <InterviewBoard hid={id} items={ivItems} mine={myIv} rels={rels} relTitle={relTitle} />}
+      {t === "intv" && <InterviewBoard hid={id} items={ivItems} mine={myIv} rels={rels} relTitle={relTitle} big={["상급종합", "종합병원"].includes(h.kind)} />}
       {t === "welfare" && <>
         {searchParams.done && <div className="fb-thanks">🙏 복지 평가 고마워요!</div>}
         <section className="rv2-stat"><h3>🎁 직원들이 실제로 쓴 복지 <small>({wa.n}명)</small></h3>

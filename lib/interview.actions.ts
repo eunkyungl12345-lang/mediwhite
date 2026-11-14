@@ -37,8 +37,9 @@ export async function submitInterview(_: R, fd: FormData): Promise<R> {
   const tq = textProblem(q, 20); if (tq) return { error: `면접 질문: ${tq}` }; if (tip) { const tt = textProblem(tip, 10); if (tt) return { error: `팁: ${tt}` }; }
   if (follow) { const tf = textProblem(follow, 10); if (tf) return { error: `${IV_FOLLOW[result].tag}: ${tf}` }; }
   for (const t of [q, tip, follow]) { const pm = personMention(t); if (pm) return { error: `특정인을 알 수 있는 표현("${pm}")은 빼주세요` }; }
+  const fairV = Number(fd.get("fair")), fair = [0, 1, 2].includes(fairV) && fd.get("fair") !== null && fd.get("fair") !== "" ? fairV : undefined, gap = fd.get("gap") === "on" || undefined;
   const { data: prev } = await s.from("game_state").select("user_id").eq("user_id", u.id).eq("game", ivKey(hid)).maybeSingle();
-  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: ivKey(hid), state: { dept, year, route, steps, level, result, feel, q, tip: tip || undefined, follow: follow || undefined, wait: wait >= 1 && wait <= 90 ? wait : undefined, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
+  const { error } = await s.from("game_state").upsert({ user_id: u.id, game: ivKey(hid), state: { dept, year, route, steps, level, result, feel, q, tip: tip || undefined, follow: follow || undefined, wait: wait >= 1 && wait <= 90 ? wait : undefined, fair, gap, at: new Date().toISOString() }, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요" };
   if (!prev) await awardXp(u.id, 30, `hintv:${hid}`, "quest");
   revalidatePath(`/hospitals/${hid}`); redirect(`/hospitals/${hid}?t=intv`);

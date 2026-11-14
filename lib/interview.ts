@@ -14,8 +14,10 @@ export const IV_RESULT_LABEL: Record<string, string> = { "합격 후 입사": "�
 export const ivResultTone = (r: string) => r.startsWith("합격") ? "ok" : r === "불합격" ? "no" : "wait";
 export const IV_WAIT = [3, 7, 14, 30, 60] as const;
 export const IV_FEEL = ["😊 좋았어요", "😐 보통", "😣 별로였어요"] as const;
+/** 면접이 공정했는지 — '내정자 있고 나머지는 병풍' 후기가 반복돼서 */
+export const IV_FAIR = ["🙆 골고루 질문했어요", "🤷 잘 모르겠어요", "🙈 내정자 있는 듯·병풍 느낌"] as const;
 export const IV_LEVEL = ["매우 쉬움", "쉬움", "보통", "어려움", "매우 어려움"] as const;
-export type Interview = { dept: string; year: string; route: string; steps: string[]; level: number; result: string; feel: number; q: string; tip?: string; follow?: string; wait?: number; at: string };
+export type Interview = { dept: string; year: string; route: string; steps: string[]; level: number; result: string; feel: number; q: string; tip?: string; follow?: string; wait?: number; fair?: number; gap?: boolean; at: string };
 export const ivKey = (hid: number) => `hintv:${hid}`;
 
 /** 외부 공고 주소("서울 광진 · 건대입구역") → 채용 지역 추정. 모르면 "" (직접 고르게) */

@@ -3057,3 +3057,13 @@ button.wfab-item{width:100%;border:0;background:none;font:inherit;text-align:lef
 button.wfab-item:active{background:var(--scrub-soft)}
 /* 시트에서 '병원 찾아 쓰기'를 고르면 검색창이 잠깐 빛나며 포커스 */
 .rf-search.spot{border-color:var(--scrub);box-shadow:0 0 0 4px rgba(31,169,122,.16)}
+/* 📚 단골 면접 질문 · 면접 공정성 */
+.ivk{display:grid;gap:8px;margin:6px 0 4px}.ivk h3{margin:0;font-size:17px}.ivk h3 small{font-size:12px;color:#12805B;background:#E8F7F0;border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:2px}.ivk>p{margin:0;font-size:12.5px}
+.ivk-g{background:#fff;border:1px solid #EEF0F2;border-radius:14px;padding:10px 14px}.ivk-g summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;list-style:none;font-size:14.5px}.ivk-g summary::-webkit-details-marker{display:none}.ivk-g summary em{font-style:normal;font-size:12px;color:#6B7280;background:#F3F5F7;border-radius:99px;padding:1px 8px}
+.ivk-g ol{margin:8px 0 2px;padding-left:20px;display:grid;gap:5px;font-size:14px;line-height:1.5}.ivk-tip{margin:8px 0 0;font-size:12.5px;color:#4B5563;background:#F6F8FA;border-radius:10px;padding:8px 10px}
+.ivk-tips{margin:4px 0 0;padding-left:18px;font-size:12.5px;color:#4B5563;display:grid;gap:4px}
+.iv-warn{display:grid;gap:4px;margin-top:10px;font-size:12.5px;color:#8A5A00;background:#FFF8EC;border-radius:10px;padding:8px 10px}
+.iv-card-tags .t-warn{background:#FFF4E5;color:#8A5A00}
+.iv-gap{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px;font-weight:500;cursor:pointer}.iv-gap input{width:18px;height:18px;flex:none;margin-top:1px}
+.ivb-cta{display:flex;gap:8px;flex-wrap:wrap}
+.q1-risk{display:grid;gap:6px}.q1-risk label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer;padding:8px 10px;border:1px solid #E5E9EE;border-radius:10px}.q1-risk input{width:18px;height:18px;flex:none;margin-top:1px}.q1-risk label:has(input:checked){border-color:#F0B35A;background:#FFF8EC}

@@ -1,4 +1,5 @@
 "use client";
+import { RISKS } from "@/lib/hospFacts";
 import Pledge from "@/components/jobs/Pledge";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
@@ -73,6 +74,8 @@ function ExtraForm({ kind, hospital, dept }: { kind: "pay" | "alba"; hospital?: 
     <Send label={kind === "pay" ? "💰 연봉 후기 올리기" : "⏰ 알바·당직 후기 올리기"} />
   </form>;
 }
+/** 현직자 후기에서 반복되는 이슈 — 빠른 제보에서도 체크만 */
+const Q1_RISKS = RISKS.filter(r => r.k === "offjob" || r.k === "leaveeye");
 const MAIN_DEPTS: [string, string][] = [["간호사", "간호사"], ["방사선", "방사선사"], ["임상병리", "임상병리사"], ["물리치료", "물리치료사"]];
 const Pills = ({ name, items, def, wide }: { name: string; items: { v: string | number; n: string; sub?: string; tone?: string }[]; def?: string | number | null; wide?: boolean }) =>
   <div className={"fq-pills" + (wide ? " wide" : "")} role="radiogroup">{items.map(o => <label key={o.v} className={"fq-pill" + (o.tone ? " t-" + o.tone : "")}><input type="radio" name={name} value={o.v} defaultChecked={def !== undefined && def !== null && String(def) === String(o.v)} /><span><b>{o.n}</b>{o.sub && <small>{o.sub}</small>}</span></label>)}</div>;
@@ -91,6 +94,7 @@ function QuickForm({ hospital, dept, mine }: { hospital?: Hosp | null; dept?: st
         <div className="rw-seg" role="radiogroup" aria-label="재직 상태">{[["재직", "현직"], ["퇴사", "전직"]].map(([v, n]) => <button key={v} type="button" role="radio" aria-checked={status === v} className={status === v ? "on" : ""} onClick={() => setStatus(v)}>{n}</button>)}</div></div>}
     <details className="q1-more" open={!!(mine?.pros || mine?.cons || typeof mine?.after2 === "number")}><summary>✍️ 한마디 더 남기기 <small>(선택)</small></summary>
       <div className="rw-f"><span className="rw-l">2년 채우면 어떻게 되나요?</span><Pills name="after2" items={AFTER2.map((n, i) => ({ v: i, n }))} def={mine?.after2} /></div>
+      <div className="rw-f"><span className="rw-l">이런 일 있었나요? <small>(해당하면 체크)</small></span><div className="q1-risk">{Q1_RISKS.map(r => <label key={r.k}><input type="checkbox" name="risk" value={r.k} defaultChecked={mine?.risks?.includes(r.k)} /><span>{r.label}</span></label>)}</div></div>
       <div className="rw-f"><label htmlFor="rq-pr">장점</label><textarea id="rq-pr" name="pros" rows={2} maxLength={500} defaultValue={mine?.pros ?? ""} placeholder="예: 2년 차에 대부분 정규직 면접 기회를 줘요." /></div>
       <div className="rw-f"><label htmlFor="rq-cn">지원 전에 꼭 알아야 할 점</label><textarea id="rq-cn" name="cons" rows={2} maxLength={500} defaultValue={mine?.cons ?? ""} placeholder="예: 공고엔 “전환 가능”인데 최근 3년간 전환된 사람을 못 봤어요." /></div>
     </details>

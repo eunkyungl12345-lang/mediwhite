@@ -48,6 +48,9 @@ export const RISKS = [
   { k: "probation", s: "긴 수습 감액", label: "수습 급여 깎는 기간이 길어요" },
   { k: "resign", s: "사직 지연", label: "사직서를 잘 안 받아줘요" },
   { k: "turnover", s: "계약직 만기퇴사 반복", label: "정규직 전환 없이 계약직만 돌려막기(2년 만기퇴사)" },
+  // 현직자 후기에서 반복되는 이슈 (2026-11 반영)
+  { k: "offjob", s: "공고 외 업무 강요", label: "공고·면접 때 없던 업무(IV·접수·수술방 보조 등)를 시켜요" },
+  { k: "leaveeye", s: "연차 눈치", label: "연차 쓸 때 눈치 주거나 쓸 수 있는 시기를 막아요" },
 ] as const;
 /** 🚪 퇴사자 내부 평가 — 별 5개 기준 + 퇴사 사유 + 마지막 한마디 */
 export const EXIT_STARS = [

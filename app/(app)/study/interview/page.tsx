@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { hasContributed } from "@/lib/hospFactsDb";
 import { JOB_DEPTS } from "@/lib/jobs";
 import type { Interview } from "@/lib/interview";
+import { IV_BANK, IV_BANK_NOTE, IV_BANK_TIPS } from "@/lib/ivBank";
 export const dynamic = "force-dynamic";
 /** 🎤 면접 질문 모음 — 모든 병원 면접 후기의 '받은 질문'만 모아서 */
 export default async function IvAll({ searchParams }: { searchParams: { dept?: string } }) {
@@ -14,6 +15,10 @@ export default async function IvAll({ searchParams }: { searchParams: { dept?: s
   const H = new Map((hs ?? []).map(h => [h.id, h])); const depts = Array.from(new Set((data ?? []).map(r => (r.state as any)?.dept).filter(Boolean)));
   return <div className="detail"><Link className="link" href="/study">← 공부방·자료실</Link><h2 style={{ margin: "8px 0 2px" }}>🎤 면접 질문 모음</h2>
     <p className="muted" style={{ margin: "0 0 10px", fontSize: 13 }}>병원 면접 후기에 올라온 ‘받은 질문’만 모았어요. 면접 본 적 있다면 병원 화면의 <b>면접</b> 탭에서 남겨주세요.</p>
+    <section className="ivk" id="bank"><h3>📚 대학·상급종합병원 단골 면접 질문 <small>임상병리</small></h3><p className="muted">{IV_BANK_NOTE}</p>
+      {IV_BANK.map((g, gi) => <details key={g.k} className="ivk-g" open={gi === 0}><summary><b>{g.t}</b><em>{g.qs.length}</em></summary>{g.tip && <p className="ivk-tip">💡 {g.tip}</p>}<ol>{g.qs.map(q => <li key={q}>{q}</li>)}</ol></details>)}
+      <ul className="ivk-tips">{IV_BANK_TIPS.map(t => <li key={t}>{t}</li>)}</ul></section>
+    <h3 style={{ margin: "18px 0 8px" }}>🎤 메디화이트 회원이 받은 질문</h3>
     {depts.length > 1 && <div className="rf-kw" style={{ marginBottom: 8 }}><Link href="/study/interview" className={!dept ? "on" : ""}>전체</Link>{depts.map(x => <Link key={x} href={`/study/interview?dept=${encodeURIComponent(x)}`} className={dept === x ? "on" : ""}>{x}</Link>)}</div>}
     {!rows.length ? <div className="fb fb-wait"><b>아직 모인 질문이 없어요</b><p>첫 면접 후기를 남겨주면 다음 지원자에게 제일 큰 도움이 돼요.</p><Link href="/hospitals" className="btn">병원 찾아서 면접 후기 남기기</Link></div>
       : <div className="rf-list">{rows.filter(r => H.has(r.hid)).map((x, i) => <article key={i} className="rf-item"><Link href={`/hospitals/${x.hid}?t=intv`} className="rf-meta" style={{ textDecoration: "none" }}><b style={{ color: "var(--ink)" }}>{H.get(x.hid)!.name}</b>  |  {x.dept}  |  {x.year}년  |  {x.result}</Link>

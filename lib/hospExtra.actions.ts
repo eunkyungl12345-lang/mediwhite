@@ -81,6 +81,7 @@ export async function submitQuickReview(_: R, fd: FormData): Promise<R> {
   const pill = HIRE_PILLS.find(p => p.v === hire)!;
   const state: any = { ...((prev?.state as any) ?? {}), dept, status, regular: hire, regularPct: pill.pct ?? undefined, ...(a2Raw !== "" ? { after2 } : {}), pros: pros || undefined, cons: cons || undefined, at: new Date().toISOString() };
   if (pill.pct === null) delete state.regularPct; if (a2Raw === "") delete state.after2;
+  { const Q = ["offjob", "leaveeye"], pick = fd.getAll("risk").map(String).filter(k => Q.includes(k)); const keep = (Array.isArray(state.risks) ? state.risks : []).filter((k: string) => !Q.includes(k)); state.risks = [...keep, ...pick]; if (state.risks.length) state.good = false; }
   const { error } = await s.from("game_state").upsert({ user_id: u.id, game: key, state, updated_at: new Date().toISOString() });
   if (error) return { error: "저장에 실패했어요. 잠시 후 다시" };
   if (!prev) await awardXp(u.id, 50, `hfact:${hid}`, "quest");
